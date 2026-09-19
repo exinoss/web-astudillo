@@ -295,7 +295,9 @@ const citizenLinks = await contentRepository.getCitizenLinks();
         accessToggle.setAttribute("aria-expanded", String(open));
         if (open) access.querySelector<HTMLButtonElement>("button")!.focus();
       };
-      accessToggle.addEventListener("click", () => setAccess(access.hidden));
+      accessToggle.addEventListener("click", () =>
+        setAccess(Boolean(access.hidden)),
+      );
       document.querySelector(".access-close")!.addEventListener("click", () => {
         setAccess(false);
         accessToggle.focus();
