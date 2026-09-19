@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Frontend (Astro)
+frontend/dist/
+frontend/.astro/
+frontend/test-results/
+frontend/playwright-report/
+frontend/.env
+frontend/.env.*.local
+
+# Backend (Bun + Elysia)
+backend/dist/
+backend/.env
+backend/.env.*.local
+
+# Editors / OS
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+
+# Logs
+*.log
+npm-debug.log*
