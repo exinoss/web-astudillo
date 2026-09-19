@@ -1,0 +1,88 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Icon from '../components/Icon.astro';
+import { Image } from 'astro:assets';
+import cover from '../assets/portada.jpg';
+import carlos from '../assets/carlos.jpg';
+import carlos2 from '../assets/carlos2.jpg';
+import carlos3 from '../assets/carlos3.jpg';
+import { proposals, citizenLinks } from '../data';
+---
+<Layout>
+  <h1 class="sr-only">Carlos Astudillo, candidato a la alcaldía de San Lorenzo</h1>
+  <section class="hero" aria-label="Presentación de Carlos Astudillo" aria-roledescription="carrusel">
+    <div class="container hero-heading"><span class="eyebrow">CARLOS ASTUDILLO · CANDIDATO A ALCALDE</span><span class="hero-location">Por ti, <strong>San Lorenzo.</strong></span></div>
+    <div class="hero-slides">
+      <div class="hero-slide" data-slide="0" role="group" aria-roledescription="diapositiva" aria-label="1 de 2"><Image class="campaign-cover" src={cover} alt="Carlos Astudillo, PSC. La nueva historia. Creo en una ciudad donde el progreso no sea privilegio de pocos, sino derecho de todos." widths={[640, 960, 1440, 1947]} sizes="100vw" width={1947} height={741} loading="eager" fetchpriority="high" quality={85} /><div class="mobile-hero-copy"><span>PSC · LISTA 6</span><h2>Por ti,<br />San Lorenzo.</h2><p>Carlos Astudillo<br />Candidato a alcalde</p></div></div>
+      <div class="hero-slide alternate-slide" data-slide="1" role="group" aria-roledescription="diapositiva" aria-label="2 de 2" hidden><div class="container alternate-inner"><div><span class="eyebrow">CONOCE AL CANDIDATO</span><h2>Respeto.<br />Coherencia.<br /><em>Claridad.</em></h2><a href="/acerca-de-nosotros/" class="button button-light">Conoce a Carlos <Icon name="arrow" size={18} /></a></div><Image src={carlos} alt="Retrato de Carlos Astudillo" width={620} height={620} loading="lazy" /></div></div>
+    </div>
+    <div class="hero-controls"><div class="container hero-controls-inner"><div class="carousel-controls" role="group" aria-label="Controles del carrusel"><button class="slide-dot is-active" type="button" aria-label="Ver diapositiva 1" aria-current="true"></button><button class="slide-dot" type="button" aria-label="Ver diapositiva 2" aria-current="false"></button></div></div></div>
+  </section>
+  <section class="citizen-strip" aria-label="Participación ciudadana"><div class="container citizen-inner"><div class="citizen-title"><span class="eyebrow">ESTAMOS PARA ESCUCHARTE</span><h2>Tu voz cuenta.</h2></div>{[...citizenLinks].sort((a, b) => Number(b.slug === 'alerta-ciudadana') - Number(a.slug === 'alerta-ciudadana')).map(p => <a class:list={['citizen-link', {'citizen-primary': p.slug === 'alerta-ciudadana'}]} href={`/ciudadania/${p.slug}/`}><span class="citizen-icon"><Icon name={p.icon} size={26} /></span><span><strong>{p.name}</strong><small>{p.description}</small></span><Icon name="arrow" size={19} /></a>)}</div></section>
+  <section class="about-section section-space"><div class="container about-grid"><div class="portrait-wrap profile-carousel" aria-roledescription="carrusel" aria-label="Carlos Astudillo"><Image data-profile-image="0" class="is-active" src={carlos} alt="Carlos Astudillo. Respeto, coherencia y claridad. Por ti, San Lorenzo." widths={[400, 640, 850]} sizes="(max-width: 760px) 90vw, 40vw" width={640} height={640} loading="lazy" /><Image data-profile-image="1" src={carlos2} alt="Carlos Astudillo. Por ti, San Lorenzo." widths={[400, 640, 850]} sizes="(max-width: 760px) 90vw, 40vw" width={640} height={640} loading="lazy" hidden /><Image data-profile-image="2" src={carlos3} alt="Carlos Astudillo. Respeto, coherencia, claridad." widths={[400, 640, 850]} sizes="(max-width: 760px) 90vw, 40vw" width={640} height={640} loading="lazy" hidden /><div class="profile-glass"><div class="profile-slide is-active" data-profile-slide="0"><span>CARLOS ASTUDILLO</span><small>Candidato a alcalde · Lista 6</small></div><div class="profile-slide" data-profile-slide="1" hidden><span>POR TI, SAN LORENZO</span><small>Una ciudad para todas las voces</small></div><div class="profile-slide" data-profile-slide="2" hidden><span>RESPETO · COHERENCIA · CLARIDAD</span><small>Valores para servir a la ciudad</small></div><div class="profile-dots" role="group" aria-label="Mensajes de Carlos Astudillo"><button class="profile-dot is-active" type="button" aria-label="Ver mensaje 1" aria-current="true"></button><button class="profile-dot" type="button" aria-label="Ver mensaje 2" aria-current="false"></button><button class="profile-dot" type="button" aria-label="Ver mensaje 3" aria-current="false"></button></div></div></div><div class="about-copy"><span class="eyebrow"><span class="short-line"></span> CONOCE A CARLOS</span><h2>Una ciudad.<br />Todas sus <span>voces.</span></h2><p class="lead">«Creo en una ciudad donde el progreso no sea privilegio de pocos, sino derecho de todos».</p><p>Carlos Astudillo, candidato a la alcaldía de San Lorenzo por el Partido Social Cristiano, Lista 6.</p><a class="button button-blue" href="/acerca-de-nosotros/">Acerca de nosotros <Icon name="arrow" size={19} /></a><div class="values"><span>Respeto</span><span>Coherencia</span><span>Claridad</span></div></div></div></section>
+  <section id="propuestas" class="proposals-section section-space"><div class="container"><div class="section-heading"><div><span class="eyebrow">CONOCE LOS EJES</span><h2>Propuestas para <span>San Lorenzo.</span></h2></div><p>Explora cada tema.<br />Conoce lo que se propone para tu ciudad.</p></div><div class="proposal-grid">{proposals.map(p => <a class="proposal-card" href={`/propuestas/${p.slug}/`}><div class="card-top"><span class="proposal-icon"><Icon name={p.icon} size={30} /></span><Icon name="arrow" size={20} /></div><span class="card-label">{p.label}</span><h3>{p.name}</h3><span class="card-action">Conocer propuesta</span></a>)}<a class="proposal-invitation" href="/ciudadania/sugerencias/"><Icon name="idea" size={34} /><h3>¿Y tú,<br />qué propones?</h3><span class="proposal-invitation-action">Comparte tu idea <Icon name="arrow" size={18} /></span></a></div></div></section>
+  <section id="contacto" class="contact-section section-space" aria-labelledby="contact-title">
+    <div class="container contact-hub">
+      <div class="contact-intro">
+        <span class="eyebrow">CERCA DE TI</span>
+        <h2 id="contact-title">Conecta con<br /><span>Carlos.</span></h2>
+        <p>Sigue las actividades, conoce el día a día y participa en la conversación.</p>
+        <span class="contact-signature">Por ti, San Lorenzo.</span>
+      </div>
+      <div class="contact-channels">
+        <div class="network-grid">
+          {[
+            {name:'Facebook',icon:'facebook',handle:'@carlosastudillo7',copy:'Encuentros, noticias y actividades en San Lorenzo.',url:'https://www.facebook.com/carlosastudillo7',action:'Ir a Facebook'},
+            {name:'TikTok',icon:'tiktok',handle:'@carlosastudillo01',copy:'Historias y momentos, más cerca de Carlos.',url:'https://www.tiktok.com/@carlosastudillo01',action:'Ver en TikTok'}
+          ].map(s => <a class="network-card" href={s.url} target="_blank" rel="noopener noreferrer" aria-label={s.name + ' de Carlos Astudillo (abre en otra pestaña)'}>
+            <div class="network-card-top"><span class:list={['network-icon', `network-icon-${s.icon}`]}><Icon name={s.icon} size={32} /></span><Icon name="external" size={22} /></div>
+            <h3>{s.name}</h3>
+            <span class="network-handle">{s.handle}</span>
+            <p>{s.copy}</p>
+            <span class="network-action">{s.action}<Icon name="arrow" size={19} /></span>
+          </a>)}
+        </div>
+        <a class="whatsapp-note" href="https://wa.me/593961368214" target="_blank" rel="noopener noreferrer" aria-label="Escribir por WhatsApp a Carlos Astudillo (abre en otra pestaña)"><Icon name="whatsapp" size={25} /><span><strong>WhatsApp</strong><span>Escríbenos directamente por WhatsApp.</span></span><Icon name="arrow" size={19} /></a>
+      </div>
+    </div>
+  </section>
+  <script>
+    const slides = [...document.querySelectorAll<HTMLElement>('[data-slide]')];
+    let index = 0;
+    const slideDots = [...document.querySelectorAll<HTMLButtonElement>('.slide-dot')];
+    const showSlide = (next: number) => { index = (next + slides.length) % slides.length; slides.forEach((slide, i) => slide.hidden = i !== index); slideDots.forEach((dot, i) => { dot.classList.toggle('is-active', i === index); dot.setAttribute('aria-current', String(i === index)); }); };
+    let timer: ReturnType<typeof setInterval> | undefined;
+    function syncAutoplay() {
+      clearInterval(timer);
+      const motionOff = document.documentElement.classList.contains('reduce-motion');
+      if (!motionOff && !document.hidden) timer = setInterval(() => showSlide(index + 1), 6000);
+    }
+    document.addEventListener('visibilitychange', syncAutoplay);
+    new MutationObserver(syncAutoplay).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    syncAutoplay();
+    slideDots.forEach((dot, i) => dot.addEventListener('click', () => { showSlide(i); syncAutoplay(); }));
+    const carousel = document.querySelector<HTMLElement>('.hero-slides')!;
+    let startX = 0; let startY = 0;
+    carousel.addEventListener('touchstart', e => { startX = e.changedTouches[0].clientX; startY = e.changedTouches[0].clientY; }, { passive: true });
+    carousel.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - startX; const dy = e.changedTouches[0].clientY - startY; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) { showSlide(index + (dx < 0 ? 1 : -1)); syncAutoplay(); } }, { passive: true });
+    const profileSlides = [...document.querySelectorAll<HTMLElement>('[data-profile-slide]')];
+    const profileImages = [...document.querySelectorAll<HTMLElement>('[data-profile-image]')];
+    const profileDots = [...document.querySelectorAll<HTMLButtonElement>('.profile-dot')];
+    let profileIndex = 0;
+    const showProfileSlide = (next: number) => { profileIndex = (next + profileSlides.length) % profileSlides.length; profileSlides.forEach((slide, i) => { slide.hidden = i !== profileIndex; slide.classList.toggle('is-active', i === profileIndex); }); profileImages.forEach((img, i) => { img.hidden = i !== profileIndex; img.classList.toggle('is-active', i === profileIndex); }); profileDots.forEach((dot, i) => { dot.classList.toggle('is-active', i === profileIndex); dot.setAttribute('aria-current', String(i === profileIndex)); }); };
+    profileDots.forEach((dot, i) => dot.addEventListener('click', () => { showProfileSlide(i); syncProfileAutoplay(); }));
+    const profileCarousel = document.querySelector<HTMLElement>('.profile-carousel')!;
+    let profileStartX = 0; let profileStartY = 0;
+    profileCarousel.addEventListener('touchstart', e => { profileStartX = e.changedTouches[0].clientX; profileStartY = e.changedTouches[0].clientY; }, { passive: true });
+    profileCarousel.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - profileStartX; const dy = e.changedTouches[0].clientY - profileStartY; if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) { showProfileSlide(profileIndex + (dx < 0 ? 1 : -1)); syncProfileAutoplay(); } }, { passive: true });
+    let profileTimer: ReturnType<typeof setInterval> | undefined;
+    function syncProfileAutoplay() {
+      clearInterval(profileTimer);
+      const motionOff = document.documentElement.classList.contains('reduce-motion');
+      if (!motionOff && !document.hidden) profileTimer = setInterval(() => showProfileSlide(profileIndex + 1), 5000);
+    }
+    document.addEventListener('visibilitychange', syncProfileAutoplay);
+    new MutationObserver(syncProfileAutoplay).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    syncProfileAutoplay();
+  </script>
+</Layout>
