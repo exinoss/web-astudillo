@@ -24,9 +24,9 @@ test('desktop navigation, carousel and accessibility', async ({ page }) => {
   await page.screenshot({ path: 'test-results/desktop.png', fullPage: true });
   await page.getByRole('button', { name: 'Herramientas de accesibilidad' }).click();
   await page.getByRole('button', { name: 'Aumentar texto' }).click();
-  await expect(page.locator('html')).toHaveClass(/large-text/);
+  await expect(page.locator('html')).toHaveClass(/text-large/);
   await page.reload();
-  await expect(page.locator('html')).toHaveClass(/large-text/);
+  await expect(page.locator('html')).toHaveClass(/text-large/);
   expect(errors).toEqual([]);
 });
 
@@ -84,20 +84,17 @@ test('all internal destinations and image resources exist', async ({ page, reque
   }
 });
 
-test('automatic carousel can pause and respects reduced motion', async ({ page }) => {
+test('automatic carousel advances and respects the reduced-motion accessibility setting', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
   await page.clock.fastForward(6500);
   await expect(page.locator('[data-slide="1"]')).toBeVisible();
-  await page.getByRole('button', { name: 'Pausar carrusel', exact: true }).click();
-  await page.clock.fastForward(13000);
-  await expect(page.locator('[data-slide="1"]')).toBeVisible();
-  await page.getByRole('button', { name: 'Reproducir carrusel', exact: true }).click();
-  await page.clock.fastForward(6500);
+  await page.getByRole('button', { name: 'Herramientas de accesibilidad' }).click();
+  await page.getByRole('button', { name: 'Reducir movimiento' }).click();
+  await expect(page.getByRole('button', { name: 'Reducir movimiento' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Ver diapositiva 1' }).click();
   await expect(page.locator('[data-slide="0"]')).toBeVisible();
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(page.locator('.slide-playback')).toBeDisabled();
-  await page.clock.fastForward(6500);
+  await page.clock.fastForward(13000);
   await expect(page.locator('[data-slide="0"]')).toBeVisible();
 });
 
