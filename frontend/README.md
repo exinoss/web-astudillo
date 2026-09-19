@@ -1,43 +1,27 @@
-# Astro Starter Kit: Minimal
+# Frontend — Carlos Astudillo
 
-```sh
-bun create astro@latest -- --template minimal
-```
+Sitio web de campaña de Carlos Astudillo (candidato a la alcaldía de San Lorenzo, Esmeraldas), construido con [Astro](https://astro.build).
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Migrado desde el prototipo aprobado (`PrototipoAstudillo`), preservando exactamente el mismo diseño, contenido y comportamiento. Ver el plan de migración en `docs/` (raíz del repo) para el detalle de las fases.
 
-## 🚀 Project Structure
+## Comandos
 
-Inside of your Astro project, you'll see the following folders and files:
+Todos los comandos se ejecutan desde esta carpeta (`frontend/`):
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+| Comando          | Acción                                              |
+| :--------------- | :--------------------------------------------------- |
+| `bun install`     | Instala las dependencias                             |
+| `bun run dev`     | Inicia el servidor de desarrollo en `localhost:4321` |
+| `bun run build`   | Genera el sitio estático en `./dist/`                |
+| `bun run preview` | Sirve el build localmente                            |
+| `bun run check`   | Verifica tipos de TypeScript (`astro check`)         |
+| `bun run test`    | Corre la suite de pruebas Playwright                 |
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Estructura
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `bun install`             | Installs dependencies                            |
-| `bun dev`             | Starts local dev server at `localhost:4321`      |
-| `bun build`           | Build your production site to `./dist/`          |
-| `bun preview`         | Preview your build locally, before deploying     |
-| `bun astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `bun astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+- `src/pages/` — rutas del sitio (home, propuestas, ciudadanía, acerca de nosotros).
+- `src/layouts/Layout.astro` — plantilla base (header, footer, panel de accesibilidad).
+- `src/components/Icon.astro` — íconos SVG inline.
+- `src/lib/data/` — capa de acceso a datos (hoy con datos locales; preparada para conectarse a la API del backend).
+- `src/styles/` — estilos globales (Tailwind + DaisyUI).
+- `tests/` — pruebas end-to-end con Playwright.
