@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+/*
+  Prefixed so DaisyUI's reserved component class names (e.g. "hero",
+  "chat-header") can never collide with the approved prototype's own
+  plain semantic class names of the same name.
+*/
+@plugin "daisyui" {
+  prefix: "du-";
+}
+
+/*
+  Theme tokens mirror the approved prototype's CSS variables
+  (src/styles/legacy-global.css :root) 1:1. --color-error is the
+  form-validation red (#a50913), distinct from the brand red (--red).
+*/
+@plugin "daisyui/theme" {
+  name: "campaign";
+  default: true;
+  color-scheme: light;
+  --color-primary: #063176; /* --navy */
+  --color-primary-content: #feffff;
+  --color-secondary: #f47f0e; /* --orange */
+  --color-secondary-content: #feffff;
+  --color-accent: #f9c31b; /* --yellow / --paper */
+  --color-accent-content: #063176;
+  --color-neutral: #054994; /* --blue */
+  --color-neutral-content: #feffff;
+  --color-base-100: #feffff; /* --white */
+  --color-base-200: #f9c31b; /* --paper */
+  --color-base-300: #06317640; /* --line */
+  --color-base-content: #063176; /* --navy / --muted */
+  --color-error: #a50913;
+}
+
+@plugin "daisyui/theme" {
+  name: "campaign-high-contrast";
+  color-scheme: light;
+  --color-primary: #00132e;
+  --color-primary-content: #fff;
+  --color-secondary: #00132e;
+  --color-secondary-content: #fff;
+  --color-accent: #fff;
+  --color-accent-content: #00132e;
+  --color-neutral: #00132e;
+  --color-neutral-content: #fff;
+  --color-base-100: #fff;
+  --color-base-200: #fff;
+  --color-base-300: #52647c;
+  --color-base-content: #172a40;
+  --color-error: #a50913;
+}
+
+@theme {
+  --font-display: "Barlow Condensed", sans-serif;
+  --font-sans: "DM Sans", sans-serif;
+  /* Brand red used for accents/bullets; NOT the same token as --color-error. */
+  --color-campaign-red: #e0121f;
+}
