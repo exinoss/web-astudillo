@@ -79,3 +79,27 @@ h3 {
 p {
   margin-bottom: 1em;
 }
+
+/*
+  Named "site-container", not "container": Tailwind ships its own
+  ".container" utility (width:100% plus max-width breakpoints), which
+  silently layered on top of this same-named class and broke layout
+  inside flex/grid parents. Kept as a plain CSS class (not a DaisyUI
+  concern) since it is applied by literal class name across every page.
+*/
+.site-container {
+  width: min(1280px, calc(100% - 96px));
+  margin-inline: auto;
+}
+
+@media (max-width: 1190px) {
+  .site-container {
+    width: calc(100% - 64px);
+  }
+}
+
+@media (max-width: 760px) {
+  .site-container {
+    width: calc(100% - 40px);
+  }
+}

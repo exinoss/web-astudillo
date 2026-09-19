@@ -26,9 +26,9 @@ const current = Astro.url.pathname;
   </head>
   <body>
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
-    <div class="topbar"><div class="container topbar-inner"><span><Icon name="location" size={14} /> San Lorenzo, Esmeraldas</span><span>Partido Social Cristiano <b>LISTA 6</b></span></div></div>
+    <div class="topbar"><div class="site-container topbar-inner"><span><Icon name="location" size={14} /> San Lorenzo, Esmeraldas</span><span>Partido Social Cristiano <b>LISTA 6</b></span></div></div>
     <header class="site-header">
-      <div class="container header-inner">
+      <div class="site-container header-inner">
         <a class="brand" href="/" aria-label="Carlos Astudillo, inicio"><Image src={logo} alt="" width={68} height={58} fit="contain" /><span>CARLOS <strong>ASTUDILLO</strong><small>ALCALDÍA DE SAN LORENZO</small></span></a>
         <a class="report-link" href="/ciudadania/alerta-ciudadana/"><Icon name="alert" size={19} /><span>Reportar daño</span></a>
         <button class="menu-toggle" aria-label="Abrir menú" aria-controls="main-nav" aria-expanded="false"><Icon name="menu" /></button>
@@ -48,7 +48,7 @@ const current = Astro.url.pathname;
       </div>
     </header>
     <main id="contenido" tabindex="-1"><slot /></main>
-    <footer><div class="container footer-top"><a class="footer-brand" href="/">CARLOS ASTUDILLO<span>Por ti, San Lorenzo.</span></a><p>Candidato a la alcaldía de San Lorenzo<br />Partido Social Cristiano · Lista 6</p><a href="/#contacto">Contáctanos <Icon name="arrow" size={18} /></a></div><div class="container footer-bottom"><span>© {new Date().getFullYear()} Carlos Astudillo</span><span>Por ti, San Lorenzo.</span></div></footer>
+    <footer><div class="site-container footer-top"><a class="footer-brand" href="/">CARLOS ASTUDILLO<span>Por ti, San Lorenzo.</span></a><p>Candidato a la alcaldía de San Lorenzo<br />Partido Social Cristiano · Lista 6</p><a href="/#contacto">Contáctanos <Icon name="arrow" size={18} /></a></div><div class="site-container footer-bottom"><span>© {new Date().getFullYear()} Carlos Astudillo</span><span>Por ti, San Lorenzo.</span></div></footer>
     <button class="access-toggle" aria-label="Herramientas de accesibilidad" aria-expanded="false" aria-controls="access-panel"><Icon name="person" size={24} /></button>
     <aside id="access-panel" class="access-panel" aria-label="Herramientas de accesibilidad" hidden><div class="panel-title"><strong>Accesibilidad</strong><button class="access-close" aria-label="Cerrar accesibilidad"><Icon name="close" size={20} /></button></div><button data-text-step="1">Aumentar texto <span>A+</span></button><button data-text-step="-1">Disminuir texto <span>A-</span></button><button data-setting="grayscale" aria-pressed="false">Escala de grises <span>◍</span></button><button data-setting="high-contrast" aria-pressed="false">Alto contraste <span>◐</span></button><button data-setting="negative-contrast" aria-pressed="false">Contraste negativo <span>◑</span></button><button data-setting="light-bg" aria-pressed="false">Fondo claro <span>▢</span></button><button data-setting="underline-links" aria-pressed="false">Subrayar enlaces <span>U</span></button><button data-setting="readable-font" aria-pressed="false">Fuente legible <span>Aa</span></button><button data-setting="reduce-motion" aria-pressed="false">Reducir movimiento <span>Ⅱ</span></button><button class="access-reset">Restablecer ajustes</button></aside>
     <script>
