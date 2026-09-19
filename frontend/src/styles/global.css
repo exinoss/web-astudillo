@@ -57,3 +57,25 @@
   /* Brand red used for accents/bullets; NOT the same token as --color-error. */
   --color-campaign-red: #e0121f;
 }
+
+/*
+  Tailwind's Preflight zeroes margin on every element. legacy-global.css
+  never set its own margin-bottom for plain <h1>/<h3>/<p> (it explicitly
+  sets margin-bottom:24px only for <h2>), relying on the browser's UA
+  defaults (0.67em / 1em / 1em) instead, so without this compatibility
+  rule those elements lose their spacing the moment Tailwind is
+  imported. This is unlayered (like legacy-global.css) so it wins over
+  Preflight; more specific legacy rules that already set their own
+  margin-bottom keep winning by specificity. Remove once every element
+  has been given an explicit Tailwind spacing utility during the
+  component migration.
+*/
+h1 {
+  margin-bottom: 0.67em;
+}
+h3 {
+  margin-bottom: 1em;
+}
+p {
+  margin-bottom: 1em;
+}
