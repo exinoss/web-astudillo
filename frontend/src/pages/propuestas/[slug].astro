@@ -1,8 +1,85 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Icon from '../../components/Icon.astro';
-import { proposals } from '../../data';
-export function getStaticPaths() { return proposals.map(p => ({ params: { slug: p.slug }, props: { proposal: p } })); }
-const { proposal } = Astro.props;
+import Layout from "../../layouts/Layout.astro";
+import Icon from "../../components/Icon.astro";
+import { contentRepository } from "../../lib/data";
+import type { Proposal } from "../../lib/data/types";
+
+interface Props {
+  proposal: Proposal;
+  proposals: Proposal[];
+}
+
+export async function getStaticPaths() {
+  const proposals = await contentRepository.getProposals();
+  return proposals.map((p) => ({
+    params: { slug: p.slug },
+    props: { proposal: p, proposals },
+  }));
+}
+const { proposal, proposals } = Astro.props;
 ---
-<Layout title={`${proposal.name} · Carlos Astudillo`}><div class="site-container breadcrumb"><a href="/">Inicio</a><span>/</span><a href="/#propuestas">Propuestas</a><span>/</span>{proposal.name}</div><section class="detail-banner"><div class="site-container"><span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">PROPUESTAS · {proposal.label.toUpperCase()}</span><div class="detail-title"><h1>{proposal.name}</h1><Icon name={proposal.icon} size={76} /></div><p class="lead">{proposal.intro}</p></div></section><div class="site-container detail-grid py-24 max-[1190px]:py-[70px] max-[760px]:py-14"><article><span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">INFORMACIÓN DE LA PROPUESTA</span><h2>Conoce este eje.</h2><p>Este es uno de los siete temas presentados para la candidatura de Carlos Astudillo a la alcaldía de San Lorenzo.</p><div class="content-notice"><Icon name="book" size={24} /><div><strong>Contenido en preparación</strong><p>Los objetivos, acciones y detalles de esta propuesta se incorporarán cuando estén disponibles.</p></div></div><h3>Tu perspectiva también cuenta.</h3><p>Comparte una idea relacionada con {proposal.name.toLowerCase()}.</p><a class="button inline-flex justify-center items-center gap-7 min-h-[50px] py-[15px] px-6 border-0 text-[0.85rem] font-bold rounded-[3px] transition duration-[180ms] hover:-translate-y-0.5 bg-primary text-primary-content hover:bg-neutral" href={`/ciudadania/sugerencias/?tema=${proposal.slug}`}>Compartir una sugerencia <Icon name="arrow" size={18} /></a></article><aside class="related-proposals"><h3>Explora las propuestas</h3>{proposals.map(p => <a href={`/propuestas/${p.slug}/`} aria-current={p.slug === proposal.slug ? 'page' : undefined}><Icon name={p.icon} size={20} />{p.name}<Icon name="arrow" size={16} /></a>)}</aside></div></Layout>
+
+<Layout title={`${proposal.name} · Carlos Astudillo`}>
+  <div class="site-container breadcrumb">
+    <a href="/">Inicio</a>
+    <span>/</span>
+    <a href="/#propuestas">Propuestas</a>
+    <span>/</span>
+    {proposal.name}
+  </div>
+  <section class="detail-banner">
+    <div class="site-container">
+      <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
+        PROPUESTAS · {proposal.label.toUpperCase()}
+      </span>
+      <div class="detail-title">
+        <h1>{proposal.name}</h1>
+        <Icon name={proposal.icon} size={76} />
+      </div>
+      <p class="lead">{proposal.intro}</p>
+    </div>
+  </section>
+  <div class="site-container detail-grid py-24 max-[1190px]:py-[70px] max-[760px]:py-14">
+    <article>
+      <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
+        INFORMACIÓN DE LA PROPUESTA
+      </span>
+      <h2>Conoce este eje.</h2>
+      <p>
+        Este es uno de los siete temas presentados para la candidatura de Carlos
+        Astudillo a la alcaldía de San Lorenzo.
+      </p>
+      <div class="content-notice">
+        <Icon name="book" size={24} />
+        <div>
+          <strong>Contenido en preparación</strong>
+          <p>
+            Los objetivos, acciones y detalles de esta propuesta se incorporarán
+            cuando estén disponibles.
+          </p>
+        </div>
+      </div>
+      <h3>Tu perspectiva también cuenta.</h3>
+      <p>Comparte una idea relacionada con {proposal.name.toLowerCase()}.</p>
+      <a
+        class="button inline-flex justify-center items-center gap-7 min-h-[50px] py-[15px] px-6 border-0 text-[0.85rem] font-bold rounded-[3px] transition duration-[180ms] hover:-translate-y-0.5 bg-primary text-primary-content hover:bg-neutral"
+        href={`/ciudadania/sugerencias/?tema=${proposal.slug}`}
+      >
+        Compartir una sugerencia <Icon name="arrow" size={18} />
+      </a>
+    </article>
+    <aside class="related-proposals">
+      <h3>Explora las propuestas</h3>
+      {proposals.map((p) => (
+        <a
+          href={`/propuestas/${p.slug}/`}
+          aria-current={p.slug === proposal.slug ? "page" : undefined}
+        >
+          <Icon name={p.icon} size={20} />
+          {p.name}
+          <Icon name="arrow" size={16} />
+        </a>
+      ))}
+    </aside>
+  </div>
+</Layout>

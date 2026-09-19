@@ -1,62 +1,355 @@
 ---
-import Layout from '../../layouts/Layout.astro';
-import Icon from '../../components/Icon.astro';
-import { citizenLinks, proposals } from '../../data';
-export function getStaticPaths() { return citizenLinks.map(p => ({ params: { slug: p.slug }, props: { item: p } })); }
-const { item } = Astro.props;
-const alert = item.slug === 'alerta-ciudadana';
-const chat = item.slug === 'chat';
+import Layout from "../../layouts/Layout.astro";
+import Icon from "../../components/Icon.astro";
+import { contentRepository } from "../../lib/data";
+import type { CitizenLink, Proposal } from "../../lib/data/types";
+
+interface Props {
+  item: CitizenLink;
+  proposals: Proposal[];
+}
+
+export async function getStaticPaths() {
+  const [citizenLinks, proposals] = await Promise.all([
+    contentRepository.getCitizenLinks(),
+    contentRepository.getProposals(),
+  ]);
+  return citizenLinks.map((p) => ({
+    params: { slug: p.slug },
+    props: { item: p, proposals },
+  }));
+}
+const { item, proposals } = Astro.props;
+const alert = item.slug === "alerta-ciudadana";
+const chat = item.slug === "chat";
 ---
-<Layout title={`${item.name} · Carlos Astudillo`}><div class="site-container breadcrumb"><a href="/">Inicio</a><span>/</span>Ciudadanía<span>/</span>{item.name}</div><section class="detail-banner"><div class="site-container"><span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">CIUDADANÍA · TU VOZ CUENTA</span><div class="detail-title"><h1>{item.name}</h1><Icon name={item.icon} size={64} /></div><p class="lead">{item.description}</p></div></section><section class="site-container citizen-page py-24 max-[1190px]:py-[70px] max-[760px]:py-14"><div class="citizen-explanation"><span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">UN ESPACIO PARA TI</span><h2>{chat ? '¿Qué quieres conocer?' : alert ? 'Cuéntanos lo que pasa.' : 'Las ideas empiezan contigo.'}</h2><p>{chat ? 'Selecciona un tema para encontrar información del sitio.' : alert ? 'Indica el barrio, describe el daño y adjunta una foto para ayudarnos a entender la situación.' : 'Elige un tema y comparte tu sugerencia de forma clara.'}</p>{alert && <p class="content-note">Este espacio no recibe emergencias ni genera reportes oficiales.</p>}</div>{chat ? <div class="chat-box"><div class="chat-header"><Icon name="chat" /><div><strong>Orientación ciudadana</strong><small>Información y orientación</small></div></div><div class="chat-messages" role="log" aria-live="polite" aria-relevant="additions" aria-label="Conversación"><div class="chat-message">Hola. Puedes consultar las propuestas, conocer a Carlos o encontrar la sección de contacto.</div></div><div class="chat-options"><button data-chat="propuestas">Ver propuestas</button><button data-chat="carlos">Conocer a Carlos</button><button data-chat="contacto">Contacto</button></div><form id="chat-form"><label class="sr-only" for="chat-input">Escribe tu consulta</label><input id="chat-input" placeholder="Escribe tu consulta…" maxlength="300" required autocomplete="off" /><button class="button inline-flex justify-center items-center gap-7 min-h-[50px] py-[15px] px-6 border-0 text-[0.85rem] font-bold rounded-[3px] transition duration-[180ms] hover:-translate-y-0.5 bg-primary text-primary-content hover:bg-neutral" aria-label="Enviar consulta"><Icon name="arrow" size={20} /></button></form></div> : <form class="citizen-form"><div class="form-heading"><h3>{alert ? 'Nueva alerta' : 'Tu sugerencia'}</h3><span>* Campos obligatorios</span></div><label for="name">Nombre <span>(opcional)</span></label><input id="name" name="nombre" autocomplete="given-name" maxlength="80" placeholder="¿Cómo te llamas?" /><label for="topic">{alert ? 'Sector o barrio *' : 'Tema *'}</label>{alert ? <input id="topic" name="sector" placeholder="Indica el sector" required maxlength="120" /> : <select id="topic" name="tema" required><option value="">Selecciona un tema</option>{proposals.map(p => <option value={p.slug}>{p.name}</option>)}<option value="otro">Otra idea</option></select>}{alert && <><label for="reference">Dirección o punto de referencia <span>(opcional)</span></label><input id="reference" name="referencia" maxlength="180" placeholder="Por ejemplo: frente al parque, calle principal" /></>}<label for="message">{alert ? '¿Qué está ocurriendo? *' : '¿Qué te gustaría proponer? *'}</label><textarea id="message" name="mensaje" rows="5" minlength="15" maxlength="1500" required placeholder={alert ? 'Describe la situación y dónde ocurre…' : 'Cuéntanos tu idea…'}></textarea><div class="form-hint">Mínimo 15 caracteres. Evita incluir datos sensibles.</div>{alert && <div class="photo-field"><label for="damage-photo">Foto del daño <span>(opcional)</span></label><p id="photo-help">Adjunta una foto de tu galería o usa la cámara de tu teléfono. JPG, PNG o WebP · máximo 10 MB.</p><input type="file" id="damage-photo" name="foto" accept="image/jpeg,image/png,image/webp" aria-describedby="photo-help photo-error" /><p id="photo-error" role="alert" hidden></p><div class="photo-preview" hidden><img alt="Vista previa de la foto del daño" /><div><span class="photo-name"></span><button type="button" class="photo-remove">Quitar foto</button></div></div></div>}<button class="button inline-flex justify-center items-center gap-7 min-h-[50px] py-[15px] px-6 border-0 text-[0.85rem] font-bold rounded-[3px] transition duration-[180ms] hover:-translate-y-0.5 bg-primary text-primary-content hover:bg-neutral" type="submit">Enviar {alert ? 'alerta' : 'sugerencia'} <Icon name="arrow" size={18} /></button><p class="form-status" role="status" hidden></p></form>}</section>
-<script>
-  const form = document.querySelector<HTMLFormElement>('.citizen-form');
-  if (form) {
-    const topic = new URLSearchParams(location.search).get('tema');
-    const select = form.querySelector<HTMLSelectElement>('select');
-    if (select && topic && [...select.options].some(option => option.value === topic)) select.value = topic;
-    form.addEventListener('submit', e => { e.preventDefault(); const status = form.querySelector<HTMLElement>('.form-status')!; status.hidden = false; status.textContent = 'Gracias por compartir tu mensaje. Tu voz cuenta.'; });
-  }
-  const photoInput = document.querySelector<HTMLInputElement>('#damage-photo');
-  if (photoInput) {
-    const preview = document.querySelector<HTMLElement>('.photo-preview')!;
-    const picture = preview.querySelector('img')!;
-    const error = document.querySelector<HTMLElement>('#photo-error')!;
-    let objectUrl: string | undefined;
-    function clearPhoto() {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-      objectUrl = undefined; photoInput!.value = ''; preview.hidden = true;
-      picture.removeAttribute('src'); error.hidden = true; photoInput!.removeAttribute('aria-invalid');
+
+<Layout title={`${item.name} · Carlos Astudillo`}>
+  <div class="site-container breadcrumb">
+    <a href="/">Inicio</a>
+    <span>/</span>Ciudadanía<span>/</span>
+    {item.name}
+  </div>
+  <section class="detail-banner">
+    <div class="site-container">
+      <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
+        CIUDADANÍA · TU VOZ CUENTA
+      </span>
+      <div class="detail-title">
+        <h1>{item.name}</h1>
+        <Icon name={item.icon} size={64} />
+      </div>
+      <p class="lead">{item.description}</p>
+    </div>
+  </section>
+  <section class="site-container citizen-page py-24 max-[1190px]:py-[70px] max-[760px]:py-14">
+    <div class="citizen-explanation">
+      <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
+        UN ESPACIO PARA TI
+      </span>
+      <h2>
+        {chat
+          ? "¿Qué quieres conocer?"
+          : alert
+            ? "Cuéntanos lo que pasa."
+            : "Las ideas empiezan contigo."}
+      </h2>
+      <p>
+        {chat
+          ? "Selecciona un tema para encontrar información del sitio."
+          : alert
+            ? "Indica el barrio, describe el daño y adjunta una foto para ayudarnos a entender la situación."
+            : "Elige un tema y comparte tu sugerencia de forma clara."}
+      </p>
+      {alert && (
+        <p class="content-note">
+          Este espacio no recibe emergencias ni genera reportes oficiales.
+        </p>
+      )}
+    </div>
+    {chat ? (
+      <div class="chat-box">
+        <div class="chat-header">
+          <Icon name="chat" />
+          <div>
+            <strong>Orientación ciudadana</strong>
+            <small>Información y orientación</small>
+          </div>
+        </div>
+        <div
+          class="chat-messages"
+          role="log"
+          aria-live="polite"
+          aria-relevant="additions"
+          aria-label="Conversación"
+        >
+          <div class="chat-message">
+            Hola. Puedes consultar las propuestas, conocer a Carlos o encontrar
+            la sección de contacto.
+          </div>
+        </div>
+        <div class="chat-options">
+          <button data-chat="propuestas">Ver propuestas</button>
+          <button data-chat="carlos">Conocer a Carlos</button>
+          <button data-chat="contacto">Contacto</button>
+        </div>
+        <form id="chat-form">
+          <label class="sr-only" for="chat-input">
+            Escribe tu consulta
+          </label>
+          <input
+            id="chat-input"
+            placeholder="Escribe tu consulta…"
+            maxlength="300"
+            required
+            autocomplete="off"
+          />
+          <button
+            class="button inline-flex justify-center items-center gap-7 min-h-[50px] py-[15px] px-6 border-0 text-[0.85rem] font-bold rounded-[3px] transition duration-[180ms] hover:-translate-y-0.5 bg-primary text-primary-content hover:bg-neutral"
+            aria-label="Enviar consulta"
+          >
+            <Icon name="arrow" size={20} />
+          </button>
+        </form>
+      </div>
+    ) : (
+      <form class="citizen-form">
+        <div class="form-heading">
+          <h3>{alert ? "Nueva alerta" : "Tu sugerencia"}</h3>
+          <span>* Campos obligatorios</span>
+        </div>
+        <label for="name">
+          Nombre <span>(opcional)</span>
+        </label>
+        <input
+          id="name"
+          name="nombre"
+          autocomplete="given-name"
+          maxlength="80"
+          placeholder="¿Cómo te llamas?"
+        />
+        <label for="topic">{alert ? "Sector o barrio *" : "Tema *"}</label>
+        {alert ? (
+          <input
+            id="topic"
+            name="sector"
+            placeholder="Indica el sector"
+            required
+            maxlength="120"
+          />
+        ) : (
+          <select id="topic" name="tema" required>
+            <option value="">Selecciona un tema</option>
+            {proposals.map((p) => (
+              <option value={p.slug}>{p.name}</option>
+            ))}
+            <option value="otro">Otra idea</option>
+          </select>
+        )}
+        {alert && (
+          <>
+            <label for="reference">
+              Dirección o punto de referencia <span>(opcional)</span>
+            </label>
+            <input
+              id="reference"
+              name="referencia"
+              maxlength="180"
+              placeholder="Por ejemplo: frente al parque, calle principal"
+            />
+          </>
+        )}
+        <label for="message">
+          {alert ? "¿Qué está ocurriendo? *" : "¿Qué te gustaría proponer? *"}
+        </label>
+        <textarea
+          id="message"
+          name="mensaje"
+          rows="5"
+          minlength="15"
+          maxlength="1500"
+          required
+          placeholder={
+            alert
+              ? "Describe la situación y dónde ocurre…"
+              : "Cuéntanos tu idea…"
+          }
+        ></textarea>
+        <div class="form-hint">
+          Mínimo 15 caracteres. Evita incluir datos sensibles.
+        </div>
+        {alert && (
+          <div class="photo-field">
+            <label for="damage-photo">
+              Foto del daño <span>(opcional)</span>
+            </label>
+            <p id="photo-help">
+              Adjunta una foto de tu galería o usa la cámara de tu teléfono.
+              JPG, PNG o WebP · máximo 10 MB.
+            </p>
+            <input
+              type="file"
+              id="damage-photo"
+              name="foto"
+              accept="image/jpeg,image/png,image/webp"
+              aria-describedby="photo-help photo-error"
+            />
+            <p id="photo-error" role="alert" hidden></p>
+            <div class="photo-preview" hidden>
+              <img alt="Vista previa de la foto del daño" />
+              <div>
+                <span class="photo-name"></span>
+                <button type="button" class="photo-remove">
+                  Quitar foto
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        <button
+          class="button inline-flex justify-center items-center gap-7 min-h-[50px] py-[15px] px-6 border-0 text-[0.85rem] font-bold rounded-[3px] transition duration-[180ms] hover:-translate-y-0.5 bg-primary text-primary-content hover:bg-neutral"
+          type="submit"
+        >
+          Enviar {alert ? "alerta" : "sugerencia"}{" "}
+          <Icon name="arrow" size={18} />
+        </button>
+        <p class="form-status" role="status" hidden></p>
+      </form>
+    )}
+  </section>
+  <script>
+    import { submissionRepository, chatRepository } from "../../lib/data";
+
+    const form = document.querySelector<HTMLFormElement>(".citizen-form");
+    if (form) {
+      const topic = new URLSearchParams(location.search).get("tema");
+      const select = form.querySelector<HTMLSelectElement>("select");
+      if (
+        select &&
+        topic &&
+        [...select.options].some((option) => option.value === topic)
+      )
+        select.value = topic;
+      const isAlert = !!form.querySelector("#damage-photo");
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const status = form.querySelector<HTMLElement>(".form-status")!;
+        const nombre =
+          form.querySelector<HTMLInputElement>("#name")?.value.trim() ||
+          undefined;
+        const mensaje = form.querySelector<HTMLTextAreaElement>(
+          "#message",
+        )!.value;
+        const result = isAlert
+          ? await submissionRepository.submitAlert({
+              nombre,
+              sector: form.querySelector<HTMLInputElement>("#topic")!.value,
+              referencia:
+                form
+                  .querySelector<HTMLInputElement>("#reference")
+                  ?.value.trim() || undefined,
+              descripcion: mensaje,
+              foto: form.querySelector<HTMLInputElement>("#damage-photo")
+                ?.files?.[0],
+            })
+          : await submissionRepository.submitSuggestion({
+              nombre,
+              tema: form.querySelector<HTMLSelectElement>("#topic")!.value,
+              mensaje,
+            });
+        status.hidden = false;
+        status.textContent = result.message;
+      });
     }
-    photoInput.addEventListener('change', () => {
-      const file = photoInput.files?.[0];
-      if (!file) { clearPhoto(); return; }
-      if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) {
-        clearPhoto(); error.hidden = false; error.textContent = 'Selecciona una imagen JPG, PNG o WebP de hasta 10 MB.'; photoInput.setAttribute('aria-invalid', 'true'); return;
+    const photoInput =
+      document.querySelector<HTMLInputElement>("#damage-photo");
+    if (photoInput) {
+      const preview = document.querySelector<HTMLElement>(".photo-preview")!;
+      const picture = preview.querySelector("img")!;
+      const error = document.querySelector<HTMLElement>("#photo-error")!;
+      let objectUrl: string | undefined;
+      function clearPhoto() {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        objectUrl = undefined;
+        photoInput!.value = "";
+        preview.hidden = true;
+        picture.removeAttribute("src");
+        error.hidden = true;
+        photoInput!.removeAttribute("aria-invalid");
       }
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-      error.hidden = true; photoInput.removeAttribute('aria-invalid');
-      objectUrl = URL.createObjectURL(file); picture.src = objectUrl;
-      preview.querySelector('.photo-name')!.textContent = file.name; preview.hidden = false;
-    });
-    picture.addEventListener('error', () => { clearPhoto(); error.hidden = false; error.textContent = 'No se pudo abrir esta imagen. Elige otra foto.'; });
-    document.querySelector('.photo-remove')!.addEventListener('click', () => { clearPhoto(); photoInput.focus(); });
-    window.addEventListener('pagehide', () => { if (objectUrl) URL.revokeObjectURL(objectUrl); });
-  }
-  const chatForm = document.querySelector<HTMLFormElement>('#chat-form');
-  if (chatForm) {
-    const log = document.querySelector<HTMLElement>('.chat-messages')!;
-    const reply = (text: string, key?: string) => {
-      const user = document.createElement('div'); user.className = 'chat-message from-user'; user.textContent = text; log.append(user);
-      const response = document.createElement('div'); response.className = 'chat-message';
-      const normalized = (key || text).toLocaleLowerCase('es');
-      const link = document.createElement('a');
-      if (normalized.includes('propuesta')) { response.textContent = 'Puedes explorar los siete ejes para San Lorenzo. '; link.href = '/#propuestas'; link.textContent = 'Ver propuestas'; }
-      else if (normalized.includes('carlos') || normalized.includes('biograf')) { response.textContent = 'Carlos Astudillo es candidato a alcalde por el PSC, Lista 6. '; link.href = '/acerca-de-nosotros/'; link.textContent = 'Conoce a Carlos'; }
-      else if (normalized.includes('contact') || normalized.includes('whatsapp')) { response.textContent = 'Puedes encontrar a Carlos en Facebook y TikTok. '; link.href = '/#contacto'; link.textContent = 'Ver contacto'; }
-      else { response.textContent = 'Puedo orientarte sobre propuestas, Carlos y contacto. Elige uno de esos temas para continuar.'; }
-      if (link.textContent) response.append(link); log.append(response); log.scrollTop = log.scrollHeight;
-    };
-    document.querySelectorAll<HTMLButtonElement>('[data-chat]').forEach(button => button.addEventListener('click', () => reply(button.textContent!, button.dataset.chat)));
-    chatForm.addEventListener('submit', e => { e.preventDefault(); const input = chatForm.querySelector('input')!; if (input.value.trim()) reply(input.value.trim()); input.value = ''; input.focus(); });
-  }
-</script></Layout>
+      photoInput.addEventListener("change", () => {
+        const file = photoInput.files?.[0];
+        if (!file) {
+          clearPhoto();
+          return;
+        }
+        if (
+          !["image/jpeg", "image/png", "image/webp"].includes(file.type) ||
+          file.size > 10 * 1024 * 1024
+        ) {
+          clearPhoto();
+          error.hidden = false;
+          error.textContent =
+            "Selecciona una imagen JPG, PNG o WebP de hasta 10 MB.";
+          photoInput.setAttribute("aria-invalid", "true");
+          return;
+        }
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+        error.hidden = true;
+        photoInput.removeAttribute("aria-invalid");
+        objectUrl = URL.createObjectURL(file);
+        picture.src = objectUrl;
+        preview.querySelector(".photo-name")!.textContent = file.name;
+        preview.hidden = false;
+      });
+      picture.addEventListener("error", () => {
+        clearPhoto();
+        error.hidden = false;
+        error.textContent = "No se pudo abrir esta imagen. Elige otra foto.";
+      });
+      document.querySelector(".photo-remove")!.addEventListener("click", () => {
+        clearPhoto();
+        photoInput.focus();
+      });
+      window.addEventListener("pagehide", () => {
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
+      });
+    }
+    const chatForm = document.querySelector<HTMLFormElement>("#chat-form");
+    if (chatForm) {
+      const log = document.querySelector<HTMLElement>(".chat-messages")!;
+      const reply = async (text: string, key?: string) => {
+        const user = document.createElement("div");
+        user.className = "chat-message from-user";
+        user.textContent = text;
+        log.append(user);
+        const result = await chatRepository.ask(key || text);
+        const response = document.createElement("div");
+        response.className = "chat-message";
+        response.textContent = result.text;
+        if (result.linkHref && result.linkText) {
+          const link = document.createElement("a");
+          link.href = result.linkHref;
+          link.textContent = result.linkText;
+          response.append(link);
+        }
+        log.append(response);
+        log.scrollTop = log.scrollHeight;
+      };
+      document
+        .querySelectorAll<HTMLButtonElement>("[data-chat]")
+        .forEach((button) =>
+          button.addEventListener("click", () =>
+            reply(button.textContent!, button.dataset.chat),
+          ),
+        );
+      chatForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const input = chatForm.querySelector("input")!;
+        if (input.value.trim()) reply(input.value.trim());
+        input.value = "";
+        input.focus();
+      });
+    }
+  </script>
+</Layout>

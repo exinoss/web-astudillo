@@ -1,18 +1,27 @@
 ---
-import { Image } from 'astro:assets';
-import logo from '../assets/logo.avif';
-import Icon from '../components/Icon.astro';
-import { proposals, citizenLinks } from '../data';
-import '@fontsource/barlow-condensed/600.css';
-import '@fontsource/barlow-condensed/700.css';
-import '@fontsource/dm-sans/400.css';
-import '@fontsource/dm-sans/500.css';
-import '@fontsource/dm-sans/700.css';
-import '../styles/global.css';
-interface Props { title?: string; description?: string; }
-const { title = 'Carlos Astudillo · San Lorenzo', description = 'Conoce a Carlos Astudillo, candidato a la alcaldía de San Lorenzo por el Partido Social Cristiano, Lista 6. Propuestas y espacios de ciudadanía.' } = Astro.props;
+import { Image } from "astro:assets";
+import logo from "../assets/logo.avif";
+import Icon from "../components/Icon.astro";
+import { contentRepository } from "../lib/data";
+import "@fontsource/barlow-condensed/600.css";
+import "@fontsource/barlow-condensed/700.css";
+import "@fontsource/dm-sans/400.css";
+import "@fontsource/dm-sans/500.css";
+import "@fontsource/dm-sans/700.css";
+import "../styles/global.css";
+interface Props {
+  title?: string;
+  description?: string;
+}
+const {
+  title = "Carlos Astudillo · San Lorenzo",
+  description = "Conoce a Carlos Astudillo, candidato a la alcaldía de San Lorenzo por el Partido Social Cristiano, Lista 6. Propuestas y espacios de ciudadanía.",
+} = Astro.props;
 const current = Astro.url.pathname;
+const proposals = await contentRepository.getProposals();
+const citizenLinks = await contentRepository.getCitizenLinks();
 ---
+
 <!doctype html>
 <html lang="es">
   <head>
@@ -24,92 +33,353 @@ const current = Astro.url.pathname;
     <title>{title}</title>
   </head>
   <body>
-    <a class="fixed -top-[100px] left-5 z-[1000] p-[15px] bg-base-100 text-primary focus:top-3" href="#contenido">Saltar al contenido</a>
-    <div class="topbar"><div class="site-container topbar-inner"><span><Icon name="location" size={14} /> San Lorenzo, Esmeraldas</span><span>Partido Social Cristiano <b>LISTA 6</b></span></div></div>
+    <a
+      class="fixed -top-[100px] left-5 z-[1000] p-[15px] bg-base-100 text-primary focus:top-3"
+      href="#contenido"
+    >
+      Saltar al contenido
+    </a>
+    <div class="topbar">
+      <div class="site-container topbar-inner">
+        <span>
+          <Icon name="location" size={14} /> San Lorenzo, Esmeraldas
+        </span>
+        <span>
+          Partido Social Cristiano <b>LISTA 6</b>
+        </span>
+      </div>
+    </div>
     <header class="site-header">
       <div class="site-container header-inner">
-        <a class="brand" href="/" aria-label="Carlos Astudillo, inicio"><Image src={logo} alt="" width={68} height={58} fit="contain" /><span>CARLOS <strong>ASTUDILLO</strong><small>ALCALDÍA DE SAN LORENZO</small></span></a>
-        <a class="report-link" href="/ciudadania/alerta-ciudadana/"><Icon name="alert" size={19} /><span>Reportar daño</span></a>
-        <button class="menu-toggle" aria-label="Abrir menú" aria-controls="main-nav" aria-expanded="false"><Icon name="menu" /></button>
+        <a class="brand" href="/" aria-label="Carlos Astudillo, inicio">
+          <Image src={logo} alt="" width={68} height={58} fit="contain" />
+          <span>
+            CARLOS <strong>ASTUDILLO</strong>
+            <small>ALCALDÍA DE SAN LORENZO</small>
+          </span>
+        </a>
+        <a class="report-link" href="/ciudadania/alerta-ciudadana/">
+          <Icon name="alert" size={19} />
+          <span>Reportar daño</span>
+        </a>
+        <button
+          class="menu-toggle"
+          aria-label="Abrir menú"
+          aria-controls="main-nav"
+          aria-expanded="false"
+        >
+          <Icon name="menu" />
+        </button>
         <nav id="main-nav" aria-label="Navegación principal">
-          <a class:list={['nav-link', { active: current === '/' }]} href="/" aria-current={current === '/' ? 'page' : undefined}>Inicio</a>
-          <a class:list={['nav-link', { active: current === '/acerca-de-nosotros/' }]} href="/acerca-de-nosotros/">Acerca de nosotros</a>
+          <a
+            class:list={["nav-link", { active: current === "/" }]}
+            href="/"
+            aria-current={current === "/" ? "page" : undefined}
+          >
+            Inicio
+          </a>
+          <a
+            class:list={[
+              "nav-link",
+              { active: current === "/acerca-de-nosotros/" },
+            ]}
+            href="/acerca-de-nosotros/"
+          >
+            Acerca de nosotros
+          </a>
           <div class="nav-dropdown">
-            <button class:list={['nav-link', { active: current.startsWith('/propuestas/') }]} aria-expanded="false" aria-controls="proposals-menu">Propuestas <Icon name="chevron" size={14} /></button>
-            <div id="proposals-menu" class="dropdown-panel proposals-menu" hidden>{proposals.map(p => <a href={`/propuestas/${p.slug}/`}><Icon name={p.icon} size={21} /><span>{p.name}</span></a>)}</div>
+            <button
+              class:list={[
+                "nav-link",
+                { active: current.startsWith("/propuestas/") },
+              ]}
+              aria-expanded="false"
+              aria-controls="proposals-menu"
+            >
+              Propuestas <Icon name="chevron" size={14} />
+            </button>
+            <div
+              id="proposals-menu"
+              class="dropdown-panel proposals-menu"
+              hidden
+            >
+              {proposals.map((p) => (
+                <a href={`/propuestas/${p.slug}/`}>
+                  <Icon name={p.icon} size={21} />
+                  <span>{p.name}</span>
+                </a>
+              ))}
+            </div>
           </div>
           <div class="nav-dropdown">
-            <button class:list={['nav-link', { active: current.startsWith('/ciudadania/') }]} aria-expanded="false" aria-controls="citizen-menu">Ciudadanía <Icon name="chevron" size={14} /></button>
-            <div id="citizen-menu" class="dropdown-panel" hidden>{citizenLinks.map(p => <a href={`/ciudadania/${p.slug}/`}><Icon name={p.icon} size={21} />{p.name}</a>)}</div>
+            <button
+              class:list={[
+                "nav-link",
+                { active: current.startsWith("/ciudadania/") },
+              ]}
+              aria-expanded="false"
+              aria-controls="citizen-menu"
+            >
+              Ciudadanía <Icon name="chevron" size={14} />
+            </button>
+            <div id="citizen-menu" class="dropdown-panel" hidden>
+              {citizenLinks.map((p) => (
+                <a href={`/ciudadania/${p.slug}/`}>
+                  <Icon name={p.icon} size={21} />
+                  {p.name}
+                </a>
+              ))}
+            </div>
           </div>
-          <a class="nav-link" href="/#contacto">Contáctanos</a>
+          <a class="nav-link" href="/#contacto">
+            Contáctanos
+          </a>
         </nav>
       </div>
     </header>
-    <main id="contenido" tabindex="-1"><slot /></main>
-    <footer><div class="site-container footer-top"><a class="footer-brand" href="/">CARLOS ASTUDILLO<span>Por ti, San Lorenzo.</span></a><p>Candidato a la alcaldía de San Lorenzo<br />Partido Social Cristiano · Lista 6</p><a href="/#contacto">Contáctanos <Icon name="arrow" size={18} /></a></div><div class="site-container footer-bottom"><span>© {new Date().getFullYear()} Carlos Astudillo</span><span>Por ti, San Lorenzo.</span></div></footer>
-    <button class="access-toggle" aria-label="Herramientas de accesibilidad" aria-expanded="false" aria-controls="access-panel"><Icon name="person" size={24} /></button>
-    <aside id="access-panel" class="access-panel" aria-label="Herramientas de accesibilidad" hidden><div class="panel-title"><strong>Accesibilidad</strong><button class="access-close" aria-label="Cerrar accesibilidad"><Icon name="close" size={20} /></button></div><button data-text-step="1">Aumentar texto <span>A+</span></button><button data-text-step="-1">Disminuir texto <span>A-</span></button><button data-setting="grayscale" aria-pressed="false">Escala de grises <span>◍</span></button><button data-setting="high-contrast" aria-pressed="false">Alto contraste <span>◐</span></button><button data-setting="negative-contrast" aria-pressed="false">Contraste negativo <span>◑</span></button><button data-setting="light-bg" aria-pressed="false">Fondo claro <span>▢</span></button><button data-setting="underline-links" aria-pressed="false">Subrayar enlaces <span>U</span></button><button data-setting="readable-font" aria-pressed="false">Fuente legible <span>Aa</span></button><button data-setting="reduce-motion" aria-pressed="false">Reducir movimiento <span>Ⅱ</span></button><button class="access-reset">Restablecer ajustes</button></aside>
+    <main id="contenido" tabindex="-1">
+      <slot />
+    </main>
+    <footer>
+      <div class="site-container footer-top">
+        <a class="footer-brand" href="/">
+          CARLOS ASTUDILLO<span>Por ti, San Lorenzo.</span>
+        </a>
+        <p>
+          Candidato a la alcaldía de San Lorenzo
+          <br />
+          Partido Social Cristiano · Lista 6
+        </p>
+        <a href="/#contacto">
+          Contáctanos <Icon name="arrow" size={18} />
+        </a>
+      </div>
+      <div class="site-container footer-bottom">
+        <span>© {new Date().getFullYear()} Carlos Astudillo</span>
+        <span>Por ti, San Lorenzo.</span>
+      </div>
+    </footer>
+    <button
+      class="access-toggle"
+      aria-label="Herramientas de accesibilidad"
+      aria-expanded="false"
+      aria-controls="access-panel"
+    >
+      <Icon name="person" size={24} />
+    </button>
+    <aside
+      id="access-panel"
+      class="access-panel"
+      aria-label="Herramientas de accesibilidad"
+      hidden
+    >
+      <div class="panel-title">
+        <strong>Accesibilidad</strong>
+        <button class="access-close" aria-label="Cerrar accesibilidad">
+          <Icon name="close" size={20} />
+        </button>
+      </div>
+      <button data-text-step="1">
+        Aumentar texto <span>A+</span>
+      </button>
+      <button data-text-step="-1">
+        Disminuir texto <span>A-</span>
+      </button>
+      <button data-setting="grayscale" aria-pressed="false">
+        Escala de grises <span>◍</span>
+      </button>
+      <button data-setting="high-contrast" aria-pressed="false">
+        Alto contraste <span>◐</span>
+      </button>
+      <button data-setting="negative-contrast" aria-pressed="false">
+        Contraste negativo <span>◑</span>
+      </button>
+      <button data-setting="light-bg" aria-pressed="false">
+        Fondo claro <span>▢</span>
+      </button>
+      <button data-setting="underline-links" aria-pressed="false">
+        Subrayar enlaces <span>U</span>
+      </button>
+      <button data-setting="readable-font" aria-pressed="false">
+        Fuente legible <span>Aa</span>
+      </button>
+      <button data-setting="reduce-motion" aria-pressed="false">
+        Reducir movimiento <span>Ⅱ</span>
+      </button>
+      <button class="access-reset">Restablecer ajustes</button>
+    </aside>
     <script>
-      const nav = document.querySelector<HTMLElement>('#main-nav')!;
-      const toggle = document.querySelector<HTMLButtonElement>('.menu-toggle')!;
-      const dropdowns = [...document.querySelectorAll<HTMLElement>('.nav-dropdown')];
+      const nav = document.querySelector<HTMLElement>("#main-nav")!;
+      const toggle = document.querySelector<HTMLButtonElement>(".menu-toggle")!;
+      const dropdowns = [
+        ...document.querySelectorAll<HTMLElement>(".nav-dropdown"),
+      ];
       function setDropdown(el: HTMLElement, open: boolean) {
-        el.querySelector('button')!.setAttribute('aria-expanded', String(open));
-        el.querySelector<HTMLElement>('.dropdown-panel')!.hidden = !open;
+        el.querySelector("button")!.setAttribute("aria-expanded", String(open));
+        el.querySelector<HTMLElement>(".dropdown-panel")!.hidden = !open;
       }
-      function closeDropdowns() { dropdowns.forEach(el => setDropdown(el, false)); }
-      toggle.addEventListener('click', () => {
-        const open = toggle.getAttribute('aria-expanded') !== 'true';
-        toggle.setAttribute('aria-expanded', String(open));
-        toggle.setAttribute('aria-label', open ? 'Cerrar menú' : 'Abrir menú');
-        nav.classList.toggle('is-open', open);
+      function closeDropdowns() {
+        dropdowns.forEach((el) => setDropdown(el, false));
+      }
+      toggle.addEventListener("click", () => {
+        const open = toggle.getAttribute("aria-expanded") !== "true";
+        toggle.setAttribute("aria-expanded", String(open));
+        toggle.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+        nav.classList.toggle("is-open", open);
         if (!open) closeDropdowns();
       });
-      dropdowns.forEach(el => {
-        const button = el.querySelector('button')!;
+      dropdowns.forEach((el) => {
+        const button = el.querySelector("button")!;
         let timer: ReturnType<typeof setTimeout>;
-        const open = () => { clearTimeout(timer); closeDropdowns(); setDropdown(el, true); };
-        el.addEventListener('pointerenter', e => { if (e.pointerType === 'mouse' && matchMedia('(min-width: 1200px)').matches) open(); });
-        el.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse') timer = setTimeout(() => { if (!el.contains(document.activeElement)) setDropdown(el, false); }, 180); });
-        button.addEventListener('click', () => { const next = button.getAttribute('aria-expanded') !== 'true'; clearTimeout(timer); closeDropdowns(); setDropdown(el, next); });
-        button.addEventListener('keydown', e => { if (e.key === 'ArrowDown') { e.preventDefault(); open(); el.querySelector<HTMLAnchorElement>('.dropdown-panel a')!.focus(); } });
-        el.addEventListener('focusout', e => { if (!el.contains(e.relatedTarget as Node)) setDropdown(el, false); });
-        el.addEventListener('keydown', e => { if (e.key === 'Escape') { setDropdown(el, false); button.focus(); e.stopPropagation(); } });
-      });
-      document.addEventListener('click', e => { if (!(e.target as Element).closest('.site-header')) { closeDropdowns(); nav.classList.remove('is-open'); toggle.setAttribute('aria-expanded', 'false'); } });
-      nav.querySelectorAll('a').forEach(a => a.addEventListener('click', () => { nav.classList.remove('is-open'); toggle.setAttribute('aria-expanded', 'false'); closeDropdowns(); }));
-      const access = document.querySelector<HTMLElement>('#access-panel')!;
-      const accessToggle = document.querySelector<HTMLButtonElement>('.access-toggle')!;
-      const setAccess = (open: boolean) => { access.hidden = !open; accessToggle.setAttribute('aria-expanded', String(open)); if (open) access.querySelector<HTMLButtonElement>('button')!.focus(); };
-      accessToggle.addEventListener('click', () => setAccess(access.hidden));
-      document.querySelector('.access-close')!.addEventListener('click', () => { setAccess(false); accessToggle.focus(); });
-      const settings = [...document.querySelectorAll<HTMLButtonElement>('[data-setting]')];
-      settings.forEach(button => {
-        const key = button.dataset.setting!;
-        try { if (localStorage.getItem(key) === 'true') { document.documentElement.classList.add(key); button.setAttribute('aria-pressed', 'true'); } } catch {}
-        button.addEventListener('click', () => { const active = document.documentElement.classList.toggle(key); button.setAttribute('aria-pressed', String(active)); try { localStorage.setItem(key, String(active)); } catch {} });
-      });
-      const TEXT_MIN = 87.5, TEXT_MAX = 125, TEXT_STEP = 12.5, TEXT_LARGE_AT = 112.5;
-      let textScale = 100;
-      try { textScale = Number(localStorage.getItem('text-scale')) || 100; } catch {}
-      function applyTextScale() {
-        document.documentElement.style.fontSize = textScale === 100 ? '' : textScale + '%';
-        document.documentElement.classList.toggle('text-large', textScale >= TEXT_LARGE_AT);
-      }
-      applyTextScale();
-      document.querySelectorAll<HTMLButtonElement>('[data-text-step]').forEach(button => {
-        button.addEventListener('click', () => {
-          textScale = Math.min(TEXT_MAX, Math.max(TEXT_MIN, textScale + Number(button.dataset.textStep) * TEXT_STEP));
-          applyTextScale();
-          try { localStorage.setItem('text-scale', String(textScale)); } catch {}
+        const open = () => {
+          clearTimeout(timer);
+          closeDropdowns();
+          setDropdown(el, true);
+        };
+        el.addEventListener("pointerenter", (e) => {
+          if (
+            e.pointerType === "mouse" &&
+            matchMedia("(min-width: 1200px)").matches
+          )
+            open();
+        });
+        el.addEventListener("pointerleave", (e) => {
+          if (e.pointerType === "mouse")
+            timer = setTimeout(() => {
+              if (!el.contains(document.activeElement)) setDropdown(el, false);
+            }, 180);
+        });
+        button.addEventListener("click", () => {
+          const next = button.getAttribute("aria-expanded") !== "true";
+          clearTimeout(timer);
+          closeDropdowns();
+          setDropdown(el, next);
+        });
+        button.addEventListener("keydown", (e) => {
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            open();
+            el.querySelector<HTMLAnchorElement>(".dropdown-panel a")!.focus();
+          }
+        });
+        el.addEventListener("focusout", (e) => {
+          if (!el.contains(e.relatedTarget as Node)) setDropdown(el, false);
+        });
+        el.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            setDropdown(el, false);
+            button.focus();
+            e.stopPropagation();
+          }
         });
       });
-      document.querySelector('.access-reset')!.addEventListener('click', () => {
-        settings.forEach(button => { document.documentElement.classList.remove(button.dataset.setting!); button.setAttribute('aria-pressed', 'false'); try { localStorage.removeItem(button.dataset.setting!); } catch {} });
-        textScale = 100; applyTextScale(); try { localStorage.removeItem('text-scale'); } catch {}
+      document.addEventListener("click", (e) => {
+        if (!(e.target as Element).closest(".site-header")) {
+          closeDropdowns();
+          nav.classList.remove("is-open");
+          toggle.setAttribute("aria-expanded", "false");
+        }
       });
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') { if (!access.hidden) { setAccess(false); accessToggle.focus(); } if (nav.classList.contains('is-open')) { nav.classList.remove('is-open'); toggle.setAttribute('aria-expanded', 'false'); toggle.focus(); } } });
+      nav.querySelectorAll("a").forEach((a) =>
+        a.addEventListener("click", () => {
+          nav.classList.remove("is-open");
+          toggle.setAttribute("aria-expanded", "false");
+          closeDropdowns();
+        }),
+      );
+      const access = document.querySelector<HTMLElement>("#access-panel")!;
+      const accessToggle =
+        document.querySelector<HTMLButtonElement>(".access-toggle")!;
+      const setAccess = (open: boolean) => {
+        access.hidden = !open;
+        accessToggle.setAttribute("aria-expanded", String(open));
+        if (open) access.querySelector<HTMLButtonElement>("button")!.focus();
+      };
+      accessToggle.addEventListener("click", () => setAccess(access.hidden));
+      document.querySelector(".access-close")!.addEventListener("click", () => {
+        setAccess(false);
+        accessToggle.focus();
+      });
+      const settings = [
+        ...document.querySelectorAll<HTMLButtonElement>("[data-setting]"),
+      ];
+      settings.forEach((button) => {
+        const key = button.dataset.setting!;
+        try {
+          if (localStorage.getItem(key) === "true") {
+            document.documentElement.classList.add(key);
+            button.setAttribute("aria-pressed", "true");
+          }
+        } catch {}
+        button.addEventListener("click", () => {
+          const active = document.documentElement.classList.toggle(key);
+          button.setAttribute("aria-pressed", String(active));
+          try {
+            localStorage.setItem(key, String(active));
+          } catch {}
+        });
+      });
+      const TEXT_MIN = 87.5,
+        TEXT_MAX = 125,
+        TEXT_STEP = 12.5,
+        TEXT_LARGE_AT = 112.5;
+      let textScale = 100;
+      try {
+        textScale = Number(localStorage.getItem("text-scale")) || 100;
+      } catch {}
+      function applyTextScale() {
+        document.documentElement.style.fontSize =
+          textScale === 100 ? "" : textScale + "%";
+        document.documentElement.classList.toggle(
+          "text-large",
+          textScale >= TEXT_LARGE_AT,
+        );
+      }
+      applyTextScale();
+      document
+        .querySelectorAll<HTMLButtonElement>("[data-text-step]")
+        .forEach((button) => {
+          button.addEventListener("click", () => {
+            textScale = Math.min(
+              TEXT_MAX,
+              Math.max(
+                TEXT_MIN,
+                textScale + Number(button.dataset.textStep) * TEXT_STEP,
+              ),
+            );
+            applyTextScale();
+            try {
+              localStorage.setItem("text-scale", String(textScale));
+            } catch {}
+          });
+        });
+      document.querySelector(".access-reset")!.addEventListener("click", () => {
+        settings.forEach((button) => {
+          document.documentElement.classList.remove(button.dataset.setting!);
+          button.setAttribute("aria-pressed", "false");
+          try {
+            localStorage.removeItem(button.dataset.setting!);
+          } catch {}
+        });
+        textScale = 100;
+        applyTextScale();
+        try {
+          localStorage.removeItem("text-scale");
+        } catch {}
+      });
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          if (!access.hidden) {
+            setAccess(false);
+            accessToggle.focus();
+          }
+          if (nav.classList.contains("is-open")) {
+            nav.classList.remove("is-open");
+            toggle.setAttribute("aria-expanded", "false");
+            toggle.focus();
+          }
+        }
+      });
     </script>
   </body>
 </html>
