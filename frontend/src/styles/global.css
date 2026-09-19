@@ -2415,6 +2415,45 @@ input[type='file']::file-selector-button {
   -webkit-backdrop-filter: blur(14px);
   color: var(--color-primary-content);
   text-shadow: 0 1px 2px #063176aa;
+  overflow: hidden;
+}
+
+/*
+  Scan-line sweep: a bright line loops top-to-bottom-to-top across the
+  glass panel. Confined to the panel via the overflow:hidden above.
+  Automatically disabled by the site's existing reduce-motion rules
+  (.reduce-motion and prefers-reduced-motion already set
+  animation:none!important on every element).
+*/
+.profile-glass::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    #feffff,
+    transparent
+  );
+  /* White glow plus a navy halo so the line stays visible against both
+     light and dark parts of the underlying photo. */
+  box-shadow:
+    0 0 6px 1px #feffffe0,
+    0 0 16px 5px #063176a0;
+  pointer-events: none;
+  animation: profile-glass-scan 3s ease-in-out infinite;
+}
+
+@keyframes profile-glass-scan {
+  0%,
+  100% {
+    top: 0;
+  }
+  50% {
+    top: calc(100% - 2px);
+  }
 }
 .profile-slide span {
   display: block;
