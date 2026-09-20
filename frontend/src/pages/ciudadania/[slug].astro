@@ -32,9 +32,7 @@ const chat = item.slug === "chat";
   </div>
   <section class="detail-banner">
     <div class="site-container">
-      <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
-        CIUDADANÍA · TU VOZ CUENTA
-      </span>
+      <span class="eyebrow">CIUDADANÍA · TU VOZ CUENTA</span>
       <div class="detail-title">
         <h1>{item.name}</h1>
         <Icon name={item.icon} size={64} />
@@ -44,9 +42,7 @@ const chat = item.slug === "chat";
   </section>
   <section class="site-container citizen-page py-24 max-[1190px]:py-[70px] max-[760px]:py-14">
     <div class="citizen-explanation">
-      <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
-        UN ESPACIO PARA TI
-      </span>
+      <span class="eyebrow">UN ESPACIO PARA TI</span>
       <h2>
         {chat
           ? "¿Qué quieres conocer?"
@@ -104,10 +100,7 @@ const chat = item.slug === "chat";
             required
             autocomplete="off"
           />
-          <button
-            class="button inline-flex justify-center items-center gap-7 min-h-[50px] py-[15px] px-6 border-0 text-[0.85rem] font-bold rounded-[3px] transition duration-[180ms] hover:-translate-y-0.5 bg-primary text-primary-content hover:bg-neutral"
-            aria-label="Enviar consulta"
-          >
+          <button class="button" aria-label="Enviar consulta">
             <Icon name="arrow" size={20} />
           </button>
         </form>
@@ -206,10 +199,7 @@ const chat = item.slug === "chat";
             </div>
           </div>
         )}
-        <button
-          class="button inline-flex justify-center items-center gap-7 min-h-[50px] py-[15px] px-6 border-0 text-[0.85rem] font-bold rounded-[3px] transition duration-[180ms] hover:-translate-y-0.5 bg-primary text-primary-content hover:bg-neutral"
-          type="submit"
-        >
+        <button class="button" type="submit">
           Enviar {alert ? "alerta" : "sugerencia"}{" "}
           <Icon name="arrow" size={18} />
         </button>

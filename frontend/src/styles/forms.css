@@ -1,0 +1,211 @@
+.citizen-page {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 100px;
+  align-items: start;
+  max-width: 1100px;
+}
+
+.citizen-explanation h2 {
+  margin-top: 15px;
+}
+
+.citizen-explanation > .content-note {
+  margin-top: 20px;
+}
+
+.citizen-form {
+  padding: 30px;
+  border: 1px solid var(--color-base-300);
+  border-radius: 5px;
+  box-shadow: 0 8px 30px #06317606;
+}
+
+.form-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.form-heading h3 {
+  margin: 0;
+}
+
+.form-heading span {
+  font-size: 0.6rem;
+  color: var(--color-base-content);
+}
+
+.citizen-form label {
+  display: block;
+  font-size: 0.79rem;
+  font-weight: 700;
+  margin: 20px 0 9px;
+}
+
+.citizen-form label span {
+  font-weight: 400;
+  color: var(--color-base-content);
+}
+
+.form-hint {
+  font-size: 0.68rem;
+  color: var(--color-base-content);
+  margin: 8px 0 22px;
+}
+
+.form-status {
+  background: var(--color-base-200);
+  border-left: 3px solid var(--color-neutral);
+  padding: 15px;
+  margin: 20px 0 0;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 1190px) {
+  .citizen-page {
+    gap: 60px;
+  }
+}
+
+@media (max-width: 1199px) {
+  .citizen-page {
+    gap: 35px;
+  }
+  .citizen-form {
+    padding: 22px;
+  }
+  .form-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 760px) {
+  .citizen-page {
+    grid-template-columns: 1fr;
+    gap: 30px;
+  }
+  .citizen-explanation h2 {
+    font-size: 2.7rem;
+  }
+  .citizen-form {
+    padding: 22px;
+  }
+  .form-heading {
+    flex-direction: row;
+    align-items: center;
+  }
+  .form-heading h3 {
+    font-size: 1.1rem;
+  }
+  .form-heading span {
+    font-size: 0.52rem;
+  }
+}
+
+@media (max-width: 760px) {
+  .form-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .form-heading span {
+    font-size: 0.73rem;
+  }
+}
+
+.citizen-form {
+  background: var(--color-accent);
+  border-color: var(--color-primary);
+  border-top: 5px solid var(--color-secondary);
+}
+
+.citizen-form {
+  background: var(--color-base-100);
+  border-color: #06317630;
+  border-top-color: var(--color-secondary);
+}
+
+.form-heading span {
+  font-size: 0.73rem;
+}
+
+.citizen-form label {
+  font-size: 0.9rem;
+}
+
+.form-hint {
+  font-size: 0.78rem;
+}
+
+.photo-field {
+  margin: 24px 0;
+}
+
+.photo-field > p {
+  font-size: 0.8rem;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+input[type="file"] {
+  font-size: 0.82rem;
+  padding: 12px;
+  background: var(--color-base-100);
+}
+
+input[type="file"]::file-selector-button {
+  border: 0;
+  border-radius: 3px;
+  background: var(--color-primary);
+  color: var(--color-primary-content);
+  font: inherit;
+  padding: 10px 12px;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.photo-preview {
+  margin-top: 16px;
+  padding: 12px;
+  border: 1px solid var(--color-base-300);
+  border-radius: 4px;
+}
+
+.photo-preview img {
+  max-height: 230px;
+  width: 100%;
+  object-fit: contain;
+}
+
+.photo-preview > div {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.photo-name {
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.photo-remove {
+  border: 1px solid var(--color-primary);
+  background: var(--color-base-100);
+  padding: 10px;
+  white-space: nowrap;
+  border-radius: 3px;
+  font-size: 0.8rem;
+}
+
+#photo-error {
+  color: var(--color-error);
+  font-weight: 700;
+  margin-top: 10px;
+}

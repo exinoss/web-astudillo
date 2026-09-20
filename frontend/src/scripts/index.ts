@@ -54,9 +54,6 @@ carousel.addEventListener(
   },
   { passive: true },
 );
-const profileSlides = [
-  ...document.querySelectorAll<HTMLElement>("[data-profile-slide]"),
-];
 const profileImages = [
   ...document.querySelectorAll<HTMLElement>("[data-profile-image]"),
 ];
@@ -65,11 +62,7 @@ const profileDots = [
 ];
 let profileIndex = 0;
 const showProfileSlide = (next: number) => {
-  profileIndex = (next + profileSlides.length) % profileSlides.length;
-  profileSlides.forEach((slide, i) => {
-    slide.hidden = i !== profileIndex;
-    slide.classList.toggle("is-active", i === profileIndex);
-  });
+  profileIndex = (next + profileImages.length) % profileImages.length;
   profileImages.forEach((img, i) => {
     img.hidden = i !== profileIndex;
     img.classList.toggle("is-active", i === profileIndex);
@@ -115,10 +108,7 @@ function syncProfileAutoplay() {
   const motionOff =
     document.documentElement.classList.contains("reduce-motion");
   if (!motionOff && !document.hidden)
-    profileTimer = setInterval(
-      () => showProfileSlide(profileIndex + 1),
-      5000,
-    );
+    profileTimer = setInterval(() => showProfileSlide(profileIndex + 1), 5000);
 }
 document.addEventListener("visibilitychange", syncProfileAutoplay);
 new MutationObserver(syncProfileAutoplay).observe(document.documentElement, {

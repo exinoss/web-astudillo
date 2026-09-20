@@ -1,0 +1,121 @@
+@media (max-width: 1199px) {
+  .light-bg #main-nav {
+    background: var(--color-base-100);
+  }
+}
+
+@media (max-width: 1199px) {
+  .text-large #main-nav {
+    gap: 0;
+  }
+}
+
+@media (max-width: 1199px) {
+  .high-contrast #main-nav {
+    background: var(--color-base-100);
+  }
+}
+
+.high-contrast {
+  --color-primary: #00132e;
+  --color-primary-content: #fff;
+  --color-neutral: #00132e;
+  --color-neutral-content: #fff;
+  --color-accent-content: #00132e;
+  --color-base-100: #fff;
+  --color-base-200: #fff;
+  --color-base-300: #52647c;
+  --color-base-content: #172a40;
+}
+
+.high-contrast a {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.high-contrast .card-top > svg {
+  color: var(--color-primary);
+}
+
+.reduce-motion {
+  scroll-behavior: auto;
+}
+
+.reduce-motion *,
+.reduce-motion *:before,
+.reduce-motion *:after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+
+.grayscale {
+  filter: grayscale(1);
+}
+
+.negative-contrast {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.negative-contrast img,
+.negative-contrast svg,
+.negative-contrast video {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+.underline-links a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.readable-font {
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.readable-font h1,
+.readable-font h2,
+.readable-font h3 {
+  font-family: Arial, Helvetica, sans-serif;
+  letter-spacing: normal;
+}
+
+.light-bg body,
+.light-bg .site-header,
+.light-bg .about-section,
+.light-bg .contact-section,
+.light-bg .proposals-section,
+.light-bg .hero-controls,
+.light-bg .detail-banner,
+.light-bg .citizen-form,
+.light-bg .proposal-card {
+  background: var(--color-base-100);
+}
+
+@media (max-width: 760px) {
+  .text-large .carousel-controls {
+    gap: 5px;
+  }
+  .text-large .values {
+    flex-wrap: wrap;
+  }
+}
+
+.high-contrast body,
+.high-contrast .site-header,
+.high-contrast .about-section,
+.high-contrast .contact-section,
+.high-contrast .proposals-section,
+.high-contrast .hero-controls,
+.high-contrast .detail-banner,
+.high-contrast .citizen-form,
+.high-contrast .proposal-card {
+  background: var(--color-base-100);
+}
+
+.high-contrast .contact-intro h2 {
+  color: var(--color-primary);
+}
+
+.high-contrast .contact-intro h2 span {
+  color: var(--color-primary);
+}

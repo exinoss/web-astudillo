@@ -22,9 +22,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
     aria-roledescription="carrusel"
   >
     <div class="site-container hero-heading">
-      <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
-        CARLOS ASTUDILLO · CANDIDATO A ALCALDE
-      </span>
+      <span class="eyebrow">CARLOS ASTUDILLO · CANDIDATO A ALCALDE</span>
       <span class="hero-location">
         Por ti, <strong>San Lorenzo.</strong>
       </span>
@@ -73,9 +71,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
       >
         <div class="site-container alternate-inner">
           <div>
-            <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
-              CONOCE AL CANDIDATO
-            </span>
+            <span class="eyebrow">CONOCE AL CANDIDATO</span>
             <h2>
               Respeto.
               <br />
@@ -83,10 +79,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
               <br />
               <em>Claridad.</em>
             </h2>
-            <a
-              href="/acerca-de-nosotros/"
-              class="button inline-flex justify-center items-center gap-7 min-h-[50px] py-[15px] px-6 border-0 text-[0.85rem] font-bold rounded-[3px] transition duration-[180ms] hover:-translate-y-0.5 bg-base-100 text-primary"
-            >
+            <a href="/acerca-de-nosotros/" class="button button-light">
               Conoce a Carlos <Icon name="arrow" size={18} />
             </a>
           </div>
@@ -126,9 +119,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
   <section class="citizen-strip" aria-label="Participación ciudadana">
     <div class="site-container citizen-inner">
       <div class="citizen-title">
-        <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
-          ESTAMOS PARA ESCUCHARTE
-        </span>
+        <span class="eyebrow">ESTAMOS PARA ESCUCHARTE</span>
         <h2>Tu voz cuenta.</h2>
       </div>
       {[...citizenLinks]
@@ -197,47 +188,37 @@ const citizenLinks = await contentRepository.getCitizenLinks();
           loading="lazy"
           hidden
         />
-        <div class="profile-glass">
-          <div class="profile-slide is-active" data-profile-slide="0">
-            <span>CARLOS ASTUDILLO</span>
-            <small>Candidato a alcalde · Lista 6</small>
-          </div>
-          <div class="profile-slide" data-profile-slide="1" hidden>
-            <span>POR TI, SAN LORENZO</span>
-            <small>Una ciudad para todas las voces</small>
-          </div>
-          <div class="profile-slide" data-profile-slide="2" hidden>
-            <span>RESPETO · COHERENCIA · CLARIDAD</span>
-            <small>Valores para servir a la ciudad</small>
-          </div>
-          <div
-            class="profile-dots"
-            role="group"
-            aria-label="Mensajes de Carlos Astudillo"
-          >
-            <button
-              class="profile-dot is-active"
-              type="button"
-              aria-label="Ver mensaje 1"
-              aria-current="true"
-            ></button>
-            <button
-              class="profile-dot"
-              type="button"
-              aria-label="Ver mensaje 2"
-              aria-current="false"
-            ></button>
-            <button
-              class="profile-dot"
-              type="button"
-              aria-label="Ver mensaje 3"
-              aria-current="false"
-            ></button>
-          </div>
+        <div class="profile-glass-curtain" aria-hidden="true">
+          <div class="profile-glass-line"></div>
+          <div class="profile-glass-veil"></div>
+        </div>
+        <div
+          class="profile-dots"
+          role="group"
+          aria-label="Imágenes de Carlos Astudillo"
+        >
+          <button
+            class="profile-dot is-active"
+            type="button"
+            aria-label="Ver imagen 1"
+            aria-current="true"
+          ></button>
+          <button
+            class="profile-dot"
+            type="button"
+            aria-label="Ver imagen 2"
+            aria-current="false"
+          ></button>
+          <button
+            class="profile-dot"
+            type="button"
+            aria-label="Ver imagen 3"
+            aria-current="false"
+          ></button>
         </div>
       </div>
       <div class="about-copy">
-        <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
+        <span class="eyebrow">
           <span class="short-line"></span> CONOCE A CARLOS
         </span>
         <h2>
@@ -253,10 +234,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
           Carlos Astudillo, candidato a la alcaldía de San Lorenzo por el
           Partido Social Cristiano, Lista 6.
         </p>
-        <a
-          class="button inline-flex justify-center items-center gap-7 min-h-[50px] py-[15px] px-6 border-0 text-[0.85rem] font-bold rounded-[3px] transition duration-[180ms] hover:-translate-y-0.5 bg-primary text-primary-content hover:bg-neutral"
-          href="/acerca-de-nosotros/"
-        >
+        <a class="button" href="/acerca-de-nosotros/">
           Acerca de nosotros <Icon name="arrow" size={19} />
         </a>
         <div class="values">
@@ -274,9 +252,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
     <div class="site-container">
       <div class="section-heading">
         <div>
-          <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
-            CONOCE LOS EJES
-          </span>
+          <span class="eyebrow">CONOCE LOS EJES</span>
           <h2>
             Propuestas para <span>San Lorenzo.</span>
           </h2>
@@ -322,9 +298,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
   >
     <div class="site-container contact-hub">
       <div class="contact-intro">
-        <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
-          CERCA DE TI
-        </span>
+        <span class="eyebrow">CERCA DE TI</span>
         <h2 id="contact-title">
           Conecta con
           <br />

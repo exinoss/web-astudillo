@@ -29,9 +29,7 @@ const { proposal, proposals } = Astro.props;
   </div>
   <section class="detail-banner">
     <div class="site-container">
-      <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
-        PROPUESTAS · {proposal.label.toUpperCase()}
-      </span>
+      <span class="eyebrow">PROPUESTAS · {proposal.label.toUpperCase()}</span>
       <div class="detail-title">
         <h1>{proposal.name}</h1>
         <Icon name={proposal.icon} size={76} />
@@ -41,9 +39,7 @@ const { proposal, proposals } = Astro.props;
   </section>
   <div class="site-container detail-grid py-24 max-[1190px]:py-[70px] max-[760px]:py-14">
     <article>
-      <span class="eyebrow flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.15em] leading-[1.6]">
-        INFORMACIÓN DE LA PROPUESTA
-      </span>
+      <span class="eyebrow">INFORMACIÓN DE LA PROPUESTA</span>
       <h2>Conoce este eje.</h2>
       <p>
         Este es uno de los siete temas presentados para la candidatura de Carlos
@@ -61,10 +57,7 @@ const { proposal, proposals } = Astro.props;
       </div>
       <h3>Tu perspectiva también cuenta.</h3>
       <p>Comparte una idea relacionada con {proposal.name.toLowerCase()}.</p>
-      <a
-        class="button inline-flex justify-center items-center gap-7 min-h-[50px] py-[15px] px-6 border-0 text-[0.85rem] font-bold rounded-[3px] transition duration-[180ms] hover:-translate-y-0.5 bg-primary text-primary-content hover:bg-neutral"
-        href={`/ciudadania/sugerencias/?tema=${proposal.slug}`}
-      >
+      <a class="button" href={`/ciudadania/sugerencias/?tema=${proposal.slug}`}>
         Compartir una sugerencia <Icon name="arrow" size={18} />
       </a>
     </article>

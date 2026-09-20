@@ -106,6 +106,11 @@ test('reporting is directly accessible on mobile and photo selection works', asy
   await expect(page.locator('a[href="https://www.tiktok.com/@carlosastudillo01"]')).toHaveCount(1);
   await page.getByRole('link', { name: 'Reportar daño', exact: true }).click();
   await expect(page).toHaveURL(/alerta-ciudadana/);
+  // The page's script is an external module, so it attaches its listeners
+  // after the document loads - without this the file input can receive the
+  // change event before the handler exists (only reproducible against the
+  // dev server, where modules are served unbundled).
+  await page.waitForLoadState('load');
   await page.locator('#damage-photo').setInputFiles('src/assets/carlos.jpg');
   await expect(page.locator('.photo-preview')).toBeVisible();
   await expect(page.locator('.photo-name')).toHaveText('carlos.jpg');
