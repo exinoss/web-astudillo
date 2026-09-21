@@ -17,6 +17,6 @@ export const submissionRepository =
     ? new HttpSubmissionRepository(apiBaseUrl)
     : new MockSubmissionRepository();
 
-// No HTTP variant yet: the chat widget is a local FAQ-style demo, not
-// backed by a planned API endpoint (see backend/README.md).
+// Sin variante HTTP: el chat es una demo local tipo FAQ, sin endpoint
+// planeado (ver backend/README.md).
 export const chatRepository = new MockChatRepository();

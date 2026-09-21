@@ -2,6 +2,9 @@
 import { Image } from "astro:assets";
 import logo from "../assets/logo.avif";
 import Icon from "../components/Icon.astro";
+import NavLink from "../components/NavLink.astro";
+import DropdownPanel from "../components/DropdownPanel.astro";
+import DropdownLink from "../components/DropdownLink.astro";
 import { contentRepository } from "../lib/data";
 import "@fontsource/barlow-condensed/600.css";
 import "@fontsource/barlow-condensed/700.css";
@@ -20,6 +23,34 @@ const {
 const current = Astro.url.pathname;
 const proposals = await contentRepository.getProposals();
 const citizenLinks = await contentRepository.getCitizenLinks();
+
+const accessTextSteps = [
+  { step: "1", label: "Aumentar texto", icon: "zoomIn" },
+  { step: "-1", label: "Disminuir texto", icon: "zoomOut" },
+];
+const accessSettings = [
+  { setting: "grayscale", label: "Escala de grises", icon: "grayscale" },
+  { setting: "high-contrast", label: "Alto contraste", icon: "contrastHalf" },
+  {
+    setting: "negative-contrast",
+    label: "Contraste negativo",
+    icon: "contrastNegative",
+  },
+  { setting: "light-bg", label: "Fondo claro", icon: "lightBg" },
+  {
+    setting: "underline-links",
+    label: "Subrayar enlaces",
+    icon: "underlineLinks",
+  },
+  { setting: "readable-font", label: "Fuente legible", icon: "readableFont" },
+  {
+    setting: "reduce-motion",
+    label: "Reducir movimiento",
+    icon: "reduceMotion",
+  },
+];
+const accessButton =
+  "flex w-full items-center gap-3 rounded-[3px] px-2.5 py-[11px] text-left text-[0.82rem] text-primary hover:bg-base-200";
 ---
 
 <!doctype html>
@@ -39,31 +70,53 @@ const citizenLinks = await contentRepository.getCitizenLinks();
     >
       Saltar al contenido
     </a>
-    <div class="topbar">
-      <div class="site-container topbar-inner">
-        <span>
+    <div class="topbar bg-primary text-[0.67rem] text-primary-content">
+      <div class="topbar-inner site-container flex min-h-[33px] items-center justify-between max-tablet:min-h-[30px] max-tablet:text-[0.55rem]">
+        <span class="flex items-center gap-2 max-tablet:gap-1">
           <Icon name="location" size={14} /> San Lorenzo, Esmeraldas
         </span>
-        <span>
-          Partido Social Cristiano <b>LISTA 6</b>
+        <span class="flex items-center gap-2 max-tablet:gap-1">
+          Partido Social Cristiano{" "}
+          <b class="ml-3 tracking-[0.1em] text-accent max-tablet:ml-1 max-tablet:text-[0.53rem]">
+            LISTA 6
+          </b>
         </span>
       </div>
     </div>
-    <header class="site-header">
-      <div class="site-container header-inner">
-        <a class="brand" href="/" aria-label="Carlos Astudillo, inicio">
-          <Image src={logo} alt="" width={68} height={58} fit="contain" />
-          <span>
-            CARLOS <strong>ASTUDILLO</strong>
-            <small>ALCALDÍA DE SAN LORENZO</small>
+    <header class="site-header sticky top-0 z-50 border-b border-b-base-300 bg-accent">
+      <div class="site-container flex min-h-[98px] items-center justify-between gap-[22px] max-nav:min-h-[82px] max-nav:gap-4 max-tablet:min-h-[77px] max-tablet:gap-2.5 max-mobile-xs:gap-2">
+        <a
+          class="order-0 flex shrink-0 items-center gap-[13px] max-desktop-sm:gap-2"
+          href="/"
+          aria-label="Carlos Astudillo, inicio"
+        >
+          <Image
+            class="h-[58px] w-16 object-contain max-nav:w-[58px] max-tablet:w-9 max-mobile-xs:hidden"
+            src={logo}
+            alt=""
+            width={68}
+            height={58}
+            fit="contain"
+          />
+          <span class="font-display text-[1.4rem] leading-[0.95] font-semibold tracking-[0.02em] max-tablet:text-[0.9rem]">
+            CARLOS{" "}
+            <strong class="block text-[1.72rem] font-bold max-tablet:text-[1.13rem]">
+              ASTUDILLO
+            </strong>
+            <small class="mt-[9px] block font-sans text-[0.47rem] font-bold tracking-[0.12em] max-tablet:text-[0.32rem]">
+              ALCALDÍA DE SAN LORENZO
+            </small>
           </span>
         </a>
-        <a class="report-link" href="/ciudadania/alerta-ciudadana/">
+        <a
+          class="report-link order-2 flex min-h-12 items-center justify-center gap-2.5 rounded-[4px] bg-primary px-[17px] py-3.5 text-[0.85rem] font-bold whitespace-nowrap text-primary-content hover:bg-neutral max-nav:ml-auto max-tablet:min-h-11 max-tablet:gap-1.5 max-tablet:px-2.5 max-tablet:py-[11px] max-tablet:text-[0.72rem] max-mobile-xs:text-[0.7rem]"
+          href="/ciudadania/alerta-ciudadana/"
+        >
           <Icon name="alert" size={19} />
           <span>Reportar daño</span>
         </a>
         <button
-          class="menu-toggle"
+          class="menu-toggle order-3 hidden h-11 w-11 items-center justify-center rounded-[3px] border border-base-300 bg-transparent text-primary max-nav:flex max-tablet:w-10 max-tablet:min-w-10"
           aria-label="Abrir menú"
           aria-controls="main-nav"
           aria-expanded="false"
@@ -71,143 +124,133 @@ const citizenLinks = await contentRepository.getCitizenLinks();
           <Icon name="menu" />
         </button>
         <nav id="main-nav" aria-label="Navegación principal">
-          <a
-            class:list={["nav-link", { active: current === "/" }]}
+          <NavLink
             href="/"
-            aria-current={current === "/" ? "page" : undefined}
+            active={current === "/"}
+            markCurrent={current === "/"}
           >
             Inicio
-          </a>
-          <a
-            class:list={[
-              "nav-link",
-              { active: current === "/acerca-de-nosotros/" },
-            ]}
+          </NavLink>
+          <NavLink
             href="/acerca-de-nosotros/"
+            active={current === "/acerca-de-nosotros/"}
           >
             Acerca de nosotros
-          </a>
-          <div class="nav-dropdown">
-            <button
-              class:list={[
-                "nav-link",
-                { active: current.startsWith("/propuestas/") },
-              ]}
-              aria-expanded="false"
-              aria-controls="proposals-menu"
+          </NavLink>
+          <div class="nav-dropdown relative">
+            <NavLink
+              active={current.startsWith("/propuestas/")}
+              ariaControls="proposals-menu"
             >
               Propuestas <Icon name="chevron" size={14} />
-            </button>
-            <div
-              id="proposals-menu"
-              class="dropdown-panel proposals-menu"
-              hidden
-            >
+            </NavLink>
+            <DropdownPanel id="proposals-menu" wide>
               {proposals.map((p) => (
-                <a href={`/propuestas/${p.slug}/`}>
+                <DropdownLink href={`/propuestas/${p.slug}/`}>
                   <Icon name={p.icon} size={21} />
                   <span>{p.name}</span>
-                </a>
+                </DropdownLink>
               ))}
-            </div>
+            </DropdownPanel>
           </div>
-          <div class="nav-dropdown">
-            <button
-              class:list={[
-                "nav-link",
-                { active: current.startsWith("/ciudadania/") },
-              ]}
-              aria-expanded="false"
-              aria-controls="citizen-menu"
+          <div class="nav-dropdown relative">
+            <NavLink
+              active={current.startsWith("/ciudadania/")}
+              ariaControls="citizen-menu"
             >
               Ciudadanía <Icon name="chevron" size={14} />
-            </button>
-            <div id="citizen-menu" class="dropdown-panel" hidden>
+            </NavLink>
+            <DropdownPanel id="citizen-menu">
               {citizenLinks.map((p) => (
-                <a href={`/ciudadania/${p.slug}/`}>
+                <DropdownLink href={`/ciudadania/${p.slug}/`}>
                   <Icon name={p.icon} size={21} />
                   {p.name}
-                </a>
+                </DropdownLink>
               ))}
-            </div>
+            </DropdownPanel>
           </div>
-          <a class="nav-link" href="/#contacto">
-            Contáctanos
-          </a>
+          <NavLink href="/#contacto">Contáctanos</NavLink>
         </nav>
       </div>
     </header>
     <main id="contenido" tabindex="-1">
       <slot />
     </main>
-    <footer>
-      <div class="site-container footer-top">
-        <a class="footer-brand" href="/">
-          CARLOS ASTUDILLO<span>Por ti, San Lorenzo.</span>
+    <footer class="bg-primary text-primary-content pt-[45px] pb-[22px]">
+      <div class="site-container flex items-center justify-between gap-[35px] pb-8 max-tablet:flex-col max-tablet:items-start max-tablet:gap-[25px] max-tablet:pb-[30px]">
+        <a class="font-display text-[1.8rem] font-semibold" href="/">
+          CARLOS ASTUDILLO
+          <span class="mt-2 block font-sans text-[0.75rem] font-normal text-accent">
+            Por ti, San Lorenzo.
+          </span>
         </a>
-        <p>
+        <p class="m-0 text-[0.75rem] text-footer-muted">
           Candidato a la alcaldía de San Lorenzo
           <br />
           Partido Social Cristiano · Lista 6
         </p>
-        <a href="/#contacto">
+        <a href="/#contacto" class="flex items-center gap-5 text-[0.8rem]">
           Contáctanos <Icon name="arrow" size={18} />
         </a>
       </div>
-      <div class="site-container footer-bottom">
+      <div class="site-container relative flex justify-between gap-5 border-t border-t-[#ffffff25] pt-[22px] text-[0.62rem] text-footer-muted max-tablet:flex-col max-tablet:gap-2.5 max-tablet:pr-[45px] max-tablet:leading-[1.7]">
         <span>© {new Date().getFullYear()} Carlos Astudillo</span>
         <span>Por ti, San Lorenzo.</span>
-      </div>
-    </footer>
-    <button
-      class="access-toggle"
-      aria-label="Herramientas de accesibilidad"
-      aria-expanded="false"
-      aria-controls="access-panel"
-    >
-      <Icon name="person" size={24} />
-    </button>
-    <aside
-      id="access-panel"
-      class="access-panel"
-      aria-label="Herramientas de accesibilidad"
-      hidden
-    >
-      <div class="panel-title">
-        <strong>Accesibilidad</strong>
-        <button class="access-close" aria-label="Cerrar accesibilidad">
-          <Icon name="close" size={20} />
+        {/* Por debajo de 1191px se ancla aquí en vez de flotar (ver layout.ts).
+            El `::after` amplía el área táctil a 44px sin cambiar el tamaño
+            visible. */}
+        <button
+          class="back-to-top invisible fixed right-3 bottom-[84px] z-[80] grid h-8 w-8 place-items-center rounded-[4px] border-2 border-base-100 bg-neutral text-neutral-content opacity-0 [box-shadow:0_3px_15px_#06317630] [transition:opacity_0.2s,visibility_0.2s] max-desktop-sm:absolute max-desktop-sm:right-0 max-desktop-sm:bottom-full max-desktop-sm:translate-y-1/2 max-desktop-sm:after:absolute max-desktop-sm:after:inset-[-6px] max-desktop-sm:after:content-[''] [&.is-visible]:visible [&.is-visible]:opacity-100"
+          aria-label="Volver al inicio de la página"
+        >
+          <Icon name="chevronUp" size={17} />
         </button>
       </div>
-      <button data-text-step="1">
-        Aumentar texto <span>A+</span>
+    </footer>
+    {/* Fila desde left:0: con el panel oculto solo se ve el botón en el
+        borde; al abrirse, el botón se desplaza al borde derecho del panel. */}
+    <div class="fixed top-1/2 left-0 z-[80] flex -translate-y-1/2 items-start">
+      <aside
+        id="access-panel"
+        class="max-h-[calc(100dvh-40px)] w-[min(300px,calc(100vw-96px))] overflow-y-auto rounded-r-[4px] border border-l-0 border-base-300 bg-base-100 px-4 py-5 text-primary [box-shadow:0_10px_45px_#06317625]"
+        aria-label="Herramientas de accesibilidad"
+        hidden
+      >
+        <strong class="mb-4 block text-[1.05rem] leading-[1.3]">
+          Herramientas de accesibilidad
+        </strong>
+        {accessTextSteps.map((item) => (
+          <button data-text-step={item.step} class={accessButton}>
+            <Icon name={item.icon} size={19} />
+            {item.label}
+          </button>
+        ))}
+        {accessSettings.map((item) => (
+          <button
+            data-setting={item.setting}
+            aria-pressed="false"
+            class={`${accessButton} aria-pressed:bg-primary aria-pressed:text-primary-content`}
+          >
+            <Icon name={item.icon} size={19} />
+            {item.label}
+          </button>
+        ))}
+        <button
+          class={`access-reset ${accessButton} mt-3 border-t border-t-base-300 pt-4`}
+        >
+          <Icon name="reset" size={19} />
+          Restablecer ajustes
+        </button>
+      </aside>
+      <button
+        class="access-toggle grid h-11 w-11 shrink-0 place-items-center rounded-r-[4px] border-y-2 border-r-2 border-base-100 bg-primary text-primary-content [box-shadow:0_3px_15px_#06317630]"
+        aria-label="Herramientas de accesibilidad"
+        aria-expanded="false"
+        aria-controls="access-panel"
+      >
+        <Icon name="person" size={22} />
       </button>
-      <button data-text-step="-1">
-        Disminuir texto <span>A-</span>
-      </button>
-      <button data-setting="grayscale" aria-pressed="false">
-        Escala de grises <span>◍</span>
-      </button>
-      <button data-setting="high-contrast" aria-pressed="false">
-        Alto contraste <span>◐</span>
-      </button>
-      <button data-setting="negative-contrast" aria-pressed="false">
-        Contraste negativo <span>◑</span>
-      </button>
-      <button data-setting="light-bg" aria-pressed="false">
-        Fondo claro <span>▢</span>
-      </button>
-      <button data-setting="underline-links" aria-pressed="false">
-        Subrayar enlaces <span>U</span>
-      </button>
-      <button data-setting="readable-font" aria-pressed="false">
-        Fuente legible <span>Aa</span>
-      </button>
-      <button data-setting="reduce-motion" aria-pressed="false">
-        Reducir movimiento <span>Ⅱ</span>
-      </button>
-      <button class="access-reset">Restablecer ajustes</button>
-    </aside>
+    </div>
     <script src="../scripts/layout.ts"></script>
   </body>
 </html>

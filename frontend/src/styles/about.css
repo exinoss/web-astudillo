@@ -1,11 +1,3 @@
-.about-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 100px;
-  align-items: center;
-  max-width: 1120px;
-}
-
 .portrait-wrap {
   position: relative;
   padding-right: 22px;
@@ -27,101 +19,12 @@
   object-fit: cover;
 }
 
-.about-copy h2 {
-  font-size: clamp(3rem, 4.8vw, 4.6rem);
-  margin-top: 16px;
-  margin-bottom: 20px;
-}
-
-.about-copy h2 span {
-  color: var(--color-neutral);
-}
-
-.about-copy .lead {
-  font-size: 1.13rem;
-  color: var(--color-primary);
-}
-
-.about-copy > p:not(.lead) {
-  font-size: 0.88rem;
-  max-width: 430px;
-  margin-bottom: 25px;
-}
-
-.values {
-  display: flex;
-  gap: 20px;
-  margin-top: 30px;
-  font-size: 0.64rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-weight: 700;
-}
-
-.values span {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.values span:before {
-  content: "";
-  height: 5px;
-  width: 5px;
-  background: var(--color-campaign-red);
-  border-radius: 50%;
-}
-
-@media (max-width: 1190px) {
-  .about-grid {
-    gap: 55px;
-  }
-}
-
-@media (max-width: 1199px) {
-  .about-grid {
-    gap: 40px;
-  }
-  .about-copy h2 {
-    font-size: 3.3rem;
-  }
-  .about-copy .lead {
-    font-size: 1rem;
-  }
-  .values {
-    gap: 12px;
-    font-size: 0.58rem;
-  }
-}
-
 @media (max-width: 760px) {
-  .about-grid {
-    grid-template-columns: 1fr;
-    gap: 42px;
-  }
   .portrait-wrap {
     max-width: 470px;
     width: 100%;
     margin: auto;
   }
-  .about-copy h2 {
-    font-size: 3.4rem;
-  }
-  .about-copy .lead {
-    font-size: 1.1rem;
-  }
-  .about-copy > p:not(.lead) {
-    max-width: none;
-  }
-  .values {
-    font-size: 0.65rem;
-    gap: 20px;
-  }
-}
-
-.about-section,
-.contact-section {
-  background: var(--color-secondary);
 }
 
 .portrait-wrap.profile-carousel {
@@ -131,8 +34,10 @@
   border: 1px solid #feffff85;
   border-radius: 22px;
   box-shadow: 0 16px 34px #06317633;
-  background: var(--color-accent);
-  aspect-ratio: 1;
+  /* Naranja de sección (no amarillo) + 4:5, la proporción de las piezas de
+     campaña: juntos llenan el marco sin franjas visibles. */
+  background: var(--color-secondary);
+  aspect-ratio: 4 / 5;
 }
 
 .portrait-wrap.profile-carousel:before {
@@ -144,12 +49,14 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
+  aspect-ratio: 4 / 5;
+  /* `contain`, no `cover`: entra cualquier proporción sin recortar texto
+     pegado a los bordes, como el de las piezas de redes actuales. */
+  object-fit: contain;
 }
 
-/* Anchored at the bottom with an animated height, so its glowing top edge
-   is what travels up and down across the card. */
+/* Anclado al fondo con una altura animada: su filo de arriba es lo que
+   recorre la tarjeta de abajo arriba y viceversa. */
 .profile-glass-curtain {
   position: absolute;
   z-index: 2;
@@ -161,35 +68,16 @@
   animation: profile-glass-oscillate 9s linear infinite;
 }
 
-.profile-glass-line {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(
-    90deg,
-    #feffff59 0%,
-    #feffff 25%,
-    #feffff 75%,
-    #feffff59 100%
-  );
-  box-shadow:
-    0 -3px 12px #fefffff2,
-    0 1px 0 #06317680,
-    0 7px 16px #0631764d;
-}
-
 .profile-glass-veil {
   position: absolute;
   inset: 0;
-  backdrop-filter: blur(2px) saturate(1.25) brightness(1.06);
-  -webkit-backdrop-filter: blur(2px) saturate(1.25) brightness(1.06);
-  background: linear-gradient(
-    180deg,
-    #feffff2e 0%,
-    #feffff1f 45%,
-    #feffff17 100%
+  /* Destello con forma, no franja recta: se apaga en las cuatro direcciones,
+     no solo hacia abajo. */
+  background: radial-gradient(
+    120% 60% at 50% 0%,
+    #feffff36 0%,
+    #feffff1a 40%,
+    #feffff00 75%
   );
 }
 

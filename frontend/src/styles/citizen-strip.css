@@ -1,177 +1,22 @@
-.citizen-strip {
-  background: var(--color-primary);
-  color: var(--color-primary-content);
-}
-
-.citizen-inner {
-  display: grid;
-  grid-template-columns: 1fr 1.2fr 1.2fr 1.2fr;
-  align-items: center;
-  min-height: 150px;
-  gap: 25px;
-}
-
-.citizen-title .eyebrow {
-  font-size: 0.53rem;
-  color: var(--color-accent);
-}
-
-.citizen-title h2 {
-  font-size: 2.1rem;
-  margin: 6px 0 0;
-}
-
-.citizen-link {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  min-height: 70px;
-  padding-left: 24px;
-  border-left: 1px solid #ffffff30;
-  transition: color 0.18s;
-}
-
-.citizen-link:hover {
-  color: var(--color-accent);
-}
-
-.citizen-icon {
-  color: var(--color-accent);
-}
+/* Reglas que apuntan a <svg>: `Icon.astro` no reenvía `class` y el tamaño
+   cambia por breakpoint, cosa que su prop `size` no puede hacer. */
 
 .citizen-link > svg {
   margin-left: auto;
   width: 16px;
 }
 
-.citizen-link strong {
-  font-size: 0.88rem;
-  display: block;
-}
-
-.citizen-link small {
-  font-size: 0.67rem;
-  line-height: 1.6;
-  display: block;
-  margin-top: 6px;
-  max-width: 155px;
-  color: #d5e0f2;
-}
-
 @media (max-width: 1190px) {
-  .citizen-inner {
-    gap: 15px;
-  }
-  .citizen-link {
-    padding-left: 15px;
-    gap: 10px;
-  }
   .citizen-icon svg {
     width: 23px;
-  }
-  .citizen-link strong {
-    font-size: 0.79rem;
-  }
-  .citizen-link small {
-    font-size: 0.61rem;
-  }
-}
-
-@media (max-width: 1199px) {
-  .citizen-inner {
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    padding-block: 25px;
-  }
-  .citizen-title {
-    padding-left: 10px;
-  }
-  .citizen-link {
-    padding-left: 20px;
-  }
-  .citizen-link strong {
-    font-size: 0.9rem;
-  }
-  .citizen-link small {
-    font-size: 0.73rem;
-    max-width: none;
-  }
-  .citizen-title h2 {
-    font-size: 2.3rem;
-  }
-  .citizen-title .eyebrow {
-    font-size: 0.6rem;
-  }
-}
-
-@media (max-width: 1199px) {
-  .citizen-primary {
-    padding: 18px;
   }
 }
 
 @media (max-width: 760px) {
-  .citizen-inner {
-    grid-template-columns: 1fr;
-    padding-block: 30px;
-    gap: 0;
-  }
-  .citizen-title {
-    padding: 0 0 20px;
-  }
-  .citizen-title h2 {
-    font-size: 2.4rem;
-  }
-  .citizen-link {
-    padding: 18px 0;
-    border-left: 0;
-    border-top: 1px solid #ffffff30;
-    gap: 18px;
-    min-height: 80px;
-  }
-  .citizen-link strong {
-    font-size: 0.92rem;
-  }
-  .citizen-link small {
-    font-size: 0.73rem;
-    margin-top: 4px;
-  }
   .citizen-icon svg {
     width: 27px;
   }
   .citizen-link > svg {
     width: 19px;
   }
-}
-
-@media (max-width: 760px) {
-  .citizen-primary {
-    margin-bottom: 10px;
-  }
-}
-
-.citizen-primary {
-  background: var(--color-accent);
-  color: var(--color-primary);
-  border: 0;
-  border-radius: 4px;
-  padding: 18px;
-}
-
-.citizen-primary .citizen-icon,
-.citizen-primary small {
-  color: var(--color-primary);
-}
-
-.citizen-primary:hover {
-  background: var(--color-base-100);
-  color: var(--color-primary);
-}
-
-.citizen-link strong {
-  font-size: 1rem;
-}
-
-.citizen-link small {
-  font-size: 0.78rem;
 }

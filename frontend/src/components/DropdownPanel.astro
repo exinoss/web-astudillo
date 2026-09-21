@@ -1,0 +1,20 @@
+---
+// La clase `dropdown-panel` la consulta `src/scripts/layout.ts`.
+interface Props {
+  id: string;
+  /** El menú de propuestas es ancho y de dos columnas. */
+  wide?: boolean;
+}
+const { id, wide = false } = Astro.props;
+---
+
+<div
+  id={id}
+  class:list={[
+    "dropdown-panel absolute top-full left-[-20px] z-[60] min-w-[260px] rounded-b-[4px] [border-right:1px_solid_var(--color-base-300)] [border-bottom:1px_solid_var(--color-base-300)] [border-left:1px_solid_var(--color-base-300)] [border-top:3px_solid_var(--color-secondary)] bg-base-100 p-3 [box-shadow:0_12px_30px_#0631761a] max-nav:static max-nav:my-2.5 max-nav:w-full max-nav:min-w-0 max-nav:[border-top:0] max-nav:[border-right:0] max-nav:[border-bottom:0] max-nav:[border-left:2px_solid_var(--color-accent)] max-nav:px-2 max-nav:py-0 max-nav:[box-shadow:none]",
+    wide && "left-[-170px] grid w-[510px] grid-cols-[1fr_1fr]",
+  ]}
+  hidden
+>
+  <slot />
+</div>

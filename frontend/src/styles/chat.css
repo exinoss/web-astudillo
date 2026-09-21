@@ -1,33 +1,6 @@
-.chat-box {
-  border: 1px solid var(--color-base-300);
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.chat-header {
-  display: flex;
-  gap: 15px;
-  padding: 22px;
-  background: var(--color-primary);
-  color: var(--color-primary-content);
-}
-
-.chat-header small {
-  display: block;
-  font-size: 0.68rem;
-  margin-top: 5px;
-  color: #d5e0f2;
-}
-
-.chat-messages {
-  height: 310px;
-  overflow: auto;
-  padding: 24px;
-  background: var(--color-base-200);
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
+/* Estos nodos los crea `src/scripts/citizen.ts` en runtime con `className`
+   fijo. El JIT de Tailwind solo ve las clases presentes en el código fuente,
+   así que estos estilos NO pueden ser utilidades: dejarían de generarse. */
 
 .chat-message {
   border: 1px solid var(--color-base-300);
@@ -51,46 +24,4 @@
   color: var(--color-primary-content);
   align-self: end;
   border-radius: 10px 0 10px 10px;
-}
-
-.chat-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  padding: 15px;
-}
-
-.chat-options button {
-  background: var(--color-base-100);
-  border: 1px solid var(--color-base-300);
-  color: var(--color-neutral);
-  border-radius: 30px;
-  padding: 10px 13px;
-  font-size: 0.7rem;
-}
-
-.chat-options button:hover {
-  background: var(--color-accent);
-}
-
-#chat-form {
-  display: flex;
-  gap: 10px;
-  padding: 0 15px 15px;
-}
-
-#chat-form .button {
-  padding: 10px 15px;
-}
-
-@media (max-width: 760px) {
-  .chat-messages {
-    height: 300px;
-    padding: 18px;
-  }
-}
-
-.chat-box {
-  background: var(--color-accent);
-  border-color: var(--color-primary);
 }

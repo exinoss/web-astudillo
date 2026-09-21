@@ -1,0 +1,25 @@
+---
+import Icon from "./Icon.astro";
+
+interface Props {
+  eyebrow: string;
+  title: string;
+  icon: string;
+  iconSize: number;
+  lead: string;
+}
+const { eyebrow, title, icon, iconSize, lead } = Astro.props;
+---
+
+<section class="detail-banner border-b-4 border-b-accent bg-secondary pt-[58px] pb-[65px] max-tablet:py-[38px]">
+  <div class="site-container">
+    <span class="eyebrow text-primary">{eyebrow}</span>
+    <div class="detail-title flex items-center justify-between gap-[30px] mt-[15px] max-tablet:gap-[15px]">
+      <h1 class="mt-0 mr-0 mb-5 ml-0 max-w-[950px] max-tablet:text-[3.1rem]">
+        {title}
+      </h1>
+      <Icon name={icon} size={iconSize} />
+    </div>
+    <p class="lead m-0 text-primary max-tablet:text-[1.05rem]">{lead}</p>
+  </div>
+</section>

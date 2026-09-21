@@ -1,0 +1,34 @@
+---
+// La clase `nav-link` la usan `src/scripts/layout.ts` y el pseudo-elemento
+// del subrayado activo.
+interface Props {
+  href?: string;
+  active?: boolean;
+  markCurrent?: boolean;
+  ariaControls?: string;
+}
+const { href, active = false, markCurrent = false, ariaControls } = Astro.props;
+
+const clases = [
+  "nav-link relative flex items-center justify-between gap-[7px] border-0 bg-transparent px-0 py-5 text-[0.88rem] font-bold whitespace-nowrap text-primary hover:text-neutral max-nav:w-full max-nav:border-b max-nav:border-b-base-300 max-nav:py-4 max-nav:text-[1rem]",
+  { active },
+];
+---
+
+{href ? (
+  <a
+    class:list={clases}
+    href={href}
+    aria-current={markCurrent ? "page" : undefined}
+  >
+    <slot />
+  </a>
+) : (
+  <button
+    class:list={clases}
+    aria-expanded="false"
+    aria-controls={ariaControls}
+  >
+    <slot />
+  </button>
+)}

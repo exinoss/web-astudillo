@@ -15,19 +15,18 @@ if (form) {
     e.preventDefault();
     const status = form.querySelector<HTMLElement>(".form-status")!;
     const nombre =
-      form.querySelector<HTMLInputElement>("#name")?.value.trim() ||
-      undefined;
+      form.querySelector<HTMLInputElement>("#name")?.value.trim() || undefined;
     const mensaje = form.querySelector<HTMLTextAreaElement>("#message")!.value;
     const result = isAlert
       ? await submissionRepository.submitAlert({
           nombre,
           sector: form.querySelector<HTMLInputElement>("#topic")!.value,
           referencia:
-            form
-              .querySelector<HTMLInputElement>("#reference")
-              ?.value.trim() || undefined,
+            form.querySelector<HTMLInputElement>("#reference")?.value.trim() ||
+            undefined,
           descripcion: mensaje,
-          foto: form.querySelector<HTMLInputElement>("#damage-photo")?.files?.[0],
+          foto: form.querySelector<HTMLInputElement>("#damage-photo")
+            ?.files?.[0],
         })
       : await submissionRepository.submitSuggestion({
           nombre,
@@ -65,7 +64,8 @@ if (photoInput) {
     ) {
       clearPhoto();
       error.hidden = false;
-      error.textContent = "Selecciona una imagen JPG, PNG o WebP de hasta 10 MB.";
+      error.textContent =
+        "Selecciona una imagen JPG, PNG o WebP de hasta 10 MB.";
       photoInput.setAttribute("aria-invalid", "true");
       return;
     }

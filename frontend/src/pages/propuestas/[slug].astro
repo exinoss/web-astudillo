@@ -1,6 +1,8 @@
 ---
 import Layout from "../../layouts/Layout.astro";
 import Icon from "../../components/Icon.astro";
+import Breadcrumb from "../../components/Breadcrumb.astro";
+import DetailBanner from "../../components/DetailBanner.astro";
 import { contentRepository } from "../../lib/data";
 import type { Proposal } from "../../lib/data/types";
 
@@ -20,53 +22,59 @@ const { proposal, proposals } = Astro.props;
 ---
 
 <Layout title={`${proposal.name} · Carlos Astudillo`}>
-  <div class="site-container breadcrumb">
-    <a href="/">Inicio</a>
-    <span>/</span>
-    <a href="/#propuestas">Propuestas</a>
-    <span>/</span>
-    {proposal.name}
-  </div>
-  <section class="detail-banner">
-    <div class="site-container">
-      <span class="eyebrow">PROPUESTAS · {proposal.label.toUpperCase()}</span>
-      <div class="detail-title">
-        <h1>{proposal.name}</h1>
-        <Icon name={proposal.icon} size={76} />
-      </div>
-      <p class="lead">{proposal.intro}</p>
-    </div>
-  </section>
-  <div class="site-container detail-grid py-24 max-[1190px]:py-[70px] max-[760px]:py-14">
+  <Breadcrumb
+    items={[
+      { label: "Inicio", href: "/" },
+      { label: "Propuestas", href: "/#propuestas" },
+      { label: proposal.name },
+    ]}
+  />
+  <DetailBanner
+    eyebrow={`PROPUESTAS · ${proposal.label.toUpperCase()}`}
+    title={proposal.name}
+    icon={proposal.icon}
+    iconSize={76}
+    lead={proposal.intro}
+  />
+  <div class="site-container grid grid-cols-[minmax(0,1.7fr)_minmax(250px,1fr)] gap-[90px] py-section max-desktop-sm:gap-[45px] max-tablet:grid-cols-1">
     <article>
       <span class="eyebrow">INFORMACIÓN DE LA PROPUESTA</span>
-      <h2>Conoce este eje.</h2>
-      <p>
+      <h2 class="mt-[15px] max-tablet:text-[2.6rem]">Conoce este eje.</h2>
+      <p class="max-w-[680px]">
         Este es uno de los siete temas presentados para la candidatura de Carlos
         Astudillo a la alcaldía de San Lorenzo.
       </p>
-      <div class="content-notice">
+      <div class="mt-[30px] mb-10 flex items-start gap-[18px] [border-left:3px_solid_var(--color-accent)] bg-base-200 p-[25px]">
         <Icon name="book" size={24} />
         <div>
           <strong>Contenido en preparación</strong>
-          <p>
+          <p class="mt-2 mr-0 mb-0 ml-0 text-[0.88rem]">
             Los objetivos, acciones y detalles de esta propuesta se incorporarán
             cuando estén disponibles.
           </p>
         </div>
       </div>
       <h3>Tu perspectiva también cuenta.</h3>
-      <p>Comparte una idea relacionada con {proposal.name.toLowerCase()}.</p>
-      <a class="button" href={`/ciudadania/sugerencias/?tema=${proposal.slug}`}>
+      <p class="max-w-[680px]">
+        Comparte una idea relacionada con {proposal.name.toLowerCase()}.
+      </p>
+      <a
+        class="button max-tablet:gap-3.5 max-tablet:text-[0.75rem]"
+        href={`/ciudadania/sugerencias/?tema=${proposal.slug}`}
+      >
         Compartir una sugerencia <Icon name="arrow" size={18} />
       </a>
     </article>
-    <aside class="related-proposals">
-      <h3>Explora las propuestas</h3>
+    <aside class="related-proposals self-start rounded-[4px] border border-base-300 p-[25px]">
+      <h3 class="mb-5 text-[1rem]">Explora las propuestas</h3>
       {proposals.map((p) => (
         <a
           href={`/propuestas/${p.slug}/`}
           aria-current={p.slug === proposal.slug ? "page" : undefined}
+          class:list={[
+            "flex items-center gap-3 border-t border-t-base-300 px-2 py-[15px] text-[0.78rem] hover:bg-base-200",
+            p.slug === proposal.slug && "bg-accent font-bold",
+          ]}
         >
           <Icon name={p.icon} size={20} />
           {p.name}

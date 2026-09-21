@@ -1,0 +1,17 @@
+---
+// Item sin href → texto plano, a propósito: en Ciudadanía el nivel
+// intermedio no enlaza (así estaba en el diseño original).
+interface Props {
+  items: { label: string; href?: string }[];
+}
+const { items } = Astro.props;
+---
+
+<div class="breadcrumb site-container flex flex-wrap items-center gap-2.5 py-6 text-[0.72rem] text-base-content max-tablet:gap-2 max-tablet:py-5 max-tablet:text-[0.65rem]">
+  {items.map((item, i) => (
+    <>
+      {i > 0 && <span>/</span>}
+      {item.href ? <a href={item.href}>{item.label}</a> : item.label}
+    </>
+  ))}
+</div>

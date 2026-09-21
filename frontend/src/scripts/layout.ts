@@ -90,10 +90,47 @@ const setAccess = (open: boolean) => {
 
 accessToggle.addEventListener("click", () => setAccess(Boolean(access.hidden)));
 
-document.querySelector(".access-close")!.addEventListener("click", () => {
-  setAccess(false);
-  accessToggle.focus();
-});
+const backToTop = document.querySelector<HTMLButtonElement>(".back-to-top");
+if (backToTop) {
+  // Por debajo de 1191px el botón se ancla al pie por CSS (ver Layout.astro).
+  const FLOTANTE = "(min-width: 1191px)";
+  // Sin tope, el centrado real se aleja del borde en pantallas anchas (320px
+  // a 1920px); 24 es lo que ya da el centrado a 1440px.
+  const SEPARACION_MAX = 24;
+  const contenedor = document.querySelector<HTMLElement>(".site-container");
+
+  // En páginas cortas nunca se baja una pantalla completa.
+  const hayScroll = () =>
+    document.documentElement.scrollHeight > window.innerHeight + 4;
+  const alFinal = () =>
+    window.scrollY + window.innerHeight >=
+    document.documentElement.scrollHeight - 2;
+
+  const syncBackToTop = () => {
+    const flota = matchMedia(FLOTANTE).matches && contenedor !== null;
+    backToTop.classList.toggle(
+      "is-visible",
+      !flota ||
+        (hayScroll() && (window.scrollY > window.innerHeight || alFinal())),
+    );
+    if (!flota) {
+      backToTop.style.right = "";
+      return;
+    }
+    const margen =
+      window.innerWidth - contenedor!.getBoundingClientRect().right;
+    const centrado = (margen - backToTop.offsetWidth) / 2;
+    backToTop.style.right =
+      Math.max(6, Math.min(SEPARACION_MAX, centrado)) + "px";
+  };
+  window.addEventListener("scroll", syncBackToTop, { passive: true });
+  window.addEventListener("resize", syncBackToTop, { passive: true });
+  syncBackToTop();
+  backToTop.addEventListener("click", () => {
+    const suave = !document.documentElement.classList.contains("reduce-motion");
+    window.scrollTo({ top: 0, behavior: suave ? "smooth" : "auto" });
+  });
+}
 
 const settings = [
   ...document.querySelectorAll<HTMLButtonElement>("[data-setting]"),

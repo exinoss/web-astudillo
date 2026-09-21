@@ -3,33 +3,45 @@ import Layout from "../layouts/Layout.astro";
 import Icon from "../components/Icon.astro";
 import { Image } from "astro:assets";
 import carlos from "../assets/carlos.jpg";
+import Breadcrumb from "../components/Breadcrumb.astro";
+
+const localLink = "min-h-[28px] underline underline-offset-[5px]";
+const articleSection =
+  "border-t border-t-base-300 py-[45px] [scroll-margin-top:100px]";
+const articleH2 = "mt-3 max-tablet:text-[2.5rem]";
 ---
 
 <Layout title="Acerca de nosotros · Carlos Astudillo">
-  <div class="site-container breadcrumb">
-    <a href="/">Inicio</a>
-    <span>/</span>Acerca de nosotros
-  </div>
-  <section class="site-container detail-about py-24 max-[1190px]:py-[70px] max-[760px]:py-14">
+  <Breadcrumb
+    items={[{ label: "Inicio", href: "/" }, { label: "Acerca de nosotros" }]}
+  />
+  <section class="site-container grid grid-cols-[1fr_1fr] items-center gap-20 pt-[30px] pb-24 max-nav:gap-[35px] max-[1190px]:pb-[70px] max-tablet:grid-cols-1 max-tablet:gap-[35px] max-tablet:pt-5 max-[760px]:pb-14">
     <div>
       <span class="eyebrow">CONOCE AL CANDIDATO</span>
-      <h1>
+      <h1 class="mt-[15px] text-[6rem] max-nav:text-[4.5rem]">
         Carlos
         <br />
-        <span>Astudillo.</span>
+        <span class="text-neutral">Astudillo.</span>
       </h1>
-      <p class="lead">
+      <p class="lead max-tablet:text-[1.05rem]">
         Candidato a la alcaldía de San Lorenzo.
         <br />
         Partido Social Cristiano · Lista 6.
       </p>
-      <div class="local-links">
-        <a href="#biografia">Biografía</a>
-        <a href="#motivacion">Por qué quiero ser alcalde</a>
-        <a href="#mas">Conoce más sobre Carlos</a>
+      <div class="mt-[30px] flex flex-col gap-4 text-[0.85rem]">
+        <a class={localLink} href="#biografia">
+          Biografía
+        </a>
+        <a class={localLink} href="#motivacion">
+          Por qué quiero ser alcalde
+        </a>
+        <a class={localLink} href="#mas">
+          Conoce más sobre Carlos
+        </a>
       </div>
     </div>
     <Image
+      class="w-full rounded-[3px] border-b-[7px] border-b-accent max-tablet:mx-auto max-tablet:max-w-[500px]"
       src={carlos}
       alt="Carlos Astudillo, candidato a alcalde de San Lorenzo"
       width={600}
@@ -39,10 +51,10 @@ import carlos from "../assets/carlos.jpg";
       loading="eager"
     />
   </section>
-  <div class="site-container article-content">
-    <section id="biografia">
+  <div class="site-container max-w-[850px] pb-20 max-tablet:pb-10">
+    <section id="biografia" class={articleSection}>
       <span class="eyebrow">SU HISTORIA</span>
-      <h2>Biografía</h2>
+      <h2 class={articleH2}>Biografía</h2>
       <p>
         Carlos Astudillo es candidato a la alcaldía de San Lorenzo por el
         Partido Social Cristiano, Lista 6.
@@ -51,10 +63,10 @@ import carlos from "../assets/carlos.jpg";
         La biografía completa está pendiente de incorporación.
       </p>
     </section>
-    <section id="motivacion">
+    <section id="motivacion" class={articleSection}>
       <span class="eyebrow">EN SUS PALABRAS</span>
-      <h2>Por qué quiero ser alcalde</h2>
-      <blockquote>
+      <h2 class={articleH2}>Por qué quiero ser alcalde</h2>
+      <blockquote class="my-5 border-l-4 border-l-accent pl-[25px] text-[1.5rem] leading-[1.5] max-tablet:text-[1.25rem]">
         «Creo en una ciudad donde el progreso no sea privilegio de pocos, sino
         derecho de todos».
       </blockquote>
@@ -62,9 +74,9 @@ import carlos from "../assets/carlos.jpg";
         El mensaje completo del candidato se incorporará a esta sección.
       </p>
     </section>
-    <section id="mas">
+    <section id="mas" class={articleSection}>
       <span class="eyebrow">CONOCE MÁS SOBRE CARLOS</span>
-      <h2>Respeto. Coherencia. Claridad.</h2>
+      <h2 class={articleH2}>Respeto. Coherencia. Claridad.</h2>
       <p>
         Explora los ejes de sus propuestas o comparte una sugerencia para San
         Lorenzo.

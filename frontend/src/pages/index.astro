@@ -3,7 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import Icon from "../components/Icon.astro";
 import { Image } from "astro:assets";
 import cover from "../assets/portada.jpg";
-import carlos from "../assets/carlos.jpg";
+import carlos from "../assets/carlos-vertical.png";
 import carlos2 from "../assets/carlos2.jpg";
 import carlos3 from "../assets/carlos3.jpg";
 import { contentRepository } from "../lib/data";
@@ -21,22 +21,24 @@ const citizenLinks = await contentRepository.getCitizenLinks();
     aria-label="Presentación de Carlos Astudillo"
     aria-roledescription="carrusel"
   >
-    <div class="site-container hero-heading">
-      <span class="eyebrow">CARLOS ASTUDILLO · CANDIDATO A ALCALDE</span>
-      <span class="hero-location">
-        Por ti, <strong>San Lorenzo.</strong>
+    <div class="site-container flex min-h-16 items-center justify-between min-wide:min-h-[75px] max-tablet:min-h-[53px]">
+      <span class="eyebrow max-nav:text-[0.57rem] max-tablet:text-[0.52rem] max-tablet:tracking-[0.1em]">
+        CARLOS ASTUDILLO · CANDIDATO A ALCALDE
+      </span>
+      <span class="text-[0.88rem] max-nav:text-[0.76rem] max-tablet:hidden">
+        Por ti, <strong class="text-neutral">San Lorenzo.</strong>
       </span>
     </div>
-    <div class="hero-slides">
+    <div class="hero-slides bg-accent">
       <div
-        class="hero-slide"
+        class="relative aspect-[1947/741] w-full max-h-[680px] overflow-hidden min-wide:max-h-[740px] max-tablet:aspect-[4/3] max-tablet:max-h-none"
         data-slide="0"
         role="group"
         aria-roledescription="diapositiva"
         aria-label="1 de 2"
       >
         <Image
-          class="campaign-cover"
+          class="h-full w-full object-cover max-tablet:absolute max-tablet:object-[100%_center]"
           src={cover}
           alt="Carlos Astudillo, PSC. La nueva historia. Creo en una ciudad donde el progreso no sea privilegio de pocos, sino derecho de todos."
           widths={[640, 960, 1440, 1947]}
@@ -47,14 +49,16 @@ const citizenLinks = await contentRepository.getCitizenLinks();
           fetchpriority="high"
           quality={85}
         />
-        <div class="mobile-hero-copy">
-          <span>PSC · LISTA 6</span>
-          <h2>
+        <div class="hidden max-tablet:absolute max-tablet:inset-y-0 max-tablet:right-auto max-tablet:left-0 max-tablet:flex max-tablet:w-[48%] max-tablet:flex-col max-tablet:justify-center max-tablet:bg-accent max-tablet:pt-6 max-tablet:pr-0 max-tablet:pb-5 max-tablet:pl-5">
+          <span class="max-tablet:text-[0.56rem] max-tablet:font-bold max-tablet:tracking-[0.08em]">
+            PSC · LISTA 6
+          </span>
+          <h2 class="max-tablet:mx-0 max-tablet:mt-[15px] max-tablet:mb-[18px] max-tablet:text-[clamp(2rem,8vw,3.6rem)]">
             Por ti,
             <br />
             San Lorenzo.
           </h2>
-          <p>
+          <p class="max-tablet:m-0 max-tablet:text-[0.67rem] max-tablet:leading-[1.6] max-tablet:text-primary">
             Carlos Astudillo
             <br />
             Candidato a alcalde
@@ -62,28 +66,34 @@ const citizenLinks = await contentRepository.getCitizenLinks();
         </div>
       </div>
       <div
-        class="hero-slide alternate-slide"
+        class="relative aspect-[1947/741] w-full max-h-[680px] overflow-hidden bg-primary text-primary-content min-wide:max-h-[740px] max-tablet:aspect-[4/3] max-tablet:max-h-none"
         data-slide="1"
         role="group"
         aria-roledescription="diapositiva"
         aria-label="2 de 2"
         hidden
       >
-        <div class="site-container alternate-inner">
-          <div>
-            <span class="eyebrow">CONOCE AL CANDIDATO</span>
-            <h2>
+        <div class="alternate-inner site-container flex h-full items-center justify-between max-tablet:w-full max-tablet:pl-5">
+          <div class="py-[25px] max-tablet:w-[48%] max-tablet:py-2.5">
+            <span class="eyebrow max-tablet:text-[0.48rem] max-tablet:tracking-[0.08em]">
+              CONOCE AL CANDIDATO
+            </span>
+            <h2 class="mx-0 mt-[15px] mb-6 text-[clamp(2rem,5.7vw,6rem)] max-tablet:mt-2.5 max-tablet:mb-[15px] max-tablet:text-[clamp(2rem,7vw,3.5rem)]">
               Respeto.
               <br />
               Coherencia.
               <br />
-              <em>Claridad.</em>
+              <em class="text-accent not-italic">Claridad.</em>
             </h2>
-            <a href="/acerca-de-nosotros/" class="button button-light">
+            <a
+              href="/acerca-de-nosotros/"
+              class="button button-light max-tablet:min-h-10 max-tablet:gap-2.5 max-tablet:p-2.5 max-tablet:text-[0.62rem]"
+            >
               Conoce a Carlos <Icon name="arrow" size={18} />
             </a>
           </div>
           <Image
+            class="h-full w-[47%] object-cover object-center max-tablet:w-[49%]"
             src={carlos}
             alt="Retrato de Carlos Astudillo"
             width={620}
@@ -93,21 +103,21 @@ const citizenLinks = await contentRepository.getCitizenLinks();
         </div>
       </div>
     </div>
-    <div class="hero-controls">
-      <div class="site-container hero-controls-inner">
+    <div class="hero-controls border-b border-b-base-300 bg-secondary">
+      <div class="site-container flex min-h-[69px] items-center justify-start gap-7 max-tablet:min-h-[66px] max-tablet:flex-wrap max-tablet:justify-center max-tablet:gap-4 max-tablet:py-3.5">
         <div
-          class="carousel-controls"
+          class="carousel-controls mx-auto flex items-center gap-2.5 max-tablet:mx-0"
           role="group"
           aria-label="Controles del carrusel"
         >
           <button
-            class="slide-dot is-active"
+            class="slide-dot grid h-[11px] min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5 is-active"
             type="button"
             aria-label="Ver diapositiva 1"
             aria-current="true"
           ></button>
           <button
-            class="slide-dot"
+            class="slide-dot grid h-[11px] min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5"
             type="button"
             aria-label="Ver diapositiva 2"
             aria-current="false"
@@ -116,11 +126,18 @@ const citizenLinks = await contentRepository.getCitizenLinks();
       </div>
     </div>
   </section>
-  <section class="citizen-strip" aria-label="Participación ciudadana">
-    <div class="site-container citizen-inner">
-      <div class="citizen-title">
-        <span class="eyebrow">ESTAMOS PARA ESCUCHARTE</span>
-        <h2>Tu voz cuenta.</h2>
+  <section
+    class="bg-primary text-primary-content"
+    aria-label="Participación ciudadana"
+  >
+    <div class="site-container grid min-h-[150px] grid-cols-[1fr_1.2fr_1.2fr_1.2fr] items-center gap-[25px] max-nav:grid-cols-2 max-nav:gap-5 max-nav:py-[25px] max-tablet:grid-cols-1 max-tablet:gap-0 max-tablet:py-[30px]">
+      <div class="max-nav:pl-2.5 max-tablet:pb-5 max-tablet:pl-0">
+        <span class="eyebrow text-[0.53rem] text-accent max-nav:text-[0.6rem]">
+          ESTAMOS PARA ESCUCHARTE
+        </span>
+        <h2 class="mt-1.5 mr-0 mb-0 text-[2.1rem] max-nav:text-[2.3rem] max-tablet:text-[2.4rem]">
+          Tu voz cuenta.
+        </h2>
       </div>
       {[...citizenLinks]
         .sort(
@@ -128,28 +145,45 @@ const citizenLinks = await contentRepository.getCitizenLinks();
             Number(b.slug === "alerta-ciudadana") -
             Number(a.slug === "alerta-ciudadana"),
         )
-        .map((p) => (
-          <a
-            class:list={[
-              "citizen-link",
-              { "citizen-primary": p.slug === "alerta-ciudadana" },
-            ]}
-            href={`/ciudadania/${p.slug}/`}
-          >
-            <span class="citizen-icon">
-              <Icon name={p.icon} size={26} />
-            </span>
-            <span>
-              <strong>{p.name}</strong>
-              <small>{p.description}</small>
-            </span>
-            <Icon name="arrow" size={19} />
-          </a>
-        ))}
+        .map((p) => {
+          const primary = p.slug === "alerta-ciudadana";
+          return (
+            <a
+              class:list={[
+                "citizen-link flex min-h-[70px] items-center gap-[15px] [transition:color_0.18s] max-desktop-sm:gap-2.5 max-tablet:min-h-[80px] max-tablet:gap-[18px]",
+                primary
+                  ? "rounded-[4px] bg-accent p-[18px] text-primary hover:bg-base-100 hover:text-primary max-tablet:mb-2.5"
+                  : "[border-left:1px_solid_#ffffff30] pl-6 hover:text-accent max-nav:pl-5 max-tablet:[border-left:0] max-tablet:[border-top:1px_solid_#ffffff30] max-tablet:py-[18px] max-tablet:pl-0",
+              ]}
+              href={`/ciudadania/${p.slug}/`}
+            >
+              <span
+                class:list={[
+                  "citizen-icon",
+                  primary ? "text-primary" : "text-accent",
+                ]}
+              >
+                <Icon name={p.icon} size={26} />
+              </span>
+              <span>
+                <strong class="block text-base">{p.name}</strong>
+                <small
+                  class:list={[
+                    "mt-1.5 block max-w-[155px] text-[0.78rem] leading-[1.6] max-nav:max-w-none max-tablet:mt-1",
+                    primary ? "text-primary" : "text-footer-muted",
+                  ]}
+                >
+                  {p.description}
+                </small>
+              </span>
+              <Icon name="arrow" size={19} />
+            </a>
+          );
+        })}
     </div>
   </section>
-  <section class="about-section py-24 max-[1190px]:py-[70px] max-[760px]:py-14">
-    <div class="site-container about-grid">
+  <section class="about-section bg-secondary py-section">
+    <div class="site-container grid max-w-[1120px] grid-cols-2 items-center gap-[100px] max-nav:gap-10 max-tablet:grid-cols-1 max-tablet:gap-[42px]">
       <div
         class="portrait-wrap profile-carousel"
         aria-roledescription="carrusel"
@@ -162,8 +196,6 @@ const citizenLinks = await contentRepository.getCitizenLinks();
           alt="Carlos Astudillo. Respeto, coherencia y claridad. Por ti, San Lorenzo."
           widths={[400, 640, 850]}
           sizes="(max-width: 760px) 90vw, 40vw"
-          width={640}
-          height={640}
           loading="lazy"
         />
         <Image
@@ -172,8 +204,6 @@ const citizenLinks = await contentRepository.getCitizenLinks();
           alt="Carlos Astudillo. Por ti, San Lorenzo."
           widths={[400, 640, 850]}
           sizes="(max-width: 760px) 90vw, 40vw"
-          width={640}
-          height={640}
           loading="lazy"
           hidden
         />
@@ -183,13 +213,10 @@ const citizenLinks = await contentRepository.getCitizenLinks();
           alt="Carlos Astudillo. Respeto, coherencia, claridad."
           widths={[400, 640, 850]}
           sizes="(max-width: 760px) 90vw, 40vw"
-          width={640}
-          height={640}
           loading="lazy"
           hidden
         />
         <div class="profile-glass-curtain" aria-hidden="true">
-          <div class="profile-glass-line"></div>
           <div class="profile-glass-veil"></div>
         </div>
         <div
@@ -217,74 +244,87 @@ const citizenLinks = await contentRepository.getCitizenLinks();
           ></button>
         </div>
       </div>
-      <div class="about-copy">
+      <div class="">
         <span class="eyebrow">
           <span class="short-line"></span> CONOCE A CARLOS
         </span>
-        <h2>
+        <h2 class="mt-4 mb-5 text-[clamp(3rem,4.8vw,4.6rem)] max-nav:text-[3.3rem] max-tablet:text-[3.4rem]">
           Una ciudad.
           <br />
-          Todas sus <span>voces.</span>
+          Todas sus <span class="text-neutral">voces.</span>
         </h2>
-        <p class="lead">
+        <p class="lead text-[1.13rem] text-primary max-nav:text-[1rem] max-tablet:text-[1.1rem]">
           «Creo en una ciudad donde el progreso no sea privilegio de pocos, sino
           derecho de todos».
         </p>
-        <p>
+        <p class="mb-[25px] max-w-[430px] text-[0.88rem] max-tablet:max-w-none">
           Carlos Astudillo, candidato a la alcaldía de San Lorenzo por el
           Partido Social Cristiano, Lista 6.
         </p>
         <a class="button" href="/acerca-de-nosotros/">
           Acerca de nosotros <Icon name="arrow" size={19} />
         </a>
-        <div class="values">
-          <span>Respeto</span>
-          <span>Coherencia</span>
-          <span>Claridad</span>
+        <div class="values mt-[30px] flex gap-5 text-[0.64rem] font-bold tracking-[0.04em] uppercase max-nav:gap-3 max-nav:text-[0.58rem] max-tablet:flex-wrap max-tablet:gap-2.5 max-tablet:text-[0.65rem]">
+          <span class="rounded-full bg-base-100 px-4 py-[7px]">Respeto</span>
+          <span class="rounded-full bg-base-100 px-4 py-[7px]">Coherencia</span>
+          <span class="rounded-full bg-base-100 px-4 py-[7px]">Claridad</span>
         </div>
       </div>
     </div>
   </section>
   <section
     id="propuestas"
-    class="proposals-section py-24 max-[1190px]:py-[70px] max-[760px]:py-14"
+    class="proposals-section bg-base-200 py-section [scroll-margin-top:20px]"
   >
     <div class="site-container">
-      <div class="section-heading">
+      <div class="mb-10 flex items-end justify-between gap-[30px] max-tablet:mb-[25px] max-tablet:block">
         <div>
           <span class="eyebrow">CONOCE LOS EJES</span>
-          <h2>
-            Propuestas para <span>San Lorenzo.</span>
+          <h2 class="mt-2.5 mr-0 mb-0 text-[3.3rem] max-nav:text-[2.8rem]">
+            Propuestas para{" "}
+            <span class="text-neutral max-tablet:block">San Lorenzo.</span>
           </h2>
         </div>
-        <p>
+        <p class="mt-0 mr-0 mb-[5px] ml-0 text-[0.83rem] max-nav:max-w-[200px] max-tablet:mt-[18px] max-tablet:max-w-none max-tablet:text-[0.82rem]">
           Explora cada tema.
-          <br />
+          <br class="max-tablet:hidden" />
           Conoce lo que se propone para tu ciudad.
         </p>
       </div>
-      <div class="proposal-grid">
+      <div class="grid grid-cols-[repeat(4,1fr)] gap-[18px] max-nav:grid-cols-[repeat(2,1fr)] max-tablet:gap-3 max-mobile-xs:grid-cols-[1fr]">
         {proposals.map((p) => (
-          <a class="proposal-card" href={`/propuestas/${p.slug}/`}>
-            <div class="card-top">
-              <span class="proposal-icon">
-                <Icon name={p.icon} size={30} />
+          <a
+            class="proposal-card flex min-h-[242px] flex-col rounded-[4px] bg-base-100 p-7 text-primary [border-right:1px_solid_#06317630] [border-bottom:1px_solid_#06317630] [border-left:1px_solid_#06317630] [border-top:4px_solid_var(--color-secondary)] [box-shadow:0_4px_14px_#06317608] [transition:transform_0.2s,border-color_0.2s,box-shadow_0.2s] hover:-translate-y-1 hover:border-neutral hover:bg-base-100 hover:[box-shadow:0_8px_20px_#06317618] max-nav:min-h-[220px] max-desktop-sm:p-[23px] max-tablet:min-h-[225px] max-tablet:px-4 max-tablet:py-5 max-mobile-xs:min-h-[210px]"
+            href={`/propuestas/${p.slug}/`}
+          >
+            <div class="card-top mb-7 flex items-center justify-between max-tablet:mb-6">
+              <span class="proposal-icon text-neutral">
+                <Icon name={p.icon} size={34} />
               </span>
               <Icon name="arrow" size={20} />
             </div>
-            <span class="card-label">{p.label}</span>
-            <h3>{p.name}</h3>
-            <span class="card-action">Conocer propuesta</span>
+            <span class="mb-2 text-[0.7rem] font-bold tracking-[0.06em] text-primary uppercase max-tablet:leading-[1.4]">
+              {p.label}
+            </span>
+            <h3 class="mb-[22px] font-display text-[1.8rem] leading-[1.15] font-semibold max-tablet:mb-[18px]">
+              {p.name}
+            </h3>
+            <span class="mt-auto text-[0.8rem] font-bold text-neutral">
+              Conocer propuesta
+            </span>
           </a>
         ))}
-        <a class="proposal-invitation" href="/ciudadania/sugerencias/">
+        <a
+          class="group flex flex-col rounded-[4px] bg-campaign-red p-7 text-primary-content [transition:transform_0.2s] hover:-translate-y-1 max-tablet:px-4 max-tablet:py-5"
+          href="/ciudadania/sugerencias/"
+        >
           <Icon name="idea" size={34} />
-          <h3>
+          <h3 class="my-[18px] font-display text-[2rem] font-semibold max-tablet:text-[1.8rem]">
             ¿Y tú,
             <br />
             qué propones?
           </h3>
-          <span class="proposal-invitation-action">
+          <span class="mt-auto flex min-h-8 items-center justify-between text-[0.76rem] font-bold group-hover:underline max-tablet:gap-[5px] max-tablet:text-[0.65rem]">
             Comparte tu idea <Icon name="arrow" size={18} />
           </span>
         </a>
@@ -293,25 +333,30 @@ const citizenLinks = await contentRepository.getCitizenLinks();
   </section>
   <section
     id="contacto"
-    class="contact-section py-24 max-[1190px]:py-[70px] max-[760px]:py-14"
+    class="contact-section bg-secondary py-section"
     aria-labelledby="contact-title"
   >
-    <div class="site-container contact-hub">
+    <div class="site-container grid grid-cols-[0.8fr_1.35fr] items-center gap-[72px] max-laptop:grid-cols-[1fr] max-laptop:gap-8">
       <div class="contact-intro">
-        <span class="eyebrow">CERCA DE TI</span>
-        <h2 id="contact-title">
+        <span class="eyebrow text-[0.85rem] tracking-[0.1em]">CERCA DE TI</span>
+        <h2
+          id="contact-title"
+          class="mx-0 mt-4 mb-[22px] font-display text-[clamp(3.6rem,5vw,5.2rem)] leading-[1.08] font-semibold tracking-[-0.01em] text-neutral max-tablet:mt-3 max-tablet:mb-[18px] max-tablet:text-[3.5rem]"
+        >
           Conecta con
-          <br />
-          <span>Carlos.</span>
+          <br class="max-laptop:hidden" />
+          <span class="text-inherit">Carlos.</span>
         </h2>
-        <p>
+        <p class="mb-[26px] max-w-[370px] text-[1.125rem] leading-[1.8] font-medium text-primary max-laptop:max-w-[640px] max-tablet:mb-0">
           Sigue las actividades, conoce el día a día y participa en la
           conversación.
         </p>
-        <span class="contact-signature">Por ti, San Lorenzo.</span>
+        <span class="inline-block border-t-2 border-t-primary pt-[15px] text-[1rem] font-bold max-tablet:hidden">
+          Por ti, San Lorenzo.
+        </span>
       </div>
-      <div class="contact-channels">
-        <div class="network-grid">
+      <div class="">
+        <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-5 max-laptop:gap-[15px] max-mobile:grid-cols-[1fr]">
           {[
             {
               name: "Facebook",
@@ -331,7 +376,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
             },
           ].map((s) => (
             <a
-              class="network-card"
+              class="group flex flex-col rounded-[10px] border-2 border-transparent bg-base-100 p-7 text-primary [box-shadow:0_6px_0_#06317614] [transition:transform_0.18s,border-color_0.18s,box-shadow_0.18s] hover:-translate-y-1 hover:border-primary hover:[box-shadow:0_10px_0_#06317614] max-laptop:p-[22px] max-tablet:p-5 max-mobile:p-6"
               href={s.url}
               target="_blank"
               rel="noopener noreferrer"
@@ -339,16 +384,27 @@ const citizenLinks = await contentRepository.getCitizenLinks();
                 s.name + " de Carlos Astudillo (abre en otra pestaña)"
               }
             >
-              <div class="network-card-top">
-                <span class:list={["network-icon", `network-icon-${s.icon}`]}>
+              <div class="network-card-top mb-[26px] flex items-center justify-between max-tablet:mb-5 max-mobile:mb-[18px]">
+                <span
+                  class:list={[
+                    "network-icon grid h-[52px] w-[52px] place-items-center rounded-[50%] text-primary-content",
+                    s.icon === "facebook" ? "bg-[#1877f2]" : "bg-[#111]",
+                  ]}
+                >
                   <Icon name={s.icon} size={32} />
                 </span>
                 <Icon name="external" size={22} />
               </div>
-              <h3>{s.name}</h3>
-              <span class="network-handle">{s.handle}</span>
-              <p>{s.copy}</p>
-              <span class="network-action">
+              <h3 class="mb-2 font-sans text-[1.65rem] leading-[1.3] font-bold tracking-[-0.025em] max-tablet:text-[1.6rem]">
+                {s.name}
+              </h3>
+              <span class="text-[0.95rem] font-medium text-neutral [overflow-wrap:anywhere]">
+                {s.handle}
+              </span>
+              <p class="mx-0 mt-[18px] mb-[26px] text-[1rem] leading-[1.75] text-primary max-tablet:mt-3.5 max-tablet:mb-5">
+                {s.copy}
+              </p>
+              <span class="mt-auto flex min-h-12 items-center justify-between gap-2.5 [border-top:1px_solid_#06317625] pt-[18px] text-[1rem] font-bold group-hover:underline group-hover:underline-offset-4">
                 {s.action}
                 <Icon name="arrow" size={19} />
               </span>
@@ -356,14 +412,14 @@ const citizenLinks = await contentRepository.getCitizenLinks();
           ))}
         </div>
         <a
-          class="whatsapp-note"
+          class="whatsapp-note mt-6 flex items-center gap-4 rounded-lg border border-[#06317625] bg-base-100 p-5 text-primary [transition:border-color_0.18s] hover:border-primary max-tablet:flex-wrap max-tablet:p-[18px]"
           href="https://wa.me/593961368214"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Escribir por WhatsApp a Carlos Astudillo (abre en otra pestaña)"
         >
           <Icon name="whatsapp" size={25} />
-          <span>
+          <span class="flex flex-col flex-wrap gap-x-2.5 gap-y-1 text-[1rem] leading-[1.65] max-tablet:min-w-[180px] max-tablet:flex-1">
             <strong>WhatsApp</strong>
             <span>Escríbenos directamente por WhatsApp.</span>
           </span>
