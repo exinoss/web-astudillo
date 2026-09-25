@@ -60,7 +60,7 @@ se incluye en Git ni en la imagen Docker.
    `ssl/__uteq_edu_ec2026Enero_cert_out.pem` y `ssl/__uteq_edu_ec.key` dentro
    de ese volumen, para `aplicaciones.uteq.edu.ec`.
 
-La construcción ejecuta `bun run check` y `bun test tests/proxy.test.ts`;
+La construcción verifica los tipos con TypeScript y ejecuta `bun test tests/proxy.test.ts`;
 si fallan, no se construye la imagen del backend. Jenkins despliega y espera
 el healthcheck, luego verifica Nginx y `/api/health` por HTTPS interno. Las
 pruebas completas de autenticación se ejecutan aparte como se describe en

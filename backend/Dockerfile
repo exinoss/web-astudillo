@@ -14,7 +14,8 @@ COPY src ./src
 COPY tests ./tests
 COPY drizzle ./drizzle
 COPY database ./database
-RUN bun run check && bun test tests/proxy.test.ts
+# Bun 1.3.14 en Alpine resuelve tsc desde .bin y pierde la ruta de sus imports relativos.
+RUN bun ./node_modules/typescript/bin/tsc --noEmit && bun test tests/proxy.test.ts
 
 FROM base AS runtime
 COPY --from=prod_deps /app/node_modules ./node_modules
