@@ -1,12 +1,24 @@
+import { setAccountNav } from '../lib/auth/navigation';
+import { authRepository } from '../lib/data/auth';
+import { ApiError } from '../lib/data/http/api-client';
+
+if (location.pathname !== '/cuenta/') {
+  authRepository.getProfile()
+    .then(() => setAccountNav(true))
+    .catch(error => setAccountNav(error instanceof ApiError && error.status === 403));
+}
+
 const nav = document.querySelector<HTMLElement>("#main-nav")!;
 const toggle = document.querySelector<HTMLButtonElement>(".menu-toggle")!;
 const dropdowns = [...document.querySelectorAll<HTMLElement>(".nav-dropdown")];
 
+/** Sincroniza el estado accesible y la visibilidad de un submenú. */
 function setDropdown(el: HTMLElement, open: boolean) {
   el.querySelector("button")!.setAttribute("aria-expanded", String(open));
   el.querySelector<HTMLElement>(".dropdown-panel")!.hidden = !open;
 }
 
+/** Cierra todos los submenús de navegación abiertos. */
 function closeDropdowns() {
   dropdowns.forEach((el) => setDropdown(el, false));
 }
@@ -82,6 +94,7 @@ const access = document.querySelector<HTMLElement>("#access-panel")!;
 const accessToggle =
   document.querySelector<HTMLButtonElement>(".access-toggle")!;
 
+/** Abre el panel de accesibilidad y enfoca su primer control. */
 const setAccess = (open: boolean) => {
   access.hidden = !open;
   accessToggle.setAttribute("aria-expanded", String(open));
@@ -92,20 +105,20 @@ accessToggle.addEventListener("click", () => setAccess(Boolean(access.hidden)));
 
 const backToTop = document.querySelector<HTMLButtonElement>(".back-to-top");
 if (backToTop) {
-  // Por debajo de 1191px el botón se ancla al pie por CSS (ver Layout.astro).
+  // En móvil el botón se ancla al pie por CSS (ver Layout.astro).
   const FLOTANTE = "(min-width: 1191px)";
-  // Sin tope, el centrado real se aleja del borde en pantallas anchas (320px
-  // a 1920px); 24 es lo que ya da el centrado a 1440px.
+  // Limita el margen para que el botón no se aleje del borde en monitores anchos.
   const SEPARACION_MAX = 24;
   const contenedor = document.querySelector<HTMLElement>(".site-container");
 
-  // En páginas cortas nunca se baja una pantalla completa.
+  // En páginas cortas el botón aparece sin esperar un scroll completo.
   const hayScroll = () =>
     document.documentElement.scrollHeight > window.innerHeight + 4;
   const alFinal = () =>
     window.scrollY + window.innerHeight >=
     document.documentElement.scrollHeight - 2;
 
+  /** Ajusta visibilidad y posición del botón según scroll y ancho de página. */
   const syncBackToTop = () => {
     const flota = matchMedia(FLOTANTE).matches && contenedor !== null;
     backToTop.classList.toggle(
@@ -162,6 +175,7 @@ try {
   textScale = Number(localStorage.getItem("text-scale")) || 100;
 } catch {}
 
+/** Aplica el tamaño tipográfico elegido y activa sus ajustes de layout. */
 function applyTextScale() {
   document.documentElement.style.fontSize =
     textScale === 100 ? "" : textScale + "%";

@@ -3,6 +3,7 @@ let index = 0;
 const slideDots = [
   ...document.querySelectorAll<HTMLButtonElement>(".slide-dot"),
 ];
+/** Selecciona una diapositiva del carrusel principal y actualiza sus indicadores. */
 const showSlide = (next: number) => {
   index = (next + slides.length) % slides.length;
   slides.forEach((slide, i) => (slide.hidden = i !== index));
@@ -12,6 +13,7 @@ const showSlide = (next: number) => {
   });
 };
 let timer: ReturnType<typeof setInterval> | undefined;
+/** Pausa o inicia el carrusel según visibilidad y modo reduce-motion. */
 function syncAutoplay() {
   clearInterval(timer);
   const motionOff =
@@ -61,6 +63,7 @@ const profileDots = [
   ...document.querySelectorAll<HTMLButtonElement>(".profile-dot"),
 ];
 let profileIndex = 0;
+/** Selecciona una imagen del carrusel del perfil y actualiza sus indicadores. */
 const showProfileSlide = (next: number) => {
   profileIndex = (next + profileImages.length) % profileImages.length;
   profileImages.forEach((img, i) => {
@@ -103,6 +106,7 @@ profileCarousel.addEventListener(
   { passive: true },
 );
 let profileTimer: ReturnType<typeof setInterval> | undefined;
+/** Sincroniza la rotación del carrusel del perfil con accesibilidad y pestaña. */
 function syncProfileAutoplay() {
   clearInterval(profileTimer);
   const motionOff =

@@ -6,5 +6,9 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   output: 'static',
   server: { host: true },
-  vite: { plugins: [tailwindcss()] },
+  vite: {
+    plugins: [tailwindcss()],
+    server: { proxy: { '/api': process.env.API_PROXY_TARGET || 'http://127.0.0.1:3000' } },
+    preview: { proxy: { '/api': process.env.API_PROXY_TARGET || 'http://127.0.0.1:3000' } },
+  },
 });

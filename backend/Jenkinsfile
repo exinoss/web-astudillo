@@ -1,0 +1,47 @@
+// Credencial Secret file con las variables del .env de producción.
+pipeline {
+    agent any
+    options {
+        disableConcurrentBuilds()
+        timeout(time: 40, unit: 'MINUTES')
+    }
+    stages {
+        stage('Despliegue') {
+            steps {
+                withCredentials([file(credentialsId: 'astudillo-backend-env', variable: 'BACKEND_ENV_FILE')]) {
+                    dir('backend') {
+                        sh '''
+                            set +x
+                            set -eu
+                            umask 077
+                            cp "$BACKEND_ENV_FILE" .env
+                            docker compose up -d --build --wait --wait-timeout 120
+                        '''
+                    }
+                }
+            }
+        }
+        stage('Verificar salud') {
+            steps {
+                dir('backend') {
+                    sh '''
+                        set -eu
+                        docker compose exec -T nginx nginx -t
+                        docker compose exec -T nginx \
+                            wget -q --no-check-certificate -O - https://127.0.0.1/api/health
+                    '''
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            sh 'docker ps -a --filter label=com.docker.compose.project=astudillo-auth || true'
+        }
+        always {
+            dir('backend') {
+                sh 'rm -f .env'
+            }
+        }
+    }
+}

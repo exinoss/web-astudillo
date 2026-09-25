@@ -1,0 +1,24 @@
+---
+import AccountShell from '../../components/account/AccountShell.astro';
+import AccountCard from '../../components/account/AccountCard.astro';
+import AccountField from '../../components/account/AccountField.astro';
+import AccountStatus from '../../components/account/AccountStatus.astro';
+---
+
+<AccountShell title="Participa" lead="Registra tus datos y confirma tu correo para empezar.">
+  <div class="mx-auto max-w-[560px]">
+    <AccountCard heading="Tus datos" description="Te enviaremos un enlace de verificación. Al confirmarlo podrás iniciar sesión.">
+      <AccountStatus />
+      <form id="register-form" data-new-password="contrasenia" novalidate>
+        <AccountField id="register-name" name="nombresCompletos" label="Nombre completo" placeholder="Tu nombre completo" autocomplete="name" required maxLength={200} />
+        <AccountField id="register-email" name="correo" label="Correo electrónico" type="email" placeholder="nombre@ejemplo.com" autocomplete="email" hint="Recibirás aquí el enlace de confirmación." required maxLength={320} />
+        <AccountField id="register-password" name="contrasenia" label="Contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" hint="Mínimo 6 caracteres; incluye una letra, un número y un símbolo." required maxLength={128} />
+        <AccountField id="register-confirm" name="confirmarContrasenia" label="Repite la contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" required maxLength={128} />
+        <AccountField id="register-address" name="direccion" label="Dirección (opcional)" placeholder="Barrio o dirección" autocomplete="street-address" maxLength={500} />
+        <button type="submit" class="button w-full">Enviar enlace de verificación</button>
+      </form>
+      <a class="mt-5 inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/">Ya tengo cuenta</a>
+    </AccountCard>
+  </div>
+  <script src="../../scripts/account-register.ts"></script>
+</AccountShell>

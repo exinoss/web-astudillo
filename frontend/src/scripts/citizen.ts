@@ -1,4 +1,4 @@
-import { submissionRepository, chatRepository } from "../lib/data";
+import { alertRepository, chatRepository, suggestionRepository } from "../lib/data";
 
 const form = document.querySelector<HTMLFormElement>(".citizen-form");
 if (form) {
@@ -11,6 +11,7 @@ if (form) {
   )
     select.value = topic;
   const isAlert = !!form.querySelector("#damage-photo");
+  // Envía sugerencia o alerta al repositorio activo y muestra su respuesta.
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const status = form.querySelector<HTMLElement>(".form-status")!;
@@ -18,7 +19,7 @@ if (form) {
       form.querySelector<HTMLInputElement>("#name")?.value.trim() || undefined;
     const mensaje = form.querySelector<HTMLTextAreaElement>("#message")!.value;
     const result = isAlert
-      ? await submissionRepository.submitAlert({
+      ? await alertRepository.submit({
           nombre,
           sector: form.querySelector<HTMLInputElement>("#topic")!.value,
           referencia:
@@ -28,7 +29,7 @@ if (form) {
           foto: form.querySelector<HTMLInputElement>("#damage-photo")
             ?.files?.[0],
         })
-      : await submissionRepository.submitSuggestion({
+      : await suggestionRepository.submit({
           nombre,
           tema: form.querySelector<HTMLSelectElement>("#topic")!.value,
           mensaje,
@@ -43,6 +44,7 @@ if (photoInput) {
   const picture = preview.querySelector("img")!;
   const error = document.querySelector<HTMLElement>("#photo-error")!;
   let objectUrl: string | undefined;
+  /** Libera la vista previa y reinicia el control de archivo. */
   function clearPhoto() {
     if (objectUrl) URL.revokeObjectURL(objectUrl);
     objectUrl = undefined;
@@ -93,6 +95,7 @@ if (photoInput) {
 const chatForm = document.querySelector<HTMLFormElement>("#chat-form");
 if (chatForm) {
   const log = document.querySelector<HTMLElement>(".chat-messages")!;
+  /** Añade el mensaje local y la respuesta del repositorio de chat. */
   const reply = async (text: string, key?: string) => {
     const user = document.createElement("div");
     user.className = "chat-message from-user";

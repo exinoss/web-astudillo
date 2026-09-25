@@ -1,0 +1,22 @@
+---
+import AccountShell from '../../components/account/AccountShell.astro';
+import AccountCard from '../../components/account/AccountCard.astro';
+import AccountField from '../../components/account/AccountField.astro';
+import AccountStatus from '../../components/account/AccountStatus.astro';
+---
+
+<AccountShell title="Nueva contraseña" lead="Elige una contraseña para volver a entrar.">
+  <div class="mx-auto max-w-[560px]">
+    <AccountCard heading="Restablecer acceso" description="El enlace se puede usar una sola vez. Al guardar, cerraremos las sesiones abiertas.">
+      <AccountStatus />
+      <form id="reset-form" data-new-password="contrasenia" novalidate>
+        <AccountField id="reset-password" name="contrasenia" label="Nueva contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" hint="Mínimo 6 caracteres; incluye una letra, un número y un símbolo." required maxLength={128} />
+        <AccountField id="reset-confirm" name="confirmarContrasenia" label="Repite la nueva contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" required maxLength={128} />
+        <button type="submit" class="button w-full">Guardar contraseña</button>
+      </form>
+      <div id="reset-done" hidden><a class="mt-5 inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/">Ir al acceso</a></div>
+      <a class="mt-5 inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/recuperar/">Solicitar otro enlace</a>
+    </AccountCard>
+  </div>
+  <script src="../../scripts/account-reset.ts"></script>
+</AccountShell>

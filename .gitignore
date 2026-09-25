@@ -12,6 +12,7 @@ frontend/.env.*.local
 # Backend (Bun + Elysia)
 backend/dist/
 backend/.env
+backend/.env.local
 backend/.env.*.local
 
 # Editors / OS
@@ -25,3 +26,7 @@ Thumbs.db
 npm-debug.log*
 
 /design
+
+# Instrucciones locales para agentes (no versionar)
+/AGENTS.md
+/CLAUDE.md

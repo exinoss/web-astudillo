@@ -11,18 +11,23 @@
     "preview": "astro preview",
     "astro": "astro",
     "check": "astro check",
-    "test": "playwright test"
+    "test": "playwright test",
+    "test:unit": "node --test test-unit/api-client.test.ts",
+    "modelos": "bun scripts/optimizar-modelos.ts && node scripts/generar-posters.ts"
   },
   "dependencies": {
     "@fontsource/barlow-condensed": "^5.2.0",
     "@fontsource/dm-sans": "^5.2.0",
-    "astro": "^7.3.3"
+    "@google/model-viewer": "^4.3.1",
+    "astro": "^7.3.3",
+    "meshoptimizer": "^1.2.0"
   },
   "allowScripts": {
     "esbuild": true
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.0",
+    "@gltf-transform/cli": "^4.5.0",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/vite": "^4.3.3",
     "@types/node": "^26.6.1",

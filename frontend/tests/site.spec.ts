@@ -128,3 +128,73 @@ test('reporting is directly accessible on mobile and photo selection works', asy
   await expect(page.getByRole('status')).toContainText('Gracias por compartir tu mensaje');
   await page.screenshot({ path: 'test-results/report-mobile.png', fullPage: true });
 });
+
+test('proposal 3D model loads only when scrolled into view and replaces its poster', async ({ page }) => {
+  // Short enough that the block sits below the fold plus the 200px preload margin.
+  await page.setViewportSize({ width: 390, height: 480 });
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  const requests: string[] = [];
+  page.on('request', r => requests.push(r.url()));
+  await page.goto('/propuestas/tecnologias-emergentes/');
+  await page.waitForLoadState('load');
+  await page.waitForTimeout(500);
+  // Vite pide `?url` para conocer la ruta; esa respuesta no carga el visor pesado.
+  expect(requests.filter(u => /model-viewer|\.glb$/.test(u) && !new URL(u).searchParams.has('url'))).toEqual([]);
+  await expect(page.locator('.model-3d-poster')).toBeVisible();
+  await page.locator('.model-3d').scrollIntoViewIfNeeded();
+  const viewer = page.locator('model-viewer');
+  await expect.poll(() => viewer.evaluate((v: any) => v.loaded), { timeout: 30000 }).toBe(true);
+  await expect(page.locator('.model-3d-poster')).toHaveCount(0);
+  const size = await viewer.evaluate((v: any) => v.getDimensions());
+  expect(size.x).toBeCloseTo(3.29, 2);
+  expect(size.y).toBeCloseTo(1.419, 2);
+  expect(errors).toEqual([]);
+});
+
+test('proposals without a model do not load the 3D viewer', async ({ page }) => {
+  const requests: string[] = [];
+  page.on('request', r => requests.push(r.url()));
+  await page.goto('/propuestas/agua-potable/');
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(500);
+  await expect(page.locator('.model-3d')).toHaveCount(0);
+  expect(requests.filter(u => /model-viewer|\.glb$/.test(u))).toEqual([]);
+});
+
+test('3D model respects reduced motion and zooms with the wheel only inside its frame', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.addInitScript(() => localStorage.setItem('reduce-motion', 'true'));
+  await page.goto('/propuestas/tecnologias-emergentes/');
+  const viewer = page.locator('model-viewer');
+  await expect.poll(() => viewer.evaluate((v: any) => v.loaded), { timeout: 30000 }).toBe(true);
+  await expect(viewer).not.toHaveAttribute('auto-rotate');
+  const radius = () => viewer.evaluate((v: any) => v.getCameraOrbit().radius);
+  const scrollY = () => page.evaluate(() => window.scrollY);
+  const before = await radius();
+  await viewer.hover();
+  const scrollInside = await scrollY();
+  await page.mouse.wheel(0, -300);
+  await expect.poll(radius).toBeLessThan(before);
+  expect(await scrollY()).toBe(scrollInside);
+  await page.mouse.move(1420, 950);
+  await page.mouse.wheel(0, 200);
+  await expect.poll(scrollY).toBeGreaterThan(scrollInside);
+  await page.getByRole('button', { name: 'Herramientas de accesibilidad' }).click();
+  await page.getByRole('button', { name: 'Reducir movimiento' }).click();
+  await expect(viewer).toHaveAttribute('auto-rotate', '');
+});
+
+test('3D model offers a retry button when the viewer fails to load', async ({ page }) => {
+  let fail = true;
+  await page.route('**/model-viewer*.js', route => (fail ? route.abort() : route.continue()));
+  await page.goto('/propuestas/tecnologias-emergentes/');
+  await page.locator('.model-3d').scrollIntoViewIfNeeded();
+  const retry = page.getByRole('button', { name: 'Ver en 3D' });
+  await expect(retry).toBeVisible();
+  await expect(page.locator('.model-3d-poster')).toBeVisible();
+  fail = false;
+  await retry.click();
+  await expect.poll(() => page.locator('model-viewer').evaluate((v: any) => v.loaded), { timeout: 30000 }).toBe(true);
+  await expect(retry).toBeHidden();
+});

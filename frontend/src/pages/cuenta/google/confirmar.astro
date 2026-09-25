@@ -1,0 +1,16 @@
+---
+import AccountShell from '../../../components/account/AccountShell.astro';
+import AccountCard from '../../../components/account/AccountCard.astro';
+import AccountStatus from '../../../components/account/AccountStatus.astro';
+---
+
+<AccountShell title="Confirma tu correo" lead="Verifica el buzón asociado con tu cuenta Google.">
+  <div class="mx-auto max-w-[560px]">
+    <AccountCard heading="Confirmación de Google" description="Comprobaremos el enlace recibido en tu correo. Si estás en otro navegador, vuelve a autenticarte con la misma cuenta Google.">
+      <AccountStatus />
+      <div id="google-confirm-button" class="mx-auto min-h-12 w-full text-center" hidden></div>
+      <a class="mt-5 inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/">Volver al acceso</a>
+    </AccountCard>
+  </div>
+  <script src="../../../scripts/account-google-confirm.ts"></script>
+</AccountShell>

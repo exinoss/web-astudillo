@@ -1,22 +1,13 @@
-import { HttpContentRepository } from "./http/http-content-repository";
-import { HttpSubmissionRepository } from "./http/http-submission-repository";
+import { MockAlertRepository } from "./mock/mock-alert-repository";
 import { MockChatRepository } from "./mock/mock-chat-repository";
 import { MockContentRepository } from "./mock/mock-content-repository";
-import { MockSubmissionRepository } from "./mock/mock-submission-repository";
+import { MockSuggestionRepository } from "./mock/mock-suggestion-repository";
+import type { AlertRepository } from './alert-repository';
+import type { ChatRepository } from './chat-repository';
+import type { ContentRepository } from './content-repository';
+import type { SuggestionRepository } from './suggestion-repository';
 
-const dataSource = import.meta.env.PUBLIC_DATA_SOURCE ?? "mock";
-const apiBaseUrl = import.meta.env.PUBLIC_API_BASE_URL ?? "";
-
-export const contentRepository =
-  dataSource === "http"
-    ? new HttpContentRepository(apiBaseUrl)
-    : new MockContentRepository();
-
-export const submissionRepository =
-  dataSource === "http"
-    ? new HttpSubmissionRepository(apiBaseUrl)
-    : new MockSubmissionRepository();
-
-// Sin variante HTTP: el chat es una demo local tipo FAQ, sin endpoint
-// planeado (ver backend/README.md).
-export const chatRepository = new MockChatRepository();
+export const contentRepository: ContentRepository = new MockContentRepository();
+export const suggestionRepository: SuggestionRepository = new MockSuggestionRepository();
+export const alertRepository: AlertRepository = new MockAlertRepository();
+export const chatRepository: ChatRepository = new MockChatRepository();

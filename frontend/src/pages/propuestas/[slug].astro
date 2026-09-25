@@ -3,6 +3,7 @@ import Layout from "../../layouts/Layout.astro";
 import Icon from "../../components/Icon.astro";
 import Breadcrumb from "../../components/Breadcrumb.astro";
 import DetailBanner from "../../components/DetailBanner.astro";
+import Model3D from "../../components/Model3D.astro";
 import { contentRepository } from "../../lib/data";
 import type { Proposal } from "../../lib/data/types";
 
@@ -11,6 +12,7 @@ interface Props {
   proposals: Proposal[];
 }
 
+/** Genera una ruta estática por cada propuesta del repositorio de contenido. */
 export async function getStaticPaths() {
   const proposals = await contentRepository.getProposals();
   return proposals.map((p) => ({
@@ -44,6 +46,7 @@ const { proposal, proposals } = Astro.props;
         Este es uno de los siete temas presentados para la candidatura de Carlos
         Astudillo a la alcaldía de San Lorenzo.
       </p>
+      {proposal.model && <Model3D {...proposal.model} />}
       <div class="mt-[30px] mb-10 flex items-start gap-[18px] [border-left:3px_solid_var(--color-accent)] bg-base-200 p-[25px]">
         <Icon name="book" size={24} />
         <div>

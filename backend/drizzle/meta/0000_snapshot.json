@@ -1,0 +1,920 @@
+{
+  "id": "e2e39e92-64ab-44d8-80fd-183e96c71cb2",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.tb_auditoria": {
+      "name": "tb_auditoria",
+      "schema": "",
+      "columns": {
+        "id_auditoria": {
+          "name": "id_auditoria",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tb_auditoria_id_auditoria_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "id_actor": {
+          "name": "id_actor",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "accion": {
+          "name": "accion",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "entidad": {
+          "name": "entidad",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id_registro": {
+          "name": "id_registro",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cambios": {
+          "name": "cambios",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "idx_auditoria_actor": {
+          "name": "idx_auditoria_actor",
+          "columns": [
+            {
+              "expression": "id_actor",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_auditoria_entidad_registro": {
+          "name": "idx_auditoria_entidad_registro",
+          "columns": [
+            {
+              "expression": "entidad",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "id_registro",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tb_auditoria_id_actor_fkey": {
+          "name": "tb_auditoria_id_actor_fkey",
+          "tableFrom": "tb_auditoria",
+          "tableTo": "tb_usuarios",
+          "columnsFrom": [
+            "id_actor"
+          ],
+          "columnsTo": [
+            "id_usuario"
+          ],
+          "onDelete": "set null",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "tb_auditoria_cambios_check": {
+          "name": "tb_auditoria_cambios_check",
+          "value": "jsonb_typeof(cambios) = 'object'::text"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tb_identidades_autenticacion": {
+      "name": "tb_identidades_autenticacion",
+      "schema": "",
+      "columns": {
+        "id_identidad": {
+          "name": "id_identidad",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tb_identidades_autenticacion_id_identidad_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "id_usuario": {
+          "name": "id_usuario",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "proveedor": {
+          "name": "proveedor",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sujeto_externo": {
+          "name": "sujeto_externo",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contrasenia_hash": {
+          "name": "contrasenia_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tb_identidades_autenticacion_id_usuario_fkey": {
+          "name": "tb_identidades_autenticacion_id_usuario_fkey",
+          "tableFrom": "tb_identidades_autenticacion",
+          "tableTo": "tb_usuarios",
+          "columnsFrom": [
+            "id_usuario"
+          ],
+          "columnsTo": [
+            "id_usuario"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_identidad_usuario_proveedor": {
+          "name": "uq_identidad_usuario_proveedor",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id_usuario",
+            "proveedor"
+          ]
+        },
+        "uq_identidad_proveedor_sujeto": {
+          "name": "uq_identidad_proveedor_sujeto",
+          "nullsNotDistinct": false,
+          "columns": [
+            "proveedor",
+            "sujeto_externo"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "tb_identidades_autenticacion_proveedor_check": {
+          "name": "tb_identidades_autenticacion_proveedor_check",
+          "value": "(proveedor)::text = ANY ((ARRAY['correo'::character varying, 'google'::character varying])::text[])"
+        },
+        "ck_identidad_credenciales": {
+          "name": "ck_identidad_credenciales",
+          "value": "(((proveedor)::text = 'correo'::text) AND (sujeto_externo IS NULL) AND (contrasenia_hash IS NOT NULL) AND (contrasenia_hash <> ''::text)) OR (((proveedor)::text = 'google'::text) AND (sujeto_externo IS NOT NULL) AND ((sujeto_externo)::text <> ''::text) AND (contrasenia_hash IS NULL))"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tb_permisos": {
+      "name": "tb_permisos",
+      "schema": "",
+      "columns": {
+        "id_permiso": {
+          "name": "id_permiso",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tb_permisos_id_permiso_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "codigo": {
+          "name": "codigo",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tb_permisos_codigo_key": {
+          "name": "tb_permisos_codigo_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "codigo"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tb_registros_pendientes": {
+      "name": "tb_registros_pendientes",
+      "schema": "",
+      "columns": {
+        "id_token_autenticacion": {
+          "name": "id_token_autenticacion",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nombres_completos": {
+          "name": "nombres_completos",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "direccion": {
+          "name": "direccion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contrasenia_hash": {
+          "name": "contrasenia_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "verificador_navegador_hash": {
+          "name": "verificador_navegador_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "tb_registros_pendientes_id_token_autenticacion_fkey": {
+          "name": "tb_registros_pendientes_id_token_autenticacion_fkey",
+          "tableFrom": "tb_registros_pendientes",
+          "tableTo": "tb_token_autenticacion",
+          "columnsFrom": [
+            "id_token_autenticacion"
+          ],
+          "columnsTo": [
+            "id_token_autenticacion"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "tb_registros_pendientes_nombres_completos_check": {
+          "name": "tb_registros_pendientes_nombres_completos_check",
+          "value": "btrim((nombres_completos)::text) <> ''::text"
+        },
+        "tb_registros_pendientes_contrasenia_hash_check": {
+          "name": "tb_registros_pendientes_contrasenia_hash_check",
+          "value": "contrasenia_hash <> ''::text"
+        },
+        "tb_registros_pendientes_verificador_navegador_hash_check": {
+          "name": "tb_registros_pendientes_verificador_navegador_hash_check",
+          "value": "verificador_navegador_hash <> ''::text"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tb_rol_permisos": {
+      "name": "tb_rol_permisos",
+      "schema": "",
+      "columns": {
+        "id_rol": {
+          "name": "id_rol",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "id_permiso": {
+          "name": "id_permiso",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "idx_rol_permisos_permiso": {
+          "name": "idx_rol_permisos_permiso",
+          "columns": [
+            {
+              "expression": "id_permiso",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tb_rol_permisos_id_rol_fkey": {
+          "name": "tb_rol_permisos_id_rol_fkey",
+          "tableFrom": "tb_rol_permisos",
+          "tableTo": "tb_roles",
+          "columnsFrom": [
+            "id_rol"
+          ],
+          "columnsTo": [
+            "id_rol"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "tb_rol_permisos_id_permiso_fkey": {
+          "name": "tb_rol_permisos_id_permiso_fkey",
+          "tableFrom": "tb_rol_permisos",
+          "tableTo": "tb_permisos",
+          "columnsFrom": [
+            "id_permiso"
+          ],
+          "columnsTo": [
+            "id_permiso"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "tb_rol_permisos_pkey": {
+          "name": "tb_rol_permisos_pkey",
+          "columns": [
+            "id_rol",
+            "id_permiso"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tb_roles": {
+      "name": "tb_roles",
+      "schema": "",
+      "columns": {
+        "id_rol": {
+          "name": "id_rol",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tb_roles_id_rol_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "rol": {
+          "name": "rol",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nombre": {
+          "name": "nombre",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descripcion": {
+          "name": "descripcion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tb_roles_rol_key": {
+          "name": "tb_roles_rol_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "rol"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.tb_sesiones": {
+      "name": "tb_sesiones",
+      "schema": "",
+      "columns": {
+        "id_sesion": {
+          "name": "id_sesion",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tb_sesiones_id_sesion_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "id_usuario": {
+          "name": "id_usuario",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "expira_en": {
+          "name": "expira_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revocado_en": {
+          "name": "revocado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ultimo_uso_en": {
+          "name": "ultimo_uso_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_sesiones_caducidad": {
+          "name": "idx_sesiones_caducidad",
+          "columns": [
+            {
+              "expression": "expira_en",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "timestamptz_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_sesiones_usuario": {
+          "name": "idx_sesiones_usuario",
+          "columns": [
+            {
+              "expression": "id_usuario",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tb_sesiones_id_usuario_fkey": {
+          "name": "tb_sesiones_id_usuario_fkey",
+          "tableFrom": "tb_sesiones",
+          "tableTo": "tb_usuarios",
+          "columnsFrom": [
+            "id_usuario"
+          ],
+          "columnsTo": [
+            "id_usuario"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tb_sesiones_token_hash_key": {
+          "name": "tb_sesiones_token_hash_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token_hash"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "tb_sesiones_token_hash_check": {
+          "name": "tb_sesiones_token_hash_check",
+          "value": "token_hash <> ''::text"
+        },
+        "ck_sesion_vigencia": {
+          "name": "ck_sesion_vigencia",
+          "value": "expira_en > creado_en"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tb_token_autenticacion": {
+      "name": "tb_token_autenticacion",
+      "schema": "",
+      "columns": {
+        "id_token_autenticacion": {
+          "name": "id_token_autenticacion",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tb_token_autenticacion_id_token_autenticacion_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "id_usuario": {
+          "name": "id_usuario",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correo": {
+          "name": "correo",
+          "type": "varchar(320)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "proposito": {
+          "name": "proposito",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sujeto_externo": {
+          "name": "sujeto_externo",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "verificador_navegador_hash": {
+          "name": "verificador_navegador_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "token_hash": {
+          "name": "token_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "expira_en": {
+          "name": "expira_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "consumido_en": {
+          "name": "consumido_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_tokens_caducidad": {
+          "name": "idx_tokens_caducidad",
+          "columns": [
+            {
+              "expression": "expira_en",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "timestamptz_ops"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_tokens_usuario": {
+          "name": "idx_tokens_usuario",
+          "columns": [
+            {
+              "expression": "id_usuario",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last",
+              "opclass": "int4_ops"
+            }
+          ],
+          "isUnique": false,
+          "where": "(id_usuario IS NOT NULL)",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tb_token_autenticacion_id_usuario_fkey": {
+          "name": "tb_token_autenticacion_id_usuario_fkey",
+          "tableFrom": "tb_token_autenticacion",
+          "tableTo": "tb_usuarios",
+          "columnsFrom": [
+            "id_usuario"
+          ],
+          "columnsTo": [
+            "id_usuario"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "tb_token_autenticacion_token_hash_key": {
+          "name": "tb_token_autenticacion_token_hash_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "token_hash"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "tb_token_autenticacion_proposito_check": {
+          "name": "tb_token_autenticacion_proposito_check",
+          "value": "(proposito)::text = ANY ((ARRAY['registro_correo'::character varying, 'registro_google'::character varying, 'vincular_google'::character varying, 'recuperar_contrasenia'::character varying])::text[])"
+        },
+        "tb_token_autenticacion_token_hash_check": {
+          "name": "tb_token_autenticacion_token_hash_check",
+          "value": "token_hash <> ''::text"
+        },
+        "ck_token_correo_limpio": {
+          "name": "ck_token_correo_limpio",
+          "value": "((correo)::text = btrim((correo)::text)) AND ((correo)::text <> ''::text)"
+        },
+        "ck_token_vigencia": {
+          "name": "ck_token_vigencia",
+          "value": "expira_en > creado_en"
+        },
+        "ck_token_destino": {
+          "name": "ck_token_destino",
+          "value": "(((proposito)::text = 'registro_correo'::text) AND (id_usuario IS NULL) AND (sujeto_externo IS NULL)) OR (((proposito)::text = 'registro_google'::text) AND (id_usuario IS NULL) AND (sujeto_externo IS NOT NULL) AND ((sujeto_externo)::text <> ''::text)) OR (((proposito)::text = 'vincular_google'::text) AND (id_usuario IS NOT NULL) AND (sujeto_externo IS NOT NULL) AND ((sujeto_externo)::text <> ''::text)) OR (((proposito)::text = 'recuperar_contrasenia'::text) AND (id_usuario IS NOT NULL) AND (sujeto_externo IS NULL))"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.tb_usuarios": {
+      "name": "tb_usuarios",
+      "schema": "",
+      "columns": {
+        "id_usuario": {
+          "name": "id_usuario",
+          "type": "integer",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "tb_usuarios_id_usuario_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "2147483647",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "correo": {
+          "name": "correo",
+          "type": "varchar(320)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nombres_completos": {
+          "name": "nombres_completos",
+          "type": "varchar(200)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "direccion": {
+          "name": "direccion",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "correo_verificado_en": {
+          "name": "correo_verificado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rol": {
+          "name": "rol",
+          "type": "varchar(40)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'votante'"
+        },
+        "estado": {
+          "name": "estado",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'activo'"
+        },
+        "creado_en": {
+          "name": "creado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "actualizado_en": {
+          "name": "actualizado_en",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        }
+      },
+      "indexes": {
+        "uq_usuarios_correo_sin_mayusculas": {
+          "name": "uq_usuarios_correo_sin_mayusculas",
+          "columns": [
+            {
+              "expression": "lower((correo)::text)",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "tb_usuarios_rol_fkey": {
+          "name": "tb_usuarios_rol_fkey",
+          "tableFrom": "tb_usuarios",
+          "tableTo": "tb_roles",
+          "columnsFrom": [
+            "rol"
+          ],
+          "columnsTo": [
+            "rol"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "restrict"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "tb_usuarios_estado_check": {
+          "name": "tb_usuarios_estado_check",
+          "value": "(estado)::text = ANY ((ARRAY['activo'::character varying, 'bloqueado'::character varying])::text[])"
+        },
+        "ck_usuarios_correo_limpio": {
+          "name": "ck_usuarios_correo_limpio",
+          "value": "((correo)::text = btrim((correo)::text)) AND ((correo)::text <> ''::text)"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -13,6 +13,7 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - Capa de acceso a datos (`frontend/src/lib/data/`) con implementación local (mock) hoy y una implementación HTTP lista para conectarse al backend vía `PUBLIC_DATA_SOURCE`.
 - `backend/README.md`: contrato de entidades y endpoints propuestos para cuando se implemente la API.
 - Efecto de cortina de cristal en el carrusel de retrato: un panel translúcido sube y baja sobre la tarjeta, delimitado por una línea luminosa.
+- Modelo 3D interactivo en la página de «Tecnologías emergentes» (`<model-viewer>`): se gira y se acerca, se carga solo al entrar en pantalla y respeta «Reducir movimiento» y el ahorro de datos del navegador. `bun run modelos` optimiza los `.glb` de `frontend/modelos-fuente/` hacia `frontend/public/models/`: el primero pasa de 2,69 MB a 282 KB (79 KB servido con gzip).
 
 ### Changed
 

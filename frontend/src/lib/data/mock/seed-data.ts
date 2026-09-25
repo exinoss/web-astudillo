@@ -1,4 +1,5 @@
 import type { CitizenLink, Proposal } from "../types";
+import posterTecnologias from "../../../assets/models/tecnologias-emergentes.png";
 
 export const proposals: Proposal[] = [
   {
@@ -49,6 +50,11 @@ export const proposals: Proposal[] = [
     icon: "tech",
     label: "Innovación",
     intro: "Consulta la propuesta sobre nuevas tecnologías.",
+    model: {
+      src: "/models/tecnologias-emergentes.glb",
+      poster: posterTecnologias,
+      alt: "Modelo 3D de cuatro paneles solares sobre una estructura de soporte metálica",
+    },
   },
 ];
 

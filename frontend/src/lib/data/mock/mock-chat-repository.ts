@@ -1,6 +1,7 @@
 import type { ChatRepository } from "../chat-repository";
 import type { ChatReply } from "../types";
 
+/** Responde con reglas locales; todavía no conecta con un servicio de chat. */
 export class MockChatRepository implements ChatRepository {
   async ask(message: string): Promise<ChatReply> {
     const normalized = message.toLocaleLowerCase("es");

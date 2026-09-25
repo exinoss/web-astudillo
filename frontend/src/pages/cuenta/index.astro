@@ -1,0 +1,74 @@
+---
+import AccountShell from '../../components/account/AccountShell.astro';
+import AccountCard from '../../components/account/AccountCard.astro';
+import AccountField from '../../components/account/AccountField.astro';
+import AccountStatus from '../../components/account/AccountStatus.astro';
+import AccountSignOut from '../../components/account/AccountSignOut.astro';
+---
+
+<AccountShell title="Mi cuenta" lead="Accede para gestionar tus datos y participar.">
+  <AccountStatus />
+  <p id="account-loading" class="mx-auto max-w-[560px] text-sm">Cargando tu cuenta…</p>
+  <div id="login-panel" class="mx-auto max-w-[474px] max-tablet:max-w-[448px]" hidden>
+    <AccountCard heading="Accede a tu cuenta" description="Ingresa con tu correo y contraseña, o usa tu cuenta Google.">
+      <form id="login-form" novalidate>
+        <AccountField id="login-correo" name="correo" label="Correo electrónico" type="email" placeholder="nombre@ejemplo.com" autocomplete="email" required maxLength={320} />
+        <AccountField id="login-contrasenia" name="contrasenia" label="Contraseña" type="password" placeholder="Tu contraseña" autocomplete="current-password" required />
+        <button type="submit" class="button w-full">Entrar</button>
+      </form>
+      <div class="my-5 flex items-center gap-3 text-center text-xs text-[#50617d] before:h-px before:flex-1 before:bg-[#cbd5e1] before:content-[''] after:h-px after:flex-1 after:bg-[#cbd5e1] after:content-['']">o</div>
+      <div id="google-login-button" class="flex min-h-12 w-full justify-center"></div>
+      <p id="google-login-unavailable" hidden class="m-0 text-center text-xs text-[#50617d]">El acceso con Google estará disponible cuando se configure.</p>
+      <div class="mt-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[0.82rem]">
+        <a class="inline-flex min-h-11 items-center underline" href="/cuenta/registro/">Registrarme</a>
+        <a class="inline-flex min-h-11 items-center underline" href="/cuenta/recuperar/">Olvidé mi contraseña</a>
+      </div>
+    </AccountCard>
+  </div>
+
+  <div id="profile-panel" hidden>
+    <div class="mx-auto grid max-w-[1050px] grid-cols-2 items-start gap-[22px] max-tablet:grid-cols-1">
+      <AccountCard heading="Mis datos" description="Estos datos se usan en tu cuenta.">
+        <form id="profile-form" novalidate>
+          <AccountField id="profile-name" name="nombresCompletos" label="Nombre completo" placeholder="Tu nombre completo" autocomplete="name" required maxLength={200} />
+          <AccountField id="profile-address" name="direccion" label="Dirección (opcional)" placeholder="Barrio o dirección" autocomplete="street-address" maxLength={500} />
+          <button type="submit" class="button w-full">Guardar cambios</button>
+        </form>
+      </AccountCard>
+      <div id="change-password-panel" hidden>
+        <AccountCard heading="Cambiar contraseña" description="Confirma tu contraseña actual antes de guardar una nueva.">
+          <form id="change-password-form" data-new-password="contraseniaNueva" novalidate>
+            <AccountField id="current-password" name="contraseniaActual" label="Contraseña actual" type="password" placeholder="Tu contraseña actual" autocomplete="current-password" required />
+            <AccountField id="new-password" name="contraseniaNueva" label="Nueva contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" hint="Mínimo 6 caracteres; incluye una letra, un número y un símbolo." required maxLength={128} />
+            <AccountField id="confirm-new-password" name="confirmarContrasenia" label="Repite la nueva contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" required maxLength={128} />
+            <button type="submit" class="button w-full">Actualizar contraseña</button>
+          </form>
+          <p class="m-0 mt-[18px] border border-[#d9e0ea] bg-[#f8f9fc] px-4 py-3 text-[0.82rem] leading-normal">Al cambiarla, se cerrarán tus sesiones y tendrás que ingresar otra vez.</p>
+          <AccountSignOut id="logout-button" />
+        </AccountCard>
+      </div>
+      <div id="add-password-panel" hidden>
+        <AccountCard heading="Añadir contraseña" description="Crea una contraseña para entrar también con tu correo.">
+          <form id="add-password-form" data-new-password="contrasenia" novalidate>
+            <AccountField id="add-password" name="contrasenia" label="Nueva contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" hint="Mínimo 6 caracteres; incluye una letra, un número y un símbolo." required maxLength={128} />
+            <AccountField id="add-confirm" name="confirmarContrasenia" label="Repite la nueva contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" required maxLength={128} />
+            <button type="submit" class="button w-full">Guardar contraseña</button>
+          </form>
+          <div id="google-password-step" hidden class="mt-4">
+            <p class="m-0 mb-3 text-[0.82rem] leading-normal">Confirma tu identidad con Google para guardar la contraseña.</p>
+            <div id="google-password-button" class="flex min-h-12 w-full justify-center"></div>
+            <p id="google-password-unavailable" hidden class="m-0 text-center text-xs text-[#50617d]">No se pudo cargar Google. Inténtalo de nuevo.</p>
+          </div>
+          <AccountSignOut id="logout-google-button" />
+        </AccountCard>
+      </div>
+    </div>
+  </div>
+
+  <div id="blocked-panel" class="mx-auto max-w-[560px]" hidden>
+    <AccountCard heading="Acceso limitado" description="No tienes permiso para consultar el perfil. Puedes cerrar tu sesión.">
+      <button id="blocked-logout-button" type="button" class="button w-full">Cerrar sesión</button>
+    </AccountCard>
+  </div>
+  <script src="../../scripts/account.ts"></script>
+</AccountShell>

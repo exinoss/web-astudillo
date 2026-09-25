@@ -15,10 +15,12 @@ import "../styles/global.css";
 interface Props {
   title?: string;
   description?: string;
+  referrerPolicy?: 'no-referrer';
 }
 const {
   title = "Carlos Astudillo · San Lorenzo",
   description = "Conoce a Carlos Astudillo, candidato a la alcaldía de San Lorenzo por el Partido Social Cristiano, Lista 6. Propuestas y espacios de ciudadanía.",
+  referrerPolicy,
 } = Astro.props;
 const current = Astro.url.pathname;
 const proposals = await contentRepository.getProposals();
@@ -59,6 +61,7 @@ const accessButton =
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
+    {referrerPolicy && <meta name="referrer" content={referrerPolicy} />}
     <meta name="theme-color" content="#063176" />
     <link rel="icon" type="image/jpeg" href="/favicon.jpg" />
     <title>{title}</title>
@@ -170,6 +173,13 @@ const accessButton =
             </DropdownPanel>
           </div>
           <NavLink href="/#contacto">Contáctanos</NavLink>
+          <NavLink
+            href="/cuenta/"
+            active={current.startsWith('/cuenta/')}
+            markCurrent={current === '/cuenta/'}
+          >
+            Iniciar sesión
+          </NavLink>
         </nav>
       </div>
     </header>

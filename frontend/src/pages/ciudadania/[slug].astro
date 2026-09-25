@@ -11,6 +11,7 @@ interface Props {
   proposals: Proposal[];
 }
 
+/** Genera rutas estáticas para los enlaces de ciudadanía disponibles. */
 export async function getStaticPaths() {
   const [citizenLinks, proposals] = await Promise.all([
     contentRepository.getCitizenLinks(),

@@ -1,0 +1,27 @@
+---
+import Layout from '../../layouts/Layout.astro';
+
+interface Props { title: string; lead: string }
+const { title, lead } = Astro.props;
+---
+
+<Layout title={`${title} · Carlos Astudillo`} description={lead} referrerPolicy="no-referrer">
+  <div class="bg-base-100">
+    <div class="site-container flex items-center gap-2.5 py-[18px] text-[0.72rem] max-tablet:py-3 max-tablet:text-[0.65rem]">
+      <a href="/" class="underline">Inicio</a><span>/</span><span id="account-crumb">{title}</span>
+    </div>
+  </div>
+  <section class="border-b-4 border-b-accent bg-secondary py-[55px] max-tablet:py-[38px]">
+    <div class="site-container">
+      <span class="flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.16em] text-primary before:h-[3px] before:w-[30px] before:bg-campaign-red before:content-['']">
+        PARTICIPA EN SAN LORENZO
+      </span>
+      <h1 id="account-title" class="mt-2.5 mb-[7px] text-[clamp(3rem,5vw,4.5rem)] text-primary max-tablet:text-[3rem]">{title}</h1>
+      <p id="account-lead" class="m-0 text-base leading-normal text-primary max-tablet:text-sm">{lead}</p>
+    </div>
+  </section>
+  <section class="bg-base-100 py-10 min-h-[610px] max-tablet:min-h-[560px] max-tablet:pt-7 max-tablet:pb-[50px]">
+    <div class="site-container"><slot /></div>
+  </section>
+  <script src="../../scripts/account-fields.ts"></script>
+</Layout>

@@ -1,0 +1,22 @@
+---
+interface Props {
+  id: string; name: string; label: string; type?: 'text' | 'email' | 'password';
+  placeholder?: string; autocomplete?: string; required?: boolean; maxLength?: number;
+  hint?: string; value?: string;
+}
+const { id, name, label, type = 'text', placeholder, autocomplete, required = false,
+  maxLength, hint, value } = Astro.props;
+---
+
+<div class="mb-[17px]">
+  <label for={id} class="block text-[0.82rem] font-bold">{label}</label>
+  <div class="relative mt-[7px]">
+    <input id={id} name={name} type={type} placeholder={placeholder} autocomplete={autocomplete}
+      required={required} maxlength={maxLength} value={value}
+      aria-describedby={`${id}-error${hint ? ` ${id}-hint` : ''}`}
+      class:list={['min-h-12 w-full rounded-[3px] border border-[#acbacb] bg-base-100 px-3.5 py-3 text-sm text-primary focus-visible:outline-secondary aria-invalid:border-2 aria-invalid:border-error', { 'pr-[90px]': type === 'password' }]} />
+    {type === 'password' && <button type="button" class="password-toggle absolute inset-y-0 right-0 min-h-11 min-w-[76px] px-3 text-[0.82rem] font-bold" data-target={id} aria-label={`Mostrar ${label.toLowerCase()}`} aria-pressed="false">Mostrar</button>}
+  </div>
+  {hint && <p id={`${id}-hint`} class="m-0 mt-1.5 text-[0.72rem] leading-normal text-[#50617d]">{hint}</p>}
+  <p id={`${id}-error`} class="m-0 mt-1.5 text-[0.72rem] font-bold leading-normal text-error" hidden></p>
+</div>

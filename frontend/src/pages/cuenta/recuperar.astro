@@ -1,0 +1,20 @@
+---
+import AccountShell from '../../components/account/AccountShell.astro';
+import AccountCard from '../../components/account/AccountCard.astro';
+import AccountField from '../../components/account/AccountField.astro';
+import AccountStatus from '../../components/account/AccountStatus.astro';
+---
+
+<AccountShell title="Recupera el acceso" lead="Te enviaremos un enlace para elegir una nueva contraseña.">
+  <div class="mx-auto max-w-[560px]">
+    <AccountCard heading="Recibir instrucciones" description="Escribe el correo de tu cuenta. Si tiene acceso por contraseña, enviaremos un enlace válido por 30 minutos.">
+      <AccountStatus />
+      <form id="recovery-form" novalidate>
+        <AccountField id="recovery-email" name="correo" label="Correo electrónico" type="email" placeholder="nombre@ejemplo.com" autocomplete="email" required maxLength={320} />
+        <button type="submit" class="button w-full">Enviar instrucciones</button>
+      </form>
+      <a class="mt-5 inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/">Volver al acceso</a>
+    </AccountCard>
+  </div>
+  <script src="../../scripts/account-recovery.ts"></script>
+</AccountShell>

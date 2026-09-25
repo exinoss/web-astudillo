@@ -1,0 +1,21 @@
+---
+import AccountShell from '../../components/account/AccountShell.astro';
+import AccountCard from '../../components/account/AccountCard.astro';
+import AccountField from '../../components/account/AccountField.astro';
+import AccountStatus from '../../components/account/AccountStatus.astro';
+---
+
+<AccountShell title="Confirma tu correo" lead="Un paso más para activar tu cuenta.">
+  <div class="mx-auto max-w-[560px]">
+    <AccountCard heading="Verificación" description="Comprobaremos el enlace recibido en tu correo.">
+      <AccountStatus />
+      <form id="verify-form" novalidate hidden>
+        <AccountField id="verify-password" name="contrasenia" label="Contraseña usada en el registro" type="password" placeholder="Tu contraseña" autocomplete="current-password" required />
+        <button type="submit" class="button w-full">Confirmar correo</button>
+      </form>
+      <div id="verify-done" hidden><a class="inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/">Ir al acceso</a></div>
+      <a class="mt-5 inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/registro/">Solicitar otro enlace</a>
+    </AccountCard>
+  </div>
+  <script src="../../scripts/account-verify.ts"></script>
+</AccountShell>

@@ -1,0 +1,17 @@
+---
+import Icon from '../Icon.astro';
+
+interface Props {
+  id: string;
+}
+
+const { id } = Astro.props;
+---
+
+<div class="mt-5 border-t border-base-300 pt-4">
+  <p class="m-0 mb-3 text-[0.82rem] leading-normal text-[#50617d]">La sesión se cerrará en este dispositivo.</p>
+  <button id={id} type="button" class="flex min-h-12 w-full items-center justify-center gap-2.5 rounded-[3px] border border-primary bg-base-100 text-[0.85rem] font-bold text-primary hover:bg-[#eef4fb]">
+    <Icon name="logout" size={18} />
+    <span>Cerrar sesión</span>
+  </button>
+</div>

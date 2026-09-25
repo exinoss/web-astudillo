@@ -1,6 +1,26 @@
 # Plan — Modelos 3D interactivos en las páginas de propuesta
 
-> Estado: **pendiente**. Planificado, no implementado. Falta la ficha técnica enviada al proveedor y la aprobación de diseño del bloque en la página de detalle.
+> Estado: **en curso — 1 de 7 modelos integrado** (Tecnologías emergentes). Diseño del bloque aprobado; el modelo carga al abrir la página. Pendiente: los otros 6 modelos.
+
+## Cómo añadir un modelo nuevo
+
+1. Copiar el `.glb` del proveedor a `frontend/modelos-fuente/<slug>.glb` (el original, sin tocar).
+2. `bun run modelos` (desde `frontend/`) → genera `public/models/<slug>.glb` optimizado y su póster en `src/assets/models/<slug>.png`, con el mismo encuadre que el visor.
+3. Añadir `model: { src, poster, alt }` a la propuesta en `frontend/src/lib/data/mock/seed-data.ts`.
+
+## Lo que enseñó el primer modelo
+
+El primer `.glb` real (`tecnologias-emergentes`) contradijo varias suposiciones del plan:
+
+- **Vino de SolidWorks, sin animación y sin texturas**: 2,69 MB, ~55.000 triángulos, 12 materiales y una cámara incluida. El plan asumía modelos animados; con uno estático, el «movimiento» es la rotación automática, y es lo que desactiva «Reducir movimiento».
+- **No hay que simplificar** (`--simplify false`): los modelos CAD se deforman. Aun así, fusionar vértices y deduplicar piezas repetidas basta para bajar a 282 KB.
+- **No hay que usar instancias de GPU** (`--instance false`): `model-viewer` calcula mal la caja envolvente de los tornillos instanciados; el modelo se encuadraba más pequeño y las sombras flotaban despegadas de los pies. Cuesta 8 KB más.
+- **Meshopt sigue ganando a Draco, pero por otra razón**: servido con gzip, meshopt queda en 79 KB y Draco en 152 KB contando su decodificador, que además `model-viewer` descarga de `gstatic.com`. Meshopt no tiene ubicación por defecto: si no se configura `meshoptDecoderLocation` **el modelo no carga, sin ningún error visible**.
+- **`model-viewer` se carga con un `<script>` insertado, no con `import()`**. Con `import()` fallaban tres cosas: el servidor de desarrollo respondía 504 al descubrir la dependencia tarde; el navegador memoriza un `import()` fallido y no se podía reintentar; y cuando Astro incrusta el script en el HTML, Vite deja sin sustituir `__VITE_PRELOAD__`. En los tres casos el visitante veía solo el póster, sin aviso. Si la carga falla, ahora aparece «Ver en 3D» para reintentar.
+- **La rueda acerca mientras el cursor está dentro del recuadro del modelo**, y fuera de él hace scroll. Se descartó exigir Ctrl + rueda (como Google Maps) porque un atajo de teclado no es accesible. En móvil se pellizca.
+- **El proveedor no entregó póster, y es mejor generarlo aquí**: renderizado desde el propio modelo con la misma cámara y proporción, el paso de póster a 3D no da salto.
+- **La carga diferida no ahorra nada en esta ubicación**: el bloque queda visible al abrir la página en todos los tamaños medidos (de 360 a 1440 px). Medido en móvil con gzip: una propuesta sin modelo pesa ~132 KB y esta ~450 KB, de los que 366 KB son el 3D. Se decidió mantener la carga al abrir; con ahorro de datos activo sigue apareciendo el botón «Ver en 3D».
+- **`frontend/modelos-fuente/` guarda los originales** (2,7 MB este) en el repositorio normal, sin Git LFS: con 7 modelos de ~3 MB el repositorio lo aguanta sin problema.
 
 ## Contexto
 
@@ -147,7 +167,7 @@ La interfaz `ContentRepository` **no cambia**: es un campo más en un tipo que y
 
 - Los `.glb` van en **`frontend/public/models/`**. Astro no procesa binarios 3D, así que se sirven tal cual con URL estable.
 - Los pósters van en **`frontend/src/assets/models/`** para que `astro:assets` genere los WebP responsive.
-- **Atención al repositorio**: 7 × 1,5 MB ≈ 10 MB de binarios en git. Decidir si se usa Git LFS antes del primer commit — después es más molesto de migrar.
+- **Repositorio**: los originales y los optimizados van al repositorio normal, sin Git LFS.
 
 ### Componente
 
@@ -186,6 +206,6 @@ Añadir un bloque 3D a las 7 páginas de detalle **cambia el diseño aprobado po
 ## Riesgos y decisiones abiertas
 
 - **Que los modelos lleguen fuera de presupuesto.** Es lo más probable: los artistas 3D optimizan para render, no para web. Por eso la ficha lleva límite duro y la tubería de `gltf-transform` está en el plan, no como plan B.
-- **Git LFS: decidir antes del primer commit.**
+- **Git LFS descartado**: solo se reconsidera si algún modelo supera con creces el límite de 3 MB.
 - **Los 150 KB de `model-viewer` sobre three.js a medida.** Asumidos a propósito; revisable después sin tocar nada fuera del componente.
 - **Si al ver el primer modelo real el peso o el rendimiento en móvil no convencen**, el repliegue natural es video pre-renderizado (~250 KB, cero JS), que ya estaba evaluado. Se pierde la interacción, pero es un cambio contenido: mismo hueco en la página, mismo campo en los datos.

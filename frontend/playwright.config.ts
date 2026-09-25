@@ -1,5 +1,5 @@
 import { defineConfig } from '@playwright/test';
-const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://127.0.0.1:4321';
+const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:4321';
 export default defineConfig({
   testDir: './tests',
   use: { baseURL, channel: 'msedge', headless: true },
