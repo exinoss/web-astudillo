@@ -4,11 +4,14 @@ export interface Account {
   nombresCompletos: string | null;
   direccion: string | null;
   rol: string;
+  /** Solo llega en true para la propia cuenta maestra. */
+  esMaestro?: boolean;
 }
 
 export interface Profile extends Account {
   tieneContrasenia: boolean;
   tieneGoogle: boolean;
+  permisos: string[];
 }
 
 export interface AuthRepository {

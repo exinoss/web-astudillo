@@ -16,12 +16,39 @@ services:
       PORT: "3000"
     expose:
       - "3000"
+    volumes:
+      - medios:/app/medios
     healthcheck:
       test: ["CMD", "bun", "-e", "const response = await fetch('http://127.0.0.1:3000/api/health'); if (!response.ok) process.exit(1)"]
       interval: 30s
       timeout: 5s
       retries: 3
       start_period: 20s
+    networks:
+      - api
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Compila el sitio estático cada vez que alguien publica desde el panel.
+  publicador:
+    image: astudillo-publicador:local
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.publicador
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # El cliente de Google del frontend es el mismo que valida el backend.
+      PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - sitio:/srv/sitio
     networks:
       - api
     logging:
@@ -43,6 +70,8 @@ services:
       - "9617:443"
     volumes:
       - nginxfiles:/home/app/nginx:ro
+      - sitio:/srv/sitio:ro
+      - medios:/srv/medios:ro
     networks:
       - api
     logging:
@@ -57,3 +86,5 @@ networks:
 volumes:
   nginxfiles:
     external: true
+  sitio:
+  medios:

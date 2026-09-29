@@ -17,14 +17,15 @@ function renew() {
   return renewal;
 }
 
-/** Envía solicitudes con cookies y reintenta una vez tras renovar la sesión. */
+/** Envía solicitudes con cookies y reintenta una vez tras renovar la sesión. Un FormData viaja como multipart. */
 export async function apiRequest<T>(
-  path: string, method = 'GET', body?: object, retryAfterRenewal = false,
+  path: string, method = 'GET', body?: object | FormData, retryAfterRenewal = false,
 ): Promise<T> {
+  const multipart = body instanceof FormData;
   const send = () => fetch(path, {
     method, credentials: 'same-origin', cache: 'no-store',
-    headers: body ? { 'Content-Type': 'application/json' } : undefined,
-    body: body ? JSON.stringify(body) : undefined,
+    headers: body && !multipart ? { 'Content-Type': 'application/json' } : undefined,
+    body: multipart ? body : body ? JSON.stringify(body) : undefined,
   });
   let response: Response;
   try {

@@ -15,7 +15,7 @@ COPY tests ./tests
 COPY drizzle ./drizzle
 COPY database ./database
 # Bun 1.3.14 en Alpine resuelve tsc desde .bin y pierde la ruta de sus imports relativos.
-RUN bun ./node_modules/typescript/bin/tsc --noEmit && bun test tests/proxy.test.ts
+RUN bun ./node_modules/typescript/bin/tsc --noEmit && bun test tests/proxy.test.ts tests/http-errors.test.ts
 
 FROM base AS runtime
 COPY --from=prod_deps /app/node_modules ./node_modules
@@ -23,6 +23,8 @@ COPY --from=checked /app/src ./src
 COPY drizzle ./drizzle
 COPY database/fn.sql database/datains.sql ./database/
 ENV NODE_ENV=production
+# Carpeta del volumen de fotos: si no existe con este dueño, Docker la crea como root.
+RUN mkdir -p /app/medios && chown bun:bun /app/medios
 USER bun
 EXPOSE 3000
 CMD ["bun", "run", "start"]

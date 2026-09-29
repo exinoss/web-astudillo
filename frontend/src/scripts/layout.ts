@@ -1,11 +1,24 @@
 import { setAccountNav } from '../lib/auth/navigation';
 import { authRepository } from '../lib/data/auth';
 import { ApiError } from '../lib/data/http/api-client';
+import type { Profile } from '../lib/data/auth-repository';
 
 if (location.pathname !== '/cuenta/') {
   authRepository.getProfile()
-    .then(() => setAccountNav(true))
+    .then(profile => {
+      setAccountNav(true);
+      if (profile.permisos?.includes('contenido.editar') && !location.pathname.startsWith('/cuenta/')) void loadEditMode(profile);
+    })
     .catch(error => setAccountNav(error instanceof ApiError && error.status === 403));
+}
+
+/** Descarga el editor solo para quien puede editar; si la red falla, reintenta una vez. */
+async function loadEditMode(profile: Profile, attempt = 0): Promise<void> {
+  try {
+    (await import('./modo-edicion')).startEditMode(profile);
+  } catch {
+    if (attempt < 1) setTimeout(() => void loadEditMode(profile, attempt + 1), 3000);
+  }
 }
 
 const nav = document.querySelector<HTMLElement>("#main-nav")!;

@@ -11,7 +11,7 @@ const { title, lead } = Astro.props;
       <a href="/" class="underline">Inicio</a><span>/</span><span id="account-crumb">{title}</span>
     </div>
   </div>
-  <section class="border-b-4 border-b-accent bg-secondary py-[55px] max-tablet:py-[38px]">
+  <section class="border-b-4 border-b-accent bg-secondary py-10 max-tablet:py-7">
     <div class="site-container">
       <span class="flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.16em] text-primary before:h-[3px] before:w-[30px] before:bg-campaign-red before:content-['']">
         PARTICIPA EN SAN LORENZO
@@ -20,7 +20,7 @@ const { title, lead } = Astro.props;
       <p id="account-lead" class="m-0 text-base leading-normal text-primary max-tablet:text-sm">{lead}</p>
     </div>
   </section>
-  <section class="bg-base-100 py-10 min-h-[610px] max-tablet:min-h-[560px] max-tablet:pt-7 max-tablet:pb-[50px]">
+  <section class="bg-base-100 pt-8 pb-14 max-tablet:pt-6 max-tablet:pb-10">
     <div class="site-container"><slot /></div>
   </section>
   <script src="../../scripts/account-fields.ts"></script>

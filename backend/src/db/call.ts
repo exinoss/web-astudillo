@@ -30,11 +30,38 @@ const names = {
   sessionRotate: 'fn_session_rotate',
   sessionRevoke: 'fn_session_revoke',
   profileUpdate: 'fn_profile_update',
+  userPermissions: 'fn_user_permissions',
+  userById: 'fn_user_by_id',
+  adminUsers: 'fn_admin_users',
+  roleChange: 'fn_role_change',
+  userStateChange: 'fn_user_state_change',
+  textsList: 'fn_texts_list',
+  textSave: 'fn_text_save',
+  proposalsList: 'fn_proposals_list',
+  proposalSave: 'fn_proposal_save',
+  biographyList: 'fn_biography_list',
+  biographySave: 'fn_biography_save',
+  worksList: 'fn_works_list',
+  workSave: 'fn_work_save',
+  mediaCreate: 'fn_media_create',
+  mediaByIds: 'fn_media_by_ids',
+  publicationCreate: 'fn_publication_create',
+  publicationsList: 'fn_publications_list',
+  publicationLastPublished: 'fn_publication_last_published',
+  publicationClaim: 'fn_publication_claim',
+  publicationFinish: 'fn_publication_finish',
+  publicationRecover: 'fn_publication_recover',
+  masterCreate: 'fn_master_create',
+  masterTransfer: 'fn_master_transfer',
 } as const;
 
 export type PgFunction = keyof typeof names;
 
-/** Ejecuta una función PostgreSQL permitida con parámetros enlazados. */
+/**
+ * Ejecuta una función PostgreSQL permitida con parámetros enlazados.
+ * Los objetos y arreglos de objetos van tal cual a parámetros jsonb. Las listas de números
+ * van como texto «1,2,3»: el driver de Bun 1.3 se cae al enlazar arreglos numéricos.
+ */
 export function callPg<T extends object = Record<string, unknown>>(
   db: SQL, functionName: PgFunction, values: unknown[] = [],
 ): Promise<T[]> {

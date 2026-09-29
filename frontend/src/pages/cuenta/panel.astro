@@ -1,0 +1,69 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import Icon from "../../components/Icon.astro";
+
+// Usuarios solo se muestra con permiso: el script la destapa según /api/me.
+const pestanias = [
+  { id: "propuestas", nombre: "Propuestas" },
+  { id: "biografia", nombre: "Biografía" },
+  { id: "obras", nombre: "Obras" },
+  { id: "textos", nombre: "Textos del sitio" },
+  { id: "publicaciones", nombre: "Publicaciones" },
+  { id: "usuarios", nombre: "Usuarios" },
+];
+---
+
+<Layout title="Panel de administración · Carlos Astudillo" referrerPolicy="no-referrer">
+  <section class="border-b-4 border-b-accent bg-secondary py-10 max-tablet:py-6">
+    <div class="site-container">
+      <span class="flex items-center gap-3 text-[0.69rem] font-bold tracking-[0.16em] text-primary before:h-[3px] before:w-[30px] before:bg-campaign-red before:content-['']">
+        PANEL DE ADMINISTRACIÓN
+      </span>
+      <div class="flex flex-wrap items-end justify-between gap-x-5 gap-y-3">
+        <h1 id="panel-titulo" class="mt-2.5 mb-1.5 text-[clamp(2.8rem,5vw,4rem)] text-primary">Panel</h1>
+        <div class="mb-2.5 flex items-center gap-2.5 max-tablet:w-full max-tablet:flex-wrap">
+          <span id="panel-rol" class="rounded-full bg-primary px-3 py-1 text-[0.66rem] font-bold tracking-[0.08em] text-primary-content uppercase" hidden></span>
+          <button id="panel-publicar" type="button" class="button max-tablet:w-full" hidden>
+            <Icon name="upload" size={18} /> <span>Publicar cambios</span>
+          </button>
+        </div>
+      </div>
+      <p id="panel-quien" class="m-0 text-[0.95rem] text-primary">Los cambios se guardan como borrador hasta que publicas.</p>
+    </div>
+  </section>
+  <div class="border-b border-b-base-300 bg-base-100">
+    <div class="site-container overflow-x-auto">
+      <div id="panel-pestanias" class="flex gap-7 whitespace-nowrap max-tablet:gap-5" role="tablist" aria-label="Secciones del panel" hidden>
+        {pestanias.map((p) => (
+          <button
+            type="button"
+            role="tab"
+            id={`pestania-${p.id}`}
+            aria-controls={`seccion-${p.id}`}
+            aria-selected="false"
+            data-pestania={p.id}
+            class="relative min-h-11 py-4 text-[0.88rem] font-bold text-neutral aria-selected:text-primary aria-selected:after:absolute aria-selected:after:inset-x-0 aria-selected:after:-bottom-px aria-selected:after:h-[3px] aria-selected:after:bg-secondary aria-selected:after:content-['']"
+            hidden={p.id === "usuarios"}
+          >
+            {p.nombre}
+          </button>
+        ))}
+      </div>
+    </div>
+  </div>
+  <section class="bg-base-100 pt-8 pb-14 max-tablet:pt-6 max-tablet:pb-10">
+    <div class="site-container">
+      <p id="panel-estado" role="status" aria-live="polite" hidden
+        class="mb-5 border-l-4 border-primary bg-[#eef4fb] px-4 py-3 text-[0.82rem] leading-normal text-primary data-[error=true]:border-error data-[error=true]:bg-[#fff2f2] data-[error=true]:text-error"></p>
+      <div id="panel-cargando" class="min-h-[160px] text-sm">Cargando el panel…</div>
+      <div id="panel-sin-acceso" class="max-w-[560px]" hidden>
+        <p class="mt-0">No tienes permiso para ver esta página.</p>
+        <a class="button" href="/cuenta/">Ir a mi cuenta</a>
+      </div>
+      {pestanias.map((p) => (
+        <div id={`seccion-${p.id}`} role="tabpanel" aria-labelledby={`pestania-${p.id}`} data-seccion={p.id} hidden></div>
+      ))}
+    </div>
+  </section>
+  <script src="../../scripts/panel/index.ts"></script>
+</Layout>

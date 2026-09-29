@@ -1,5 +1,6 @@
 import { authRepository } from '../lib/data/auth';
 import { errorText, readToken, showStatus, validateFields, value } from '../lib/auth/page';
+import { mostrarCarga } from '../lib/animaciones';
 
 const form = document.querySelector<HTMLFormElement>('#reset-form')!;
 const status = document.querySelector<HTMLElement>('#account-status')!;
@@ -17,6 +18,7 @@ form.addEventListener('submit', async event => {
   if (!token) return;
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
   submit.disabled = true;
+  const terminarCarga = mostrarCarga(form);
   try {
     if (!validateFields(form)) {
       showStatus(status, 'Revisa los campos marcados.', true);
@@ -30,6 +32,7 @@ form.addEventListener('submit', async event => {
   } catch (error) {
     showStatus(status, errorText(error), true);
   } finally {
+    terminarCarga();
     submit.disabled = false;
   }
 });

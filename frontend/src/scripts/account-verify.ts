@@ -1,6 +1,7 @@
 import { authRepository } from '../lib/data/auth';
 import { ApiError } from '../lib/data/http/api-client';
 import { errorText, readToken, showStatus, validateFields, value } from '../lib/auth/page';
+import { mostrarCarga } from '../lib/animaciones';
 
 const status = document.querySelector<HTMLElement>('#account-status')!;
 const form = document.querySelector<HTMLFormElement>('#verify-form')!;
@@ -11,6 +12,7 @@ if (!token) {
   showStatus(status, 'El enlace de verificación no es válido. Solicita uno nuevo desde el registro.', true);
 } else {
   showStatus(status, 'Confirmando tu correo…');
+  const terminarCarga = mostrarCarga(form.closest('section')!, 'Confirmando tu correo…');
   try {
     await authRepository.verifyEmail(token);
     showStatus(status, 'Correo confirmado. Ya puedes iniciar sesión.');
@@ -20,6 +22,8 @@ if (!token) {
       showStatus(status, 'Este enlace se abrió en otro navegador. Escribe la contraseña que usaste al registrarte.');
       form.hidden = false;
     } else showStatus(status, errorText(error), true);
+  } finally {
+    terminarCarga();
   }
 }
 
@@ -29,6 +33,7 @@ form.addEventListener('submit', async event => {
   if (!token) return;
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
   submit.disabled = true;
+  const terminarCarga = mostrarCarga(form);
   try {
     if (!validateFields(form)) {
       showStatus(status, 'Escribe la contraseña usada al registrarte.', true);
@@ -41,6 +46,7 @@ form.addEventListener('submit', async event => {
   } catch (error) {
     showStatus(status, errorText(error), true);
   } finally {
+    terminarCarga();
     submit.disabled = false;
   }
 });

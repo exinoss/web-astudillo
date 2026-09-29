@@ -1,6 +1,7 @@
 ---
 import Layout from "../layouts/Layout.astro";
 import Icon from "../components/Icon.astro";
+import Editable from "../components/Editable.astro";
 import { Image } from "astro:assets";
 import cover from "../assets/portada.jpg";
 import carlos from "../assets/carlos-vertical.png";
@@ -21,15 +22,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
     aria-label="Presentación de Carlos Astudillo"
     aria-roledescription="carrusel"
   >
-    <div class="site-container flex min-h-16 items-center justify-between min-wide:min-h-[75px] max-tablet:min-h-[53px]">
-      <span class="eyebrow max-nav:text-[0.57rem] max-tablet:text-[0.52rem] max-tablet:tracking-[0.1em]">
-        CARLOS ASTUDILLO · CANDIDATO A ALCALDE
-      </span>
-      <span class="text-[0.88rem] max-nav:text-[0.76rem] max-tablet:hidden">
-        Por ti, <strong class="text-neutral">San Lorenzo.</strong>
-      </span>
-    </div>
-    <div class="hero-slides bg-accent">
+    <div class="hero-slides relative bg-accent">
       <div
         class="relative aspect-[1947/741] w-full max-h-[680px] overflow-hidden min-wide:max-h-[740px] max-tablet:aspect-[4/3] max-tablet:max-h-none"
         data-slide="0"
@@ -50,19 +43,9 @@ const citizenLinks = await contentRepository.getCitizenLinks();
           quality={85}
         />
         <div class="hidden max-tablet:absolute max-tablet:inset-y-0 max-tablet:right-auto max-tablet:left-0 max-tablet:flex max-tablet:w-[48%] max-tablet:flex-col max-tablet:justify-center max-tablet:bg-accent max-tablet:pt-6 max-tablet:pr-0 max-tablet:pb-5 max-tablet:pl-5">
-          <span class="max-tablet:text-[0.56rem] max-tablet:font-bold max-tablet:tracking-[0.08em]">
-            PSC · LISTA 6
-          </span>
-          <h2 class="max-tablet:mx-0 max-tablet:mt-[15px] max-tablet:mb-[18px] max-tablet:text-[clamp(2rem,8vw,3.6rem)]">
-            Por ti,
-            <br />
-            San Lorenzo.
-          </h2>
-          <p class="max-tablet:m-0 max-tablet:text-[0.67rem] max-tablet:leading-[1.6] max-tablet:text-primary">
-            Carlos Astudillo
-            <br />
-            Candidato a alcalde
-          </p>
+          <Editable clave="inicio.carrusel.antetitulo" class="max-tablet:text-[0.56rem] max-tablet:font-bold max-tablet:tracking-[0.08em]" />
+          <Editable as="h2" clave="inicio.carrusel.titulo" class="max-tablet:mx-0 max-tablet:mt-[15px] max-tablet:mb-[18px] max-tablet:text-[clamp(2rem,8vw,3.6rem)]" />
+          <Editable as="p" clave="inicio.carrusel.texto" class="max-tablet:m-0 max-tablet:text-[0.67rem] max-tablet:leading-[1.6] max-tablet:text-primary" />
         </div>
       </div>
       <div
@@ -75,15 +58,11 @@ const citizenLinks = await contentRepository.getCitizenLinks();
       >
         <div class="alternate-inner site-container flex h-full items-center justify-between max-tablet:w-full max-tablet:pl-5">
           <div class="py-[25px] max-tablet:w-[48%] max-tablet:py-2.5">
-            <span class="eyebrow max-tablet:text-[0.48rem] max-tablet:tracking-[0.08em]">
-              CONOCE AL CANDIDATO
-            </span>
+            <Editable clave="inicio.carrusel-2.antetitulo" class="eyebrow max-tablet:text-[0.48rem] max-tablet:tracking-[0.08em]" />
             <h2 class="mx-0 mt-[15px] mb-6 text-[clamp(2rem,5.7vw,6rem)] max-tablet:mt-2.5 max-tablet:mb-[15px] max-tablet:text-[clamp(2rem,7vw,3.5rem)]">
-              Respeto.
+              <Editable clave="inicio.carrusel-2.titulo" />
               <br />
-              Coherencia.
-              <br />
-              <em class="text-accent not-italic">Claridad.</em>
+              <Editable as="em" clave="inicio.carrusel-2.destacado" class="text-accent not-italic" />
             </h2>
             <a
               href="/acerca-de-nosotros/"
@@ -102,14 +81,16 @@ const citizenLinks = await contentRepository.getCitizenLinks();
           />
         </div>
       </div>
-    </div>
-    <div class="hero-controls border-b border-b-base-300 bg-secondary">
-      <div class="site-container flex min-h-[69px] items-center justify-start gap-7 max-tablet:min-h-[66px] max-tablet:flex-wrap max-tablet:justify-center max-tablet:gap-4 max-tablet:py-3.5">
+      {/* En escritorio las flechas quedan a los lados; en móvil se unen a los puntos para no tapar el texto. */}
+      <div class="carousel-controls pointer-events-none absolute inset-0 flex items-end justify-center pb-4 max-tablet:pb-2.5">
         <div
-          class="carousel-controls mx-auto flex items-center gap-2.5 max-tablet:mx-0"
+          class="pointer-events-auto flex items-center gap-2.5 rounded-full bg-base-100/85 px-3 py-2 max-tablet:gap-3 max-tablet:px-2 max-tablet:py-1"
           role="group"
           aria-label="Controles del carrusel"
         >
+          <button class="slide-prev left-5 pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-primary/65 text-primary-content hover:bg-primary max-tablet:relative max-tablet:top-auto max-tablet:size-8 max-tablet:translate-y-0 max-tablet:bg-transparent max-tablet:text-primary max-tablet:before:absolute max-tablet:before:-inset-1.5 max-tablet:before:content-[''] max-tablet:hover:bg-transparent" type="button" aria-label="Diapositiva anterior">
+            <Icon name="chevronLeft" size={22} />
+          </button>
           <button
             class="slide-dot grid h-[11px] min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5 is-active"
             type="button"
@@ -122,6 +103,9 @@ const citizenLinks = await contentRepository.getCitizenLinks();
             aria-label="Ver diapositiva 2"
             aria-current="false"
           ></button>
+          <button class="slide-next right-5 pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-primary/65 text-primary-content hover:bg-primary max-tablet:relative max-tablet:top-auto max-tablet:size-8 max-tablet:translate-y-0 max-tablet:bg-transparent max-tablet:text-primary max-tablet:before:absolute max-tablet:before:-inset-1.5 max-tablet:before:content-[''] max-tablet:hover:bg-transparent" type="button" aria-label="Diapositiva siguiente">
+            <Icon name="chevronRight" size={22} />
+          </button>
         </div>
       </div>
     </div>
@@ -132,12 +116,8 @@ const citizenLinks = await contentRepository.getCitizenLinks();
   >
     <div class="site-container grid min-h-[150px] grid-cols-[1fr_1.2fr_1.2fr_1.2fr] items-center gap-[25px] max-nav:grid-cols-2 max-nav:gap-5 max-nav:py-[25px] max-tablet:grid-cols-1 max-tablet:gap-0 max-tablet:py-[30px]">
       <div class="max-nav:pl-2.5 max-tablet:pb-5 max-tablet:pl-0">
-        <span class="eyebrow text-[0.53rem] text-accent max-nav:text-[0.6rem]">
-          ESTAMOS PARA ESCUCHARTE
-        </span>
-        <h2 class="mt-1.5 mr-0 mb-0 text-[2.1rem] max-nav:text-[2.3rem] max-tablet:text-[2.4rem]">
-          Tu voz cuenta.
-        </h2>
+        <Editable clave="inicio.participa.antetitulo" class="eyebrow text-[0.53rem] text-accent max-nav:text-[0.6rem]" />
+        <Editable as="h2" clave="inicio.participa.titulo" class="mt-1.5 mr-0 mb-0 text-[2.1rem] max-nav:text-[2.3rem] max-tablet:text-[2.4rem]" />
       </div>
       {[...citizenLinks]
         .sort(
@@ -246,28 +226,20 @@ const citizenLinks = await contentRepository.getCitizenLinks();
       </div>
       <div class="">
         <span class="eyebrow">
-          <span class="short-line"></span> CONOCE A CARLOS
+          <span class="short-line"></span> <Editable clave="inicio.conoce.antetitulo" />
         </span>
         <h2 class="mt-4 mb-5 text-[clamp(3rem,4.8vw,4.6rem)] max-nav:text-[3.3rem] max-tablet:text-[3.4rem]">
-          Una ciudad.
-          <br />
-          Todas sus <span class="text-neutral">voces.</span>
+          <Editable clave="inicio.conoce.titulo" /> <Editable clave="inicio.conoce.destacado" class="text-neutral" />
         </h2>
-        <p class="lead text-[1.13rem] text-primary max-nav:text-[1rem] max-tablet:text-[1.1rem]">
-          «Creo en una ciudad donde el progreso no sea privilegio de pocos, sino
-          derecho de todos».
-        </p>
-        <p class="mb-[25px] max-w-[430px] text-[0.88rem] max-tablet:max-w-none">
-          Carlos Astudillo, candidato a la alcaldía de San Lorenzo por el
-          Partido Social Cristiano, Lista 6.
-        </p>
+        <Editable as="p" clave="inicio.conoce.cita" class="lead text-[1.13rem] text-primary max-nav:text-[1rem] max-tablet:text-[1.1rem]" />
+        <Editable as="p" clave="inicio.conoce.texto" class="mb-[25px] max-w-[430px] text-[0.88rem] max-tablet:max-w-none" />
         <a class="button" href="/acerca-de-nosotros/">
           Acerca de nosotros <Icon name="arrow" size={19} />
         </a>
         <div class="values mt-[30px] flex gap-5 text-[0.64rem] font-bold tracking-[0.04em] uppercase max-nav:gap-3 max-nav:text-[0.58rem] max-tablet:flex-wrap max-tablet:gap-2.5 max-tablet:text-[0.65rem]">
-          <span class="rounded-full bg-base-100 px-4 py-[7px]">Respeto</span>
-          <span class="rounded-full bg-base-100 px-4 py-[7px]">Coherencia</span>
-          <span class="rounded-full bg-base-100 px-4 py-[7px]">Claridad</span>
+          <Editable clave="inicio.valores.1" class="rounded-full bg-base-100 px-4 py-[7px]" />
+          <Editable clave="inicio.valores.2" class="rounded-full bg-base-100 px-4 py-[7px]" />
+          <Editable clave="inicio.valores.3" class="rounded-full bg-base-100 px-4 py-[7px]" />
         </div>
       </div>
     </div>
@@ -279,16 +251,16 @@ const citizenLinks = await contentRepository.getCitizenLinks();
     <div class="site-container">
       <div class="mb-10 flex items-end justify-between gap-[30px] max-tablet:mb-[25px] max-tablet:block">
         <div>
-          <span class="eyebrow">CONOCE LOS EJES</span>
+          <Editable clave="inicio.propuestas.antetitulo" class="eyebrow" />
           <h2 class="mt-2.5 mr-0 mb-0 text-[3.3rem] max-nav:text-[2.8rem]">
-            Propuestas para{" "}
-            <span class="text-neutral max-tablet:block">San Lorenzo.</span>
+            <Editable clave="inicio.propuestas.titulo" />{" "}
+            <Editable clave="inicio.propuestas.destacado" class="text-neutral max-tablet:block" />
           </h2>
         </div>
         <p class="mt-0 mr-0 mb-[5px] ml-0 text-[0.83rem] max-nav:max-w-[200px] max-tablet:mt-[18px] max-tablet:max-w-none max-tablet:text-[0.82rem]">
-          Explora cada tema.
+          <Editable clave="inicio.propuestas.texto-1" />
           <br class="max-tablet:hidden" />
-          Conoce lo que se propone para tu ciudad.
+          <Editable clave="inicio.propuestas.texto-2" />
         </p>
       </div>
       <div class="grid grid-cols-[repeat(4,1fr)] gap-[18px] max-nav:grid-cols-[repeat(2,1fr)] max-tablet:gap-3 max-mobile-xs:grid-cols-[1fr]">
@@ -338,43 +310,38 @@ const citizenLinks = await contentRepository.getCitizenLinks();
   >
     <div class="site-container grid grid-cols-[0.8fr_1.35fr] items-center gap-[72px] max-laptop:grid-cols-[1fr] max-laptop:gap-8">
       <div class="contact-intro">
-        <span class="eyebrow text-[0.85rem] tracking-[0.1em]">CERCA DE TI</span>
+        <Editable clave="inicio.contacto.antetitulo" class="eyebrow text-[0.85rem] tracking-[0.1em]" />
         <h2
           id="contact-title"
           class="mx-0 mt-4 mb-[22px] font-display text-[clamp(3.6rem,5vw,5.2rem)] leading-[1.08] font-semibold tracking-[-0.01em] text-neutral max-tablet:mt-3 max-tablet:mb-[18px] max-tablet:text-[3.5rem]"
         >
-          Conecta con
+          <Editable clave="inicio.contacto.titulo" />
           <br class="max-laptop:hidden" />
-          <span class="text-inherit">Carlos.</span>
+          <Editable clave="inicio.contacto.destacado" class="text-inherit" />
         </h2>
-        <p class="mb-[26px] max-w-[370px] text-[1.125rem] leading-[1.8] font-medium text-primary max-laptop:max-w-[640px] max-tablet:mb-0">
-          Sigue las actividades, conoce el día a día y participa en la
-          conversación.
-        </p>
-        <span class="inline-block border-t-2 border-t-primary pt-[15px] text-[1rem] font-bold max-tablet:hidden">
-          Por ti, San Lorenzo.
-        </span>
+        <Editable as="p" clave="inicio.contacto.texto" class="mb-[26px] max-w-[370px] text-[1.125rem] leading-[1.8] font-medium text-primary max-laptop:max-w-[640px] max-tablet:mb-0" />
+        <Editable clave="global.lema" class="inline-block border-t-2 border-t-primary pt-[15px] text-[1rem] font-bold max-tablet:hidden" />
       </div>
       <div class="">
         <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-5 max-laptop:gap-[15px] max-mobile:grid-cols-[1fr]">
-          {[
+          {([
             {
               name: "Facebook",
               icon: "facebook",
-              handle: "@carlosastudillo7",
-              copy: "Encuentros, noticias y actividades en San Lorenzo.",
+              handle: "inicio.contacto.facebook.usuario",
+              copy: "inicio.contacto.facebook.texto",
               url: "https://www.facebook.com/carlosastudillo7",
               action: "Ir a Facebook",
             },
             {
               name: "TikTok",
               icon: "tiktok",
-              handle: "@carlosastudillo01",
-              copy: "Historias y momentos, más cerca de Carlos.",
+              handle: "inicio.contacto.tiktok.usuario",
+              copy: "inicio.contacto.tiktok.texto",
               url: "https://www.tiktok.com/@carlosastudillo01",
               action: "Ver en TikTok",
             },
-          ].map((s) => (
+          ] as const).map((s) => (
             <a
               class="group flex flex-col rounded-[10px] border-2 border-transparent bg-base-100 p-7 text-primary [box-shadow:0_6px_0_#06317614] [transition:transform_0.18s,border-color_0.18s,box-shadow_0.18s] hover:-translate-y-1 hover:border-primary hover:[box-shadow:0_10px_0_#06317614] max-laptop:p-[22px] max-tablet:p-5 max-mobile:p-6"
               href={s.url}
@@ -398,12 +365,8 @@ const citizenLinks = await contentRepository.getCitizenLinks();
               <h3 class="mb-2 font-sans text-[1.65rem] leading-[1.3] font-bold tracking-[-0.025em] max-tablet:text-[1.6rem]">
                 {s.name}
               </h3>
-              <span class="text-[0.95rem] font-medium text-neutral [overflow-wrap:anywhere]">
-                {s.handle}
-              </span>
-              <p class="mx-0 mt-[18px] mb-[26px] text-[1rem] leading-[1.75] text-primary max-tablet:mt-3.5 max-tablet:mb-5">
-                {s.copy}
-              </p>
+              <Editable clave={s.handle} class="text-[0.95rem] font-medium text-neutral [overflow-wrap:anywhere]" />
+              <Editable as="p" clave={s.copy} class="mx-0 mt-[18px] mb-[26px] text-[1rem] leading-[1.75] text-primary max-tablet:mt-3.5 max-tablet:mb-5" />
               <span class="mt-auto flex min-h-12 items-center justify-between gap-2.5 [border-top:1px_solid_#06317625] pt-[18px] text-[1rem] font-bold group-hover:underline group-hover:underline-offset-4">
                 {s.action}
                 <Icon name="arrow" size={19} />
@@ -421,7 +384,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
           <Icon name="whatsapp" size={25} />
           <span class="flex flex-col flex-wrap gap-x-2.5 gap-y-1 text-[1rem] leading-[1.65] max-tablet:min-w-[180px] max-tablet:flex-1">
             <strong>WhatsApp</strong>
-            <span>Escríbenos directamente por WhatsApp.</span>
+            <Editable clave="inicio.contacto.whatsapp.texto" />
           </span>
           <Icon name="arrow" size={19} />
         </a>

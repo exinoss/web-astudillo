@@ -30,3 +30,6 @@ npm-debug.log*
 # Instrucciones locales para agentes (no versionar)
 /AGENTS.md
 /CLAUDE.md
+
+# Versiones del sitio generadas por el publicador
+/sitio/

@@ -1,4 +1,5 @@
 import { alertRepository, chatRepository, suggestionRepository } from "../lib/data";
+import { mostrarCarga } from "../lib/animaciones";
 
 const form = document.querySelector<HTMLFormElement>(".citizen-form");
 if (form) {
@@ -18,8 +19,11 @@ if (form) {
     const nombre =
       form.querySelector<HTMLInputElement>("#name")?.value.trim() || undefined;
     const mensaje = form.querySelector<HTMLTextAreaElement>("#message")!.value;
-    const result = isAlert
-      ? await alertRepository.submit({
+    const submit = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
+    submit.disabled = true;
+    const terminarCarga = mostrarCarga(form);
+    const result = await (isAlert
+      ? alertRepository.submit({
           nombre,
           sector: form.querySelector<HTMLInputElement>("#topic")!.value,
           referencia:
@@ -29,11 +33,15 @@ if (form) {
           foto: form.querySelector<HTMLInputElement>("#damage-photo")
             ?.files?.[0],
         })
-      : await suggestionRepository.submit({
+      : suggestionRepository.submit({
           nombre,
           tema: form.querySelector<HTMLSelectElement>("#topic")!.value,
           mensaje,
-        });
+        })
+    ).finally(() => {
+      terminarCarga();
+      submit.disabled = false;
+    });
     status.hidden = false;
     status.textContent = result.message;
   });

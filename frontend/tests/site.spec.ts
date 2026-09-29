@@ -6,7 +6,7 @@ test('desktop navigation, carousel and accessibility', async ({ page }) => {
   page.on('pageerror', e => errors.push(e.message));
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
-  await expect(page.getByRole('navigation').getByRole('link', { name: 'Acerca de nosotros' })).toBeVisible();
+  await expect(page.getByRole('navigation').getByRole('button', { name: 'Acerca de nosotros' })).toBeVisible();
   await page.getByRole('button', { name: 'Propuestas', exact: true }).hover();
   await expect(page.locator('#proposals-menu')).toBeVisible();
   await page.locator('#proposals-menu a').first().hover();
@@ -98,13 +98,15 @@ test('automatic carousel advances and respects the reduced-motion accessibility 
   await expect(page.locator('[data-slide="0"]')).toBeVisible();
 });
 
-test('reporting is directly accessible on mobile and photo selection works', async ({ page }) => {
+test('reporting is reachable from the Ciudadanía menu on mobile and photo selection works', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await expect(page.locator('.proposal-card').first()).toHaveCSS('background-color', 'rgb(254, 255, 255)');
   await expect(page.locator('a[href="https://www.facebook.com/carlosastudillo7"]')).toHaveCount(1);
   await expect(page.locator('a[href="https://www.tiktok.com/@carlosastudillo01"]')).toHaveCount(1);
-  await page.getByRole('link', { name: 'Reportar daño', exact: true }).click();
+  await page.getByRole('button', { name: 'Abrir menú' }).click();
+  await page.getByRole('button', { name: 'Ciudadanía' }).click();
+  await page.locator('#citizen-menu').getByRole('link', { name: 'Alerta ciudadana' }).click();
   await expect(page).toHaveURL(/alerta-ciudadana/);
   // The page's script is an external module, so it attaches its listeners
   // after the document loads - without this the file input can receive the
@@ -131,7 +133,7 @@ test('reporting is directly accessible on mobile and photo selection works', asy
 
 test('proposal 3D model loads only when scrolled into view and replaces its poster', async ({ page }) => {
   // Short enough that the block sits below the fold plus the 200px preload margin.
-  await page.setViewportSize({ width: 390, height: 480 });
+  await page.setViewportSize({ width: 390, height: 400 });
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   const requests: string[] = [];
@@ -197,4 +199,106 @@ test('3D model offers a retry button when the viewer fails to load', async ({ pa
   await retry.click();
   await expect.poll(() => page.locator('model-viewer').evaluate((v: any) => v.loaded), { timeout: 30000 }).toBe(true);
   await expect(retry).toBeHidden();
+});
+
+test('las flechas del carrusel principal avanzan y retroceden dentro del carrusel', async ({ page }) => {
+  await page.goto('/');
+  const slides = page.locator('.hero-slides');
+  await expect(slides.getByRole('button', { name: 'Diapositiva siguiente' })).toBeVisible();
+  await slides.getByRole('button', { name: 'Diapositiva siguiente' }).click();
+  await expect(page.locator('[data-slide="1"]')).toBeVisible();
+  await slides.getByRole('button', { name: 'Diapositiva anterior' }).click();
+  await expect(page.locator('[data-slide="0"]')).toBeVisible();
+});
+
+for (const ancho of [390, 1440]) {
+  test(`el botón de accesibilidad no se monta sobre «Volver arriba» a ${ancho}px`, async ({ page }) => {
+    await page.setViewportSize({ width: ancho, height: 844 });
+    await page.goto('/');
+    await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+    await expect(page.locator('.back-to-top')).toHaveClass(/is-visible/);
+    const [a, b] = await Promise.all(['.back-to-top', '.access-toggle'].map(s =>
+      page.locator(s).evaluate(el => { const r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom, left: r.left, right: r.right }; })));
+    const separados = a.bottom <= b.top || b.bottom <= a.top || a.right <= b.left || b.right <= a.left;
+    expect(separados).toBe(true);
+  });
+}
+
+test('el modelo 3D entra y sale de pantalla completa', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/propuestas/tecnologias-emergentes/');
+  const boton = page.getByRole('button', { name: 'Ver en pantalla completa' });
+  await expect(boton).toBeVisible({ timeout: 30000 });
+  await boton.click();
+  await expect.poll(() => page.evaluate(() => document.fullscreenElement?.classList.contains('model-3d-visor'))).toBe(true);
+  await page.getByRole('button', { name: 'Salir de pantalla completa' }).click();
+  await expect.poll(() => page.evaluate(() => document.fullscreenElement)).toBeNull();
+});
+
+test('sin la API de pantalla completa el visor ocupa la ventana y Escape lo cierra', async ({ page }) => {
+  await page.addInitScript(() => { delete (Element.prototype as any).requestFullscreen; });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/propuestas/tecnologias-emergentes/');
+  // Con la franja de KPI el visor queda bajo el pliegue, y el modelo solo carga cuando se ve.
+  await page.locator('.model-3d-visor').scrollIntoViewIfNeeded();
+  await page.getByRole('button', { name: 'Ver en pantalla completa' }).click({ timeout: 30000 });
+  const visor = page.locator('.model-3d-visor');
+  // Por clase y no por texto: las utilidades de Tailwind también contienen «is-expandido».
+  const expandido = () => visor.evaluate(el => el.classList.contains('is-expandido'));
+  await expect.poll(expandido).toBe(true);
+  expect(await visor.evaluate(el => el.getBoundingClientRect().height)).toBe(844);
+  await expect(page.locator('model-viewer')).toHaveAttribute('touch-action', 'none');
+  await page.keyboard.press('Escape');
+  await expect.poll(expandido).toBe(false);
+  await expect(page.locator('model-viewer')).toHaveAttribute('touch-action', 'pan-y');
+});
+
+test('obras en ejecución muestra el avance y los hitos de cada propuesta', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Ciudadanía' }).hover();
+  await page.locator('#citizen-menu').getByRole('link', { name: 'Obras en ejecución' }).click();
+  await page.waitForURL('**/ciudadania/obras-en-ejecucion/');
+  await expect(page.locator('.obra')).toHaveCount(7);
+  await expect(page.getByText('Datos provisionales de ejemplo')).toBeVisible();
+  const barra = page.getByRole('progressbar', { name: 'Avance de Agua potable' });
+  await expect(barra).toHaveAttribute('aria-valuenow', '60');
+  await expect(page.locator('.obra').first().getByRole('listitem')).toHaveCount(5);
+  await page.locator('.obra').first().getByRole('link', { name: 'Ver propuesta' }).click();
+  await page.waitForURL('**/propuestas/agua-potable/');
+});
+
+test('cada obra muestra su progreso junto a un carrusel de evidencias', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/ciudadania/obras-en-ejecucion/');
+  const carrusel = page.getByRole('region', { name: 'Evidencias del avance de Agua potable' });
+  const tarjeta = page.locator('.obra').first();
+  const [t, c] = await Promise.all([tarjeta, carrusel].map(l => l.evaluate(el => el.getBoundingClientRect())));
+  expect(c.left).toBeGreaterThan(t.right);
+  expect(Math.round(c.top)).toBe(Math.round(t.top));
+  await expect(carrusel.locator('.evidencia:visible')).toHaveCount(1);
+  await expect(carrusel.getByText('1 / 3')).toBeVisible();
+  await carrusel.getByRole('button', { name: 'Foto siguiente' }).click();
+  await expect(carrusel.getByText('2 / 3')).toBeVisible();
+  await expect(carrusel.getByText('Foto provisional 2', { exact: true })).toBeVisible();
+  await carrusel.getByRole('button', { name: 'Foto anterior' }).click();
+  await carrusel.getByRole('button', { name: 'Foto anterior' }).click();
+  await expect(carrusel.getByText('3 / 3')).toBeVisible();
+  await expect(page.getByText('Aún no hay imágenes del avance de esta obra.')).toHaveCount(1);
+});
+
+test('en móvil las fotos de cada obra se despliegan desde un acordeón', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/ciudadania/obras-en-ejecucion/');
+  const boton = page.getByRole('button', { name: 'Fotos del avance (3)' }).first();
+  const carrusel = page.getByRole('region', { name: 'Evidencias del avance de Agua potable' });
+  await expect(boton).toHaveAttribute('aria-expanded', 'false');
+  await expect(carrusel).toBeHidden();
+  await boton.click();
+  await expect(boton).toHaveAttribute('aria-expanded', 'true');
+  await expect(carrusel).toBeVisible();
+  await carrusel.getByRole('button', { name: 'Foto siguiente' }).click();
+  await expect(carrusel.getByText('2 / 3')).toBeVisible();
+  await boton.click();
+  await expect(carrusel).toBeHidden();
 });

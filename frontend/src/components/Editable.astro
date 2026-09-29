@@ -1,0 +1,15 @@
+---
+// Texto editable desde el panel. Pinta el valor vigente (publicado o por defecto) y marca el
+// elemento con data-editable para que el modo edición lo encuentre. Un salto de línea es un <br>.
+import { texto, type TextKey } from "../lib/contenido";
+
+interface Props {
+  clave: TextKey;
+  as?: string;
+  [atributo: string]: unknown;
+}
+const { clave, as: Tag = "span", ...atributos } = Astro.props;
+const lineas = (await texto(clave)).split("\n");
+---
+
+<Tag {...atributos} data-editable={clave}>{lineas.map((linea, i) => <Fragment>{i > 0 && <br />}{linea}</Fragment>)}</Tag>

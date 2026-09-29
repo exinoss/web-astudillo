@@ -1,0 +1,17 @@
+# Contexto de Dockerfile.publicador (raíz del repositorio).
+**/node_modules
+**/.env*
+.git
+sitio
+frontend/dist
+frontend/.astro
+frontend/test-results
+frontend/playwright-report
+frontend/modelos-fuente
+frontend/tests
+frontend/test-unit
+frontend/tmp-*
+backend/medios
+backend/medios-pruebas*
+design
+docs

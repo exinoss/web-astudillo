@@ -7,19 +7,21 @@ interface Props {
   icon: string;
   iconSize: number;
   lead: string;
+  /** Claves de lib/contenido.ts cuando estos textos se editan desde el panel. */
+  claves?: { eyebrow: string; title: string; lead: string };
 }
-const { eyebrow, title, icon, iconSize, lead } = Astro.props;
+const { eyebrow, title, icon, iconSize, lead, claves } = Astro.props;
 ---
 
-<section class="detail-banner border-b-4 border-b-accent bg-secondary pt-[58px] pb-[65px] max-tablet:py-[38px]">
+<section class="detail-banner border-b-4 border-b-accent bg-secondary py-10 max-tablet:py-7">
   <div class="site-container">
-    <span class="eyebrow text-primary">{eyebrow}</span>
+    <span class="eyebrow text-primary" data-editable={claves?.eyebrow}>{eyebrow}</span>
     <div class="detail-title flex items-center justify-between gap-[30px] mt-[15px] max-tablet:gap-[15px]">
-      <h1 class="mt-0 mr-0 mb-5 ml-0 max-w-[950px] max-tablet:text-[3.1rem]">
+      <h1 class="mt-0 mr-0 mb-5 ml-0 max-w-[950px] max-tablet:text-[3.1rem]" data-editable={claves?.title}>
         {title}
       </h1>
       <Icon name={icon} size={iconSize} />
     </div>
-    <p class="lead m-0 text-primary max-tablet:text-[1.05rem]">{lead}</p>
+    <p class="lead m-0 text-primary max-tablet:text-[1.05rem]" data-editable={claves?.lead}>{lead}</p>
   </div>
 </section>

@@ -8,6 +8,20 @@
       "when": 1790200467829,
       "tag": "0000_next_excalibur",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790664787502,
+      "tag": "0001_admin_maestro",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790667927282,
+      "tag": "0002_contenido",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,57 @@
+---
+import Layout from "../../layouts/Layout.astro";
+import { Image } from "astro:assets";
+import carlos from "../../assets/carlos.jpg";
+import Breadcrumb from "../../components/Breadcrumb.astro";
+import Editable from "../../components/Editable.astro";
+import Icon from "../../components/Icon.astro";
+import { aboutLinks } from "../../lib/acerca";
+---
+
+<Layout title="Acerca de nosotros · Carlos Astudillo">
+  <Breadcrumb
+    items={[{ label: "Inicio", href: "/" }, { label: "Acerca de nosotros" }]}
+  />
+  <section class="site-container grid grid-cols-[1fr_1fr] items-center gap-20 pt-[30px] pb-14 max-nav:gap-[35px] max-tablet:grid-cols-1 max-tablet:gap-[35px] max-tablet:pt-5 max-tablet:pb-10">
+    <div>
+      <Editable clave="acerca.antetitulo" class="eyebrow" />
+      <h1 class="mt-[15px] text-[6rem] max-nav:text-[4.5rem]">
+        <Editable clave="acerca.nombre" />
+        <br />
+        <Editable clave="acerca.apellido" class="text-neutral" />
+      </h1>
+      <Editable as="p" clave="acerca.subtitulo" class="lead max-tablet:text-[1.05rem]" />
+      <nav
+        class="mt-[38px] flex flex-col border-b border-b-base-300 max-tablet:mt-7"
+        aria-label="Conoce a Carlos"
+      >
+        {aboutLinks.map((link, i) => (
+          <a
+            class="group flex items-center gap-5 border-t border-t-base-300 py-4 text-primary max-tablet:gap-3.5"
+            href={link.href}
+          >
+            <span class="w-[30px] font-display text-[1.1rem] font-bold text-neutral max-tablet:w-6 max-tablet:text-base">
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <span class="flex-1 font-display text-[1.95rem] leading-[1.1] font-semibold group-hover:text-neutral max-tablet:text-[1.55rem]">
+              {link.name}
+            </span>
+            <span class="grid size-11 shrink-0 place-items-center rounded-full transition-colors duration-200 group-hover:bg-primary group-hover:text-primary-content">
+              <Icon name="arrow" size={20} />
+            </span>
+          </a>
+        ))}
+      </nav>
+    </div>
+    <Image
+      class="w-full rounded-[3px] border-b-[7px] border-b-accent max-tablet:mx-auto max-tablet:max-w-[500px]"
+      src={carlos}
+      alt="Carlos Astudillo, candidato a alcalde de San Lorenzo"
+      width={600}
+      height={600}
+      widths={[360, 600, 850]}
+      sizes="(max-width: 760px) 90vw, 45vw"
+      loading="eager"
+    />
+  </section>
+</Layout>

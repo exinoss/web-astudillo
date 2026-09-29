@@ -338,3 +338,370 @@ BEGIN
   RETURN NEXT v_user;
 END;
 $$;
+
+-- Códigos de permiso vigentes de una cuenta activa, para que el cliente sepa qué mostrar.
+CREATE OR REPLACE FUNCTION fn_user_permissions(p_user integer)
+RETURNS TABLE(codigo varchar) LANGUAGE sql STABLE AS $$
+  SELECT p.codigo FROM tb_usuarios u
+  JOIN tb_roles r ON r.rol = u.rol
+  JOIN tb_rol_permisos rp ON rp.id_rol = r.id_rol
+  JOIN tb_permisos p ON p.id_permiso = rp.id_permiso
+  WHERE u.id_usuario = p_user AND u.estado = 'activo'
+  ORDER BY p.codigo;
+$$;
+
+-- Lista paginada y filtrable de cuentas para el panel; p_query ya llega con los comodines de
+-- LIKE escapados. El orden no depende de es_maestro para no delatar qué cuenta es la maestra.
+-- Siempre devuelve al menos una fila con el total, aunque la página pedida quede vacía
+-- (id_usuario nulo); así la paginación conoce el total real.
+DROP FUNCTION IF EXISTS fn_admin_users(text, integer, integer);
+CREATE OR REPLACE FUNCTION fn_admin_users(p_query text, p_role text, p_state text,
+  p_limit integer, p_offset integer)
+RETURNS TABLE(id_usuario integer, correo varchar, nombres_completos varchar, rol varchar,
+  es_maestro boolean, estado varchar, total bigint)
+LANGUAGE sql STABLE AS $$
+  WITH filtradas AS (
+    SELECT u.* FROM tb_usuarios u
+    WHERE (p_query IS NULL
+        OR u.correo ILIKE '%' || p_query || '%' ESCAPE '\'
+        OR u.nombres_completos ILIKE '%' || p_query || '%' ESCAPE '\')
+      AND (p_role IS NULL OR u.rol = p_role)
+      AND (p_state IS NULL OR u.estado = p_state)
+  )
+  SELECT pagina.id_usuario, pagina.correo, pagina.nombres_completos, pagina.rol,
+    pagina.es_maestro, pagina.estado, conteo.total
+  FROM (SELECT count(*) AS total FROM filtradas) conteo
+  LEFT JOIN LATERAL (
+    SELECT * FROM filtradas f
+    ORDER BY array_position(ARRAY['admin', 'coadmin', 'analista', 'votante']::varchar[], f.rol),
+      lower(f.correo)
+    LIMIT p_limit OFFSET p_offset
+  ) pagina ON true;
+$$;
+
+-- Cuenta objetivo de un cambio de rol, con los datos que decide la jerarquía.
+CREATE OR REPLACE FUNCTION fn_user_by_id(p_user integer)
+RETURNS SETOF tb_usuarios LANGUAGE sql STABLE AS $$
+  SELECT * FROM tb_usuarios WHERE id_usuario = p_user;
+$$;
+
+-- Cambia el rol respetando la jerarquía aunque la API fallara: nadie cambia su propio rol
+-- ni el del maestro, y solo el maestro cambia el de un admin. Sin fila = cambio denegado.
+CREATE OR REPLACE FUNCTION fn_role_change(p_actor integer, p_target integer, p_role text)
+RETURNS SETOF tb_usuarios LANGUAGE plpgsql AS $$
+DECLARE v_actor tb_usuarios%ROWTYPE; v_target tb_usuarios%ROWTYPE;
+BEGIN
+  IF p_role NOT IN ('votante', 'coadmin', 'admin') OR p_actor = p_target THEN RETURN; END IF;
+  SELECT * INTO v_actor FROM fn_authorized_user(p_actor, 'usuarios.rol.cambiar');
+  IF NOT FOUND THEN RETURN; END IF;
+  SELECT * INTO v_target FROM tb_usuarios WHERE id_usuario = p_target FOR UPDATE;
+  IF NOT FOUND OR v_target.es_maestro THEN RETURN; END IF;
+  IF v_target.rol = 'admin' AND NOT v_actor.es_maestro THEN RETURN; END IF;
+  IF v_target.rol <> p_role THEN
+    UPDATE tb_usuarios SET rol = p_role, actualizado_en = now() WHERE id_usuario = p_target;
+    INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro, cambios)
+    VALUES (p_actor, 'rol_cambiado', 'tb_usuarios', p_target,
+      jsonb_build_object('antes', v_target.rol, 'despues', p_role));
+  END IF;
+  RETURN QUERY SELECT * FROM tb_usuarios WHERE id_usuario = p_target;
+END;
+$$;
+
+-- Crea el admin maestro desde la línea de comandos. El índice único parcial impide
+-- un segundo maestro incluso con dos ejecuciones simultáneas.
+CREATE OR REPLACE FUNCTION fn_master_create(p_email text, p_name text, p_hash text)
+RETURNS TABLE(resultado text, id_usuario integer) LANGUAGE plpgsql AS $$
+DECLARE v_user integer;
+BEGIN
+  IF EXISTS (SELECT 1 FROM tb_usuarios u WHERE u.es_maestro) THEN
+    RETURN QUERY SELECT 'ya_existe_maestro'::text, NULL::integer; RETURN;
+  END IF;
+  IF EXISTS (SELECT 1 FROM tb_usuarios u WHERE lower(u.correo) = lower(p_email)) THEN
+    RETURN QUERY SELECT 'correo_en_uso'::text, NULL::integer; RETURN;
+  END IF;
+  INSERT INTO tb_usuarios (correo, nombres_completos, correo_verificado_en, rol, es_maestro)
+  VALUES (p_email, p_name, now(), 'admin', true)
+  RETURNING tb_usuarios.id_usuario INTO v_user;
+  INSERT INTO tb_identidades_autenticacion (id_usuario, proveedor, contrasenia_hash)
+  VALUES (v_user, 'correo', p_hash);
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro)
+  VALUES (NULL, 'maestro_creado', 'tb_usuarios', v_user);
+  RETURN QUERY SELECT 'creado'::text, v_user;
+END;
+$$;
+
+-- Pasa el rol de maestro a otra cuenta activa; el anterior queda como admin normal.
+CREATE OR REPLACE FUNCTION fn_master_transfer(p_email text)
+RETURNS TABLE(resultado text, id_usuario integer) LANGUAGE plpgsql AS $$
+DECLARE v_old integer; v_new integer;
+BEGIN
+  SELECT u.id_usuario INTO v_old FROM tb_usuarios u WHERE u.es_maestro FOR UPDATE;
+  IF NOT FOUND THEN RETURN QUERY SELECT 'sin_maestro'::text, NULL::integer; RETURN; END IF;
+  SELECT u.id_usuario INTO v_new FROM tb_usuarios u
+  WHERE lower(u.correo) = lower(p_email) AND u.estado = 'activo' FOR UPDATE;
+  IF NOT FOUND THEN RETURN QUERY SELECT 'no_encontrado'::text, NULL::integer; RETURN; END IF;
+  IF v_new = v_old THEN RETURN QUERY SELECT 'ya_es_maestro'::text, v_new; RETURN; END IF;
+  -- Primero se retira el anterior: el índice único no admite dos maestros ni un instante.
+  UPDATE tb_usuarios SET es_maestro = false, actualizado_en = now() WHERE tb_usuarios.id_usuario = v_old;
+  UPDATE tb_usuarios SET rol = 'admin', es_maestro = true, actualizado_en = now()
+  WHERE tb_usuarios.id_usuario = v_new;
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro, cambios)
+  VALUES (NULL, 'maestro_transferido', 'tb_usuarios', v_new, jsonb_build_object('anterior', v_old));
+  RETURN QUERY SELECT 'transferido'::text, v_new;
+END;
+$$;
+
+-- Activa o desactiva otra cuenta con la misma jerarquía que el cambio de rol. Al desactivar
+-- revoca sus sesiones; las funciones de acceso ya rechazan cuentas bloqueadas.
+CREATE OR REPLACE FUNCTION fn_user_state_change(p_actor integer, p_target integer, p_state text)
+RETURNS SETOF tb_usuarios LANGUAGE plpgsql AS $$
+DECLARE v_actor tb_usuarios%ROWTYPE; v_target tb_usuarios%ROWTYPE;
+BEGIN
+  IF p_state NOT IN ('activo', 'bloqueado') OR p_actor = p_target THEN RETURN; END IF;
+  SELECT * INTO v_actor FROM fn_authorized_user(p_actor, 'usuarios.estado.cambiar');
+  IF NOT FOUND THEN RETURN; END IF;
+  SELECT * INTO v_target FROM tb_usuarios WHERE id_usuario = p_target FOR UPDATE;
+  IF NOT FOUND OR v_target.es_maestro THEN RETURN; END IF;
+  IF v_target.rol = 'admin' AND NOT v_actor.es_maestro THEN RETURN; END IF;
+  IF v_target.estado <> p_state THEN
+    UPDATE tb_usuarios SET estado = p_state, actualizado_en = now() WHERE id_usuario = p_target;
+    IF p_state = 'bloqueado' THEN
+      UPDATE tb_sesiones SET revocado_en = now() WHERE id_usuario = p_target AND revocado_en IS NULL;
+    END IF;
+    INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro, cambios)
+    VALUES (p_actor, 'estado_cambiado', 'tb_usuarios', p_target,
+      jsonb_build_object('antes', v_target.estado, 'despues', p_state));
+  END IF;
+  RETURN QUERY SELECT * FROM tb_usuarios WHERE id_usuario = p_target;
+END;
+$$;
+
+-- ============ Contenido editable ============
+
+-- Indica si la cuenta activa tiene un permiso; las funciones de escritura lo repiten para
+-- que la base rechace el cambio aunque la API fallara.
+CREATE OR REPLACE FUNCTION fn_has_permission(p_user integer, p_permission text)
+RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT EXISTS (SELECT 1 FROM fn_authorized_user(p_user, p_permission));
+$$;
+
+-- Textos del sitio que difieren del valor por defecto del código.
+CREATE OR REPLACE FUNCTION fn_texts_list()
+RETURNS TABLE(clave varchar, valor text, actualizado_en timestamptz) LANGUAGE sql STABLE AS $$
+  SELECT t.clave, t.valor, t.actualizado_en FROM tb_textos t ORDER BY t.clave;
+$$;
+
+-- Guarda el borrador de un texto; con valor nulo lo borra y vuelve el texto por defecto.
+CREATE OR REPLACE FUNCTION fn_text_save(p_actor integer, p_key text, p_value text)
+RETURNS TABLE(clave varchar, valor text) LANGUAGE plpgsql AS $$
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'contenido.editar') THEN RETURN; END IF;
+  IF p_value IS NULL THEN
+    DELETE FROM tb_textos t WHERE t.clave = p_key;
+  ELSE
+    INSERT INTO tb_textos (clave, valor, actualizado_por, actualizado_en)
+    VALUES (p_key, p_value, p_actor, now())
+    ON CONFLICT ON CONSTRAINT tb_textos_pkey DO UPDATE SET valor = EXCLUDED.valor,
+      actualizado_por = EXCLUDED.actualizado_por, actualizado_en = now();
+  END IF;
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, cambios)
+  VALUES (p_actor, 'texto_guardado', 'tb_textos', jsonb_build_object('clave', p_key));
+  RETURN QUERY SELECT p_key::varchar, p_value;
+END;
+$$;
+
+-- Propuestas con sus cifras, en el orden del sitio.
+CREATE OR REPLACE FUNCTION fn_proposals_list()
+RETURNS TABLE(slug varchar, nombre varchar, categoria varchar, introduccion varchar,
+  kpis jsonb, actualizado_en timestamptz) LANGUAGE sql STABLE AS $$
+  SELECT p.slug, p.nombre, p.categoria, p.introduccion,
+    COALESCE((SELECT jsonb_agg(jsonb_build_object('etiqueta', k.etiqueta, 'valor', k.valor) ORDER BY k.orden)
+      FROM tb_propuesta_kpis k WHERE k.slug = p.slug), '[]'::jsonb),
+    p.actualizado_en
+  FROM tb_propuestas p ORDER BY p.orden;
+$$;
+
+-- Reemplaza datos y cifras de una propuesta en una sola transacción.
+CREATE OR REPLACE FUNCTION fn_proposal_save(p_actor integer, p_slug text, p_name text,
+  p_category text, p_intro text, p_kpis jsonb)
+RETURNS TABLE(slug varchar) LANGUAGE plpgsql AS $$
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'contenido.editar') THEN RETURN; END IF;
+  UPDATE tb_propuestas p SET nombre = p_name, categoria = p_category, introduccion = p_intro,
+    actualizado_por = p_actor, actualizado_en = now()
+  WHERE p.slug = p_slug;
+  IF NOT FOUND THEN RETURN; END IF;
+  DELETE FROM tb_propuesta_kpis k WHERE k.slug = p_slug;
+  INSERT INTO tb_propuesta_kpis (slug, orden, etiqueta, valor)
+  SELECT p_slug, e.orden, e.item->>'etiqueta', e.item->>'valor'
+  FROM jsonb_array_elements(p_kpis) WITH ORDINALITY AS e(item, orden);
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, cambios)
+  VALUES (p_actor, 'propuesta_guardada', 'tb_propuestas', jsonb_build_object('slug', p_slug));
+  RETURN QUERY SELECT p_slug::varchar;
+END;
+$$;
+
+-- Hitos de la biografía con su foto, si la tienen. Los anchos salen como jsonb: el driver de
+-- Bun 1.3 se cae al leer columnas integer[].
+DROP FUNCTION IF EXISTS fn_biography_list();
+CREATE OR REPLACE FUNCTION fn_biography_list()
+RETURNS TABLE(id_hito integer, anios varchar, titulo varchar, texto varchar, alt varchar,
+  id_medio integer, medio_nombre varchar, medio_ancho integer, medio_alto integer, medio_anchos jsonb)
+LANGUAGE sql STABLE AS $$
+  SELECT h.id_hito, h.anios, h.titulo, h.texto, h.alt, m.id_medio, m.nombre, m.ancho, m.alto, to_jsonb(m.anchos)
+  FROM tb_biografia_hitos h LEFT JOIN tb_medios m ON m.id_medio = h.id_medio
+  ORDER BY h.orden;
+$$;
+
+-- Reemplaza la línea de tiempo completa: el panel guarda la lista tal como quedó, orden incluido.
+CREATE OR REPLACE FUNCTION fn_biography_save(p_actor integer, p_items jsonb)
+RETURNS TABLE(total integer) LANGUAGE plpgsql AS $$
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'contenido.editar') THEN RETURN; END IF;
+  DELETE FROM tb_biografia_hitos;
+  INSERT INTO tb_biografia_hitos (orden, anios, titulo, texto, id_medio, alt)
+  SELECT e.orden, e.item->>'anios', e.item->>'titulo', e.item->>'texto',
+    NULLIF(e.item->>'idMedio', '')::integer, NULLIF(e.item->>'alt', '')
+  FROM jsonb_array_elements(p_items) WITH ORDINALITY AS e(item, orden);
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, cambios)
+  VALUES (p_actor, 'biografia_guardada', 'tb_biografia_hitos',
+    jsonb_build_object('hitos', jsonb_array_length(p_items)));
+  RETURN QUERY SELECT jsonb_array_length(p_items);
+END;
+$$;
+
+-- Obras con hitos y fotos agregados en JSON, en el orden de las propuestas.
+CREATE OR REPLACE FUNCTION fn_works_list()
+RETURNS TABLE(slug varchar, nota varchar, actualizado_en timestamptz, hitos jsonb, fotos jsonb)
+LANGUAGE sql STABLE AS $$
+  SELECT o.slug, o.nota, o.actualizado_en,
+    COALESCE((SELECT jsonb_agg(jsonb_build_object('nombre', h.nombre, 'completado', h.completado) ORDER BY h.orden)
+      FROM tb_obra_hitos h WHERE h.slug = o.slug), '[]'::jsonb),
+    COALESCE((SELECT jsonb_agg(jsonb_build_object('idMedio', m.id_medio, 'nombre', m.nombre, 'ancho', m.ancho,
+        'alto', m.alto, 'anchos', to_jsonb(m.anchos), 'pie', f.pie) ORDER BY f.orden)
+      FROM tb_obra_fotos f JOIN tb_medios m ON m.id_medio = f.id_medio WHERE f.slug = o.slug), '[]'::jsonb)
+  FROM tb_obras o JOIN tb_propuestas p ON p.slug = o.slug
+  ORDER BY p.orden;
+$$;
+
+-- Reemplaza nota, hitos y fotos de una obra en una sola transacción.
+CREATE OR REPLACE FUNCTION fn_work_save(p_actor integer, p_slug text, p_note text,
+  p_milestones jsonb, p_photos jsonb)
+RETURNS TABLE(slug varchar) LANGUAGE plpgsql AS $$
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'contenido.editar') THEN RETURN; END IF;
+  UPDATE tb_obras o SET nota = p_note, actualizado_por = p_actor, actualizado_en = now()
+  WHERE o.slug = p_slug;
+  IF NOT FOUND THEN RETURN; END IF;
+  DELETE FROM tb_obra_hitos h WHERE h.slug = p_slug;
+  INSERT INTO tb_obra_hitos (slug, orden, nombre, completado)
+  SELECT p_slug, e.orden, e.item->>'nombre', (e.item->>'completado')::boolean
+  FROM jsonb_array_elements(p_milestones) WITH ORDINALITY AS e(item, orden);
+  DELETE FROM tb_obra_fotos f WHERE f.slug = p_slug;
+  INSERT INTO tb_obra_fotos (slug, orden, id_medio, pie)
+  SELECT p_slug, e.orden, (e.item->>'idMedio')::integer, e.item->>'pie'
+  FROM jsonb_array_elements(p_photos) WITH ORDINALITY AS e(item, orden);
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, cambios)
+  VALUES (p_actor, 'obra_guardada', 'tb_obras', jsonb_build_object('slug', p_slug));
+  RETURN QUERY SELECT p_slug::varchar;
+END;
+$$;
+
+-- El driver de Bun 1.3 no maneja integer[]: se cae al enlazarlos como parámetro y al leerlos
+-- en un resultado. Las listas de números entran como texto «1,2,3» y salen como jsonb.
+DROP FUNCTION IF EXISTS fn_media_create(integer, text, integer, integer, integer[]);
+DROP FUNCTION IF EXISTS fn_media_by_ids(integer[]);
+DROP FUNCTION IF EXISTS fn_media_create(integer, text, integer, integer, jsonb);
+DROP FUNCTION IF EXISTS fn_media_by_ids(jsonb);
+DROP FUNCTION IF EXISTS fn_media_create(integer, text, integer, integer, text);
+DROP FUNCTION IF EXISTS fn_media_by_ids(text);
+
+-- Registra una foto ya procesada y guardada en disco.
+CREATE OR REPLACE FUNCTION fn_media_create(p_actor integer, p_name text, p_width integer,
+  p_height integer, p_widths text)
+RETURNS TABLE(id_medio integer, nombre varchar, ancho integer, alto integer, anchos jsonb)
+LANGUAGE plpgsql AS $$
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'medios.subir') THEN RETURN; END IF;
+  RETURN QUERY INSERT INTO tb_medios AS m (nombre, ancho, alto, anchos, creado_por)
+  VALUES (p_name, p_width, p_height, string_to_array(p_widths, ',')::integer[], p_actor)
+  RETURNING m.id_medio, m.nombre, m.ancho, m.alto, to_jsonb(m.anchos);
+END;
+$$;
+
+-- Ids de las fotos que existen, para validar las que llegan en un guardado.
+CREATE OR REPLACE FUNCTION fn_media_by_ids(p_ids text)
+RETURNS TABLE(id_medio integer) LANGUAGE sql STABLE AS $$
+  SELECT m.id_medio FROM tb_medios m
+  WHERE m.id_medio = ANY(string_to_array(p_ids, ',')::integer[]);
+$$;
+
+-- ============ Publicaciones ============
+
+-- Encola el contenido congelado. Si ya hay una en cola, la reemplaza: se compila una sola vez.
+CREATE OR REPLACE FUNCTION fn_publication_create(p_actor integer, p_content jsonb)
+RETURNS TABLE(id_publicacion integer) LANGUAGE plpgsql AS $$
+DECLARE v_id integer;
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'contenido.publicar') THEN RETURN; END IF;
+  UPDATE tb_publicaciones p SET contenido = p_content, creado_por = p_actor, creado_en = now()
+  WHERE p.estado = 'en_cola' RETURNING p.id_publicacion INTO v_id;
+  IF v_id IS NULL THEN
+    INSERT INTO tb_publicaciones (contenido, creado_por) VALUES (p_content, p_actor)
+    RETURNING tb_publicaciones.id_publicacion INTO v_id;
+  END IF;
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro)
+  VALUES (p_actor, 'publicacion_solicitada', 'tb_publicaciones', v_id);
+  RETURN QUERY SELECT v_id;
+END;
+$$;
+
+-- Historial paginado; siempre devuelve una fila con el total aunque la página quede vacía.
+CREATE OR REPLACE FUNCTION fn_publications_list(p_limit integer, p_offset integer)
+RETURNS TABLE(id_publicacion integer, estado varchar, creado_en timestamptz, iniciado_en timestamptz,
+  terminado_en timestamptz, detalle text, autor varchar, total bigint)
+LANGUAGE sql STABLE AS $$
+  SELECT pagina.id_publicacion, pagina.estado, pagina.creado_en, pagina.iniciado_en,
+    pagina.terminado_en, pagina.detalle, pagina.autor, conteo.total
+  FROM (SELECT count(*) AS total FROM tb_publicaciones) conteo
+  LEFT JOIN LATERAL (
+    SELECT p.id_publicacion, p.estado, p.creado_en, p.iniciado_en, p.terminado_en, p.detalle,
+      u.nombres_completos AS autor
+    FROM tb_publicaciones p LEFT JOIN tb_usuarios u ON u.id_usuario = p.creado_por
+    ORDER BY p.id_publicacion DESC LIMIT p_limit OFFSET p_offset
+  ) pagina ON true;
+$$;
+
+-- Contenido de la última publicación que llegó al sitio, para calcular lo pendiente.
+CREATE OR REPLACE FUNCTION fn_publication_last_published()
+RETURNS TABLE(contenido jsonb) LANGUAGE sql STABLE AS $$
+  SELECT p.contenido FROM tb_publicaciones p WHERE p.estado = 'publicada'
+  ORDER BY p.id_publicacion DESC LIMIT 1;
+$$;
+
+-- El publicador toma la publicación en cola; SKIP LOCKED evita que dos procesos compilen la misma.
+CREATE OR REPLACE FUNCTION fn_publication_claim()
+RETURNS TABLE(id_publicacion integer, contenido jsonb) LANGUAGE sql AS $$
+  UPDATE tb_publicaciones p SET estado = 'publicando', iniciado_en = now()
+  WHERE p.id_publicacion = (
+    SELECT q.id_publicacion FROM tb_publicaciones q WHERE q.estado = 'en_cola'
+    ORDER BY q.id_publicacion LIMIT 1 FOR UPDATE SKIP LOCKED
+  )
+  RETURNING p.id_publicacion, p.contenido;
+$$;
+
+-- Cierra una publicación como publicada o fallida, con las últimas líneas del registro.
+CREATE OR REPLACE FUNCTION fn_publication_finish(p_id integer, p_ok boolean, p_detail text)
+RETURNS void LANGUAGE sql AS $$
+  UPDATE tb_publicaciones SET estado = CASE WHEN p_ok THEN 'publicada' ELSE 'fallida' END,
+    terminado_en = now(), detalle = p_detail
+  WHERE id_publicacion = p_id AND estado = 'publicando';
+$$;
+
+-- Si el publicador se reinició a mitad de una compilación, la marca como fallida al arrancar.
+CREATE OR REPLACE FUNCTION fn_publication_recover()
+RETURNS void LANGUAGE sql AS $$
+  UPDATE tb_publicaciones SET estado = 'fallida', terminado_en = now(),
+    detalle = 'Interrumpida: el publicador se reinició durante la compilación'
+  WHERE estado = 'publicando';
+$$;

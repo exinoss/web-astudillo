@@ -11,7 +11,7 @@ API de autenticación y perfil en Bun, Elysia y PostgreSQL. El cliente HTTP de A
 
 ### Correo local con Mailpit
 
-Desde WSL, iniciar `docker compose -f compose.mailpit.yml up -d` en esta carpeta. La bandeja queda en `http://localhost:8025` y SMTP en `127.0.0.1:1025`. Para cambiar entre Mailpit y SMTP de Google, activar el bloque `SMTP_*` correspondiente en tu `.env` y reiniciar el backend. Mantener un solo bloque activo; no hace falta otro archivo de variables.
+Ejecutar `bun run mailpit` desde `backend/`, aparte de `bun run dev`. El comando lanza `docker compose -f compose.mailpit.yml up -d` y reintenta cada 2 segundos mientras Docker no responda, por ejemplo si el puente hacia el daemon de WSL aún no está arriba. Termina cuando el SMTP acepta conexiones y deja el contenedor en marcha. Para detener los reintentos, pulsa Ctrl+C. La bandeja queda en `http://localhost:8025` y SMTP en `127.0.0.1:1025`. Para cambiar entre Mailpit y SMTP de Google, activar el bloque `SMTP_*` correspondiente en tu `.env` y reiniciar el backend. Mantener un solo bloque activo; no hace falta otro archivo de variables.
 
 ## Flujos
 
@@ -22,7 +22,7 @@ Desde WSL, iniciar `docker compose -f compose.mailpit.yml up -d` en esta carpeta
 - **Cambio de contraseña:** `POST /api/auth/password/change` requiere sesión, permiso `cuenta.contrasenia.cambiar`, `contraseniaActual`, `contraseniaNueva` y `confirmarContrasenia`. Comprueba la contraseña actual, actualiza el hash, revoca todas las sesiones y borra las cookies del navegador. La cuenta vuelve a iniciar sesión.
 - **Perfil:** `GET /api/me` y `PATCH /api/me` requieren acceso válido. `GET` incluye `tieneContrasenia` y `tieneGoogle` para mostrar los métodos de acceso disponibles. El cambio admite solo `nombresCompletos` y `direccion?`; no admite correo, rol ni estado. No hay API pública para cambiar roles.
 
-Las contraseñas nuevas admiten de 6 a 128 caracteres y requieren una letra, un número y un símbolo. Se aplica al registro, recuperación, alta desde Google y cambio; el acceso sigue aceptando contraseñas existentes. Es la política solicitada para este proyecto, aunque [NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html) recomienda un mínimo de 15 caracteres cuando la contraseña es el único factor y desaconseja las reglas de composición.
+Las contraseñas nuevas requieren al menos 6 caracteres, una letra, un número y un símbolo; internamente se limitan a 128 para que nadie pueda saturar el cálculo del hash con un texto enorme (los formularios no dejan escribir más). Se aplica al registro, recuperación, alta desde Google y cambio; el acceso sigue aceptando contraseñas existentes. Es la política solicitada para este proyecto, aunque [NIST SP 800-63B](https://pages.nist.gov/800-63-4/sp800-63b.html) recomienda un mínimo de 15 caracteres cuando la contraseña es el único factor y desaconseja las reglas de composición.
 
 La API responde con errores genéricos en acceso y solicitudes de correo, limita intentos por IP y correo en memoria para el despliegue inicial de una instancia, comprueba el encabezado `Origin` en escrituras y no registra contraseñas ni tokens. Los JWT se validan sin consultar `tb_sesiones` en cada petición; las acciones administrativas futuras deberán consultar el rol actual en la base. Las notas sobre enlaces antiguos y funciones pendientes están en [integraciones-pendientes.md](../docs/integraciones-pendientes.md).
 
@@ -33,6 +33,36 @@ La API responde con errores genéricos en acceso y solicitudes de correo, limita
 Las rutas llaman a servicios, y los servicios invocan funciones PostgreSQL con `callPg()` de `src/db/call.ts`. El ejecutor acepta solo nombres de una lista interna y pasa los argumentos como parámetros. Las funciones están en `database/fn.sql`; los roles y permisos iniciales están en `database/datains.sql`. El catálogo de permisos usado por rutas y servicios está en `src/auth/permissions.ts`; el tipo `Permission` se deriva de sus valores, así no se mantiene una unión manual aparte. Al agregar un permiso, se agrega al catálogo, se define su asignación por rol en `database/datains.sql` y las rutas lo solicitan con `PERMISSIONS.*`. Las comprobaciones dentro de funciones sensibles de `fn.sql` repiten el permiso de esa operación para validar el acceso también en la capa de PostgreSQL.
 
 Visitante es anónimo y no tiene acceso al perfil. `perfil.ver`, `perfil.editar`, `cuenta.contrasenia.agregar` y `cuenta.contrasenia.cambiar` se asignan inicialmente a Votante, Analista, Coadmin y Admin porque son las únicas capacidades autenticadas implementadas. La autorización consulta el rol, estado y permiso actuales en PostgreSQL: sin sesión responde 401 y sin permiso responde 403. Las futuras funciones del sitio deberán definir nuevos permisos y asociarlos a sus rutas; no hay un endpoint público para asignarlos.
+
+## Administración
+
+Roles internos, de más a menos poder:
+
+- **Admin maestro**: uno solo en todo el sistema (lo garantiza un índice único en la base). Puede cambiar el rol de cualquier cuenta, incluido bajar un admin a coadmin. Nadie puede cambiar su rol desde la web.
+- **Admin**: edita y publica contenido, sube votantes a coadmin o admin y baja coadmins. No puede cambiar a otro admin ni su propio rol.
+- **Coadmin**: edita y publica contenido; no gestiona usuarios.
+
+El maestro se gestiona solo por comando, desde `backend/` y con `DATABASE_URL` configurada:
+
+- `bun run admin:crear` pide correo, nombre y contraseña (sin mostrarla) y crea el maestro. Se niega si ya existe uno o si el correo ya tiene cuenta.
+- `bun run admin:transferir <correo>` pasa el rol de maestro a una cuenta activa y deja al anterior como admin normal, en una sola transacción. La persona debe estar registrada antes.
+
+`GET /api/admin/usuarios` (`usuarios.ver`) admite `q` (nombre o correo), `rol`, `estado` (`activo` o `bloqueado`) y `pagina`; responde `{ total, pagina, porPagina, usuarios }` con 20 cuentas por página, y cada cuenta trae `rolesAsignables`, `puedeCambiarEstado` y `motivoBloqueo` calculados para quien consulta. `PATCH /api/admin/usuarios/:id/rol` (`usuarios.rol.cambiar`) cambia el rol y `PATCH /api/admin/usuarios/:id/estado` (`usuarios.estado.cambiar`) activa o desactiva la cuenta; desactivar revoca sus sesiones y el acceso vigente deja de servir de inmediato. La regla está en `src/admin/services/hierarchy.ts` y se repite en `fn_role_change` y `fn_user_state_change` dentro de PostgreSQL; cada cambio queda en `tb_auditoria`. `GET /api/me` incluye `rol`, `esMaestro` y `permisos` para que el frontend muestre solo lo permitido.
+
+La API no revela qué cuenta es la maestra: solo el propio maestro recibe `esMaestro` en la lista, el orden no la delata y cualquier bloqueo responde con el mismo mensaje genérico.
+
+## Contenido y publicación
+
+Coadmin y admin editan el contenido desde `/cuenta/panel/` (propuestas y sus KPI, biografía, obras, usuarios) y los textos sueltos sobre el propio sitio, con el modo edición. Todo se guarda como **borrador** en las tablas `tb_textos`, `tb_propuestas`, `tb_propuesta_kpis`, `tb_biografia_hitos`, `tb_obras`, `tb_obra_hitos` y `tb_obra_fotos`; el sitio público no cambia hasta que alguien pulsa «Publicar».
+
+- **Textos**: solo se aceptan las claves del registro `frontend/src/lib/contenido/textos.ts` y texto plano (se rechaza cualquier marca HTML y los caracteres de control). Guardar `null` devuelve el texto al del diseño.
+- **Fotos** (`POST /api/admin/medios`, permiso `medios.subir`): JPEG, PNG o WebP de hasta 8 MB, comprobados por su contenido. `sharp` las gira según su orientación, genera variantes WebP de 480, 960 y 1600 px y **elimina los metadatos EXIF** (incluida la ubicación GPS). Se guardan en `MEDIA_DIR` con un nombre que nunca se reutiliza, y la base guarda solo el nombre y los anchos. En desarrollo el backend las sirve en `/medios/`; en producción las sirve nginx.
+- **Avance de obras**: no se guarda. Se calcula a partir de los hitos (`frontend/src/lib/obras.ts`): 0 % es «Por iniciar», 100 % «Terminada» y el resto «En ejecución».
+- **Publicar** (`POST /api/admin/publicaciones`, permiso `contenido.publicar`): congela todo el borrador como JSON en `tb_publicaciones`. Si ya había una en cola, la sustituye, y responde 409 si no hay cambios respecto a la última publicada.
+
+El **publicador** (`bun run publicador`) toma la publicación en cola, compila el frontend con ese contenido (`CONTENT_FILE`) en `SITE_DIR/releases/<id>` y, solo si la compilación termina bien, cambia el enlace `SITE_DIR/actual` a la nueva versión. Si falla, la publicación queda como fallida y el sitio sigue con la versión anterior; el panel muestra un mensaje genérico y el registro técnico queda en la base. Conserva las últimas 5 versiones. Variables: `DATABASE_URL`, `FRONTEND_DIR` (por defecto `../frontend`) y `SITE_DIR` (por defecto `../sitio`). Tarda cerca de un minuto en el servidor.
+
+Para probarlo en local, en otra terminal: `bun run publicador`; el sitio compilado queda en `../sitio/actual`.
 
 ## Pruebas
 
@@ -71,7 +101,9 @@ Comprobar externamente `https://aplicaciones.uteq.edu.ec:9617/api/health` para
 validar también el dominio y el certificado; la comprobación HTTPS interna
 omite esa validación porque usa la dirección loopback.
 
-Al publicar Astro en Vercel, configurar la reescritura de `/api/:path*` hacia
+**Sitio y fotos.** Compose también levanta el servicio `publicador` (`Dockerfile.publicador`, construido desde la raíz del repositorio porque necesita `frontend/`). Comparte con nginx dos volúmenes: `sitio`, donde nginx sirve `actual` en `/`, y `medios`, las fotos subidas, que también escribe el backend. nginx admite subidas de hasta 10 MB solo en `/api/admin/medios`; el resto conserva 1 MB. El frontend toma `PUBLIC_GOOGLE_CLIENT_ID` de `GOOGLE_CLIENT_ID` del `.env`. En el primer despliegue el sitio está vacío hasta la primera publicación: crea el maestro (`bun run admin:crear`), entra al panel y pulsa «Publicar».
+
+Con el sitio servido por nginx, lo que se publica desde el panel se ve en ese servidor. Una copia en Vercel no se actualiza con las publicaciones del panel. Si se usa Vercel, configurar la reescritura de `/api/:path*` hacia
 `https://aplicaciones.uteq.edu.ec:9617/api/:path*` y el mismo ID Google en
 `PUBLIC_GOOGLE_CLIENT_ID`. Los enlaces de correo usan `APP_ORIGIN`, por lo
 que el flujo completo requiere el frontend publicado en ese origen.

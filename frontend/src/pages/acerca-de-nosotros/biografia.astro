@@ -1,0 +1,46 @@
+---
+import { Image } from "astro:assets";
+import Layout from "../../layouts/Layout.astro";
+import Breadcrumb from "../../components/Breadcrumb.astro";
+import Editable from "../../components/Editable.astro";
+import Timeline from "../../components/Timeline.astro";
+import fondo from "../../assets/backgruond-historia.png";
+import { contentRepository } from "../../lib/data";
+
+const biography = await contentRepository.getBiography();
+---
+
+<Layout
+  title="Biografía · Carlos Astudillo"
+  description="La historia de Carlos Astudillo, candidato a la alcaldía de San Lorenzo por el Partido Social Cristiano, Lista 6."
+>
+  <Breadcrumb
+    items={[
+      { label: "Inicio", href: "/" },
+      { label: "Acerca de nosotros", href: "/acerca-de-nosotros/" },
+      { label: "Biografía" },
+    ]}
+  />
+  <section class="relative overflow-clip bg-base-100 pb-14 max-tablet:pb-10">
+    {/* Sticky dentro de una capa del alto de la sección: la cinta acompaña todo el recorrido.
+        overflow-clip y no hidden, que crearía un contenedor de scroll y anularía el sticky. */}
+    <div class="pointer-events-none absolute inset-0">
+      <Image
+        class="sticky top-0 h-dvh w-full object-cover object-left-top max-tablet:h-auto"
+        src={fondo}
+        alt=""
+        widths={[800, 1280, 2000]}
+        sizes="100vw"
+        loading="eager"
+      />
+    </div>
+    <div class="site-container relative">
+      <div class="pt-8 pb-8 text-center max-tablet:pt-6 max-tablet:pb-6">
+        <Editable clave="biografia.antetitulo" class="eyebrow justify-center text-primary" />
+        <Editable as="h1" clave="biografia.titulo" class="mt-[15px] mb-4 text-primary" />
+        <Editable as="p" clave="biografia.nota" class="content-note m-0" />
+      </div>
+      <Timeline milestones={biography} />
+    </div>
+  </section>
+</Layout>

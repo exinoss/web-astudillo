@@ -45,10 +45,10 @@ test('el menú refleja la sesión también fuera de la página de cuenta', async
       body: JSON.stringify(status === 200 ? { nombresCompletos: 'María Pérez' } : { error: 'Inicia sesión' }) });
   });
   await page.goto('/');
-  await expect(page.getByRole('navigation').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
   loggedIn = true;
   await page.reload();
-  await expect(page.getByRole('navigation').getByRole('link', { name: 'Mi cuenta' })).toBeVisible();
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Mi cuenta' })).toBeVisible();
 });
 
 test('registro valida correo, política, confirmación y visibilidad antes de enviar', async ({ page }) => {
@@ -110,12 +110,12 @@ test('acceso, perfil y cambio de contraseña muestran solo los datos aprobados',
   });
   await page.goto('/cuenta/');
   await expect(page.locator('#login-panel')).toBeVisible();
-  await expect(page.getByRole('navigation').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
   await page.locator('#login-correo').fill('maria@example.com');
   await page.locator('#login-contrasenia').fill('Ab1!xy');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   await expect(page.locator('#profile-panel')).toBeVisible();
-  await expect(page.getByRole('navigation').getByRole('link', { name: 'Mi cuenta' })).toBeVisible();
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Mi cuenta' })).toBeVisible();
   const logout = page.locator('#logout-button');
   await expect(logout).toBeVisible();
   expect((await logout.boundingBox())!.height).toBeGreaterThanOrEqual(48);
@@ -134,7 +134,7 @@ test('acceso, perfil y cambio de contraseña muestran solo los datos aprobados',
   await page.locator('#current-password').fill('Ab1!xy');
   await page.getByRole('button', { name: 'Actualizar contraseña' }).click();
   await expect(page.locator('#login-panel')).toBeVisible();
-  await expect(page.getByRole('navigation').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
   await expect(page.locator('#account-status')).toContainText('Inicia sesión de nuevo');
 });
 
@@ -165,13 +165,13 @@ test('cuenta Google muestra el mismo cierre de sesión y actualiza el menú', as
   await page.getByRole('button', { name: 'Guardar contraseña' }).click();
   await expect(page.locator('#google-password-step')).toBeVisible();
   await expect(page.locator('#google-password-step')).toContainText('Confirma tu identidad con Google');
-  await expect(page.getByRole('navigation').getByRole('link', { name: 'Mi cuenta' })).toBeVisible();
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Mi cuenta' })).toBeVisible();
   const logout = page.locator('#logout-google-button');
   await expect(logout).toBeVisible();
   expect((await logout.boundingBox())!.height).toBeGreaterThanOrEqual(48);
   await logout.click();
   await expect(page.locator('#login-panel')).toBeVisible();
-  await expect(page.getByRole('navigation').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
   expect(logouts).toBe(1);
 });
 
@@ -282,7 +282,7 @@ test('la cuenta se usa en móvil y conserva los modos de accesibilidad', async (
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/cuenta/registro/');
   await page.getByRole('button', { name: 'Abrir menú' }).click();
-  await expect(page.getByRole('navigation').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
   await page.getByRole('button', { name: 'Cerrar menú' }).click();
   await page.getByRole('button', { name: 'Herramientas de accesibilidad' }).click();
   await page.getByRole('button', { name: 'Aumentar texto' }).click();

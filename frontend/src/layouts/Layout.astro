@@ -2,10 +2,12 @@
 import { Image } from "astro:assets";
 import logo from "../assets/logo.avif";
 import Icon from "../components/Icon.astro";
+import Editable from "../components/Editable.astro";
 import NavLink from "../components/NavLink.astro";
 import DropdownPanel from "../components/DropdownPanel.astro";
 import DropdownLink from "../components/DropdownLink.astro";
 import { contentRepository } from "../lib/data";
+import { aboutLinks } from "../lib/acerca";
 import "@fontsource/barlow-condensed/600.css";
 import "@fontsource/barlow-condensed/700.css";
 import "@fontsource/dm-sans/400.css";
@@ -66,7 +68,7 @@ const accessButton =
     <link rel="icon" type="image/jpeg" href="/favicon.jpg" />
     <title>{title}</title>
   </head>
-  <body>
+  <body class="flex min-h-dvh flex-col">
     <a
       class="fixed -top-[100px] left-5 z-[1000] p-[15px] bg-base-100 text-primary focus:top-3"
       href="#contenido"
@@ -76,13 +78,11 @@ const accessButton =
     <div class="topbar bg-primary text-[0.67rem] text-primary-content">
       <div class="topbar-inner site-container flex min-h-[33px] items-center justify-between max-tablet:min-h-[30px] max-tablet:text-[0.55rem]">
         <span class="flex items-center gap-2 max-tablet:gap-1">
-          <Icon name="location" size={14} /> San Lorenzo, Esmeraldas
+          <Icon name="location" size={14} /> <Editable clave="global.ubicacion" />
         </span>
         <span class="flex items-center gap-2 max-tablet:gap-1">
-          Partido Social Cristiano{" "}
-          <b class="ml-3 tracking-[0.1em] text-accent max-tablet:ml-1 max-tablet:text-[0.53rem]">
-            LISTA 6
-          </b>
+          <Editable clave="global.partido" />{" "}
+          <Editable as="b" clave="global.lista" class="ml-3 tracking-[0.1em] text-accent max-tablet:ml-1 max-tablet:text-[0.53rem]" />
         </span>
       </div>
     </div>
@@ -112,11 +112,12 @@ const accessButton =
           </span>
         </a>
         <a
-          class="report-link order-2 flex min-h-12 items-center justify-center gap-2.5 rounded-[4px] bg-primary px-[17px] py-3.5 text-[0.85rem] font-bold whitespace-nowrap text-primary-content hover:bg-neutral max-nav:ml-auto max-tablet:min-h-11 max-tablet:gap-1.5 max-tablet:px-2.5 max-tablet:py-[11px] max-tablet:text-[0.72rem] max-mobile-xs:text-[0.7rem]"
-          href="/ciudadania/alerta-ciudadana/"
+          class="account-link order-2 flex min-h-12 items-center justify-center gap-2.5 rounded-[4px] bg-primary px-[17px] py-3.5 text-[0.85rem] font-bold whitespace-nowrap text-primary-content hover:bg-neutral max-nav:ml-auto max-tablet:min-h-11 max-tablet:gap-1.5 max-tablet:px-2.5 max-tablet:py-[11px] max-tablet:text-[0.72rem] max-mobile-xs:text-[0.7rem]"
+          href="/cuenta/"
+          aria-current={current === "/cuenta/" ? "page" : undefined}
         >
-          <Icon name="alert" size={19} />
-          <span>Reportar daño</span>
+          <Icon name="user" size={19} />
+          <span class="account-label">Iniciar sesión</span>
         </a>
         <button
           class="menu-toggle order-3 hidden h-11 w-11 items-center justify-center rounded-[3px] border border-base-300 bg-transparent text-primary max-nav:flex max-tablet:w-10 max-tablet:min-w-10"
@@ -134,12 +135,22 @@ const accessButton =
           >
             Inicio
           </NavLink>
-          <NavLink
-            href="/acerca-de-nosotros/"
-            active={current === "/acerca-de-nosotros/"}
-          >
-            Acerca de nosotros
-          </NavLink>
+          <div class="nav-dropdown relative">
+            <NavLink
+              active={current.startsWith("/acerca-de-nosotros/")}
+              ariaControls="about-menu"
+            >
+              Acerca de nosotros <Icon name="chevron" size={14} />
+            </NavLink>
+            <DropdownPanel id="about-menu">
+              {aboutLinks.map((link) => (
+                <DropdownLink href={link.href}>
+                  <Icon name={link.icon} size={21} />
+                  {link.name}
+                </DropdownLink>
+              ))}
+            </DropdownPanel>
+          </div>
           <div class="nav-dropdown relative">
             <NavLink
               active={current.startsWith("/propuestas/")}
@@ -170,34 +181,31 @@ const accessButton =
                   {p.name}
                 </DropdownLink>
               ))}
+              {/* Fuera de citizenLinks: esa lista también pinta la franja «Tu voz cuenta» de la portada. */}
+              <DropdownLink href="/ciudadania/obras-en-ejecucion/">
+                <Icon name="obras" size={21} />
+                Obras en ejecución
+              </DropdownLink>
             </DropdownPanel>
           </div>
           <NavLink href="/#contacto">Contáctanos</NavLink>
-          <NavLink
-            href="/cuenta/"
-            active={current.startsWith('/cuenta/')}
-            markCurrent={current === '/cuenta/'}
-          >
-            Iniciar sesión
-          </NavLink>
         </nav>
       </div>
     </header>
-    <main id="contenido" tabindex="-1">
+    {/* flex-1: en páginas cortas el pie queda al fondo sin alturas mínimas de relleno. */}
+    <main id="contenido" class="flex-1" tabindex="-1">
       <slot />
     </main>
-    <footer class="bg-primary text-primary-content pt-[45px] pb-[22px]">
+    <footer class="bg-primary text-primary-content pt-[45px] pb-[22px] max-desktop-sm:pb-[72px]">
       <div class="site-container flex items-center justify-between gap-[35px] pb-8 max-tablet:flex-col max-tablet:items-start max-tablet:gap-[25px] max-tablet:pb-[30px]">
         <a class="font-display text-[1.8rem] font-semibold" href="/">
-          CARLOS ASTUDILLO
-          <span class="mt-2 block font-sans text-[0.75rem] font-normal text-accent">
-            Por ti, San Lorenzo.
-          </span>
+          <Editable clave="pie.nombre" />
+          <Editable clave="global.lema" class="mt-2 block font-sans text-[0.75rem] font-normal text-accent" />
         </a>
         <p class="m-0 text-[0.75rem] text-footer-muted">
-          Candidato a la alcaldía de San Lorenzo
+          <Editable clave="pie.linea-1" />
           <br />
-          Partido Social Cristiano · Lista 6
+          <Editable clave="pie.linea-2" />
         </p>
         <a href="/#contacto" class="flex items-center gap-5 text-[0.8rem]">
           Contáctanos <Icon name="arrow" size={18} />
@@ -205,7 +213,7 @@ const accessButton =
       </div>
       <div class="site-container relative flex justify-between gap-5 border-t border-t-[#ffffff25] pt-[22px] text-[0.62rem] text-footer-muted max-tablet:flex-col max-tablet:gap-2.5 max-tablet:pr-[45px] max-tablet:leading-[1.7]">
         <span>© {new Date().getFullYear()} Carlos Astudillo</span>
-        <span>Por ti, San Lorenzo.</span>
+        <Editable clave="global.lema" />
         {/* Por debajo de 1191px se ancla aquí en vez de flotar (ver layout.ts).
             El `::after` amplía el área táctil a 44px sin cambiar el tamaño
             visible. */}
@@ -217,12 +225,12 @@ const accessButton =
         </button>
       </div>
     </footer>
-    {/* Fila desde left:0: con el panel oculto solo se ve el botón en el
-        borde; al abrirse, el botón se desplaza al borde derecho del panel. */}
-    <div class="fixed top-1/2 left-0 z-[80] flex -translate-y-1/2 items-start">
+    {/* Esquina inferior derecha; el panel se abre hacia arriba. Queda por debajo de
+        «Volver arriba»: en escritorio este flota a 84px y en móvil el pie reserva espacio. */}
+    <div class="fixed right-3 bottom-3 z-[80] flex flex-col items-end gap-2">
       <aside
         id="access-panel"
-        class="max-h-[calc(100dvh-40px)] w-[min(300px,calc(100vw-96px))] overflow-y-auto rounded-r-[4px] border border-l-0 border-base-300 bg-base-100 px-4 py-5 text-primary [box-shadow:0_10px_45px_#06317625]"
+        class="max-h-[calc(100dvh-80px)] w-[min(300px,calc(100vw-24px))] overflow-y-auto rounded-[4px] border border-base-300 bg-base-100 px-4 py-5 text-primary [box-shadow:0_10px_45px_#06317625]"
         aria-label="Herramientas de accesibilidad"
         hidden
       >
@@ -253,7 +261,7 @@ const accessButton =
         </button>
       </aside>
       <button
-        class="access-toggle grid h-11 w-11 shrink-0 place-items-center rounded-r-[4px] border-y-2 border-r-2 border-base-100 bg-primary text-primary-content [box-shadow:0_3px_15px_#06317630]"
+        class="access-toggle grid h-11 w-11 shrink-0 place-items-center rounded-[4px] border-2 border-base-100 bg-primary text-primary-content [box-shadow:0_3px_15px_#06317630]"
         aria-label="Herramientas de accesibilidad"
         aria-expanded="false"
         aria-controls="access-panel"
@@ -261,6 +269,15 @@ const accessButton =
         <Icon name="person" size={22} />
       </button>
     </div>
+    <div
+      class="transicion pointer-events-none fixed inset-0 z-[900] grid place-items-center bg-base-100/90"
+      role="status"
+      hidden
+    >
+      <div class="transicion-lienzo aspect-[6/5] w-[180px] max-tablet:w-[140px]" aria-hidden="true"></div>
+      <span class="sr-only">Cargando página…</span>
+    </div>
     <script src="../scripts/layout.ts"></script>
+    <script src="../scripts/transicion.ts"></script>
   </body>
 </html>

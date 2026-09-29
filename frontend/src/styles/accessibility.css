@@ -84,7 +84,6 @@
 .light-bg .about-section,
 .light-bg .contact-section,
 .light-bg .proposals-section,
-.light-bg .hero-controls,
 .light-bg .detail-banner,
 .light-bg .citizen-form,
 .light-bg .proposal-card {
@@ -92,9 +91,6 @@
 }
 
 @media (max-width: 760px) {
-  .text-large .carousel-controls {
-    gap: 5px;
-  }
   .text-large .values {
     flex-wrap: wrap;
   }
@@ -105,7 +101,6 @@
 .high-contrast .about-section,
 .high-contrast .contact-section,
 .high-contrast .proposals-section,
-.high-contrast .hero-controls,
 .high-contrast .detail-banner,
 .high-contrast .citizen-form,
 .high-contrast .proposal-card {

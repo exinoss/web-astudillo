@@ -1,0 +1,19 @@
+# Publicador: compila el frontend estático con cada publicación del panel.
+# Se construye desde la raíz del repositorio (ver docker-compose.yml): necesita frontend/ y backend/.
+FROM oven/bun:1.3.14-alpine
+WORKDIR /app
+
+COPY frontend/package.json frontend/bun.lock ./frontend/
+RUN cd frontend && bun install --frozen-lockfile
+COPY backend/package.json backend/bun.lock ./backend/
+RUN cd backend && bun install --frozen-lockfile --production
+
+COPY frontend ./frontend
+COPY backend/src ./backend/src
+# Astro escribe su caché dentro de frontend/ al compilar; el volumen del sitio lo crea el usuario bun.
+RUN mkdir -p /srv/sitio && chown -R bun:bun /app/frontend /srv/sitio
+
+ENV NODE_ENV=production FRONTEND_DIR=/app/frontend SITE_DIR=/srv/sitio ASTRO_TELEMETRY_DISABLED=1
+WORKDIR /app/backend
+USER bun
+CMD ["bun", "run", "publicador"]

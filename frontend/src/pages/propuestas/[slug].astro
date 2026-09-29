@@ -2,7 +2,9 @@
 import Layout from "../../layouts/Layout.astro";
 import Icon from "../../components/Icon.astro";
 import Breadcrumb from "../../components/Breadcrumb.astro";
+import Editable from "../../components/Editable.astro";
 import DetailBanner from "../../components/DetailBanner.astro";
+import KpiStrip from "../../components/KpiStrip.astro";
 import Model3D from "../../components/Model3D.astro";
 import { contentRepository } from "../../lib/data";
 import type { Proposal } from "../../lib/data/types";
@@ -38,28 +40,23 @@ const { proposal, proposals } = Astro.props;
     iconSize={76}
     lead={proposal.intro}
   />
-  <div class="site-container grid grid-cols-[minmax(0,1.7fr)_minmax(250px,1fr)] gap-[90px] py-section max-desktop-sm:gap-[45px] max-tablet:grid-cols-1">
+  <KpiStrip kpis={proposal.kpis} label={`Cifras de la propuesta ${proposal.name}`} />
+  <div class="site-container grid grid-cols-[minmax(0,1.7fr)_minmax(250px,1fr)] gap-[90px] pt-8 pb-14 max-desktop-sm:gap-[45px] max-tablet:pt-6 max-tablet:pb-10 max-tablet:grid-cols-1">
     <article>
-      <span class="eyebrow">INFORMACIÓN DE LA PROPUESTA</span>
-      <h2 class="mt-[15px] max-tablet:text-[2.6rem]">Conoce este eje.</h2>
-      <p class="max-w-[680px]">
-        Este es uno de los siete temas presentados para la candidatura de Carlos
-        Astudillo a la alcaldía de San Lorenzo.
-      </p>
+      <Editable clave="propuesta.antetitulo" class="eyebrow" />
+      <Editable as="h2" clave="propuesta.titulo" class="mt-[15px] max-tablet:text-[2.6rem]" />
+      <Editable as="p" clave="propuesta.texto" class="max-w-[680px]" />
       {proposal.model && <Model3D {...proposal.model} />}
       <div class="mt-[30px] mb-10 flex items-start gap-[18px] [border-left:3px_solid_var(--color-accent)] bg-base-200 p-[25px]">
         <Icon name="book" size={24} />
         <div>
-          <strong>Contenido en preparación</strong>
-          <p class="mt-2 mr-0 mb-0 ml-0 text-[0.88rem]">
-            Los objetivos, acciones y detalles de esta propuesta se incorporarán
-            cuando estén disponibles.
-          </p>
+          <Editable as="strong" clave="propuesta.preparacion.titulo" />
+          <Editable as="p" clave="propuesta.preparacion.texto" class="mt-2 mr-0 mb-0 ml-0 text-[0.88rem]" />
         </div>
       </div>
-      <h3>Tu perspectiva también cuenta.</h3>
+      <Editable as="h3" clave="propuesta.perspectiva.titulo" />
       <p class="max-w-[680px]">
-        Comparte una idea relacionada con {proposal.name.toLowerCase()}.
+        <Editable clave="propuesta.perspectiva.texto" /> {proposal.name.toLowerCase()}.
       </p>
       <a
         class="button max-tablet:gap-3.5 max-tablet:text-[0.75rem]"
@@ -69,7 +66,7 @@ const { proposal, proposals } = Astro.props;
       </a>
     </article>
     <aside class="related-proposals self-start rounded-[4px] border border-base-300 p-[25px]">
-      <h3 class="mb-5 text-[1rem]">Explora las propuestas</h3>
+      <Editable as="h3" clave="propuesta.explora" class="mb-5 text-[1rem]" />
       {proposals.map((p) => (
         <a
           href={`/propuestas/${p.slug}/`}

@@ -1,6 +1,6 @@
 # Plan — Sección de KPIs de campaña en el home
 
-> Estado: **pendiente**. Planificado, no implementado. Se retoma después de la migración a Tailwind.
+> Estado: **sustituido**. Los KPI se muestran ahora por propuesta, en una franja de la página de cada una, y se editan desde el panel de administración. No se implementa la franja de la portada que describe este documento.
 
 ## Contexto
 

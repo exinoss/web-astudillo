@@ -12,11 +12,12 @@ export function createProfile(sql: SQL, authorization: Authorization) {
     /** Devuelve datos públicos del perfil e indicadores de métodos de acceso. */
     async get(access: string | undefined) {
       const user = await authorization.require(access, PERMISSIONS.profileView);
-      const [methods] = await callPg<{ tiene_contrasenia: boolean; tiene_google: boolean }>(
-        sql, 'accountMethods', [user.id_usuario],
-      );
+      const [[methods], permissions] = await Promise.all([
+        callPg<{ tiene_contrasenia: boolean; tiene_google: boolean }>(sql, 'accountMethods', [user.id_usuario]),
+        callPg<{ codigo: string }>(sql, 'userPermissions', [user.id_usuario]),
+      ]);
       return { ...publicAccount(user), tieneContrasenia: methods.tiene_contrasenia,
-        tieneGoogle: methods.tiene_google };
+        tieneGoogle: methods.tiene_google, permisos: permissions.map(p => p.codigo) };
     },
     /** Actualiza solo nombre y dirección tras validar el permiso de edición. */
     async update(access: string | undefined, input: ProfileUpdateInput) {

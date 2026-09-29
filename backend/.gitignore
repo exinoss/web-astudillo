@@ -4,3 +4,7 @@ env
 /.tmp/
 /node_modules/
 
+
+# Fotos subidas desde el panel
+medios/
+medios-pruebas*/

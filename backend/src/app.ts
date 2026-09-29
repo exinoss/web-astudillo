@@ -1,9 +1,13 @@
 import { Elysia } from "elysia";
 import type { SQL } from "bun";
 import type { Config } from "./config";
+import { adminRoutes } from "./admin/routes";
 import { authRoutes } from "./auth/routes";
+import { contentRoutes } from "./content/routes";
+import { mediaFileRoutes } from "./content/routes/files";
 import { createAuthorization } from "./auth/services/authorization";
 import { ApiError } from "./http";
+import { mapHttpError } from "./http-errors";
 import type { Mailer } from "./mailer";
 import { profileRoutes } from "./profile/routes";
 import type { Security } from "./security";
@@ -19,25 +23,16 @@ export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; secu
         if (request.headers.get("origin") !== config.origin) throw new ApiError(403, "Origen no permitido");
       }
     })
-    // Expone errores controlados y oculta detalles de fallos internos.
     .onError(({ error, code, set }) => {
-      if (error instanceof ApiError) {
-        set.status = error.status;
-        return { error: error.message };
-      }
-      if (code === "VALIDATION") {
-        set.status = 422;
-        return { error: "Datos inválidos" };
-      }
-      if ("errno" in error && error.errno === "23505") {
-        set.status = 409;
-        return { error: "La operación ya fue completada" };
-      }
-      console.error("Error interno", error instanceof Error ? error.message : "desconocido");
-      set.status = 500;
-      return { error: "Error interno" };
+      const response = mapHttpError(error, code);
+      set.status = response.status;
+      return { error: response.message };
     })
     .get("/api/health", () => ({ ok: true }))
     .use(authRoutes(sql, config, mailer, security, authorization))
-    .use(profileRoutes(sql, authorization));
+    .use(profileRoutes(sql, authorization))
+    .use(adminRoutes(sql, authorization))
+    .use(contentRoutes(sql, authorization, config.mediaDir))
+    // En producción nginx sirve /medios desde el mismo volumen; esto solo cubre el desarrollo.
+    .use(config.production ? new Elysia() : mediaFileRoutes(config.mediaDir));
 }

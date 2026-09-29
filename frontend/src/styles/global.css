@@ -63,4 +63,11 @@
 
   /* Texto secundario sobre el fondo azul del pie de página. */
   --color-footer-muted: #d5e0f2;
+
+  --animate-rebote: rebote 2s ease-in-out infinite;
+  @keyframes rebote {
+    0%, 22%, 55%, 100% { transform: translateY(0); }
+    35% { transform: translateY(-9px); }
+    45% { transform: translateY(-4px); }
+  }
 }

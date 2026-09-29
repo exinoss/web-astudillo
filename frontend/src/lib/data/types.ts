@@ -7,12 +7,29 @@ export interface ProposalModel {
   alt: string;
 }
 
+/** Foto subida desde el panel: el backend ya generó las variantes `/medios/<nombre>-<ancho>.webp`. */
+export interface UploadedPicture {
+  nombre: string;
+  ancho: number;
+  alto: number;
+  anchos: number[];
+}
+
+/** Recurso del código (lo optimiza astro:assets) o foto subida desde el panel. */
+export type Picture = ImageMetadata | UploadedPicture;
+
+export interface Kpi {
+  label: string;
+  value: string;
+}
+
 export interface Proposal {
   slug: string;
   name: string;
   icon: string;
   label: string;
   intro: string;
+  kpis: Kpi[];
   model?: ProposalModel;
 }
 
@@ -46,4 +63,35 @@ export interface ChatReply {
   text: string;
   linkHref?: string;
   linkText?: string;
+}
+
+export interface BiographyMilestone {
+  years: string;
+  title: string;
+  text: string[];
+  image: Picture | null;
+  alt: string;
+}
+
+export interface WorkMilestone {
+  name: string;
+  done: boolean;
+}
+
+export interface WorkEvidence {
+  image: Picture;
+  alt: string;
+  caption: string;
+}
+
+/**
+ * Obra asociada a una propuesta; `updatedAt` en formato ISO. El porcentaje y la etapa no se
+ * guardan: los calcula `src/lib/obras.ts` a partir de los hitos completados.
+ */
+export interface WorkProgress {
+  proposalSlug: string;
+  updatedAt: string;
+  note: string;
+  milestones: WorkMilestone[];
+  evidence: WorkEvidence[];
 }

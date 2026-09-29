@@ -1,3 +1,5 @@
+import { resolve } from "node:path";
+
 export interface Config {
   databaseUrl: string;
   origin: string;
@@ -8,6 +10,8 @@ export interface Config {
   trustProxyIp: boolean;
   production: boolean;
   smtp: { host: string; port: number; user: string; pass: string; from: string; name: string };
+  /** Carpeta donde se guardan las fotos subidas desde el panel. */
+  mediaDir: string;
 }
 
 /** Lee y valida la configuración obligatoria antes de iniciar el servidor. */
@@ -34,6 +38,7 @@ export function loadConfig(env = process.env): Config {
     databaseUrl: required("DATABASE_URL"),
     origin, jwtSecret, googleClientId: required("GOOGLE_CLIENT_ID"), port,
     bindHost, trustProxyIp: proxyOption === "true", production,
+    mediaDir: resolve(env.MEDIA_DIR?.trim() || "medios"),
     smtp: {
       host: required("SMTP_HOST"), port: smtpPort, user: required("SMTP_USER"),
       pass: required("SMTP_PASS"), from: required("SMTP_FROM"),

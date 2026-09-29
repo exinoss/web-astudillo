@@ -33,6 +33,11 @@ slideDots.forEach((dot, i) =>
     syncAutoplay();
   }),
 );
+for (const [clase, paso] of [[".slide-prev", -1], [".slide-next", 1]] as const)
+  document.querySelector(clase)!.addEventListener("click", () => {
+    showSlide(index + paso);
+    syncAutoplay();
+  });
 const carousel = document.querySelector<HTMLElement>(".hero-slides")!;
 let startX = 0;
 let startY = 0;

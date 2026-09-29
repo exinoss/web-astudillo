@@ -1,4 +1,4 @@
-import { pgTable, unique, integer, varchar, text, uniqueIndex, foreignKey, check, timestamp, index, jsonb, primaryKey } from "drizzle-orm/pg-core"
+import { pgTable, unique, integer, varchar, text, uniqueIndex, foreignKey, check, timestamp, index, jsonb, primaryKey, boolean } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -28,16 +28,20 @@ export const tbUsuarios = pgTable("tb_usuarios", {
 	correoVerificadoEn: timestamp("correo_verificado_en", { withTimezone: true, mode: 'string' }).notNull(),
 	rol: varchar({ length: 40 }).default('votante').notNull(),
 	estado: varchar({ length: 20 }).default('activo').notNull(),
+	// Admin maestro: uno solo, gestionado por `bun run admin:*` y nunca desde la API.
+	esMaestro: boolean("es_maestro").default(false).notNull(),
 	creadoEn: timestamp("creado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 	actualizadoEn: timestamp("actualizado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 }, (table) => [
 	uniqueIndex("uq_usuarios_correo_sin_mayusculas").using("btree", sql`lower((correo)::text)`),
+	uniqueIndex("uq_usuarios_un_maestro").on(table.esMaestro).where(sql`es_maestro`),
 	foreignKey({
 			columns: [table.rol],
 			foreignColumns: [tbRoles.rol],
 			name: "tb_usuarios_rol_fkey"
 		}).onUpdate("restrict").onDelete("restrict"),
 	check("tb_usuarios_estado_check", sql`(estado)::text = ANY ((ARRAY['activo'::character varying, 'bloqueado'::character varying])::text[])`),
+	check("ck_usuarios_maestro_admin", sql`NOT es_maestro OR (rol)::text = 'admin'::text`),
 	check("ck_usuarios_correo_limpio", sql`((correo)::text = btrim((correo)::text)) AND ((correo)::text <> ''::text)`),
 ]);
 
@@ -161,4 +165,118 @@ export const tbRolPermisos = pgTable("tb_rol_permisos", {
 			name: "tb_rol_permisos_id_permiso_fkey"
 		}).onDelete("cascade"),
 	primaryKey({ columns: [table.idRol, table.idPermiso], name: "tb_rol_permisos_pkey"}),
+]);
+
+// Contenido editable del sitio. Estas tablas son el borrador vivo; lo publicado es la copia
+// congelada en tb_publicaciones.contenido que usa la compilación del sitio.
+
+export const tbMedios = pgTable("tb_medios", {
+	idMedio: integer("id_medio").primaryKey().generatedAlwaysAsIdentity(),
+	nombre: varchar({ length: 80 }).notNull(),
+	ancho: integer().notNull(),
+	alto: integer().notNull(),
+	anchos: integer().array().notNull(),
+	creadoPor: integer("creado_por"),
+	creadoEn: timestamp("creado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => [
+	unique("uq_medios_nombre").on(table.nombre),
+	foreignKey({ columns: [table.creadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_medios_creado_por_fkey" }).onDelete("set null"),
+	check("ck_medios_nombre", sql`nombre ~ '^[a-z0-9-]{8,80}$'`),
+]);
+
+export const tbTextos = pgTable("tb_textos", {
+	clave: varchar({ length: 120 }).primaryKey(),
+	valor: text().notNull(),
+	actualizadoPor: integer("actualizado_por"),
+	actualizadoEn: timestamp("actualizado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => [
+	foreignKey({ columns: [table.actualizadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_textos_actualizado_por_fkey" }).onDelete("set null"),
+	check("ck_textos_clave", sql`clave ~ '^[a-z0-9]+([.-][a-z0-9]+)*$'`),
+	check("ck_textos_valor", sql`char_length(valor) BETWEEN 1 AND 1000`),
+]);
+
+export const tbPropuestas = pgTable("tb_propuestas", {
+	slug: varchar({ length: 80 }).primaryKey(),
+	nombre: varchar({ length: 120 }).notNull(),
+	categoria: varchar({ length: 80 }).notNull(),
+	introduccion: varchar({ length: 400 }).notNull(),
+	orden: integer().notNull(),
+	actualizadoPor: integer("actualizado_por"),
+	actualizadoEn: timestamp("actualizado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => [
+	foreignKey({ columns: [table.actualizadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_propuestas_actualizado_por_fkey" }).onDelete("set null"),
+]);
+
+export const tbPropuestaKpis = pgTable("tb_propuesta_kpis", {
+	idKpi: integer("id_kpi").primaryKey().generatedAlwaysAsIdentity(),
+	slug: varchar({ length: 80 }).notNull(),
+	orden: integer().notNull(),
+	etiqueta: varchar({ length: 60 }).notNull(),
+	valor: varchar({ length: 30 }).notNull(),
+}, (table) => [
+	index("idx_propuesta_kpis_slug").on(table.slug, table.orden),
+	foreignKey({ columns: [table.slug], foreignColumns: [tbPropuestas.slug], name: "tb_propuesta_kpis_slug_fkey" }).onDelete("cascade"),
+]);
+
+export const tbBiografiaHitos = pgTable("tb_biografia_hitos", {
+	idHito: integer("id_hito").primaryKey().generatedAlwaysAsIdentity(),
+	orden: integer().notNull(),
+	anios: varchar({ length: 40 }).notNull(),
+	titulo: varchar({ length: 120 }).notNull(),
+	texto: varchar({ length: 3000 }).notNull(),
+	idMedio: integer("id_medio"),
+	alt: varchar({ length: 200 }),
+}, (table) => [
+	foreignKey({ columns: [table.idMedio], foreignColumns: [tbMedios.idMedio], name: "tb_biografia_hitos_id_medio_fkey" }).onDelete("set null"),
+]);
+
+export const tbObras = pgTable("tb_obras", {
+	slug: varchar({ length: 80 }).primaryKey(),
+	nota: varchar({ length: 600 }).notNull(),
+	actualizadoPor: integer("actualizado_por"),
+	actualizadoEn: timestamp("actualizado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => [
+	foreignKey({ columns: [table.slug], foreignColumns: [tbPropuestas.slug], name: "tb_obras_slug_fkey" }).onDelete("cascade"),
+	foreignKey({ columns: [table.actualizadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_obras_actualizado_por_fkey" }).onDelete("set null"),
+]);
+
+export const tbObraHitos = pgTable("tb_obra_hitos", {
+	idHito: integer("id_hito").primaryKey().generatedAlwaysAsIdentity(),
+	slug: varchar({ length: 80 }).notNull(),
+	orden: integer().notNull(),
+	nombre: varchar({ length: 120 }).notNull(),
+	completado: boolean().default(false).notNull(),
+}, (table) => [
+	index("idx_obra_hitos_slug").on(table.slug, table.orden),
+	foreignKey({ columns: [table.slug], foreignColumns: [tbObras.slug], name: "tb_obra_hitos_slug_fkey" }).onDelete("cascade"),
+]);
+
+export const tbObraFotos = pgTable("tb_obra_fotos", {
+	idFoto: integer("id_foto").primaryKey().generatedAlwaysAsIdentity(),
+	slug: varchar({ length: 80 }).notNull(),
+	orden: integer().notNull(),
+	idMedio: integer("id_medio").notNull(),
+	pie: varchar({ length: 200 }).notNull(),
+}, (table) => [
+	index("idx_obra_fotos_slug").on(table.slug, table.orden),
+	foreignKey({ columns: [table.slug], foreignColumns: [tbObras.slug], name: "tb_obra_fotos_slug_fkey" }).onDelete("cascade"),
+	foreignKey({ columns: [table.idMedio], foreignColumns: [tbMedios.idMedio], name: "tb_obra_fotos_id_medio_fkey" }).onDelete("restrict"),
+]);
+
+export const tbPublicaciones = pgTable("tb_publicaciones", {
+	idPublicacion: integer("id_publicacion").primaryKey().generatedAlwaysAsIdentity(),
+	estado: varchar({ length: 20 }).default('en_cola').notNull(),
+	contenido: jsonb().notNull(),
+	creadoPor: integer("creado_por"),
+	creadoEn: timestamp("creado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	iniciadoEn: timestamp("iniciado_en", { withTimezone: true, mode: 'string' }),
+	terminadoEn: timestamp("terminado_en", { withTimezone: true, mode: 'string' }),
+	detalle: text(),
+}, (table) => [
+	index("idx_publicaciones_estado").on(table.estado, table.idPublicacion),
+	// Una sola publicación en cola: publicar de nuevo antes de que empiece reemplaza su contenido.
+	uniqueIndex("uq_publicaciones_una_en_cola").on(table.estado).where(sql`estado = 'en_cola'`),
+	foreignKey({ columns: [table.creadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_publicaciones_creado_por_fkey" }).onDelete("set null"),
+	check("ck_publicaciones_estado", sql`estado IN ('en_cola', 'publicando', 'publicada', 'fallida')`),
+	check("ck_publicaciones_contenido", sql`jsonb_typeof(contenido) = 'object'`),
 ]);

@@ -4,11 +4,12 @@ import AccountCard from '../../components/account/AccountCard.astro';
 import AccountField from '../../components/account/AccountField.astro';
 import AccountStatus from '../../components/account/AccountStatus.astro';
 import AccountSignOut from '../../components/account/AccountSignOut.astro';
+import Icon from '../../components/Icon.astro';
 ---
 
 <AccountShell title="Mi cuenta" lead="Accede para gestionar tus datos y participar.">
   <AccountStatus />
-  <p id="account-loading" class="mx-auto max-w-[560px] text-sm">Cargando tu cuenta…</p>
+  <div id="account-loading" class="mx-auto min-h-[130px] max-w-[560px] text-sm">Cargando tu cuenta…</div>
   <div id="login-panel" class="mx-auto max-w-[474px] max-tablet:max-w-[448px]" hidden>
     <AccountCard heading="Accede a tu cuenta" description="Ingresa con tu correo y contraseña, o usa tu cuenta Google.">
       <form id="login-form" novalidate>
@@ -27,6 +28,12 @@ import AccountSignOut from '../../components/account/AccountSignOut.astro';
   </div>
 
   <div id="profile-panel" hidden>
+    <a id="admin-panel-link" href="/cuenta/panel/" hidden
+      class="mx-auto mb-[22px] flex min-h-14 max-w-[1050px] items-center justify-between gap-4 rounded-[3px] border border-base-300 border-l-[5px] border-l-accent bg-base-100 px-6 py-4 text-primary no-underline [box-shadow:0_10px_35px_#0631760d] hover:bg-[#eef4fb] max-tablet:px-4">
+      <span class="flex flex-col gap-0.5"><strong class="text-[1rem]">Panel de administración</strong>
+        <span class="text-[0.8rem] text-[#50617d]">Edita el contenido del sitio y publica los cambios.</span></span>
+      <span class="-rotate-90"><Icon name="chevron" size={20} /></span>
+    </a>
     <div class="mx-auto grid max-w-[1050px] grid-cols-2 items-start gap-[22px] max-tablet:grid-cols-1">
       <AccountCard heading="Mis datos" description="Estos datos se usan en tu cuenta.">
         <form id="profile-form" novalidate>

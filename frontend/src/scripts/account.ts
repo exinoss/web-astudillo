@@ -4,6 +4,7 @@ import { errorText, showStatus, validateFields, value } from '../lib/auth/page';
 import { authRepository } from '../lib/data/auth';
 import type { Profile } from '../lib/data/auth-repository';
 import { ApiError } from '../lib/data/http/api-client';
+import { mostrarCarga } from '../lib/animaciones';
 
 const loginPanel = document.querySelector<HTMLElement>('#login-panel')!;
 const profilePanel = document.querySelector<HTMLElement>('#profile-panel')!;
@@ -57,6 +58,7 @@ async function showLogin() {
   loginPanel.hidden = false;
   try {
     await showGoogleButton(loginGoogle, async credential => {
+      const terminarCarga = mostrarCarga(loginPanel);
       try {
         const result = await authRepository.googleLogin(credential);
         if (result === 'pending') {
@@ -67,6 +69,8 @@ async function showLogin() {
         }
       } catch (error) {
         showAccountError(error);
+      } finally {
+        terminarCarga();
       }
     });
   } catch (error) {
@@ -87,6 +91,7 @@ async function showProfile(profile: Profile) {
   profilePanel.hidden = false;
   profileForm.querySelector<HTMLInputElement>('[name="nombresCompletos"]')!.value = profile.nombresCompletos ?? '';
   profileForm.querySelector<HTMLInputElement>('[name="direccion"]')!.value = profile.direccion ?? '';
+  document.querySelector<HTMLElement>('#admin-panel-link')!.hidden = !profile.permisos?.includes('contenido.editar');
   passwordPanel.hidden = !profile.tieneGoogle || profile.tieneContrasenia;
   changePasswordPanel.hidden = !profile.tieneContrasenia;
   passwordGoogleStep.hidden = true;
@@ -104,6 +109,7 @@ loginForm.addEventListener('submit', async event => {
   event.preventDefault();
   const submit = loginForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
   submit.disabled = true;
+  const terminarCarga = mostrarCarga(loginForm);
   try {
     if (!validateFields(loginForm)) {
       showStatus(status, 'Revisa los campos marcados.', true);
@@ -114,6 +120,7 @@ loginForm.addEventListener('submit', async event => {
   } catch (error) {
     showAccountError(error);
   } finally {
+    terminarCarga();
     submit.disabled = false;
   }
 });
@@ -124,6 +131,7 @@ profileForm.addEventListener('submit', async event => {
   if (!current) return;
   const submit = profileForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
   submit.disabled = true;
+  const terminarCarga = mostrarCarga(profileForm);
   try {
     if (!validateFields(profileForm)) {
       showStatus(status, 'Revisa los campos marcados.', true);
@@ -138,6 +146,7 @@ profileForm.addEventListener('submit', async event => {
   } catch (error) {
     showStatus(status, errorText(error), true);
   } finally {
+    terminarCarga();
     submit.disabled = false;
   }
 });
@@ -165,6 +174,7 @@ async function saveGooglePassword(credential: string) {
   addingPassword = true;
   const submit = passwordForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
   submit.disabled = true;
+  const terminarCarga = mostrarCarga(passwordForm);
   try {
     await authRepository.addPassword(credential, value(passwordForm, 'contrasenia'));
     recentGoogle = undefined;
@@ -180,6 +190,7 @@ async function saveGooglePassword(credential: string) {
     } else showStatus(status, errorText(error), true);
   } finally {
     addingPassword = false;
+    terminarCarga();
     submit.disabled = false;
   }
 }
@@ -204,6 +215,7 @@ changePasswordForm.addEventListener('submit', async event => {
   event.preventDefault();
   const submit = changePasswordForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
   submit.disabled = true;
+  const terminarCarga = mostrarCarga(changePasswordForm);
   try {
     if (!validateFields(changePasswordForm)) {
       showStatus(status, 'Revisa los campos marcados.', true);
@@ -219,6 +231,7 @@ changePasswordForm.addEventListener('submit', async event => {
   } catch (error) {
     showStatus(status, errorText(error), true);
   } finally {
+    terminarCarga();
     submit.disabled = false;
   }
 });
@@ -239,6 +252,7 @@ document.querySelector<HTMLButtonElement>('#logout-button')!.addEventListener('c
 document.querySelector<HTMLButtonElement>('#logout-google-button')!.addEventListener('click', logout);
 document.querySelector<HTMLButtonElement>('#blocked-logout-button')!.addEventListener('click', logout);
 
+const terminarCargaInicial = mostrarCarga(loading, 'Cargando tu cuenta…');
 try {
   await loadProfile();
 } catch (error) {
@@ -250,4 +264,6 @@ try {
     await showLogin();
     showStatus(status, errorText(error), true);
   }
+} finally {
+  terminarCargaInicial();
 }
