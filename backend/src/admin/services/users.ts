@@ -58,20 +58,20 @@ export function createAdminUsers(sql: SQL, authorization: Authorization) {
     },
 
     /** Cambia el rol; la base repite la comprobación dentro de la transacción. */
-    async changeRole(access: string | undefined, targetId: number, role: AssignableRole) {
+    async changeRole(access: string | undefined, targetId: number, role: AssignableRole, expected: string) {
       const actor = await authorization.require(access, PERMISSIONS.usersRoleChange);
       await target(actor, targetId);
-      const [updated] = await callPg<UserRow>(sql, 'roleChange', [actor.id_usuario, targetId, role]);
-      // Solo ocurre si la cuenta cambió entre la lectura y el cambio (otro admin actuó a la vez).
+      const [updated] = await callPg<UserRow>(sql, 'roleChange', [actor.id_usuario, targetId, role, expected]);
+      // Otro admin cambió la cuenta desde que se cargó la lista (`expected` ya no es su rol).
       if (!updated) throw new ApiError(409, 'La cuenta cambió mientras tanto; recarga la lista');
       return { id: updated.id_usuario, rol: updated.rol, estado: updated.estado };
     },
 
     /** Activa o desactiva la cuenta; al desactivarla se cierran sus sesiones. */
-    async changeState(access: string | undefined, targetId: number, state: AccountState) {
+    async changeState(access: string | undefined, targetId: number, state: AccountState, expected: string) {
       const actor = await authorization.require(access, PERMISSIONS.usersStateChange);
       await target(actor, targetId);
-      const [updated] = await callPg<UserRow>(sql, 'userStateChange', [actor.id_usuario, targetId, state]);
+      const [updated] = await callPg<UserRow>(sql, 'userStateChange', [actor.id_usuario, targetId, state, expected]);
       if (!updated) throw new ApiError(409, 'La cuenta cambió mientras tanto; recarga la lista');
       return { id: updated.id_usuario, rol: updated.rol, estado: updated.estado };
     },

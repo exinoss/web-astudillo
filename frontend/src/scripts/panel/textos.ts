@@ -66,7 +66,7 @@ function drawList(section: HTMLElement) {
     </div>`).join("") : `<p class="m-0 px-5 py-6 text-[0.86rem]">Ningún texto coincide con la búsqueda.</p>`;
   list.querySelectorAll<HTMLButtonElement>("[data-original]").forEach((b) => b.addEventListener("click", () =>
     busy(b, async () => {
-      await adminApi.saveText(b.dataset.original!, null);
+      await adminApi.saveText(b.dataset.original!, null, state.draft!.versiones.textos[b.dataset.original!] ?? null);
       await Promise.all([reloadDraft(), reloadPending()]);
       drawList(section);
       notify("El texto vuelve al original en el borrador. Publica para que se vea en el sitio.");

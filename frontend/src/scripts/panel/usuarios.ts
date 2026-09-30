@@ -18,7 +18,7 @@ function actions(u: AdminUser) {
   if (confirming === u.id) return `
     <span class="flex flex-wrap items-center gap-2.5">
       <span class="text-[0.8rem] font-bold">Se cerrarán sus sesiones. ¿Desactivar?</span>
-      <button type="button" class="${DANGER}" data-estado="bloqueado" data-cuenta="${u.id}">Sí, desactivar</button>
+      <button type="button" class="${DANGER}" data-estado="bloqueado" data-cuenta="${u.id}" data-estado-actual="${u.estado}">Sí, desactivar</button>
       <button type="button" class="${GHOST}" data-cancelar>Cancelar</button>
     </span>`;
   const select = `<select data-rol-de="${u.id}" aria-label="Nuevo rol de ${esc(u.nombresCompletos ?? u.correo)}"
@@ -27,10 +27,10 @@ function actions(u: AdminUser) {
       ${u.rolesAsignables.map((r) => `<option value="${esc(r)}" ${r === u.rol ? "selected" : ""}>${esc(ROLE_NAMES[r] ?? r)}</option>`).join("")}
     </select>`;
   return `<span class="flex flex-wrap items-center gap-2.5 max-tablet:w-full">
-      <span class="flex gap-2.5 max-tablet:w-full">${select}<button type="button" class="button min-h-11 px-4 py-0" data-guardar-rol="${u.id}">Guardar</button></span>
+      <span class="flex gap-2.5 max-tablet:w-full">${select}<button type="button" class="button min-h-11 px-4 py-0" data-guardar-rol="${u.id}" data-rol-actual="${esc(u.rol)}">Guardar</button></span>
       ${u.estado === "activo"
         ? `<button type="button" class="${DANGER} max-tablet:w-full" data-desactivar="${u.id}">Desactivar</button>`
-        : `<button type="button" class="${GHOST} max-tablet:w-full" data-estado="activo" data-cuenta="${u.id}">Reactivar</button>`}
+        : `<button type="button" class="${GHOST} max-tablet:w-full" data-estado="activo" data-cuenta="${u.id}" data-estado-actual="${u.estado}">Reactivar</button>`}
     </span>`;
 }
 
@@ -115,7 +115,8 @@ function bind(section: HTMLElement, list: HTMLElement) {
     // Tabla y tarjetas repiten el selector: vale el que está junto al botón pulsado.
     const rol = b.parentElement!.querySelector<HTMLSelectElement>("select")!.value;
     if (!rol) return notify("Elige el nuevo rol.", true);
-    void busy(b, async () => { await adminApi.changeRole(id, rol); await reload(); notify("Rol actualizado."); });
+    // Se envía el rol que muestra la lista: si otro admin lo cambió mientras tanto, la API responde 409.
+    void busy(b, async () => { await adminApi.changeRole(id, rol, b.dataset.rolActual!); await reload(); notify("Rol actualizado."); });
   }));
   list.querySelectorAll<HTMLButtonElement>("[data-desactivar]").forEach((b) => b.addEventListener("click", () => {
     confirming = Number(b.dataset.desactivar);
@@ -125,7 +126,7 @@ function bind(section: HTMLElement, list: HTMLElement) {
   list.querySelectorAll<HTMLButtonElement>("[data-estado]").forEach((b) => b.addEventListener("click", () =>
     void busy(b, async () => {
       const estado = b.dataset.estado as "activo" | "bloqueado";
-      await adminApi.changeState(Number(b.dataset.cuenta), estado);
+      await adminApi.changeState(Number(b.dataset.cuenta), estado, b.dataset.estadoActual as "activo" | "bloqueado");
       await reload();
       notify(estado === "bloqueado" ? "Cuenta desactivada; sus sesiones se cerraron." : "Cuenta reactivada.");
     })));

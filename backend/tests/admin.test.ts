@@ -5,10 +5,11 @@ import { migrate } from "../src/db/migrate";
 import { testApp } from "./helpers";
 
 const { sql, ids, cookies, call, account, resetAccounts } = testApp();
-const changeRole = (actor: string, target: string, rol: string) =>
-  call(`/api/admin/usuarios/${ids[target]}/rol`, "PATCH", { rol }, cookies[actor]);
 const roleOf = async (name: string) =>
   (await sql`SELECT rol FROM tb_usuarios WHERE id_usuario = ${ids[name]}`)[0].rol;
+// Como el panel: envía el rol que se ve en la lista recién cargada (o el indicado, para simular una lista vieja).
+const changeRole = async (actor: string, target: string, rol: string, rolAnterior?: string) =>
+  call(`/api/admin/usuarios/${ids[target]}/rol`, "PATCH", { rol, rolAnterior: rolAnterior ?? await roleOf(target) }, cookies[actor]);
 
 beforeAll(async () => {
   await migrate(sql);
@@ -92,8 +93,10 @@ test("el maestro puede bajar a un admin; nadie cambia al maestro ni roles fuera 
 });
 
 test("desactivar respeta la jerarquía y cierra las sesiones de la cuenta", async () => {
-  const estado = (actor: string, objetivo: string, valor: string) =>
-    call(`/api/admin/usuarios/${ids[objetivo]}/estado`, "PATCH", { estado: valor }, cookies[actor]);
+  const estadoDe = async (name: string) =>
+    (await sql`SELECT estado FROM tb_usuarios WHERE id_usuario = ${ids[name]}`)[0]?.estado ?? "activo";
+  const estado = async (actor: string, objetivo: string, valor: string) =>
+    call(`/api/admin/usuarios/${ids[objetivo]}/estado`, "PATCH", { estado: valor, estadoAnterior: await estadoDe(objetivo) }, cookies[actor]);
   expect((await call("/api/me", "GET", undefined, cookies.votante1)).status).toBe(200);
   expect((await estado("admin1", "votante1", "bloqueado")).status).toBe(200);
   // El acceso vigente deja de servir aunque el JWT no haya caducado: la autorización consulta el estado.
@@ -109,7 +112,7 @@ test("desactivar respeta la jerarquía y cierra las sesiones de la cuenta", asyn
   expect((await estado("coadmin1", "votante2", "bloqueado")).status).toBe(403);
   expect((await estado("maestro", "admin2", "bloqueado")).status).toBe(200);
   expect((await estado("maestro", "admin2", "activo")).status).toBe(200);
-  expect(await callPg(sql, "userStateChange", [ids.admin1, ids.maestro, "bloqueado"])).toEqual([]);
+  expect(await callPg(sql, "userStateChange", [ids.admin1, ids.maestro, "bloqueado", "activo"])).toEqual([]);
 });
 
 test("la base impide un segundo maestro y un maestro que no sea admin", async () => {
@@ -118,7 +121,7 @@ test("la base impide un segundo maestro y un maestro que no sea admin", async ()
   expect(await falla(sql`UPDATE tb_usuarios SET es_maestro = true WHERE id_usuario = ${ids.admin1}`)).toBe(true);
   expect(await falla(sql`UPDATE tb_usuarios SET rol = 'coadmin' WHERE id_usuario = ${ids.maestro}`)).toBe(true);
   // Aunque la API fallara, la función de la base no deja a un admin bajar a otro admin.
-  expect(await callPg(sql, "roleChange", [ids.admin1, ids.admin2, "votante"])).toEqual([]);
+  expect(await callPg(sql, "roleChange", [ids.admin1, ids.admin2, "votante", "admin"])).toEqual([]);
 });
 
 test("crear y transferir el maestro por comando", async () => {
@@ -134,4 +137,22 @@ test("crear y transferir el maestro por comando", async () => {
   ]);
   const [repetida] = await callPg<{ resultado: string }>(sql, "masterTransfer", ["coadmin1@example.com"]);
   expect(repetida.resultado).toBe("ya_es_maestro");
+});
+
+test("cambiar rol o estado con una lista vieja no pisa lo que hizo otro admin; repetirlo es seguro", async () => {
+  await account("votante3", "votante");
+  // admin1 y admin2 ven a votante3 como votante. admin1 lo sube a coadmin.
+  expect((await changeRole("admin1", "votante3", "coadmin", "votante")).status).toBe(200);
+  // admin2 no recargó: intenta subirlo a admin creyendo que sigue siendo votante.
+  expect((await changeRole("admin2", "votante3", "admin", "votante")).status).toBe(409);
+  expect(await roleOf("votante3")).toBe("coadmin");
+  // Repetir exactamente el mismo cambio (doble clic) no falla ni duplica la auditoría.
+  const antes = (await sql`SELECT count(*)::int AS n FROM tb_auditoria WHERE accion = 'rol_cambiado'`)[0].n;
+  expect((await changeRole("admin1", "votante3", "coadmin", "votante")).status).toBe(200);
+  expect((await sql`SELECT count(*)::int AS n FROM tb_auditoria WHERE accion = 'rol_cambiado'`)[0].n).toBe(antes);
+  const estado = (actor: string, valor: string, anterior: string) =>
+    call(`/api/admin/usuarios/${ids.votante3}/estado`, "PATCH", { estado: valor, estadoAnterior: anterior }, cookies[actor]);
+  expect((await estado("admin1", "bloqueado", "activo")).status).toBe(200);
+  expect((await estado("admin1", "bloqueado", "activo")).status).toBe(200); // doble clic
+  expect((await estado("admin2", "activo", "activo")).status).toBe(409);    // cree que está activa: no coincide
 });

@@ -70,8 +70,6 @@ export const tbTokenAutenticacion = pgTable("tb_token_autenticacion", {
 	idUsuario: integer("id_usuario"),
 	correo: varchar({ length: 320 }).notNull(),
 	proposito: varchar({ length: 30 }).notNull(),
-	sujetoExterno: varchar("sujeto_externo", { length: 255 }),
-	verificadorNavegadorHash: text("verificador_navegador_hash"),
 	tokenHash: text("token_hash").notNull(),
 	creadoEn: timestamp("creado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 	expiraEn: timestamp("expira_en", { withTimezone: true, mode: 'string' }).notNull(),
@@ -85,11 +83,12 @@ export const tbTokenAutenticacion = pgTable("tb_token_autenticacion", {
 			name: "tb_token_autenticacion_id_usuario_fkey"
 		}).onDelete("cascade"),
 	unique("tb_token_autenticacion_token_hash_key").on(table.tokenHash),
-	check("tb_token_autenticacion_proposito_check", sql`(proposito)::text = ANY ((ARRAY['registro_correo'::character varying, 'registro_google'::character varying, 'vincular_google'::character varying, 'recuperar_contrasenia'::character varying])::text[])`),
+	check("tb_token_autenticacion_proposito_check", sql`(proposito)::text = ANY ((ARRAY['registro_correo'::character varying, 'recuperar_contrasenia'::character varying, 'acceso_correo'::character varying])::text[])`),
 	check("tb_token_autenticacion_token_hash_check", sql`token_hash <> ''::text`),
 	check("ck_token_correo_limpio", sql`((correo)::text = btrim((correo)::text)) AND ((correo)::text <> ''::text)`),
 	check("ck_token_vigencia", sql`expira_en > creado_en`),
-	check("ck_token_destino", sql`(((proposito)::text = 'registro_correo'::text) AND (id_usuario IS NULL) AND (sujeto_externo IS NULL)) OR (((proposito)::text = 'registro_google'::text) AND (id_usuario IS NULL) AND (sujeto_externo IS NOT NULL) AND ((sujeto_externo)::text <> ''::text)) OR (((proposito)::text = 'vincular_google'::text) AND (id_usuario IS NOT NULL) AND (sujeto_externo IS NOT NULL) AND ((sujeto_externo)::text <> ''::text)) OR (((proposito)::text = 'recuperar_contrasenia'::text) AND (id_usuario IS NOT NULL) AND (sujeto_externo IS NULL))`),
+	// El registro aún no tiene usuario; recuperar y el acceso por enlace son de una cuenta existente.
+	check("ck_token_destino", sql`(((proposito)::text = 'registro_correo'::text) AND (id_usuario IS NULL)) OR (((proposito)::text = ANY ((ARRAY['recuperar_contrasenia'::character varying, 'acceso_correo'::character varying])::text[])) AND (id_usuario IS NOT NULL))`),
 ]);
 
 export const tbRegistrosPendientes = pgTable("tb_registros_pendientes", {
@@ -97,7 +96,6 @@ export const tbRegistrosPendientes = pgTable("tb_registros_pendientes", {
 	nombresCompletos: varchar("nombres_completos", { length: 200 }).notNull(),
 	direccion: text(),
 	contraseniaHash: text("contrasenia_hash").notNull(),
-	verificadorNavegadorHash: text("verificador_navegador_hash").notNull(),
 }, (table) => [
 	foreignKey({
 			columns: [table.idTokenAutenticacion],
@@ -106,7 +104,6 @@ export const tbRegistrosPendientes = pgTable("tb_registros_pendientes", {
 		}).onDelete("cascade"),
 	check("tb_registros_pendientes_nombres_completos_check", sql`btrim((nombres_completos)::text) <> ''::text`),
 	check("tb_registros_pendientes_contrasenia_hash_check", sql`contrasenia_hash <> ''::text`),
-	check("tb_registros_pendientes_verificador_navegador_hash_check", sql`verificador_navegador_hash <> ''::text`),
 ]);
 
 export const tbSesiones = pgTable("tb_sesiones", {
@@ -117,7 +114,11 @@ export const tbSesiones = pgTable("tb_sesiones", {
 	expiraEn: timestamp("expira_en", { withTimezone: true, mode: 'string' }).notNull(),
 	revocadoEn: timestamp("revocado_en", { withTimezone: true, mode: 'string' }),
 	ultimoUsoEn: timestamp("ultimo_uso_en", { withTimezone: true, mode: 'string' }),
+	// Refresh token anterior a la última rotación: otra pestaña que renueva a la vez con él no cierra la sesión.
+	tokenHashAnterior: text("token_hash_anterior"),
+	rotadoEn: timestamp("rotado_en", { withTimezone: true, mode: 'string' }),
 }, (table) => [
+	index("idx_sesiones_token_anterior").using("btree", table.tokenHashAnterior.asc().nullsLast().op("text_ops")),
 	index("idx_sesiones_caducidad").using("btree", table.expiraEn.asc().nullsLast().op("timestamptz_ops")),
 	index("idx_sesiones_usuario").using("btree", table.idUsuario.asc().nullsLast().op("int4_ops")),
 	foreignKey({
@@ -178,8 +179,11 @@ export const tbMedios = pgTable("tb_medios", {
 	anchos: integer().array().notNull(),
 	creadoPor: integer("creado_por"),
 	creadoEn: timestamp("creado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	// SHA-256 del archivo original: subir la misma foto otra vez (reintento, doble envío) reutiliza la existente.
+	hashContenido: varchar("hash_contenido", { length: 64 }),
 }, (table) => [
 	unique("uq_medios_nombre").on(table.nombre),
+	unique("uq_medios_hash_contenido").on(table.hashContenido),
 	foreignKey({ columns: [table.creadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_medios_creado_por_fkey" }).onDelete("set null"),
 	check("ck_medios_nombre", sql`nombre ~ '^[a-z0-9-]{8,80}$'`),
 ]);
@@ -279,4 +283,14 @@ export const tbPublicaciones = pgTable("tb_publicaciones", {
 	foreignKey({ columns: [table.creadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_publicaciones_creado_por_fkey" }).onDelete("set null"),
 	check("ck_publicaciones_estado", sql`estado IN ('en_cola', 'publicando', 'publicada', 'fallida')`),
 	check("ck_publicaciones_contenido", sql`jsonb_typeof(contenido) = 'object'`),
+]);
+
+// Fallos de acceso por clave (correo+IP, IP, correo). La escalada vive en fn_limit_fail (database/fn.sql).
+export const tbLimitesIntentos = pgTable("tb_limites_intentos", {
+	clave: varchar({ length: 400 }).primaryKey().notNull(),
+	fallos: integer().notNull(),
+	bloqueadoHasta: timestamp("bloqueado_hasta", { withTimezone: true, mode: 'string' }),
+	ultimoFallo: timestamp("ultimo_fallo", { withTimezone: true, mode: 'string' }).notNull(),
+}, (table) => [
+	index("idx_limites_ultimo_fallo").using("btree", table.ultimoFallo.asc().nullsLast().op("timestamptz_ops")),
 ]);

@@ -1,3 +1,4 @@
+import { authRepository } from '../data/auth';
 import { ApiError } from '../data/http/api-client';
 import { requirePassword } from './password';
 
@@ -62,10 +63,28 @@ export function validateFields(form: HTMLFormElement) {
   return !first;
 }
 
+const plural = (amount: number, unit: string) => `${amount} ${unit}${amount === 1 ? '' : 's'}`;
+
+/** Espera legible: «45 segundos», «5 minutos», «6 horas», «2 días y 23 horas». */
+export function waitText(seconds: number) {
+  if (seconds < 60) return plural(seconds, 'segundo');
+  if (seconds < 3600) return plural(Math.ceil(seconds / 60), 'minuto');
+  if (seconds < 86_400) return plural(Math.ceil(seconds / 3600), 'hora');
+  const days = Math.floor(seconds / 86_400), hours = Math.floor((seconds % 86_400) / 3600);
+  return hours ? `${plural(days, 'día')} y ${plural(hours, 'hora')}` : plural(days, 'día');
+}
+
 /** Convierte errores de API o runtime en un mensaje visible para la persona. */
 export function errorText(error: unknown) {
+  if (error instanceof ApiError && error.status === 429 && error.retryAfter)
+    return `Demasiados intentos. Podrás intentarlo de nuevo en ${waitText(error.retryAfter)}.`;
   return error instanceof ApiError || error instanceof Error
     ? error.message : 'No se pudo completar la solicitud.';
+}
+
+/** Indica si ya hay sesión; los enlaces de un solo uso no la vuelven a iniciar, solo se comprueba. */
+export async function signedIn() {
+  return authRepository.getProfile().then(() => true, () => false);
 }
 
 /** Lee el token del enlace y lo quita de la barra de direcciones. */

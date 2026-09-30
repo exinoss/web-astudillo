@@ -1,0 +1,15 @@
+---
+import AccountShell from '../../components/account/AccountShell.astro';
+import AccountCard from '../../components/account/AccountCard.astro';
+import AccountStatus from '../../components/account/AccountStatus.astro';
+---
+
+<AccountShell title="Termina de entrar" lead="Un paso más para acceder a tu cuenta.">
+  <div class="mx-auto max-w-[560px]">
+    <AccountCard heading="Acceso por correo" description="Comprobaremos el enlace recibido en tu correo.">
+      <AccountStatus />
+      <a class="mt-5 inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/">Volver al acceso</a>
+    </AccountCard>
+  </div>
+  <script src="../../scripts/account-access.ts"></script>
+</AccountShell>

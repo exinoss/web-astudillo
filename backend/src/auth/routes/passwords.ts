@@ -26,17 +26,16 @@ export function passwordRoutes(context: AuthContext) {
       const user = await authorization.require(
         cookie.access.value as string | undefined, PERMISSIONS.passwordAdd,
       );
-      await passwords.addToGoogle(user.id_usuario, body.credential, body.contrasenia);
+      await passwords.addToGoogle(user.id_usuario, user.correo, body.credential, body.contrasenia);
       return { ok: true };
     }, { body: t.Object({ credential: t.String({ minLength: 100 }), contrasenia: password }, strict) })
     .post('/password/change', async ({ body, cookie, request, server }) => {
       const user = await authorization.require(
         cookie.access.value as string | undefined, PERMISSIONS.passwordChange,
       );
-      limit(`change:user:${user.id_usuario}`, 5, 15 * 60_000);
-      limit(`change:ip:${ipOf(server, request, config.trustProxyIp)}`, 20, 15 * 60_000);
+      // Una contraseña actual incorrecta suma fallos con sanción progresiva (createAttempts).
       await passwords.change(user.id_usuario, body.contraseniaActual,
-        body.contraseniaNueva, body.confirmarContrasenia);
+        body.contraseniaNueva, body.confirmarContrasenia, ipOf(server, request, config.trustProxyIp));
       clearSession(context, cookie);
       return { message: 'Contraseña actualizada. Inicia sesión de nuevo' };
     }, { body: t.Object({

@@ -26,7 +26,8 @@ export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; secu
     .onError(({ error, code, set }) => {
       const response = mapHttpError(error, code);
       set.status = response.status;
-      return { error: response.message };
+      if (response.detail?.reintentarEn) set.headers['retry-after'] = String(response.detail.reintentarEn);
+      return { error: response.message, ...response.detail };
     })
     .get("/api/health", () => ({ ok: true }))
     .use(authRoutes(sql, config, mailer, security, authorization))

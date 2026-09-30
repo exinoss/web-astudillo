@@ -42,9 +42,10 @@ export function clearSession(context: AuthContextType, cookie: Record<string, Co
 
 /** Guarda JWT y refresh token en cookies con rutas y vencimientos separados. */
 export function setSession(context: AuthContextType, cookie: Record<string, Cookie<unknown>>, value: {
-  access: string; refresh: string;
+  access: string; refresh: string | null;
 }) {
   cookie.access.set({ value: value.access, ...cookieOptions(context.config, 600, '/api') });
-  cookie.refresh.set({ value: value.refresh,
+  // Sin refresh nuevo (renovación simultánea desde otra pestaña) se conserva el que ya tiene el navegador.
+  if (value.refresh) cookie.refresh.set({ value: value.refresh,
     ...cookieOptions(context.config, context.sessions.lifetime, '/api/auth') });
 }

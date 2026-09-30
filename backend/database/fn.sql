@@ -45,33 +45,43 @@ LANGUAGE sql STABLE AS $$
       WHERE id_usuario = p_user AND proveedor = 'google');
 $$;
 
--- Guarda datos temporales y hashes para un alta aún no verificada.
+-- Guarda datos temporales y hashes para un alta aún no verificada. El enlace vale en cualquier
+-- navegador: no hay verificador de navegador.
+DROP FUNCTION IF EXISTS fn_pending_create(text, text, text, text, text, text);
 CREATE OR REPLACE FUNCTION fn_pending_create(
-  p_email text, p_token_hash text, p_name text, p_address text,
-  p_password_hash text, p_browser_hash text
+  p_email text, p_token_hash text, p_name text, p_address text, p_password_hash text
 ) RETURNS TABLE(id_token_autenticacion integer) LANGUAGE plpgsql AS $$
+-- Una sola solicitud válida por correo. Si hay una de hace menos de un minuto (doble envío,
+-- reintento de red, dos pestañas) no crea otra ni hace enviar otro correo: devuelve vacío.
+-- Pasado ese minuto, la nueva anula las anteriores (el borrado arrastra su registro pendiente).
 DECLARE v_id integer;
 BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext('registro:' || lower(p_email)));
+  IF EXISTS (SELECT 1 FROM tb_token_autenticacion t
+    WHERE lower(t.correo) = lower(p_email) AND t.proposito = 'registro_correo'
+      AND t.consumido_en IS NULL AND t.expira_en > now() AND t.creado_en > now() - interval '1 minute') THEN
+    RETURN;
+  END IF;
+  DELETE FROM tb_token_autenticacion t
+  WHERE lower(t.correo) = lower(p_email) AND t.proposito = 'registro_correo' AND t.consumido_en IS NULL;
   INSERT INTO tb_token_autenticacion (correo, proposito, token_hash, expira_en)
   VALUES (p_email, 'registro_correo', p_token_hash, now() + interval '30 minutes')
   RETURNING tb_token_autenticacion.id_token_autenticacion INTO v_id;
-  INSERT INTO tb_registros_pendientes
-    (id_token_autenticacion, nombres_completos, direccion, contrasenia_hash,
-     verificador_navegador_hash)
-  VALUES (v_id, p_name, p_address, p_password_hash, p_browser_hash);
+  INSERT INTO tb_registros_pendientes (id_token_autenticacion, nombres_completos, direccion, contrasenia_hash)
+  VALUES (v_id, p_name, p_address, p_password_hash);
   RETURN QUERY SELECT v_id;
 END;
 $$;
 
 -- Lee y bloquea una solicitud de registro pendiente por hash de token.
+DROP FUNCTION IF EXISTS fn_pending_get(text);
 CREATE OR REPLACE FUNCTION fn_pending_get(p_hash text)
 RETURNS TABLE(
   id_token_autenticacion integer, correo varchar(320), expira_en timestamptz,
-  consumido_en timestamptz, nombres_completos varchar(200), direccion text,
-  contrasenia_hash text, verificador_navegador_hash text
+  consumido_en timestamptz, nombres_completos varchar(200), direccion text, contrasenia_hash text
 ) LANGUAGE sql VOLATILE AS $$
   SELECT t.id_token_autenticacion, t.correo, t.expira_en, t.consumido_en,
-    p.nombres_completos, p.direccion, p.contrasenia_hash, p.verificador_navegador_hash
+    p.nombres_completos, p.direccion, p.contrasenia_hash
   FROM tb_token_autenticacion t JOIN tb_registros_pendientes p
     ON p.id_token_autenticacion = t.id_token_autenticacion
   WHERE t.token_hash = p_hash AND t.proposito = 'registro_correo'
@@ -79,6 +89,16 @@ RETURNS TABLE(
 $$;
 
 -- Crea usuario e identidad de correo y consume el registro pendiente.
+-- Indica si este enlace de registro ya se usó y la cuenta existe: abrirlo otra vez (recargar,
+-- doble clic en el correo) responde como la primera vez en lugar de dar error.
+CREATE OR REPLACE FUNCTION fn_registration_verified(p_hash text)
+RETURNS TABLE(verificado boolean) LANGUAGE sql STABLE AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM tb_token_autenticacion t JOIN tb_usuarios u ON lower(u.correo) = lower(t.correo)
+    WHERE t.token_hash = p_hash AND t.proposito = 'registro_correo' AND t.consumido_en IS NOT NULL
+  );
+$$;
+
 CREATE OR REPLACE FUNCTION fn_registration_complete(p_token integer)
 RETURNS TABLE(id_usuario integer) LANGUAGE plpgsql AS $$
 DECLARE v_token record; v_user integer;
@@ -150,17 +170,27 @@ RETURNS TABLE(id_usuario integer) LANGUAGE sql STABLE AS $$
     AND i.proveedor = 'google' AND i.sujeto_externo = p_sub;
 $$;
 
--- Crea un token temporal con propósito, vencimiento y verificadores opcionales.
+-- Enlaces por correo de una cuenta existente (recuperar contraseña, acceso por enlace). Igual que
+-- el registro: uno solo válido por correo y finalidad. Si hay uno de hace menos de un minuto (doble
+-- envío, reintento) devuelve vacío y no se manda otro correo; pasado el minuto, el nuevo anula los anteriores.
+DROP FUNCTION IF EXISTS fn_auth_token_create(integer, text, text, text, text, text, integer);
+DROP FUNCTION IF EXISTS fn_google_token_get(text);
 CREATE OR REPLACE FUNCTION fn_auth_token_create(
-  p_user integer, p_email text, p_purpose text, p_sub text,
-  p_hash text, p_browser_hash text, p_seconds integer
-) RETURNS TABLE(id_token_autenticacion integer) LANGUAGE sql AS $$
-  INSERT INTO tb_token_autenticacion
-    (id_usuario, correo, proposito, sujeto_externo, token_hash,
-     verificador_navegador_hash, expira_en)
-  VALUES (p_user, p_email, p_purpose, p_sub, p_hash, p_browser_hash,
-    now() + make_interval(secs => p_seconds))
-  RETURNING tb_token_autenticacion.id_token_autenticacion;
+  p_user integer, p_email text, p_purpose text, p_hash text, p_seconds integer
+) RETURNS TABLE(id_token_autenticacion integer) LANGUAGE plpgsql AS $$
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext('enlace:' || p_purpose || ':' || lower(p_email)));
+  IF EXISTS (SELECT 1 FROM tb_token_autenticacion t
+    WHERE lower(t.correo) = lower(p_email) AND t.proposito = p_purpose
+      AND t.consumido_en IS NULL AND t.expira_en > now() AND t.creado_en > now() - interval '1 minute') THEN
+    RETURN;
+  END IF;
+  DELETE FROM tb_token_autenticacion t
+  WHERE lower(t.correo) = lower(p_email) AND t.proposito = p_purpose AND t.consumido_en IS NULL;
+  RETURN QUERY INSERT INTO tb_token_autenticacion AS t (id_usuario, correo, proposito, token_hash, expira_en)
+  VALUES (p_user, p_email, p_purpose, p_hash, now() + make_interval(secs => p_seconds))
+  RETURNING t.id_token_autenticacion;
+END;
 $$;
 
 -- Busca y bloquea un token por hash y propósito.
@@ -170,19 +200,10 @@ RETURNS SETOF tb_token_autenticacion LANGUAGE sql VOLATILE AS $$
   WHERE token_hash = p_hash AND proposito = p_purpose FOR UPDATE;
 $$;
 
--- Busca y bloquea tokens temporales de registro o vínculo Google.
-CREATE OR REPLACE FUNCTION fn_google_token_get(p_hash text)
-RETURNS SETOF tb_token_autenticacion LANGUAGE sql VOLATILE AS $$
-  SELECT * FROM tb_token_autenticacion
-  WHERE token_hash = p_hash AND proposito IN ('registro_google', 'vincular_google')
-  FOR UPDATE;
-$$;
-
--- Marca un token como usado y elimina su verificador de navegador.
+-- Marca un token como usado.
 CREATE OR REPLACE FUNCTION fn_auth_token_consume(p_token integer)
 RETURNS void LANGUAGE sql AS $$
-  UPDATE tb_token_autenticacion
-  SET consumido_en = now(), verificador_navegador_hash = NULL
+  UPDATE tb_token_autenticacion SET consumido_en = now()
   WHERE id_token_autenticacion = p_token AND consumido_en IS NULL;
 $$;
 
@@ -305,11 +326,20 @@ BEGIN
   WHERE s.token_hash = p_old_hash AND s.revocado_en IS NULL
     AND s.expira_en > now() AND u.estado = 'activo' FOR UPDATE OF s;
   IF NOT FOUND THEN RETURN; END IF;
-  UPDATE tb_sesiones SET token_hash = p_new_hash,
+  UPDATE tb_sesiones SET token_hash = p_new_hash, token_hash_anterior = p_old_hash, rotado_en = now(),
     expira_en = now() + interval '7 days', ultimo_uso_en = now()
   WHERE token_hash = p_old_hash;
   RETURN NEXT v_user;
 END;
+$$;
+
+-- Otra pestaña renovó con este mismo refresh hace menos de 30 s (renovaciones simultáneas):
+-- la sesión sigue siendo válida. Solo da un acceso nuevo; el navegador ya recibió el refresh rotado.
+CREATE OR REPLACE FUNCTION fn_session_recently_rotated(p_old_hash text)
+RETURNS SETOF tb_usuarios LANGUAGE sql STABLE AS $$
+  SELECT u.* FROM tb_sesiones s JOIN tb_usuarios u ON u.id_usuario = s.id_usuario
+  WHERE s.token_hash_anterior = p_old_hash AND s.rotado_en > now() - interval '30 seconds'
+    AND s.revocado_en IS NULL AND s.expira_en > now() AND u.estado = 'activo';
 $$;
 
 -- Revoca una sesión mediante el hash de su refresh token.
@@ -387,7 +417,10 @@ $$;
 
 -- Cambia el rol respetando la jerarquía aunque la API fallara: nadie cambia su propio rol
 -- ni el del maestro, y solo el maestro cambia el de un admin. Sin fila = cambio denegado.
-CREATE OR REPLACE FUNCTION fn_role_change(p_actor integer, p_target integer, p_role text)
+-- `p_expected` es el rol que veía quien hace el cambio: si otra persona lo cambió antes, no se
+-- aplica (sin filas → 409). Pedir el rol que ya tiene es idempotente.
+DROP FUNCTION IF EXISTS fn_role_change(integer, integer, text);
+CREATE OR REPLACE FUNCTION fn_role_change(p_actor integer, p_target integer, p_role text, p_expected text)
 RETURNS SETOF tb_usuarios LANGUAGE plpgsql AS $$
 DECLARE v_actor tb_usuarios%ROWTYPE; v_target tb_usuarios%ROWTYPE;
 BEGIN
@@ -397,6 +430,7 @@ BEGIN
   SELECT * INTO v_target FROM tb_usuarios WHERE id_usuario = p_target FOR UPDATE;
   IF NOT FOUND OR v_target.es_maestro THEN RETURN; END IF;
   IF v_target.rol = 'admin' AND NOT v_actor.es_maestro THEN RETURN; END IF;
+  IF v_target.rol <> p_role AND v_target.rol IS DISTINCT FROM p_expected THEN RETURN; END IF;
   IF v_target.rol <> p_role THEN
     UPDATE tb_usuarios SET rol = p_role, actualizado_en = now() WHERE id_usuario = p_target;
     INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro, cambios)
@@ -453,7 +487,10 @@ $$;
 
 -- Activa o desactiva otra cuenta con la misma jerarquía que el cambio de rol. Al desactivar
 -- revoca sus sesiones; las funciones de acceso ya rechazan cuentas bloqueadas.
-CREATE OR REPLACE FUNCTION fn_user_state_change(p_actor integer, p_target integer, p_state text)
+-- Igual que el rol: `p_expected` es el estado que veía quien actúa; si otra persona lo cambió
+-- antes, no se aplica (sin filas → 409). Pedir el estado que ya tiene es idempotente.
+DROP FUNCTION IF EXISTS fn_user_state_change(integer, integer, text);
+CREATE OR REPLACE FUNCTION fn_user_state_change(p_actor integer, p_target integer, p_state text, p_expected text)
 RETURNS SETOF tb_usuarios LANGUAGE plpgsql AS $$
 DECLARE v_actor tb_usuarios%ROWTYPE; v_target tb_usuarios%ROWTYPE;
 BEGIN
@@ -463,6 +500,7 @@ BEGIN
   SELECT * INTO v_target FROM tb_usuarios WHERE id_usuario = p_target FOR UPDATE;
   IF NOT FOUND OR v_target.es_maestro THEN RETURN; END IF;
   IF v_target.rol = 'admin' AND NOT v_actor.es_maestro THEN RETURN; END IF;
+  IF v_target.estado <> p_state AND v_target.estado IS DISTINCT FROM p_expected THEN RETURN; END IF;
   IF v_target.estado <> p_state THEN
     UPDATE tb_usuarios SET estado = p_state, actualizado_en = now() WHERE id_usuario = p_target;
     IF p_state = 'bloqueado' THEN
@@ -491,11 +529,61 @@ RETURNS TABLE(clave varchar, valor text, actualizado_en timestamptz) LANGUAGE sq
   SELECT t.clave, t.valor, t.actualizado_en FROM tb_textos t ORDER BY t.clave;
 $$;
 
+-- ---------- Control de concurrencia del contenido ----------
+-- La versión de cada unidad editable es el md5 de su estado (jsonb normaliza el orden de las
+-- claves, así que el mismo contenido da siempre la misma versión). Cada guardado:
+--   1) bloquea la unidad (pg_advisory_xact_lock) para que dos guardados no se crucen;
+--   2) si el contenido ya es el que llega, responde 'sin_cambios' (repetir es seguro);
+--   3) si la versión que trae no es la actual, responde 'conflicto' y no escribe;
+--   4) si no, guarda y devuelve la versión nueva.
+
+CREATE OR REPLACE FUNCTION fn_proposal_state(p_slug text)
+RETURNS jsonb LANGUAGE sql STABLE AS $$
+  SELECT jsonb_build_object('nombre', p.nombre, 'categoria', p.categoria, 'introduccion', p.introduccion,
+    'kpis', COALESCE((SELECT jsonb_agg(jsonb_build_object('etiqueta', k.etiqueta, 'valor', k.valor) ORDER BY k.orden)
+      FROM tb_propuesta_kpis k WHERE k.slug = p.slug), '[]'::jsonb))
+  FROM tb_propuestas p WHERE p.slug = p_slug;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_biography_state()
+RETURNS jsonb LANGUAGE sql STABLE AS $$
+  SELECT COALESCE(jsonb_agg(jsonb_build_object('anios', h.anios, 'titulo', h.titulo, 'texto', h.texto,
+    'idMedio', h.id_medio, 'alt', h.alt) ORDER BY h.orden), '[]'::jsonb)
+  FROM tb_biografia_hitos h;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_work_state(p_slug text)
+RETURNS jsonb LANGUAGE sql STABLE AS $$
+  SELECT jsonb_build_object('nota', o.nota,
+    'hitos', COALESCE((SELECT jsonb_agg(jsonb_build_object('nombre', h.nombre, 'completado', h.completado) ORDER BY h.orden)
+      FROM tb_obra_hitos h WHERE h.slug = o.slug), '[]'::jsonb),
+    'fotos', COALESCE((SELECT jsonb_agg(jsonb_build_object('idMedio', f.id_medio, 'pie', f.pie) ORDER BY f.orden)
+      FROM tb_obra_fotos f WHERE f.slug = o.slug), '[]'::jsonb))
+  FROM tb_obras o WHERE o.slug = p_slug;
+$$;
+
+-- Versiones vigentes de todo el borrador; el panel las envía de vuelta al guardar.
+CREATE OR REPLACE FUNCTION fn_content_versions()
+RETURNS TABLE(versiones jsonb) LANGUAGE sql STABLE AS $$
+  SELECT jsonb_build_object(
+    'textos', COALESCE((SELECT jsonb_object_agg(t.clave, md5(t.valor)) FROM tb_textos t), '{}'::jsonb),
+    'propuestas', COALESCE((SELECT jsonb_object_agg(p.slug, md5(fn_proposal_state(p.slug)::text)) FROM tb_propuestas p), '{}'::jsonb),
+    'biografia', md5(fn_biography_state()::text),
+    'obras', COALESCE((SELECT jsonb_object_agg(o.slug, md5(fn_work_state(o.slug)::text)) FROM tb_obras o), '{}'::jsonb));
+$$;
+
 -- Guarda el borrador de un texto; con valor nulo lo borra y vuelve el texto por defecto.
-CREATE OR REPLACE FUNCTION fn_text_save(p_actor integer, p_key text, p_value text)
-RETURNS TABLE(clave varchar, valor text) LANGUAGE plpgsql AS $$
+-- Un texto sin cambiar no tiene versión (nula): quien lo edita por primera vez envía null.
+DROP FUNCTION IF EXISTS fn_text_save(integer, text, text);
+CREATE OR REPLACE FUNCTION fn_text_save(p_actor integer, p_key text, p_value text, p_version text)
+RETURNS TABLE(resultado text, version text) LANGUAGE plpgsql AS $$
+DECLARE v_current text; v_new text := md5(p_value);
 BEGIN
   IF NOT fn_has_permission(p_actor, 'contenido.editar') THEN RETURN; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext('contenido:texto:' || p_key));
+  SELECT md5(t.valor) INTO v_current FROM tb_textos t WHERE t.clave = p_key;
+  IF v_current IS NOT DISTINCT FROM v_new THEN RETURN QUERY SELECT 'sin_cambios'::text, v_current; RETURN; END IF;
+  IF v_current IS DISTINCT FROM p_version THEN RETURN QUERY SELECT 'conflicto'::text, v_current; RETURN; END IF;
   IF p_value IS NULL THEN
     DELETE FROM tb_textos t WHERE t.clave = p_key;
   ELSE
@@ -506,7 +594,7 @@ BEGIN
   END IF;
   INSERT INTO tb_auditoria (id_actor, accion, entidad, cambios)
   VALUES (p_actor, 'texto_guardado', 'tb_textos', jsonb_build_object('clave', p_key));
-  RETURN QUERY SELECT p_key::varchar, p_value;
+  RETURN QUERY SELECT 'guardado'::text, v_new;
 END;
 $$;
 
@@ -521,23 +609,31 @@ RETURNS TABLE(slug varchar, nombre varchar, categoria varchar, introduccion varc
   FROM tb_propuestas p ORDER BY p.orden;
 $$;
 
--- Reemplaza datos y cifras de una propuesta en una sola transacción.
+-- Reemplaza datos y cifras de una propuesta en una sola transacción. Sin filas: no existe.
+DROP FUNCTION IF EXISTS fn_proposal_save(integer, text, text, text, text, jsonb);
 CREATE OR REPLACE FUNCTION fn_proposal_save(p_actor integer, p_slug text, p_name text,
-  p_category text, p_intro text, p_kpis jsonb)
-RETURNS TABLE(slug varchar) LANGUAGE plpgsql AS $$
+  p_category text, p_intro text, p_kpis jsonb, p_version text)
+RETURNS TABLE(resultado text, version text) LANGUAGE plpgsql AS $$
+DECLARE v_current text; v_new text;
 BEGIN
   IF NOT fn_has_permission(p_actor, 'contenido.editar') THEN RETURN; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext('contenido:propuesta:' || p_slug));
+  v_current := md5(fn_proposal_state(p_slug)::text);
+  IF v_current IS NULL THEN RETURN; END IF;
+  v_new := md5(jsonb_build_object('nombre', p_name, 'categoria', p_category, 'introduccion', p_intro,
+    'kpis', p_kpis)::text);
+  IF v_current = v_new THEN RETURN QUERY SELECT 'sin_cambios'::text, v_current; RETURN; END IF;
+  IF v_current IS DISTINCT FROM p_version THEN RETURN QUERY SELECT 'conflicto'::text, v_current; RETURN; END IF;
   UPDATE tb_propuestas p SET nombre = p_name, categoria = p_category, introduccion = p_intro,
     actualizado_por = p_actor, actualizado_en = now()
   WHERE p.slug = p_slug;
-  IF NOT FOUND THEN RETURN; END IF;
   DELETE FROM tb_propuesta_kpis k WHERE k.slug = p_slug;
   INSERT INTO tb_propuesta_kpis (slug, orden, etiqueta, valor)
   SELECT p_slug, e.orden, e.item->>'etiqueta', e.item->>'valor'
   FROM jsonb_array_elements(p_kpis) WITH ORDINALITY AS e(item, orden);
   INSERT INTO tb_auditoria (id_actor, accion, entidad, cambios)
   VALUES (p_actor, 'propuesta_guardada', 'tb_propuestas', jsonb_build_object('slug', p_slug));
-  RETURN QUERY SELECT p_slug::varchar;
+  RETURN QUERY SELECT 'guardado'::text, v_new;
 END;
 $$;
 
@@ -554,10 +650,16 @@ LANGUAGE sql STABLE AS $$
 $$;
 
 -- Reemplaza la línea de tiempo completa: el panel guarda la lista tal como quedó, orden incluido.
-CREATE OR REPLACE FUNCTION fn_biography_save(p_actor integer, p_items jsonb)
-RETURNS TABLE(total integer) LANGUAGE plpgsql AS $$
+DROP FUNCTION IF EXISTS fn_biography_save(integer, jsonb);
+CREATE OR REPLACE FUNCTION fn_biography_save(p_actor integer, p_items jsonb, p_version text)
+RETURNS TABLE(resultado text, version text) LANGUAGE plpgsql AS $$
+DECLARE v_current text; v_new text := md5(p_items::text);
 BEGIN
   IF NOT fn_has_permission(p_actor, 'contenido.editar') THEN RETURN; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext('contenido:biografia'));
+  v_current := md5(fn_biography_state()::text);
+  IF v_current = v_new THEN RETURN QUERY SELECT 'sin_cambios'::text, v_current; RETURN; END IF;
+  IF v_current IS DISTINCT FROM p_version THEN RETURN QUERY SELECT 'conflicto'::text, v_current; RETURN; END IF;
   DELETE FROM tb_biografia_hitos;
   INSERT INTO tb_biografia_hitos (orden, anios, titulo, texto, id_medio, alt)
   SELECT e.orden, e.item->>'anios', e.item->>'titulo', e.item->>'texto',
@@ -566,7 +668,7 @@ BEGIN
   INSERT INTO tb_auditoria (id_actor, accion, entidad, cambios)
   VALUES (p_actor, 'biografia_guardada', 'tb_biografia_hitos',
     jsonb_build_object('hitos', jsonb_array_length(p_items)));
-  RETURN QUERY SELECT jsonb_array_length(p_items);
+  RETURN QUERY SELECT 'guardado'::text, v_new;
 END;
 $$;
 
@@ -584,15 +686,22 @@ LANGUAGE sql STABLE AS $$
   ORDER BY p.orden;
 $$;
 
--- Reemplaza nota, hitos y fotos de una obra en una sola transacción.
+-- Reemplaza nota, hitos y fotos de una obra en una sola transacción. Sin filas: no existe.
+DROP FUNCTION IF EXISTS fn_work_save(integer, text, text, jsonb, jsonb);
 CREATE OR REPLACE FUNCTION fn_work_save(p_actor integer, p_slug text, p_note text,
-  p_milestones jsonb, p_photos jsonb)
-RETURNS TABLE(slug varchar) LANGUAGE plpgsql AS $$
+  p_milestones jsonb, p_photos jsonb, p_version text)
+RETURNS TABLE(resultado text, version text) LANGUAGE plpgsql AS $$
+DECLARE v_current text; v_new text;
 BEGIN
   IF NOT fn_has_permission(p_actor, 'contenido.editar') THEN RETURN; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext('contenido:obra:' || p_slug));
+  v_current := md5(fn_work_state(p_slug)::text);
+  IF v_current IS NULL THEN RETURN; END IF;
+  v_new := md5(jsonb_build_object('nota', p_note, 'hitos', p_milestones, 'fotos', p_photos)::text);
+  IF v_current = v_new THEN RETURN QUERY SELECT 'sin_cambios'::text, v_current; RETURN; END IF;
+  IF v_current IS DISTINCT FROM p_version THEN RETURN QUERY SELECT 'conflicto'::text, v_current; RETURN; END IF;
   UPDATE tb_obras o SET nota = p_note, actualizado_por = p_actor, actualizado_en = now()
   WHERE o.slug = p_slug;
-  IF NOT FOUND THEN RETURN; END IF;
   DELETE FROM tb_obra_hitos h WHERE h.slug = p_slug;
   INSERT INTO tb_obra_hitos (slug, orden, nombre, completado)
   SELECT p_slug, e.orden, e.item->>'nombre', (e.item->>'completado')::boolean
@@ -603,7 +712,7 @@ BEGIN
   FROM jsonb_array_elements(p_photos) WITH ORDINALITY AS e(item, orden);
   INSERT INTO tb_auditoria (id_actor, accion, entidad, cambios)
   VALUES (p_actor, 'obra_guardada', 'tb_obras', jsonb_build_object('slug', p_slug));
-  RETURN QUERY SELECT p_slug::varchar;
+  RETURN QUERY SELECT 'guardado'::text, v_new;
 END;
 $$;
 
@@ -616,17 +725,26 @@ DROP FUNCTION IF EXISTS fn_media_by_ids(jsonb);
 DROP FUNCTION IF EXISTS fn_media_create(integer, text, integer, integer, text);
 DROP FUNCTION IF EXISTS fn_media_by_ids(text);
 
--- Registra una foto ya procesada y guardada en disco.
+-- Registra una foto ya procesada y guardada en disco. Si otra subida simultánea del mismo archivo
+-- (mismo SHA-256) llegó antes, no inserta nada: el servicio usa la existente y borra sus archivos.
 CREATE OR REPLACE FUNCTION fn_media_create(p_actor integer, p_name text, p_width integer,
-  p_height integer, p_widths text)
+  p_height integer, p_widths text, p_hash text)
 RETURNS TABLE(id_medio integer, nombre varchar, ancho integer, alto integer, anchos jsonb)
 LANGUAGE plpgsql AS $$
 BEGIN
   IF NOT fn_has_permission(p_actor, 'medios.subir') THEN RETURN; END IF;
-  RETURN QUERY INSERT INTO tb_medios AS m (nombre, ancho, alto, anchos, creado_por)
-  VALUES (p_name, p_width, p_height, string_to_array(p_widths, ',')::integer[], p_actor)
+  RETURN QUERY INSERT INTO tb_medios AS m (nombre, ancho, alto, anchos, creado_por, hash_contenido)
+  VALUES (p_name, p_width, p_height, string_to_array(p_widths, ',')::integer[], p_actor, p_hash)
+  ON CONFLICT ON CONSTRAINT uq_medios_hash_contenido DO NOTHING
   RETURNING m.id_medio, m.nombre, m.ancho, m.alto, to_jsonb(m.anchos);
 END;
+$$;
+
+-- Foto ya subida con el mismo contenido: subirla otra vez (reintento, doble envío) la reutiliza.
+CREATE OR REPLACE FUNCTION fn_media_by_hash(p_hash text)
+RETURNS TABLE(id_medio integer, nombre varchar, ancho integer, alto integer, anchos jsonb)
+LANGUAGE sql STABLE AS $$
+  SELECT m.id_medio, m.nombre, m.ancho, m.alto, to_jsonb(m.anchos) FROM tb_medios m WHERE m.hash_contenido = p_hash;
 $$;
 
 -- Ids de las fotos que existen, para validar las que llegan en un guardado.
@@ -639,11 +757,20 @@ $$;
 -- ============ Publicaciones ============
 
 -- Encola el contenido congelado. Si ya hay una en cola, la reemplaza: se compila una sola vez.
+-- Idempotente: si ya hay una publicación en cola o compilándose con este mismo contenido, la
+-- devuelve en vez de crear otra (doble clic, dos personas a la vez). Si hay una en cola con
+-- contenido distinto, la reemplaza: no tiene sentido compilar dos veces seguidas.
+DROP FUNCTION IF EXISTS fn_publication_create(integer, jsonb);
 CREATE OR REPLACE FUNCTION fn_publication_create(p_actor integer, p_content jsonb)
-RETURNS TABLE(id_publicacion integer) LANGUAGE plpgsql AS $$
-DECLARE v_id integer;
+RETURNS TABLE(id_publicacion integer, estado varchar) LANGUAGE plpgsql AS $$
+DECLARE v_id integer; v_state varchar;
 BEGIN
   IF NOT fn_has_permission(p_actor, 'contenido.publicar') THEN RETURN; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext('contenido:publicacion'));
+  SELECT p.id_publicacion, p.estado INTO v_id, v_state FROM tb_publicaciones p
+  WHERE p.estado IN ('en_cola', 'publicando') AND p.contenido = p_content
+  ORDER BY p.id_publicacion DESC LIMIT 1;
+  IF v_id IS NOT NULL THEN RETURN QUERY SELECT v_id, v_state; RETURN; END IF;
   UPDATE tb_publicaciones p SET contenido = p_content, creado_por = p_actor, creado_en = now()
   WHERE p.estado = 'en_cola' RETURNING p.id_publicacion INTO v_id;
   IF v_id IS NULL THEN
@@ -652,7 +779,7 @@ BEGIN
   END IF;
   INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro)
   VALUES (p_actor, 'publicacion_solicitada', 'tb_publicaciones', v_id);
-  RETURN QUERY SELECT v_id;
+  RETURN QUERY SELECT v_id, 'en_cola'::varchar;
 END;
 $$;
 
@@ -673,9 +800,20 @@ LANGUAGE sql STABLE AS $$
 $$;
 
 -- Contenido de la última publicación que llegó al sitio, para calcular lo pendiente.
-CREATE OR REPLACE FUNCTION fn_publication_last_published()
+-- Última publicación que no falló (en cola, compilándose o publicada): contra ella se calcula
+-- lo pendiente, así lo que ya se envió a publicar deja de contar como cambio.
+DROP FUNCTION IF EXISTS fn_publication_last_published();
+CREATE OR REPLACE FUNCTION fn_publication_latest()
+RETURNS TABLE(id_publicacion integer, estado varchar, contenido jsonb) LANGUAGE sql STABLE AS $$
+  SELECT p.id_publicacion, p.estado, p.contenido FROM tb_publicaciones p WHERE p.estado <> 'fallida'
+  ORDER BY p.id_publicacion DESC LIMIT 1;
+$$;
+
+-- Contenido que lee el frontend al compilar: el que se está compilando o, si no hay, el último publicado.
+-- Nunca devuelve borradores ni publicaciones en cola o fallidas.
+CREATE OR REPLACE FUNCTION fn_publication_current()
 RETURNS TABLE(contenido jsonb) LANGUAGE sql STABLE AS $$
-  SELECT p.contenido FROM tb_publicaciones p WHERE p.estado = 'publicada'
+  SELECT p.contenido FROM tb_publicaciones p WHERE p.estado IN ('publicando', 'publicada')
   ORDER BY p.id_publicacion DESC LIMIT 1;
 $$;
 
@@ -704,4 +842,75 @@ RETURNS void LANGUAGE sql AS $$
   UPDATE tb_publicaciones SET estado = 'fallida', terminado_en = now(),
     detalle = 'Interrumpida: el publicador se reinició durante la compilación'
   WHERE estado = 'publicando';
+$$;
+
+-- ---------- Límite de intentos fallidos ----------
+-- Una fila por clave: pareja correo+IP (`par:`, o `cambio:` al cambiar la contraseña) e IP (`ip:`).
+-- Solo se cuentan fallos. Las esperas (1 min … 6 h) son para cualquiera, también el dueño que se
+-- olvidó la contraseña. El tope, 3 días, es el «bloqueo mortal»: quien llega ahí se trata como atacante.
+-- Si pasan 24 h sin fallar, el contador vuelve a cero (tras los 3 días se puede volver a intentar).
+
+-- Estado de las claves pedidas (separadas por salto de línea): espera en segundos y fallos.
+-- Un bloqueo vigente cuenta aunque su último fallo tenga más de 24 h (el mortal dura 3 días).
+CREATE OR REPLACE FUNCTION fn_limit_check(p_keys text)
+RETURNS TABLE(clave varchar, espera integer, fallos integer) LANGUAGE sql STABLE AS $$
+  SELECT l.clave, GREATEST(0, ceil(extract(epoch FROM l.bloqueado_hasta - now())))::integer, l.fallos
+  FROM tb_limites_intentos l
+  WHERE l.clave = ANY(string_to_array(p_keys, chr(10)))
+    AND (l.bloqueado_hasta > now() OR l.ultimo_fallo > now() - interval '24 hours');
+$$;
+
+-- Suma un fallo de forma atómica y aplica la escalada: `p_free` fallos sin espera; después
+-- 1 min, 5 min, 15 min, 1 h y 6 h; el siguiente es el bloqueo mortal de 3 días. Devuelve la espera y los fallos.
+CREATE OR REPLACE FUNCTION fn_limit_fail(p_key text, p_free integer)
+RETURNS TABLE(espera integer, fallos integer) LANGUAGE plpgsql AS $$
+DECLARE v_failures integer; v_wait integer;
+BEGIN
+  DELETE FROM tb_limites_intentos l WHERE l.ultimo_fallo < now() - interval '4 days'
+    AND (l.bloqueado_hasta IS NULL OR l.bloqueado_hasta < now());
+  INSERT INTO tb_limites_intentos AS l (clave, fallos, ultimo_fallo) VALUES (p_key, 1, now())
+  ON CONFLICT (clave) DO UPDATE SET
+    fallos = CASE WHEN l.ultimo_fallo < now() - interval '24 hours' THEN 1 ELSE l.fallos + 1 END,
+    ultimo_fallo = now()
+  RETURNING l.fallos INTO v_failures;
+  v_wait := CASE WHEN v_failures <= p_free THEN 0
+    ELSE COALESCE((ARRAY[60, 300, 900, 3600, 21600])[v_failures - p_free], 259200) END;
+  UPDATE tb_limites_intentos l SET bloqueado_hasta = CASE WHEN v_wait > 0 THEN now() + make_interval(secs => v_wait) END
+  WHERE l.clave = p_key;
+  RETURN QUERY SELECT v_wait, v_failures;
+END;
+$$;
+
+-- Bloqueo mortal de una IP: tras llegar al tope con un correo, esa IP no puede probar ningún otro.
+-- No suma fallos: el contador propio de la IP (correos al azar) sigue aparte.
+CREATE OR REPLACE FUNCTION fn_limit_block(p_key text, p_seconds integer)
+RETURNS void LANGUAGE sql AS $$
+  INSERT INTO tb_limites_intentos AS l (clave, fallos, bloqueado_hasta, ultimo_fallo)
+  VALUES (p_key, 0, now() + make_interval(secs => p_seconds), now())
+  ON CONFLICT (clave) DO UPDATE SET
+    bloqueado_hasta = GREATEST(COALESCE(l.bloqueado_hasta, now()), now() + make_interval(secs => p_seconds)),
+    ultimo_fallo = now();
+$$;
+
+-- IPs distintas con bloqueo mortal vigente sobre un correo: con dos o más, ese correo sufre un
+-- ataque desde varios sitios y el dueño termina de entrar con un enlace a su correo.
+CREATE OR REPLACE FUNCTION fn_limit_attackers(p_email text)
+RETURNS TABLE(total integer) LANGUAGE sql STABLE AS $$
+  SELECT count(*)::integer FROM tb_limites_intentos l
+  WHERE left(l.clave, length('par:' || p_email || '|')) = 'par:' || p_email || '|'
+    -- La espera más larga antes del tope es de 6 h: solo el bloqueo mortal pasa de un día.
+    AND l.bloqueado_hasta > now() + interval '1 day';
+$$;
+
+CREATE OR REPLACE FUNCTION fn_limit_clear(p_key text)
+RETURNS void LANGUAGE sql AS $$
+  DELETE FROM tb_limites_intentos WHERE clave = p_key;
+$$;
+
+-- Quien demuestra controlar el correo (restablece o usa el enlace de acceso) limpia las parejas de
+-- ese correo. Las IPs con bloqueo mortal siguen bloqueadas: el atacante no vuelve a entrar por ahí.
+CREATE OR REPLACE FUNCTION fn_limit_clear_email(p_email text)
+RETURNS void LANGUAGE sql AS $$
+  DELETE FROM tb_limites_intentos
+  WHERE left(clave, length('par:' || p_email || '|')) = 'par:' || p_email || '|';
 $$;

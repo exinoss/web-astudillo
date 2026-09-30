@@ -22,6 +22,27 @@
       "when": 1790667927282,
       "tag": "0002_contenido",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790733672523,
+      "tag": "0003_idempotencia",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790786414070,
+      "tag": "0004_limite_intentos",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790790327538,
+      "tag": "0005_google_solo_gmail",
+      "breakpoints": true
     }
   ]
 }

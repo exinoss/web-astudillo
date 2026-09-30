@@ -3,11 +3,13 @@ import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
-import type { BiographyItem, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
+import type { BiographyItem, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
 import { toPhoto } from './media';
 import { plainText } from './validation';
 
 export const PUBLICATIONS_PAGE_SIZE = 10;
+/** Otra persona guardó antes: no se sobrescribe su trabajo. */
+export const CONTENT_CONFLICT = 'Otra persona guardó cambios en este contenido mientras editabas. Recarga para ver su versión; lo tuyo no se guardó.';
 const KEY = /^[a-z0-9]+([.-][a-z0-9]+)*$/;
 
 type ProposalRow = { slug: string; nombre: string; categoria: string; introduccion: string; kpis: Kpi[] };
@@ -64,40 +66,50 @@ export function createContent(sql: SQL, authorization: Authorization) {
     if (found.length !== unique.length) throw new ApiError(422, 'Alguna foto ya no existe; vuelve a subirla');
   }
 
-  const saved = <T>(rows: T[]) => {
-    if (!rows.length) throw new ApiError(404, 'No encontrado');
-    return rows[0];
+  type SaveRow = { resultado: 'guardado' | 'sin_cambios' | 'conflicto'; version: string | null };
+  /** Traduce el resultado de un guardado con versión: 404 si no existe, 409 si otro guardó antes. */
+  const saved = (rows: SaveRow[]) => {
+    const [row] = rows;
+    if (!row) throw new ApiError(404, 'No encontrado');
+    if (row.resultado === 'conflicto') throw new ApiError(409, CONTENT_CONFLICT);
+    return { version: row.version };
   };
+  type Latest = { id_publicacion: number; estado: string; contenido: Snapshot };
 
   return {
     snapshot,
 
+    /**
+     * Borrador con la versión de cada parte. Las versiones se leen antes que el contenido: si alguien
+     * guarda entre ambas lecturas, el siguiente guardado da conflicto en vez de pisar su cambio.
+     */
     async get(access: string | undefined) {
       await authorization.require(access, PERMISSIONS.contentEdit);
-      return snapshot();
+      const [{ versiones }] = await callPg<{ versiones: ContentVersions }>(sql, 'contentVersions');
+      return { ...(await snapshot()), versiones };
     },
 
     /** Guarda un texto del sitio; `null` lo devuelve al texto por defecto del código. */
-    async saveText(access: string | undefined, key: string, value: string | null) {
+    async saveText(access: string | undefined, key: string, value: string | null, version: string | null) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       if (!KEY.test(key) || key.length > 120) throw new ApiError(422, 'Clave de texto no válida');
       const text = value === null ? null : plainText(value, 'Texto', 1000, { multiline: true });
-      return saved(await callPg<{ clave: string; valor: string | null }>(sql, 'textSave', [actor.id_usuario, key, text]));
+      return saved(await callPg<SaveRow>(sql, 'textSave', [actor.id_usuario, key, text, version]));
     },
 
-    async saveProposal(access: string | undefined, slug: string, input: ProposalInput) {
+    async saveProposal(access: string | undefined, slug: string, input: ProposalInput, version: string) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       const kpis = input.kpis.map((k, i) => ({
         etiqueta: plainText(k.etiqueta, `Cifra ${i + 1} · etiqueta`, 60),
         valor: plainText(k.valor, `Cifra ${i + 1} · valor`, 30),
       }));
-      return saved(await callPg(sql, 'proposalSave', [
+      return saved(await callPg<SaveRow>(sql, 'proposalSave', [
         actor.id_usuario, slug, plainText(input.nombre, 'Nombre', 120),
-        plainText(input.categoria, 'Categoría', 80), plainText(input.introduccion, 'Introducción', 400), kpis,
+        plainText(input.categoria, 'Categoría', 80), plainText(input.introduccion, 'Introducción', 400), kpis, version,
       ]));
     },
 
-    async saveBiography(access: string | undefined, items: BiographyInput[]) {
+    async saveBiography(access: string | undefined, items: BiographyInput[], version: string) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       const clean = items.map((h, i) => ({
         anios: plainText(h.anios, `Hito ${i + 1} · años`, 40),
@@ -107,38 +119,48 @@ export function createContent(sql: SQL, authorization: Authorization) {
         alt: h.idMedio === null ? null : plainText(h.alt ?? '', `Hito ${i + 1} · descripción de la foto`, 200),
       }));
       await requirePhotos(clean.flatMap(h => (h.idMedio === null ? [] : [h.idMedio])));
-      return saved(await callPg<{ total: number }>(sql, 'biographySave', [actor.id_usuario, clean]));
+      return saved(await callPg<SaveRow>(sql, 'biographySave', [actor.id_usuario, clean, version]));
     },
 
-    async saveWork(access: string | undefined, slug: string, input: WorkInput) {
+    async saveWork(access: string | undefined, slug: string, input: WorkInput, version: string) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       const hitos = input.hitos.map((h, i) => ({ nombre: plainText(h.nombre, `Hito ${i + 1}`, 120), completado: h.completado }));
       const fotos = input.fotos.map((f, i) => ({ idMedio: f.idMedio, pie: plainText(f.pie, `Foto ${i + 1} · pie`, 200) }));
       await requirePhotos(fotos.map(f => f.idMedio));
-      return saved(await callPg(sql, 'workSave', [
+      return saved(await callPg<SaveRow>(sql, 'workSave', [
         actor.id_usuario, slug, plainText(input.nota, 'Nota', 600, { multiline: true }),
-        hitos, fotos,
+        hitos, fotos, version,
       ]));
     },
 
-    /** Lista lo que cambió respecto de la última publicación que llegó al sitio. */
+    /** Lista lo que cambió respecto de lo último enviado a publicar (en cola, compilándose o publicado). */
     async pending(access: string | undefined) {
       await authorization.require(access, PERMISSIONS.contentPublish);
-      const [[last], current] = await Promise.all([
-        callPg<{ contenido: Snapshot }>(sql, 'publicationLastPublished'), snapshot(),
-      ]);
+      const [[last], current] = await Promise.all([callPg<Latest>(sql, 'publicationLatest'), snapshot()]);
       return { cambios: diff(last?.contenido ?? null, current) };
     },
 
+    /**
+     * Idempotente: si lo mismo ya está en cola o compilándose, devuelve esa publicación en vez de
+     * crear otra. La base repite la comprobación con un bloqueo por si dos personas publican a la vez.
+     */
     async publish(access: string | undefined) {
       const actor = await authorization.require(access, PERMISSIONS.contentPublish);
-      const [[last], current] = await Promise.all([
-        callPg<{ contenido: Snapshot }>(sql, 'publicationLastPublished'), snapshot(),
-      ]);
-      if (last && !diff(last.contenido, current).length) throw new ApiError(409, 'No hay cambios para publicar');
-      const [row] = await callPg<{ id_publicacion: number }>(sql, 'publicationCreate', [actor.id_usuario, current]);
+      const [[last], current] = await Promise.all([callPg<Latest>(sql, 'publicationLatest'), snapshot()]);
+      if (last && !diff(last.contenido, current).length) {
+        if (last.estado === 'publicada') throw new ApiError(409, 'No hay cambios para publicar');
+        return { id: last.id_publicacion, estado: last.estado };
+      }
+      const [row] = await callPg<{ id_publicacion: number; estado: string }>(sql, 'publicationCreate', [actor.id_usuario, current]);
       if (!row) throw new ApiError(403, 'Permiso insuficiente');
-      return { id: row.id_publicacion, estado: 'en_cola' };
+      return { id: row.id_publicacion, estado: row.estado };
+    },
+
+    /** Contenido público vigente; no requiere sesión porque es lo mismo que muestra el sitio. */
+    async current(): Promise<Snapshot> {
+      const [row] = await callPg<{ contenido: Snapshot }>(sql, 'publicationCurrent');
+      if (!row) throw new ApiError(404, 'Aún no hay contenido publicado');
+      return row.contenido;
     },
 
     async publications(access: string | undefined, page: number) {

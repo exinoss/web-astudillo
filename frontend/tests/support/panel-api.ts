@@ -27,6 +27,13 @@ export function panelData(rol: 'admin' | 'coadmin') {
         hitos: [{ nombre: 'Estudios', completado: true }, { nombre: 'Diseño', completado: false }],
         fotos: [{ ...photo(2), pie: 'Tubería instalada' }],
       }],
+      // Como la API real: un texto sin cambiar no tiene versión. Los valores son md5 de ejemplo.
+      versiones: {
+        textos: { 'pie.lema': 'a'.repeat(32) } as Record<string, string>,
+        propuestas: { 'agua-potable': 'b'.repeat(32), educacion: 'c'.repeat(32) } as Record<string, string>,
+        biografia: 'd'.repeat(32),
+        obras: { 'agua-potable': 'e'.repeat(32) } as Record<string, string>,
+      },
     },
     pending: [] as { tipo: string; descripcion: string }[],
     users: Array.from({ length: 23 }, (_, i) => ({
@@ -44,6 +51,8 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
     const method = route.request().method();
     const body = () => route.request().postDataJSON();
     const json = (value: unknown, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(value) });
+    const conflict = () => json({ error: 'Otra persona guardó cambios en este contenido mientras editabas. Recarga para ver su versión; lo tuyo no se guardó.' }, 409);
+    const nextVersion = () => crypto.randomUUID().replaceAll('-', '');
     const path = url.pathname;
     if (path === '/api/me') return json(data.profile);
     if (path === '/api/admin/contenido') return json(data.draft);
@@ -59,15 +68,20 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
     const text = path.match(/^\/api\/admin\/contenido\/textos\/(.+)$/);
     if (text) {
       const key = decodeURIComponent(text[1]);
+      if (body().version !== (data.draft.versiones.textos[key] ?? null)) return conflict();
       data.draft.textos[key] = body().valor;
+      data.draft.versiones.textos[key] = nextVersion();
       data.pending.push({ tipo: 'Texto', descripcion: key });
-      return json({ clave: key });
+      return json({ version: data.draft.versiones.textos[key] });
     }
     const work = path.match(/^\/api\/admin\/contenido\/obras\/(.+)$/);
     if (work) {
-      Object.assign(data.draft.obras.find(o => o.slug === work[1])!, { ...body(), fotos: data.draft.obras[0].fotos });
+      const { version, ...fields } = body();
+      if (version !== data.draft.versiones.obras[work[1]]) return conflict();
+      Object.assign(data.draft.obras.find(o => o.slug === work[1])!, { ...fields, fotos: data.draft.obras[0].fotos });
+      data.draft.versiones.obras[work[1]] = nextVersion();
       data.pending.push({ tipo: 'Obra', descripcion: 'Agua potable' });
-      return json({ slug: work[1] });
+      return json({ version: data.draft.versiones.obras[work[1]] });
     }
     if (path === '/api/admin/usuarios') {
       const q = url.searchParams.get('q')?.toLowerCase() ?? '';
@@ -82,7 +96,10 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
     }
     const state = path.match(/^\/api\/admin\/usuarios\/(\d+)\/estado$/);
     if (state) {
-      data.users.find(u => u.id === Number(state[1]))!.estado = body().estado;
+      const user = data.users.find(u => u.id === Number(state[1]))!;
+      if (user.estado !== body().estado && user.estado !== body().estadoAnterior)
+        return json({ error: 'La cuenta cambió mientras tanto; recarga la lista' }, 409);
+      user.estado = body().estado;
       return json({});
     }
     return json({ error: 'No encontrado' }, 404);

@@ -15,14 +15,18 @@ export function createSessions(sql: SQL, security: Security) {
       await callPg(sql, "sessionCreate", [user.id_usuario, tokenHash(refresh)]);
       return { access: await security.sign(user), refresh };
     },
-    /** Rota el refresh token y emite un JWT para una sesión activa. */
+    /**
+     * Rota el refresh token y emite un JWT para una sesión activa. Si otra pestaña acaba de rotarlo
+     * (renovaciones simultáneas), no cierra la sesión: emite solo el acceso y `refresh` va nulo.
+     */
     async renew(refresh: string | undefined) {
       if (!refresh) throw new ApiError(401, "Sesión no válida");
       const next = randomToken();
       const rows = await callPg<Account>(sql, "sessionRotate", [tokenHash(refresh), tokenHash(next)]);
-      if (!rows.length) throw new ApiError(401, "Sesión no válida");
-      const user = rows[0];
-      return { access: await security.sign(user), refresh: next, user };
+      if (rows.length) return { access: await security.sign(rows[0]), refresh: next as string | null, user: rows[0] };
+      const [recent] = await callPg<Account>(sql, "sessionRecentlyRotated", [tokenHash(refresh)]);
+      if (!recent) throw new ApiError(401, "Sesión no válida");
+      return { access: await security.sign(recent), refresh: null, user: recent };
     },
     /** Revoca en PostgreSQL la sesión asociada al refresh token. */
     async revoke(refresh: string | undefined) {

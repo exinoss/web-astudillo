@@ -11,11 +11,11 @@ Todos los comandos se ejecutan desde esta carpeta (`frontend/`):
 | Comando          | Acción                                              |
 | :--------------- | :--------------------------------------------------- |
 | `bun install`     | Instala las dependencias                             |
-| `bun run dev`     | Inicia el servidor de desarrollo en `localhost:4321` |
-| `bun run build`   | Genera el sitio estático en `./dist/`                |
+| `bun run dev`     | Inicia el servidor de desarrollo en `localhost:4321` (necesita el backend encendido) |
+| `bun run build`   | Genera el sitio estático en `./dist/` con el contenido publicado (necesita el backend) |
 | `bun run preview` | Sirve el build localmente                            |
 | `bun run check`   | Verifica tipos de TypeScript (`astro check`)         |
-| `bun run test`    | Corre la suite de pruebas Playwright                 |
+| `bun run test`    | Corre Playwright; compila su propia copia con la semilla, sin backend |
 
 ## Estructura
 

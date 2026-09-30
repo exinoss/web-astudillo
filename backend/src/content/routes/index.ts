@@ -8,40 +8,47 @@ const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.va
 const text = (max: number) => t.String({ maxLength: max * 4 });
 const slug = t.Object({ slug: t.String({ pattern: '^[a-z0-9-]{1,80}$' }) });
 const strict = { additionalProperties: false };
+// Versión que el panel cargó (md5); con ella se detecta si otra persona guardó antes.
+const version = t.String({ pattern: '^[a-f0-9]{32}$' });
 
 /** Rutas del contenido editable, las fotos y las publicaciones del panel. */
 export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: string) {
   const content = createContent(sql, authorization);
   const media = createMedia(sql, authorization, mediaDir);
-  return new Elysia({ prefix: '/api/admin', normalize: false })
+  const admin = new Elysia({ prefix: '/api/admin', normalize: false })
     .get('/contenido', ({ cookie }) => content.get(access(cookie)))
     .put('/contenido/textos/:clave', ({ cookie, params, body }) =>
-      content.saveText(access(cookie), params.clave, body.valor), {
+      content.saveText(access(cookie), params.clave, body.valor, body.version), {
       params: t.Object({ clave: t.String({ maxLength: 120 }) }),
-      body: t.Object({ valor: t.Union([text(1000), t.Null()]) }, strict),
+      // Un texto que nunca se cambió no tiene versión: se envía null.
+      body: t.Object({ valor: t.Union([text(1000), t.Null()]), version: t.Union([version, t.Null()]) }, strict),
     })
     .put('/contenido/propuestas/:slug', ({ cookie, params, body }) =>
-      content.saveProposal(access(cookie), params.slug, body), {
+      content.saveProposal(access(cookie), params.slug, body, body.version), {
       params: slug,
       body: t.Object({
         nombre: text(120), categoria: text(80), introduccion: text(400),
         kpis: t.Array(t.Object({ etiqueta: text(60), valor: text(30) }, strict), { maxItems: 6 }),
+        version,
       }, strict),
     })
-    .put('/contenido/biografia', ({ cookie, body }) => content.saveBiography(access(cookie), body.hitos), {
+    .put('/contenido/biografia', ({ cookie, body }) => content.saveBiography(access(cookie), body.hitos, body.version), {
       body: t.Object({
         hitos: t.Array(t.Object({
           anios: text(40), titulo: text(120), texto: text(3000),
           idMedio: t.Union([t.Integer({ minimum: 1 }), t.Null()]), alt: t.Union([text(200), t.Null()]),
         }, strict), { maxItems: 30 }),
+        version,
       }, strict),
     })
-    .put('/contenido/obras/:slug', ({ cookie, params, body }) => content.saveWork(access(cookie), params.slug, body), {
+    .put('/contenido/obras/:slug', ({ cookie, params, body }) =>
+      content.saveWork(access(cookie), params.slug, body, body.version), {
       params: slug,
       body: t.Object({
         nota: text(600),
         hitos: t.Array(t.Object({ nombre: text(120), completado: t.Boolean() }, strict), { maxItems: 20 }),
         fotos: t.Array(t.Object({ idMedio: t.Integer({ minimum: 1 }), pie: text(200) }, strict), { maxItems: 24 }),
+        version,
       }, strict),
     })
     .post('/medios', ({ cookie, body }) => media.upload(access(cookie), body.foto), {
@@ -52,4 +59,8 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
       query: t.Object({ pagina: t.Optional(t.Numeric({ minimum: 1, maximum: 10000 })) }, strict),
     })
     .post('/publicaciones', ({ cookie }) => content.publish(access(cookie)));
+  // Lectura pública del contenido publicado: la usa el frontend al compilar y en desarrollo.
+  return new Elysia({ normalize: false })
+    .get('/api/contenido/publicado', () => content.current())
+    .use(admin);
 }

@@ -9,12 +9,12 @@ const proxy = { '/api': backend, '/medios': backend };
 // https://astro.build/config
 export default defineConfig({
   output: 'static',
-  // El publicador compila cada versión en su propia carpeta (ver backend/src/publisher/worker.ts).
-  ...(process.env.ASTRO_OUT_DIR ? { outDir: process.env.ASTRO_OUT_DIR } : {}),
   server: { host: true },
   vite: {
     plugins: [tailwindcss()],
-    server: { proxy },
+    // Las compilaciones del publicador y de las pruebas no se vigilan: en Windows el vigilante
+    // bloquea la carpeta y el publicador no podría moverla a `dist`.
+    server: { proxy, watch: { ignored: [/[\\/]dist-(nueva|anterior|test)([\\/]|$)/] } },
     preview: { proxy },
   },
 });

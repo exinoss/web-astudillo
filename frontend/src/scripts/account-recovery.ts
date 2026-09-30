@@ -1,9 +1,12 @@
 import { authRepository } from '../lib/data/auth';
-import { errorText, showStatus, validateFields, value } from '../lib/auth/page';
+import { releaseButton, showFormError } from '../lib/auth/bloqueo';
+import { showStatus, validateFields, value } from '../lib/auth/page';
 import { mostrarCarga } from '../lib/animaciones';
 
 const form = document.querySelector<HTMLFormElement>('#recovery-form')!;
 const status = document.querySelector<HTMLElement>('#account-status')!;
+const presetEmail = new URLSearchParams(location.search).get('correo');
+if (presetEmail) form.querySelector<HTMLInputElement>('input[name="correo"]')!.value = presetEmail.slice(0, 320);
 
 // Solicita recuperación con una respuesta que no revela si existe la cuenta.
 form.addEventListener('submit', async event => {
@@ -20,9 +23,9 @@ form.addEventListener('submit', async event => {
     form.hidden = true;
     showStatus(status, 'Si existe una cuenta con contraseña, recibirás un enlace para restablecerla.');
   } catch (error) {
-    showStatus(status, errorText(error), true);
+    showFormError(status, error, submit);
   } finally {
     terminarCarga();
-    submit.disabled = false;
+    releaseButton(submit);
   }
 });

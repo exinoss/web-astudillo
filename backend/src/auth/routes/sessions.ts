@@ -1,22 +1,27 @@
 import { Elysia, t } from 'elysia';
 import { publicAccount } from '../../http';
-import { normalizeEmail } from '../../security';
-import { clearSession, email, ipOf, setSession, strict, type AuthContext } from './common';
+import { clearSession, email, ipOf, redirectToAccount, setSession, strict, token, type AuthContext } from './common';
+
+const LINK_SENT = 'Por seguridad te enviamos un enlace a tu correo para terminar de entrar';
 
 /** Expone inicio, renovación y cierre de sesión mediante cookies HttpOnly. */
 export function sessionRoutes(context: AuthContext) {
-  const { passwords, sessions, limit, config } = context;
+  const { login, sessions, config } = context;
   return new Elysia({ prefix: '/api/auth', normalize: false })
+    // Los fallos se limitan en PostgreSQL con sanción progresiva (services/limits.ts, createAttempts).
     .post('/login', async ({ body, cookie, request, server }) => {
-      const ip = ipOf(server, request, config.trustProxyIp), correo = normalizeEmail(body.correo);
-      limit(`login:email:${correo}`, 5, 15 * 60_000);
-      limit(`login:ip:${ip}`, 20, 15 * 60_000);
-      const result = await passwords.login(body.correo, body.contrasenia);
-      limit.clear(`login:email:${correo}`);
-      limit.clear(`login:ip:${ip}`);
+      const result = await login.login(body.correo, body.contrasenia, ipOf(server, request, config.trustProxyIp));
+      if ('link' in result) return { enlace: true, message: LINK_SENT };
       setSession(context, cookie, result.tokens);
       return { user: publicAccount(result.user) };
-    }, { body: t.Object({ correo: email, contrasenia: t.String() }, strict) })
+    }, { body: t.Object({ correo: email, contrasenia: t.String({ maxLength: 128 }) }, strict) })
+    .get('/login/confirm', ({ query }) => redirectToAccount(config.origin, '/cuenta/acceso/', query.token),
+      { query: t.Object({ token }) })
+    .post('/login/confirm', async ({ body, cookie }) => {
+      const result = await login.confirm(body.token);
+      setSession(context, cookie, result.tokens);
+      return { user: publicAccount(result.user) };
+    }, { body: t.Object({ token }, strict) })
     .post('/refresh', async ({ cookie }) => {
       const result = await sessions.renew(cookie.refresh.value as string | undefined);
       setSession(context, cookie, result);

@@ -67,3 +67,36 @@ test('«Editar en el sitio» abre el texto pedido y en móvil se edita en una ho
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `${width}px`).toBeLessThanOrEqual(1);
   }
 });
+
+test('si otra persona guardó el mismo texto antes, se avisa y no se pisa su cambio', async ({ page }) => {
+  const data = panelData('coadmin');
+  await mockPanelApi(page, data);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  await page.getByRole('switch', { name: /Modo edición/ }).click();
+  // Mientras esta persona edita, otra guarda el mismo texto desde su navegador.
+  data.draft.textos['inicio.participa.titulo'] = 'Texto de la otra persona.';
+  data.draft.versiones.textos['inicio.participa.titulo'] = 'f'.repeat(32);
+
+  const title = page.locator('[data-editable="inicio.participa.titulo"]');
+  await title.click();
+  await page.keyboard.type('Mi versión.');
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('status').filter({ hasText: 'Otra persona guardó cambios' })).toBeVisible();
+  await expect(title).toHaveText('Tu voz cuenta.');
+  expect(data.draft.textos['inicio.participa.titulo']).toBe('Texto de la otra persona.');
+});
+
+test('pulsar «Publicar» varias veces seguidas no crea publicaciones repetidas', async ({ page }) => {
+  const data = panelData('coadmin');
+  data.pending = [{ tipo: 'Texto', descripcion: 'pie.lema' }];
+  await mockPanelApi(page, data);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const publish = page.getByRole('button', { name: 'Publicar' });
+  await publish.click();
+  // El botón se bloquea mientras se envía y, sin nada pendiente, queda deshabilitado.
+  await expect(page.getByRole('status').filter({ hasText: 'Publicación en cola' })).toBeVisible();
+  await expect(publish).toBeDisabled();
+  expect(data.publications).toHaveLength(1);
+});

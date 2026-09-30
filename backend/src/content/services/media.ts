@@ -1,7 +1,7 @@
 import type { SQL } from 'bun';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import sharp from 'sharp';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
@@ -28,6 +28,10 @@ export function createMedia(sql: SQL, authorization: Authorization, mediaDir: st
       const actor = await authorization.require(access, PERMISSIONS.mediaUpload);
       if (file.size > MAX_UPLOAD_BYTES) throw new ApiError(413, 'La foto supera los 8 MB');
       const input = Buffer.from(await file.arrayBuffer());
+      // Idempotente: la misma foto otra vez (reintento, doble envío) devuelve la ya guardada.
+      const hash = createHash('sha256').update(input).digest('hex');
+      const [existing] = await callPg<MediaRow>(sql, 'mediaByHash', [hash]);
+      if (existing) return toPhoto(existing);
       // El tipo se decide por el contenido, no por la extensión ni el Content-Type del navegador.
       const metadata = await sharp(input, { limitInputPixels: MAX_PIXELS }).metadata()
         .catch(() => { throw new ApiError(415, 'Sube una foto JPG, PNG o WebP'); });
@@ -45,9 +49,13 @@ export function createMedia(sql: SQL, authorization: Authorization, mediaDir: st
       await mkdir(mediaDir, { recursive: true });
       await Promise.all(widths.map(w => base.clone().resize({ width: w, withoutEnlargement: true })
         .webp({ quality: 80 }).toFile(join(mediaDir, `${name}-${w}.webp`))));
-      const [row] = await callPg<MediaRow>(sql, 'mediaCreate', [actor.id_usuario, name, width, height, widths.join(',')]);
-      if (!row) throw new ApiError(403, 'Permiso insuficiente');
-      return toPhoto(row);
+      const [row] = await callPg<MediaRow>(sql, 'mediaCreate', [actor.id_usuario, name, width, height, widths.join(','), hash]);
+      if (row) return toPhoto(row);
+      // Otra subida simultánea del mismo archivo ganó: se usa la suya y se borran estos archivos.
+      await Promise.all(widths.map(w => rm(join(mediaDir, `${name}-${w}.webp`), { force: true })));
+      const [winner] = await callPg<MediaRow>(sql, 'mediaByHash', [hash]);
+      if (!winner) throw new ApiError(403, 'Permiso insuficiente');
+      return toPhoto(winner);
     },
   };
 }

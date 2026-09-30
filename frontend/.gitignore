@@ -1,5 +1,8 @@
 # build output
 dist/
+dist-test/
+dist-nueva/
+dist-anterior/
 # generated types
 .astro/
 # test artifacts

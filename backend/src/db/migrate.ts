@@ -88,7 +88,7 @@ export async function assertMigrated(sql: SQL) {
     to_regprocedure('public.fn_authorized_user(integer, text)') IS NOT NULL
       AND to_regprocedure('public.fn_account_methods(integer)') IS NOT NULL
       AND to_regprocedure('public.fn_password_change(integer, text)') IS NOT NULL
-      AND to_regprocedure('public.fn_role_change(integer, integer, text)') IS NOT NULL AS functions_ready`;
+      AND to_regprocedure('public.fn_role_change(integer, integer, text, text)') IS NOT NULL AS functions_ready`;
   if (!ready?.schema_ready || !ready?.functions_ready)
     throw new Error('Base sin preparar: ejecuta bun run db:migrate');
 }

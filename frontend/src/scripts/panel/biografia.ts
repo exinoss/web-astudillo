@@ -120,7 +120,10 @@ function bind(section: HTMLElement) {
       return notify("Completa años, título, texto y la descripción de la foto de cada hito.", true);
     }
     void busy(form.querySelector("button[type=submit]"), async () => {
-      await adminApi.saveBiography(items!.map((h) => ({ anios: h.anios, titulo: h.titulo, texto: h.texto, idMedio: h.foto?.idMedio ?? null, alt: h.alt })));
+      await adminApi.saveBiography(
+        items!.map((h) => ({ anios: h.anios, titulo: h.titulo, texto: h.texto, idMedio: h.foto?.idMedio ?? null, alt: h.alt })),
+        state.draft!.versiones.biografia,
+      );
       await Promise.all([reloadDraft(), reloadPending()]);
       items = null;
       renderBiography(section);

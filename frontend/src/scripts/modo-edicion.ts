@@ -16,6 +16,7 @@ const mobile = matchMedia("(width <= 760px)");
 const elements = () => [...document.querySelectorAll<HTMLElement>("[data-editable]")];
 const published = new Map<HTMLElement, string>(); // HTML publicado, para restaurarlo al salir del modo
 let texts: Record<string, string> = {};
+let versions: Record<string, string> = {}; // versión de cada texto al cargar; detecta si otra persona guardó antes
 let pending = 0;
 let on = false;
 let editing: { el: HTMLElement; before: string } | null = null;
@@ -114,8 +115,9 @@ async function save(el: HTMLElement, raw: string, before: string) {
   if (!value) { notify("El texto no puede quedar vacío.", true); paint(el, before); return false; }
   if (value.length > def.max) { notify(`Máximo ${def.max} caracteres.`, true); paint(el, before); return false; }
   try {
-    await adminApi.saveText(key, value);
+    const saved = await adminApi.saveText(key, value, versions[key] ?? null);
     texts[key] = value;
+    if (saved.version) versions[key] = saved.version;
     // Los textos compartidos (el lema, por ejemplo) cambian en todos los sitios de la página.
     for (const other of elements()) if (other.dataset.editable === key) paint(other, value);
     await refreshPending();
@@ -226,7 +228,9 @@ const edit = (el: HTMLElement) => (mobile.matches ? openSheet(el) : startInline(
 async function setMode(value: boolean) {
   if (value && !on) {
     // Se muestra el borrador, no lo publicado, para ver lo pendiente mientras se edita.
-    texts = (await adminApi.draft()).textos;
+    const draft = await adminApi.draft();
+    texts = draft.textos;
+    versions = draft.versiones.textos;
     for (const el of elements()) {
       published.set(el, el.innerHTML);
       paint(el, current(el.dataset.editable!));
@@ -256,16 +260,16 @@ export async function startEditMode(profile: Profile) {
   document.body.append(chip, sheet, toast);
 
   toggle.addEventListener("click", () => void setMode(!on).catch(() => notify("No se pudo activar el modo edición.", true)));
+  // Bloqueado mientras se envía; la API además es idempotente, así que un segundo envío no duplica.
   publishButton.addEventListener("click", async () => {
     publishButton.disabled = true;
     try {
       await adminApi.publish();
-      pending = 0;
       notify("Publicación en cola. El sitio se actualizará en cerca de un minuto.");
     } catch (error) {
       notify(error instanceof Error ? error.message : "No se pudo publicar.", true);
     }
-    drawBar();
+    await refreshPending().catch(() => drawBar());
   });
 
   // En modo edición los textos dentro de enlaces se editan en vez de navegar.

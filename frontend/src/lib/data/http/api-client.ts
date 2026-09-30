@@ -1,9 +1,15 @@
 export class ApiError extends Error {
   readonly status: number;
+  /** Segundos hasta poder reintentar (429 y 503). */
+  readonly retryAfter?: number;
+  /** Primer bloqueo del acceso: conviene ofrecer restablecer la contraseña. */
+  readonly suggestRecovery: boolean;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, extra: { retryAfter?: number; suggestRecovery?: boolean } = {}) {
     super(message);
     this.status = status;
+    this.retryAfter = extra.retryAfter;
+    this.suggestRecovery = extra.suggestRecovery ?? false;
   }
 }
 
@@ -37,7 +43,10 @@ export async function apiRequest<T>(
   if (!response.ok) {
     const data = await response.json().catch(() => null);
     const message = typeof data?.error === 'string' ? data.error : 'No se pudo completar la solicitud.';
-    throw new ApiError(response.status, message);
+    throw new ApiError(response.status, message, {
+      retryAfter: typeof data?.reintentarEn === 'number' ? data.reintentarEn : undefined,
+      suggestRecovery: data?.sugerirRecuperacion === true,
+    });
   }
   return response.json() as Promise<T>;
 }

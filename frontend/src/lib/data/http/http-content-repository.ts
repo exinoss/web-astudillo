@@ -1,4 +1,5 @@
 import type { ContentRepository } from "../content-repository";
+import { MockContentRepository } from "../mock/mock-content-repository";
 import { biography as seedBiography, citizenLinks, proposals as seedProposals } from "../mock/seed-data";
 import type { BiographyMilestone, Proposal, UploadedPicture, WorkProgress } from "../types";
 
@@ -15,30 +16,43 @@ interface Snapshot {
   }[];
 }
 
-/**
- * Lee el contenido congelado de una publicación. Iconos y modelos 3D siguen en el código y se
- * cruzan por slug. El archivo se abre con import() dinámico porque este módulo también llega a
- * scripts del navegador, donde nunca se usa.
- */
-export class FileContentRepository implements ContentRepository {
-  #snapshot?: Promise<Snapshot>;
+// Misma dirección del backend que usa el proxy de astro.config.mjs.
+const API = globalThis.process?.env.API_PROXY_TARGET || "http://127.0.0.1:3000";
+// En desarrollo se relee en cada página (se ve lo recién publicado al recargar); al compilar, una vez.
+const DEV_TTL_MS = 1000;
 
-  constructor(private readonly path: string) {}
+/**
+ * Lee el contenido publicado desde el backend al compilar o al pintar en desarrollo. Iconos y
+ * modelos 3D siguen en el código y se cruzan por slug. Sin publicaciones todavía, usa la semilla.
+ */
+export class HttpContentRepository implements ContentRepository {
+  #snapshot?: Promise<Snapshot | null>;
+  #loadedAt = 0;
+  readonly #seed = new MockContentRepository();
 
   #load() {
-    this.#snapshot ??= import("node:fs/promises")
-      .then((fs) => fs.readFile(this.path, "utf8"))
-      .then((raw) => {
-        const data = JSON.parse(raw) as Snapshot;
+    if (this.#snapshot && !(import.meta.env.DEV && Date.now() - this.#loadedAt > DEV_TTL_MS)) return this.#snapshot;
+    this.#loadedAt = Date.now();
+    this.#snapshot = fetch(`${API}/api/contenido/publicado`, { cache: "no-store" })
+      .catch(() => {
+        throw new Error(`No se pudo leer el contenido publicado: el backend no responde en ${API}`);
+      })
+      .then(async (response) => {
+        if (response.status === 404) return null;
+        if (!response.ok) throw new Error(`El backend respondió ${response.status} al leer el contenido publicado`);
+        const data = (await response.json()) as Snapshot;
         if (data.version !== 1) throw new Error(`Versión de contenido no soportada: ${data.version}`);
         return data;
       });
+    // Un fallo no se guarda: la siguiente página lo vuelve a intentar.
+    this.#snapshot.catch(() => (this.#snapshot = undefined));
     return this.#snapshot;
   }
 
   async getProposals(): Promise<Proposal[]> {
-    const { propuestas } = await this.#load();
-    return propuestas.flatMap((p) => {
+    const data = await this.#load();
+    if (!data) return this.#seed.getProposals();
+    return data.propuestas.flatMap((p) => {
       const base = seedProposals.find((s) => s.slug === p.slug);
       if (!base) return [];
       return [{
@@ -57,8 +71,9 @@ export class FileContentRepository implements ContentRepository {
   }
 
   async getBiography(): Promise<BiographyMilestone[]> {
-    const { biografia } = await this.#load();
-    return biografia.map((h, i) => ({
+    const data = await this.#load();
+    if (!data) return this.#seed.getBiography();
+    return data.biografia.map((h, i) => ({
       years: h.anios,
       title: h.titulo,
       text: h.texto.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean),
@@ -68,8 +83,9 @@ export class FileContentRepository implements ContentRepository {
   }
 
   async getWorks(): Promise<WorkProgress[]> {
-    const { obras } = await this.#load();
-    return obras.map((o) => ({
+    const data = await this.#load();
+    if (!data) return this.#seed.getWorks();
+    return data.obras.map((o) => ({
       proposalSlug: o.slug,
       updatedAt: o.actualizadoEn.slice(0, 10),
       note: o.nota,
@@ -79,6 +95,6 @@ export class FileContentRepository implements ContentRepository {
   }
 
   async getTexts() {
-    return (await this.#load()).textos;
+    return (await this.#load())?.textos ?? this.#seed.getTexts();
   }
 }

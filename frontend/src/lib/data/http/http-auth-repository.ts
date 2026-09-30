@@ -8,25 +8,21 @@ export class HttpAuthRepository implements AuthRepository {
     await apiRequest('/api/auth/register', 'POST', input);
   }
 
-  async verifyEmail(token: string, contrasenia?: string) {
-    await apiRequest('/api/auth/verify-email', 'POST', { token, ...(contrasenia ? { contrasenia } : {}) });
+  async verifyEmail(token: string) {
+    await apiRequest('/api/auth/verify-email', 'POST', { token });
   }
 
-  async login(correo: string, contrasenia: string) {
-    await apiRequest('/api/auth/login', 'POST', { correo, contrasenia });
+  async login(correo: string, contrasenia: string): Promise<'ready' | 'link'> {
+    const result = await apiRequest<{ enlace?: true }>('/api/auth/login', 'POST', { correo, contrasenia });
+    return result.enlace ? 'link' : 'ready';
   }
 
-  async googleLogin(credential: string): Promise<'pending' | 'ready'> {
-    const result = await apiRequest<{ pending: true } | { user: Account }>(
-      '/api/auth/google', 'POST', { credential },
-    );
-    return 'pending' in result ? 'pending' : 'ready';
+  async confirmLogin(token: string) {
+    await apiRequest('/api/auth/login/confirm', 'POST', { token });
   }
 
-  async confirmGoogle(token: string, credential?: string) {
-    await apiRequest('/api/auth/google/confirm', 'POST', {
-      token, ...(credential ? { credential } : {}),
-    });
+  async googleLogin(credential: string) {
+    await apiRequest('/api/auth/google', 'POST', { credential });
   }
 
   async requestReset(correo: string) {

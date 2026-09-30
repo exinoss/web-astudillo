@@ -34,8 +34,20 @@ export interface WorkContent {
 }
 
 /**
- * Contenido completo del sitio. Es lo que se congela al publicar y lo que la compilación
- * del frontend lee de un archivo; cambiar su forma obliga a cambiar `FileContentRepository`.
+ * Versión (md5 del estado) de cada parte editable del borrador. El panel la devuelve al guardar;
+ * si no coincide con la actual, otra persona guardó antes y el guardado responde 409.
+ * Un texto sin cambiar no aparece en `textos`: su versión es null.
+ */
+export interface ContentVersions {
+  textos: Record<string, string>;
+  propuestas: Record<string, string>;
+  biografia: string;
+  obras: Record<string, string>;
+}
+
+/**
+ * Contenido completo del sitio. Es lo que se congela al publicar y lo que el frontend lee de
+ * GET /api/contenido/publicado; cambiar su forma obliga a cambiar `HttpContentRepository`.
  */
 export interface Snapshot {
   version: 1;

@@ -19,7 +19,7 @@ const config: Config = {
   mediaDir: "medios-pruebas",
 };
 const sent: Array<{ to: string; url: string }> = [];
-const mailer: Mailer = { async send(to, _subject, link) { sent.push({ to, url: link }); } };
+const mailer: Mailer = { async send(to, mensaje) { sent.push({ to, url: mensaje.url }); } };
 const original = createSecurity(config);
 const security = {
   ...original,
@@ -44,8 +44,8 @@ const security = {
     if (credential === "bloqueado".repeat(12)) return {
       sub: "google-bloqueado", email: "bloqueado@gmail.com", verified: true, hostedDomain: null, name: "Bloqueado",
     };
-    if (credential === "crossdevice".repeat(10)) return {
-      sub: "google-cross-device", email: "cross@example.com", verified: true, hostedDomain: null, name: "Cross",
+    if (credential === "workspace".repeat(12)) return {
+      sub: "google-workspace", email: "equipo@campana.ec", verified: true, hostedDomain: "campana.ec", name: "Equipo",
     };
     throw new Error("Credencial Google de prueba inválida");
   },
@@ -73,7 +73,7 @@ beforeAll(async () => {
   await migrate(sql);
   await migrate(sql);
   await sql`TRUNCATE tb_auditoria, tb_sesiones, tb_registros_pendientes,
-    tb_token_autenticacion, tb_identidades_autenticacion, tb_usuarios RESTART IDENTITY CASCADE`;
+    tb_token_autenticacion, tb_identidades_autenticacion, tb_usuarios, tb_limites_intentos RESTART IDENTITY CASCADE`;
 });
 afterAll(async () => { await sql.close(); });
 
@@ -94,15 +94,15 @@ test("registro, perfil, Google, sesiones y recuperación", async () => {
   expect(oldLink.status).toBe(303);
   expect(new URL(oldLink.headers.get('location')!).pathname).toBe('/cuenta/verificar/');
   expect((await sql`SELECT count(*)::int AS n FROM tb_usuarios`)[0].n).toBe(0);
-  const regCookie = cookieFrom(registration, "registration")!;
-  const verified = await call("/api/auth/verify-email", "POST", { token: verificationToken }, [regCookie]);
+  // El enlace funciona en cualquier navegador: el registro no deja cookie ni pide la contraseña.
+  expect(cookieFrom(registration, "registration")).toBeUndefined();
+  const verified = await call("/api/auth/verify-email", "POST", { token: verificationToken });
   expect(verified.status).toBe(200);
-  const clearedRegistration = verified.headers.getSetCookie().find(value => value.startsWith('registration='))!;
-  expect(clearedRegistration).toContain('Path=/api/auth/verify-email');
-  expect(clearedRegistration).toContain('Max-Age=0');
   expect((await sql`SELECT count(*)::int AS n FROM tb_usuarios`)[0].n).toBe(1);
   expect((await sql`SELECT count(*)::int AS n FROM tb_registros_pendientes`)[0].n).toBe(0);
-  expect((await call("/api/auth/verify-email", "POST", { token: verificationToken }, [regCookie])).status).toBe(400);
+  // Abrir otra vez el mismo enlace (recargar, doble clic en el correo) no es un error ni crea otra cuenta.
+  expect((await call("/api/auth/verify-email", "POST", { token: verificationToken })).status).toBe(200);
+  expect((await sql`SELECT count(*)::int AS n FROM tb_usuarios`)[0].n).toBe(1);
 
   const login = await call("/api/auth/login", "POST", {
     correo: "ana@gmail.com", contrasenia: "una contraseña suficientemente larga1!",
@@ -147,6 +147,13 @@ test("registro, perfil, Google, sesiones y recuperación", async () => {
     SELECT expira_en FROM tb_sesiones WHERE id_sesion = ${session.id_sesion}`;
   const renewed = await call("/api/auth/refresh", "POST", undefined, [refresh]);
   expect(renewed.status).toBe(200);
+  // Otra pestaña renueva a la vez con el refresh anterior: sigue con sesión (solo acceso nuevo, sin rotar).
+  const otherTab = await call("/api/auth/refresh", "POST", undefined, [refresh]);
+  expect(otherTab.status).toBe(200);
+  expect(cookieFrom(otherTab, "access")).toBeDefined();
+  expect(cookieFrom(otherTab, "refresh")).toBeUndefined();
+  // Pasado el margen de 30 s, el refresh anterior ya no sirve.
+  await sql`UPDATE tb_sesiones SET rotado_en = now() - interval '1 minute' WHERE id_sesion = ${session.id_sesion}`;
   expect((await call("/api/auth/refresh", "POST", undefined, [refresh])).status).toBe(401);
   const refresh2 = cookieFrom(renewed, "refresh")!;
   const [rotatedSession] = await sql`
@@ -165,6 +172,10 @@ test("registro, perfil, Google, sesiones y recuperación", async () => {
 
   const resetRequest = await call("/api/auth/password/reset-request", "POST", { correo: "ana@gmail.com" });
   expect(resetRequest.status).toBe(200);
+  // Pedirlo otra vez enseguida (doble clic) no manda otro correo ni crea otro enlace válido.
+  const mailsAfterRequest = sent.length;
+  expect((await call("/api/auth/password/reset-request", "POST", { correo: "ana@gmail.com" })).status).toBe(200);
+  expect(sent.length).toBe(mailsAfterRequest);
   const sessionBeforeReset = await call("/api/auth/login", "POST", {
     correo: "ana@gmail.com", contrasenia: "una contraseña suficientemente larga1!",
   });
@@ -177,8 +188,12 @@ test("registro, perfil, Google, sesiones y recuperación", async () => {
   expect((await call("/api/auth/password/reset", "POST", {
     token: resetToken, contrasenia: "otra contraseña suficientemente larga1!",
   })).status).toBe(200);
+  // El mismo enlace con la misma contraseña otra vez (doble envío) es un éxito; con otra, no.
   expect((await call("/api/auth/password/reset", "POST", {
     token: resetToken, contrasenia: "otra contraseña suficientemente larga1!",
+  })).status).toBe(200);
+  expect((await call("/api/auth/password/reset", "POST", {
+    token: resetToken, contrasenia: "una tercera contraseña bien larga1!",
   })).status).toBe(400);
   expect((await call("/api/auth/refresh", "POST", undefined, [refreshBeforeReset])).status).toBe(401);
   expect((await call("/api/auth/login", "POST", {
@@ -194,27 +209,21 @@ test("verificación desde otro navegador y Google externo", async () => {
   });
   expect(reg.status).toBe(200);
   const token = linkToken();
-  expect((await call("/api/auth/verify-email", "POST", {
-    token, contrasenia: "contraseña equivocada larga",
-  })).status).toBe(403);
-  expect((await call("/api/auth/verify-email", "POST", {
-    token, contrasenia: "contraseña original muy larga1!",
-  })).status).toBe(200);
+  // Otro navegador (sin cookies): basta el enlace, ya no se pide la contraseña.
+  expect((await call("/api/auth/verify-email", "POST", { token })).status).toBe(200);
+  expect((await call("/api/auth/verify-email", "POST", { token, contrasenia: "x" })).status).toBe(422);
 
+  // Una cuenta de Google con correo que no es de Google (Hotmail, Outlook…) no entra: se pide correo y contraseña.
+  const mailsBefore = sent.length;
   const google = await call("/api/auth/google", "POST", { credential: "externo".repeat(20) });
-  expect((await google.json()).pending).toBe(true);
+  expect(google.status).toBe(422);
+  expect((await google.json()).error).toContain("Entra con tu correo y contraseña");
+  expect(cookieFrom(google, "access")).toBeUndefined();
+  expect(sent.length).toBe(mailsBefore);
   expect((await sql`SELECT count(*)::int AS n FROM tb_usuarios WHERE correo = 'externo@hotmail.com'`)[0].n).toBe(0);
-  const externalToken = linkToken();
-  expect(new URL(sent.at(-1)!.url).pathname).toBe('/cuenta/google/confirmar/');
-  const challenge = cookieFrom(google, "googleChallenge")!;
-  const oldGoogleLink = await call('/api/auth/google/confirm?token=' + externalToken);
-  expect(oldGoogleLink.status).toBe(303);
-  expect(new URL(oldGoogleLink.headers.get('location')!).pathname).toBe('/cuenta/google/confirmar/');
-  expect(oldGoogleLink.headers.getSetCookie()).toHaveLength(0);
-  const confirmedExternal = await call("/api/auth/google/confirm", "POST", { token: externalToken }, [challenge]);
-  expect(confirmedExternal.status).toBe(200);
-  expect(cookieFrom(confirmedExternal, "access")).toBeTruthy();
-  expect((await sql`SELECT count(*)::int AS n FROM tb_usuarios WHERE correo = 'externo@hotmail.com'`)[0].n).toBe(1);
+  expect((await call("/api/auth/google/confirm", "POST", { token: "A".repeat(43) })).status).toBe(404);
+  // Un correo de empresa en Google Workspace es de Google: entra directamente, como Gmail.
+  expect((await call("/api/auth/google", "POST", { credential: "workspace".repeat(12) })).status).toBe(200);
   const googleOnly = await call("/api/auth/google", "POST", { credential: "nuevo".repeat(20) });
   expect(googleOnly.status).toBe(200);
   expect((await call("/api/auth/login", "POST", {
@@ -242,6 +251,13 @@ test("verificación desde otro navegador y Google externo", async () => {
   expect((await call("/api/auth/password", "POST", {
     credential: "nuevo".repeat(20), contrasenia: "nueva contraseña suficientemente larga1!",
   }, [googleAccess])).status).toBe(200);
+  // Repetir el mismo envío no es un error; una contraseña distinta sí.
+  expect((await call("/api/auth/password", "POST", {
+    credential: "nuevo".repeat(20), contrasenia: "nueva contraseña suficientemente larga1!",
+  }, [googleAccess])).status).toBe(200);
+  expect((await call("/api/auth/password", "POST", {
+    credential: "nuevo".repeat(20), contrasenia: "otra contraseña distinta y larga1!",
+  }, [googleAccess])).status).toBe(409);
   expect((await call("/api/auth/login", "POST", {
     correo: "nuevo@gmail.com", contrasenia: "nueva contraseña suficientemente larga1!",
   })).status).toBe(200);
@@ -254,17 +270,27 @@ test("verificación desde otro navegador y Google externo", async () => {
 
 test("duplicados simultáneos, vencimiento, vinculación externa y bloqueo", async () => {
   const common = { nombresCompletos: "Carrera", correo: "carrera@example.com" };
-  const first = await call("/api/auth/register", "POST", { ...common,
-    contrasenia: "primera contraseña muy larga1!", confirmarContrasenia: "primera contraseña muy larga1!" });
-  const firstToken = linkToken(), firstCookie = cookieFrom(first, "registration")!;
-  const second = await call("/api/auth/register", "POST", { ...common,
-    contrasenia: "segunda contraseña muy larga1!", confirmarContrasenia: "segunda contraseña muy larga1!" });
-  const secondToken = linkToken(), secondCookie = cookieFrom(second, "registration")!;
+  const register = (contrasenia: string) =>
+    call("/api/auth/register", "POST", { ...common, contrasenia, confirmarContrasenia: contrasenia });
+  // Doble envío simultáneo del formulario: una sola solicitud y un solo correo.
+  const beforeMails = sent.length;
+  const doubled = await Promise.all([register("primera contraseña muy larga1!"), register("primera contraseña muy larga1!")]);
+  expect(doubled.map(r => r.status)).toEqual([200, 200]);
+  expect(sent.length).toBe(beforeMails + 1);
+  expect((await sql`SELECT count(*)::int AS n FROM tb_registros_pendientes`)[0].n).toBe(1);
+  const firstToken = linkToken();
+  // Pasado el minuto se puede pedir otro enlace, y el anterior deja de valer: nunca hay dos válidos.
+  await sql`UPDATE tb_token_autenticacion SET creado_en = now() - interval '2 minutes' WHERE correo = 'carrera@example.com'`;
+  const second = await register("segunda contraseña muy larga1!");
+  const secondToken = linkToken();
+  expect(secondToken).not.toBe(firstToken);
+  expect((await call("/api/auth/verify-email", "POST", { token: firstToken })).status).toBe(400);
+  // El mismo enlace abierto dos veces a la vez: una cuenta, y ambas respuestas son un éxito.
   const results = await Promise.all([
-    call("/api/auth/verify-email", "POST", { token: firstToken }, [firstCookie]),
-    call("/api/auth/verify-email", "POST", { token: secondToken }, [secondCookie]),
+    call("/api/auth/verify-email", "POST", { token: secondToken }),
+    call("/api/auth/verify-email", "POST", { token: secondToken }),
   ]);
-  expect(results.map(r => r.status).sort()).toEqual([200, 409]);
+  expect(results.map(r => r.status)).toEqual([200, 200]);
   expect((await sql`SELECT count(*)::int AS n FROM tb_usuarios WHERE correo = 'carrera@example.com'`)[0].n).toBe(1);
 
   const expiring = await call("/api/auth/register", "POST", {
@@ -275,8 +301,7 @@ test("duplicados simultáneos, vencimiento, vinculación externa y bloqueo", asy
   await sql`UPDATE tb_token_autenticacion
     SET creado_en = now() - interval '2 hours', expira_en = now() - interval '1 hour'
     WHERE token_hash = ${(await import("../src/security")).tokenHash(expiredToken)}`;
-  expect((await call("/api/auth/verify-email", "POST", { token: expiredToken },
-    [cookieFrom(expiring, "registration")!])).status).toBe(400);
+  expect((await call("/api/auth/verify-email", "POST", { token: expiredToken })).status).toBe(400);
 
   const local = await call("/api/auth/register", "POST", {
     nombresCompletos: "Local", correo: "local@hotmail.com",
@@ -284,13 +309,12 @@ test("duplicados simultáneos, vencimiento, vinculación externa y bloqueo", asy
     confirmarContrasenia: "contraseña local bastante larga1!",
   });
   const localToken = linkToken();
-  await call("/api/auth/verify-email", "POST", { token: localToken }, [cookieFrom(local, "registration")!]);
-  const google = await call("/api/auth/google", "POST", { credential: "localext".repeat(20) });
-  expect((await google.json()).pending).toBe(true);
-  const googleToken = linkToken();
-  expect((await call("/api/auth/google/confirm", "POST", { token: googleToken },
-    [cookieFrom(google, "googleChallenge")!])).status).toBe(200);
-  expect((await sql`SELECT count(*)::int AS n FROM tb_usuarios WHERE correo = 'local@hotmail.com'`)[0].n).toBe(1);
+  await call("/api/auth/verify-email", "POST", { token: localToken });
+  // Registrado con Hotmail y contraseña: Google con ese mismo Hotmail no se vincula; sigue entrando con contraseña.
+  expect((await call("/api/auth/google", "POST", { credential: "localext".repeat(20) })).status).toBe(422);
+  expect((await sql`SELECT count(*)::int AS n FROM tb_identidades_autenticacion i JOIN tb_usuarios u USING (id_usuario)
+    WHERE u.correo = 'local@hotmail.com' AND i.proveedor = 'google'`)[0].n).toBe(0);
+  expect((await call("/api/auth/login", "POST", { correo: "local@hotmail.com", contrasenia: "contraseña local bastante larga1!" })).status).toBe(200);
 
   const blocked = await call("/api/auth/google", "POST", { credential: "bloqueado".repeat(12) });
   const blockedAccess = cookieFrom(blocked, "access")!, blockedRefresh = cookieFrom(blocked, "refresh")!;
@@ -298,30 +322,12 @@ test("duplicados simultáneos, vencimiento, vinculación externa y bloqueo", asy
   expect((await call("/api/me", "GET", undefined, [blockedAccess])).status).toBe(401);
   expect((await call("/api/auth/refresh", "POST", undefined, [blockedRefresh])).status).toBe(401);
   expect((await call("/api/auth/google", "POST", { credential: "bloqueado".repeat(12) })).status).toBe(403);
-  const winningPassword = results[0].status === 200
-    ? "primera contraseña muy larga1!" : "segunda contraseña muy larga1!";
+  // Solo vale el último enlace pedido, así que la cuenta usa la segunda contraseña.
   expect((await call("/api/auth/login", "POST", {
-    correo: "carrera@example.com", contrasenia: winningPassword,
+    correo: "carrera@example.com", contrasenia: "segunda contraseña muy larga1!",
   }, [])).status).toBe(200);
   const noOrigin = await app.handle(new Request(config.origin + "/api/auth/logout", { method: "POST" }));
   expect(noOrigin.status).toBe(403);
-});
-
-test("Google externo confirmado desde otro navegador exige la misma identidad", async () => {
-  const started = await call("/api/auth/google", "POST", { credential: "crossdevice".repeat(10) });
-  expect((await started.json()).pending).toBe(true);
-  const token = linkToken();
-  expect((await call("/api/auth/google/confirm", "POST", { token })).status).toBe(403);
-  expect((await call("/api/auth/google/confirm", "POST", {
-    token, credential: "gmail".repeat(20),
-  })).status).toBe(403);
-  const confirmed = await call("/api/auth/google/confirm", "POST", {
-    token, credential: "crossdevice".repeat(10),
-  });
-  expect(confirmed.status).toBe(200);
-  expect((await call("/api/auth/google/confirm", "POST", {
-    token, credential: "crossdevice".repeat(10),
-  })).status).toBe(400);
 });
 
 test("política de contraseña, confirmación y cambio de contraseña", async () => {
@@ -368,6 +374,8 @@ test("política de contraseña, confirmación y cambio de contraseña", async ()
   const changed = await change({ contraseniaActual: 'Ab1!xy', contraseniaNueva: 'Cd2@xy',
     confirmarContrasenia: 'Cd2@xy' });
   expect(changed.status).toBe(200);
+  // El mismo cambio repetido (doble envío) responde igual y no toca nada.
+  expect((await change({ contraseniaActual: 'Ab1!xy', contraseniaNueva: 'Cd2@xy', confirmarContrasenia: 'Cd2@xy' })).status).toBe(200);
   expect(changed.headers.getSetCookie().some(value => value.startsWith('access=') && value.includes('Max-Age=0')))
     .toBe(true);
   expect((await call('/api/auth/refresh', 'POST', undefined, [refresh])).status).toBe(401);

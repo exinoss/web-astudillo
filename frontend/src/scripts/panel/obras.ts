@@ -129,7 +129,8 @@ function bind(section: HTMLElement) {
     if (!work!.nota || work!.hitos.some((h) => !h.nombre) || work!.fotos.some((f) => !f.pie))
       return notify("Completa la nota, el nombre de cada hito y el pie de cada foto.", true);
     void busy(form.querySelector("button[type=submit]"), async () => {
-      await adminApi.saveWork(work!.slug, { nota: work!.nota, hitos: work!.hitos, fotos: work!.fotos.map((f) => ({ idMedio: f.idMedio, pie: f.pie })) });
+      await adminApi.saveWork(work!.slug, { nota: work!.nota, hitos: work!.hitos, fotos: work!.fotos.map((f) => ({ idMedio: f.idMedio, pie: f.pie })) },
+        state.draft!.versiones.obras[work!.slug]);
       await Promise.all([reloadDraft(), reloadPending()]);
       work = null;
       renderWorks(section);

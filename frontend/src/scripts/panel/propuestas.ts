@@ -92,7 +92,7 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
     if (!body.nombre || !body.categoria || !body.introduccion || body.kpis.some((k) => !k.etiqueta || !k.valor))
       return notify("Completa todos los campos, también etiqueta y cifra de cada KPI.", true);
     void busy(formEl.querySelector("button[type=submit]"), async () => {
-      await adminApi.saveProposal(current.slug, body);
+      await adminApi.saveProposal(current.slug, body, state.draft!.versiones.propuestas[current.slug]);
       await Promise.all([reloadDraft(), reloadPending()]);
       renderProposals(section);
       notify(`Borrador de «${body.nombre}» guardado. Publica para que se vea en el sitio.`);

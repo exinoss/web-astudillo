@@ -252,11 +252,10 @@ test('una sesión Google anterior confirma la identidad antes de añadir contras
 });
 
 test('recuperación, restablecimiento y verificación conservan los enlaces de un uso', async ({ page }) => {
+  const verifications: unknown[] = [];
   await page.route('**/api/**', route => {
-    const path = new URL(route.request().url()).pathname;
-    const status = path === '/api/auth/verify-email' && !route.request().postDataJSON()?.contrasenia ? 403 : 200;
-    return route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(
-      status === 403 ? { error: 'Confirma con contraseña' } : { message: 'ok' }) });
+    if (new URL(route.request().url()).pathname === '/api/auth/verify-email') verifications.push(route.request().postDataJSON());
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ message: 'ok' }) });
   });
   await page.goto('/cuenta/recuperar/');
   await page.locator('#recovery-email').fill('mal');
@@ -271,11 +270,89 @@ test('recuperación, restablecimiento y verificación conservan los enlaces de u
   await page.locator('#reset-confirm').fill('Ab1!xy');
   await page.getByRole('button', { name: 'Guardar contraseña' }).click();
   await expect(page.locator('#reset-done')).toBeVisible();
+  // El enlace de registro vale en cualquier navegador: no pide la contraseña.
   await page.goto(`/cuenta/verificar/?token=${token}`);
-  await expect(page.locator('#verify-form')).toBeVisible();
-  await page.locator('#verify-password').fill('Ab1!xy');
-  await page.getByRole('button', { name: 'Confirmar correo' }).click();
   await expect(page.locator('#verify-done')).toBeVisible();
+  await expect(page.getByLabel('Contraseña usada en el registro')).toHaveCount(0);
+  expect(verifications).toEqual([{ token }]);
+});
+
+test('tras muchos intentos el botón se bloquea con candado y cuenta atrás, y sugiere restablecer la contraseña', async ({ page }) => {
+  await page.clock.install();
+  await page.route('**/api/**', route => {
+    const path = new URL(route.request().url()).pathname;
+    if (path === '/api/auth/login') return route.fulfill({ status: 429, contentType: 'application/json',
+      headers: { 'retry-after': '60' },
+      body: JSON.stringify({ error: 'Demasiados intentos', reintentarEn: 60, sugerirRecuperacion: true }) });
+    return route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":"Inicia sesión"}' });
+  });
+  await page.goto('/cuenta/');
+  await page.locator('#login-correo').fill('maria@example.com');
+  await page.locator('#login-contrasenia').fill('equivocada');
+  await page.getByRole('button', { name: 'Entrar' }).click();
+
+  const status = page.locator('#account-status');
+  await expect(status).toContainText('Podrás intentarlo de nuevo en 1 minuto');
+  await expect(status.getByRole('link', { name: '¿Olvidaste tu contraseña? Restablécela ahora' }))
+    .toHaveAttribute('href', '/cuenta/recuperar/?correo=maria%40example.com');
+  const submit = page.locator('#login-form button[type="submit"]');
+  await expect(submit).toBeDisabled();
+  await expect(submit).toHaveText('Espera 1:00');
+  await expect(submit.locator('svg.candado')).toBeVisible();
+  // El botón pasa a gris con la transición de color de `.button`.
+  await expect.poll(() => submit.evaluate(el => getComputedStyle(el).backgroundColor)).toBe('rgb(213, 219, 227)');
+
+  await page.clock.runFor(30_000);
+  await expect(submit).toHaveText('Espera 0:30');
+  await page.clock.runFor(31_000);
+  await expect(submit).toHaveText('Entrar');
+  await expect(submit).toBeEnabled();
+  await expect(status).toBeHidden();
+
+  // El enlace lleva a recuperar con el correo ya escrito.
+  await page.goto('/cuenta/recuperar/?correo=maria%40example.com');
+  await expect(page.locator('#recovery-email')).toHaveValue('maria@example.com');
+});
+
+test('un bloqueo de días ofrece restablecer la contraseña y, con Reducir movimiento, el candado no se anima', async ({ page }) => {
+  await page.route('**/api/**', route => new URL(route.request().url()).pathname === '/api/auth/login'
+    ? route.fulfill({ status: 429, contentType: 'application/json', body: JSON.stringify({ error: 'x', reintentarEn: 255_600 }) })
+    : route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":"Inicia sesión"}' }));
+  await page.goto('/cuenta/');
+  await page.getByRole('button', { name: 'Accesibilidad' }).click();
+  await page.getByRole('button', { name: 'Reducir movimiento' }).click();
+  await page.locator('#login-correo').fill('maria@example.com');
+  await page.locator('#login-contrasenia').fill('equivocada');
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  const status = page.locator('#account-status');
+  await expect(status).toContainText('Podrás intentarlo de nuevo en 2 días y 23 horas. Si es tu cuenta, puedes restablecer la contraseña y entrar ya.');
+  const submit = page.locator('#login-form button[type="submit"]');
+  await expect(submit).toHaveText('Espera 2 d 23 h');
+  expect(await submit.locator('.candado .arco').evaluate(el => getComputedStyle(el).animationName)).toBe('none');
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `${width}px`).toBeLessThanOrEqual(1);
+  }
+});
+
+test('si el acceso termina por correo se avisa, y el enlace inicia la sesión', async ({ page }) => {
+  let confirmed = false;
+  await page.route('**/api/**', route => {
+    const path = new URL(route.request().url()).pathname;
+    const json = (status: number, body: object) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+    if (path === '/api/auth/login') return json(200, { enlace: true, message: 'Enlace enviado' });
+    if (path === '/api/auth/login/confirm') { confirmed = true; return json(200, { user: {} }); }
+    return json(401, { error: 'Inicia sesión' });
+  });
+  await page.goto('/cuenta/');
+  await page.locator('#login-correo').fill('maria@example.com');
+  await page.locator('#login-contrasenia').fill('Ab1!xy');
+  await page.getByRole('button', { name: 'Entrar' }).click();
+  await expect(page.locator('#account-status')).toContainText('te enviamos un enlace a tu correo');
+  await expect(page.locator('#login-form')).toBeVisible();
+  await page.goto(`/cuenta/acceso/?token=${token}`);
+  await expect(page).toHaveURL(/\/cuenta\/$/);
+  expect(confirmed).toBe(true);
 });
 
 test('la cuenta se usa en móvil y conserva los modos de accesibilidad', async ({ page }) => {

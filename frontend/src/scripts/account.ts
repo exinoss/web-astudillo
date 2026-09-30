@@ -1,4 +1,5 @@
 import { clearGoogleSelection, showGoogleButton } from '../lib/auth/google';
+import { releaseButton, showFormError } from '../lib/auth/bloqueo';
 import { setAccountNav } from '../lib/auth/navigation';
 import { errorText, showStatus, validateFields, value } from '../lib/auth/page';
 import { authRepository } from '../lib/data/auth';
@@ -60,13 +61,9 @@ async function showLogin() {
     await showGoogleButton(loginGoogle, async credential => {
       const terminarCarga = mostrarCarga(loginPanel);
       try {
-        const result = await authRepository.googleLogin(credential);
-        if (result === 'pending') {
-          showStatus(status, 'Enviamos un enlace a tu correo para confirmar esta cuenta Google.');
-        } else {
-          recentGoogle = { credential, until: Date.now() + 4 * 60_000 };
-          await loadProfile();
-        }
+        await authRepository.googleLogin(credential);
+        recentGoogle = { credential, until: Date.now() + 4 * 60_000 };
+        await loadProfile();
       } catch (error) {
         showAccountError(error);
       } finally {
@@ -115,13 +112,18 @@ loginForm.addEventListener('submit', async event => {
       showStatus(status, 'Revisa los campos marcados.', true);
       return;
     }
-    await authRepository.login(value(loginForm, 'correo'), value(loginForm, 'contrasenia'));
+    const result = await authRepository.login(value(loginForm, 'correo'), value(loginForm, 'contrasenia'));
+    if (result === 'link') {
+      showStatus(status, 'Por seguridad te enviamos un enlace a tu correo para terminar de entrar. Revisa también la carpeta de spam.');
+      return;
+    }
     await loadProfile();
   } catch (error) {
-    showAccountError(error);
+    if (error instanceof ApiError && error.status === 429) showFormError(status, error, submit, value(loginForm, 'correo'));
+    else showAccountError(error);
   } finally {
     terminarCarga();
-    submit.disabled = false;
+    releaseButton(submit);
   }
 });
 
@@ -229,10 +231,10 @@ changePasswordForm.addEventListener('submit', async event => {
     await showLogin();
     showStatus(status, 'Contraseña actualizada. Inicia sesión de nuevo.');
   } catch (error) {
-    showStatus(status, errorText(error), true);
+    showFormError(status, error, submit);
   } finally {
     terminarCarga();
-    submit.disabled = false;
+    releaseButton(submit);
   }
 });
 

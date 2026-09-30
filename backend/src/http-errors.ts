@@ -1,4 +1,4 @@
-import { ApiError } from './http';
+import { ApiError, type ApiErrorDetail } from './http';
 
 const frameworkErrors: Record<string, { status: number; message: string }> = {
   PARSE: { status: 400, message: 'La solicitud tiene un formato inválido' },
@@ -7,8 +7,8 @@ const frameworkErrors: Record<string, { status: number; message: string }> = {
 };
 
 /** Traduce errores de la API a respuestas HTTP sin exponer detalles internos. */
-export function mapHttpError(error: unknown, code: string | number) {
-  if (error instanceof ApiError) return { status: error.status, message: error.message };
+export function mapHttpError(error: unknown, code: string | number): { status: number; message: string; detail?: ApiErrorDetail } {
+  if (error instanceof ApiError) return { status: error.status, message: error.message, detail: error.detail };
 
   const frameworkError = frameworkErrors[String(code)];
   if (frameworkError) return frameworkError;

@@ -1,5 +1,6 @@
 import { authRepository } from '../lib/data/auth';
-import { errorText, showStatus, validateFields, value } from '../lib/auth/page';
+import { releaseButton, showFormError } from '../lib/auth/bloqueo';
+import { showStatus, validateFields, value } from '../lib/auth/page';
 import { mostrarCarga } from '../lib/animaciones';
 
 const form = document.querySelector<HTMLFormElement>('#register-form')!;
@@ -27,9 +28,9 @@ form.addEventListener('submit', async event => {
     form.hidden = true;
     showStatus(status, 'Si el correo puede registrarse, recibirás un enlace para confirmarlo. Revisa también la carpeta de spam.');
   } catch (error) {
-    showStatus(status, errorText(error), true);
+    showFormError(status, error, submit);
   } finally {
     terminarCarga();
-    submit.disabled = false;
+    releaseButton(submit);
   }
 });
