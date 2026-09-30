@@ -8,6 +8,7 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ### Added
 
+- Entorno local con Docker en `server-local/`: doble clic en `iniciar.cmd` comprueba los `.env`, instala o arranca Docker si hace falta, levanta PostgreSQL (con el usuario y la base de `DATABASE_URL`) y aplica las migraciones, levanta backend, sitio, publicador y Mailpit si el correo es local, y la primera vez pide el admin maestro. Ctrl+C lo detiene; cerrar la ventana lo deja encendido, y volver a abrirlo continúa donde estaba.
 - Administración del contenido sin tocar el código. Todo cambio queda como borrador hasta que alguien pulsa «Publicar»; entonces el publicador (`bun run publicador`) recompila el sitio estático con el contenido publicado, que lee de la API, en pocos segundos; si la compilación falla, el sitio sigue con la versión anterior. En desarrollo basta recargar la página.
   - **Panel** en `/cuenta/panel/`: propuestas con sus cifras, línea de tiempo de la biografía con fotos, obras con hitos y fotos de evidencia, lista de textos del sitio, historial de publicaciones y usuarios. Se entra desde «Mi cuenta» con los permisos necesarios.
   - **Modo edición** sobre el propio sitio para los textos sueltos: contorno en cada texto editable, edición en línea en escritorio y en una hoja inferior en móvil. Solo lo descarga quien tiene permiso de edición. Los textos de los botones y los destinos de los enlaces no se editan.

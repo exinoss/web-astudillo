@@ -1,0 +1,100 @@
+# Entorno completo para probar en local con Docker: lo levanta server-local/iniciar.ps1 (no hace falta
+# instalar Bun ni PostgreSQL en la PC). No es el despliegue de producción (ver backend/docker-compose.yml).
+# Las variables ASTUDILLO_* las calcula iniciar.ps1 a partir de backend/.env.
+name: astudillo-local
+
+x-backend-env: &backend-env
+  # Todo en desarrollo: cookies sin Secure y origen http://localhost:4321.
+  NODE_ENV: development
+  APP_ORIGIN: http://localhost:4321
+  # La DATABASE_URL de backend/.env con el servidor cambiado a «db»: mismo usuario, clave y base.
+  DATABASE_URL: ${ASTUDILLO_DATABASE_URL:?Ejecuta iniciar.ps1}
+  # Si el SMTP del .env es local (Mailpit), apuntan al Mailpit de aquí.
+  SMTP_HOST: ${ASTUDILLO_SMTP_HOST:?Ejecuta iniciar.ps1}
+  SMTP_PORT: ${ASTUDILLO_SMTP_PORT:?Ejecuta iniciar.ps1}
+
+services:
+  # PostgreSQL vive en un volumen de Docker; no se publica ningún puerto en la PC. La primera vez
+  # crea el usuario y la base de DATABASE_URL; después las migraciones crean las tablas.
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${ASTUDILLO_DB_USER:?Ejecuta iniciar.ps1}
+      POSTGRES_PASSWORD: ${ASTUDILLO_DB_PASSWORD:?Ejecuta iniciar.ps1}
+      POSTGRES_DB: ${ASTUDILLO_DB_NAME:?Ejecuta iniciar.ps1}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+
+  backend:
+    image: astudillo-local-backend
+    build:
+      context: ../backend
+      target: runtime
+    env_file: ../backend/.env
+    environment:
+      <<: *backend-env
+      BIND_HOST: 0.0.0.0
+      PORT: "3000"
+    volumes:
+      - medios:/app/medios
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bun", "-e", "const r = await fetch('http://127.0.0.1:3000/api/health'); if (!r.ok) process.exit(1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  # Mismo contenedor que el publicador, con el servidor de desarrollo de Astro (lee lo publicado de la API).
+  frontend:
+    image: astudillo-local-sitio
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile.publicador
+    working_dir: /app/frontend
+    command: ["bun", "run", "dev", "--host", "0.0.0.0", "--port", "4321"]
+    env_file: ../frontend/.env
+    environment:
+      NODE_ENV: development
+      API_PROXY_TARGET: http://backend:3000
+    ports:
+      - "4321:4321"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bun", "-e", "const r = await fetch('http://127.0.0.1:4321/'); if (!r.ok) process.exit(1)"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+
+  # Compila el sitio con cada publicación del panel y la marca como publicada.
+  publicador:
+    image: astudillo-local-sitio
+    env_file: ../backend/.env
+    environment:
+      DATABASE_URL: ${ASTUDILLO_DATABASE_URL:?Ejecuta iniciar.ps1}
+      API_PROXY_TARGET: http://backend:3000
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  # Solo si el .env usa un SMTP local: recibe los correos; su bandeja se ve en el navegador.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    profiles: ["correo"]
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "${ASTUDILLO_MAILPIT_PORT:-8025}:8025"
+
+volumes:
+  pgdata:
+  medios:
