@@ -1,4 +1,4 @@
-import { pgTable, unique, integer, varchar, text, uniqueIndex, foreignKey, check, timestamp, index, jsonb, primaryKey, boolean } from "drizzle-orm/pg-core"
+import { pgTable, unique, integer, varchar, text, uniqueIndex, foreignKey, check, timestamp, index, jsonb, primaryKey, boolean, uuid } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -293,4 +293,81 @@ export const tbLimitesIntentos = pgTable("tb_limites_intentos", {
 	ultimoFallo: timestamp("ultimo_fallo", { withTimezone: true, mode: 'string' }).notNull(),
 }, (table) => [
 	index("idx_limites_ultimo_fallo").using("btree", table.ultimoFallo.asc().nullsLast().op("timestamptz_ops")),
+]);
+
+// Alertas y sugerencias de votantes con sesión. `clave_idempotencia` la genera el navegador al
+// crear el borrador: reenviar el mismo formulario (doble clic, reintento) no crea otra fila.
+
+export const tbAlertas = pgTable("tb_alertas", {
+	idAlerta: integer("id_alerta").primaryKey().generatedAlwaysAsIdentity(),
+	idUsuario: integer("id_usuario").notNull(),
+	tipo: varchar({ length: 20 }).notNull(),
+	sector: varchar({ length: 120 }).notNull(),
+	referencia: varchar({ length: 180 }),
+	descripcion: varchar({ length: 1500 }).notNull(),
+	// Nombre base de la foto en la carpeta privada (`<foto>-<ancho>.webp`); nginx no la sirve.
+	foto: varchar({ length: 80 }),
+	estado: varchar({ length: 20 }).default('recibida').notNull(),
+	claveIdempotencia: uuid("clave_idempotencia").notNull(),
+	creadoEn: timestamp("creado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	actualizadoEn: timestamp("actualizado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	actualizadoPor: integer("actualizado_por"),
+}, (table) => [
+	unique("uq_alertas_idempotencia").on(table.idUsuario, table.claveIdempotencia),
+	index("idx_alertas_usuario").on(table.idUsuario, table.idAlerta),
+	index("idx_alertas_estado").on(table.estado, table.idAlerta),
+	foreignKey({ columns: [table.idUsuario], foreignColumns: [tbUsuarios.idUsuario], name: "tb_alertas_id_usuario_fkey" }).onDelete("cascade"),
+	foreignKey({ columns: [table.actualizadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_alertas_actualizado_por_fkey" }).onDelete("set null"),
+	check("ck_alertas_tipo", sql`tipo IN ('agua', 'basura', 'alumbrado', 'baches', 'seguridad', 'otro')`),
+	check("ck_alertas_estado", sql`estado IN ('recibida', 'en_revision', 'atendida')`),
+	check("ck_alertas_descripcion", sql`char_length(descripcion) >= 10`),
+	check("ck_alertas_foto", sql`foto IS NULL OR foto ~ '^[a-z0-9-]{8,80}$'`),
+]);
+
+export const tbSugerencias = pgTable("tb_sugerencias", {
+	idSugerencia: integer("id_sugerencia").primaryKey().generatedAlwaysAsIdentity(),
+	idUsuario: integer("id_usuario").notNull(),
+	// Slug de una propuesta u «otro»; no es clave foránea para que borrar una propuesta no borre ideas.
+	tema: varchar({ length: 80 }).notNull(),
+	mensaje: varchar({ length: 1500 }).notNull(),
+	estado: varchar({ length: 20 }).default('recibida').notNull(),
+	claveIdempotencia: uuid("clave_idempotencia").notNull(),
+	creadoEn: timestamp("creado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	actualizadoEn: timestamp("actualizado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	actualizadoPor: integer("actualizado_por"),
+}, (table) => [
+	unique("uq_sugerencias_idempotencia").on(table.idUsuario, table.claveIdempotencia),
+	index("idx_sugerencias_usuario").on(table.idUsuario, table.idSugerencia),
+	index("idx_sugerencias_estado").on(table.estado, table.idSugerencia),
+	foreignKey({ columns: [table.idUsuario], foreignColumns: [tbUsuarios.idUsuario], name: "tb_sugerencias_id_usuario_fkey" }).onDelete("cascade"),
+	foreignKey({ columns: [table.actualizadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_sugerencias_actualizado_por_fkey" }).onDelete("set null"),
+	check("ck_sugerencias_tema", sql`tema ~ '^[a-z0-9-]{1,80}$'`),
+	check("ck_sugerencias_estado", sql`estado IN ('recibida', 'en_revision', 'atendida')`),
+	check("ck_sugerencias_mensaje", sql`char_length(mensaje) >= 15`),
+]);
+
+// Preguntas frecuentes del chat: contenido editable y publicable como el resto del borrador.
+export const tbChatRespuestas = pgTable("tb_chat_respuestas", {
+	idRespuesta: integer("id_respuesta").primaryKey().generatedAlwaysAsIdentity(),
+	orden: integer().notNull(),
+	pregunta: varchar({ length: 160 }).notNull(),
+	// Separadas por comas; el chat compara sin tildes ni mayúsculas.
+	palabrasClave: varchar("palabras_clave", { length: 300 }).notNull(),
+	respuesta: varchar({ length: 1000 }).notNull(),
+	enlaceTexto: varchar("enlace_texto", { length: 60 }),
+	enlaceRuta: varchar("enlace_ruta", { length: 200 }),
+	destacada: boolean().default(false).notNull(),
+}, (table) => [
+	// Solo rutas del propio sitio: el chat nunca enlaza fuera.
+	check("ck_chat_enlace_ruta", sql`enlace_ruta IS NULL OR enlace_ruta ~ '^/[a-z0-9/#-]*$'`),
+]);
+
+// Lo que el chat no supo responder, agrupado por texto normalizado: base para nuevas respuestas.
+export const tbChatSinRespuesta = pgTable("tb_chat_sin_respuesta", {
+	textoNormalizado: varchar("texto_normalizado", { length: 300 }).primaryKey(),
+	ejemplo: varchar({ length: 300 }).notNull(),
+	veces: integer().default(1).notNull(),
+	ultimaVez: timestamp("ultima_vez", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => [
+	index("idx_chat_sin_respuesta_veces").on(table.veces),
 ]);

@@ -1,3 +1,4 @@
+import { vigilarCambios } from "../../lib/cambios";
 import { adminApi, type DraftWork } from "../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../lib/fotos";
 import { STAGE_NAMES, workProgress } from "../../lib/obras";
@@ -10,6 +11,9 @@ let selected = "";
 let work: DraftWork | null = null; // copia de trabajo de la obra abierta
 
 const nameOf = (slug: string) => state.draft!.propuestas.find((p) => p.slug === slug)?.nombre ?? slug;
+
+/** Lo que se guarda de una obra, para comparar la copia de trabajo con el borrador. */
+const saved = (w: DraftWork) => ({ nota: w.nota, hitos: w.hitos, fotos: w.fotos.map((f) => ({ idMedio: f.idMedio, pie: f.pie })) });
 
 /** Pasa a la copia de trabajo lo escrito en el formulario. */
 function capture(form: HTMLElement) {
@@ -49,7 +53,7 @@ export function renderWorks(section: HTMLElement) {
     <div class="mb-6 flex items-center gap-4 border-l-4 border-l-neutral bg-[#eef4fb] px-4 py-4 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-2">
       <span class="font-display text-[2.4rem] leading-none font-bold">${percent} %</span>
       <div class="flex flex-1 flex-col gap-2">
-        <span class="flex items-center justify-between gap-3 text-[0.78rem]"><strong>Se calcula solo con los hitos</strong>
+        <span class="flex items-center justify-between gap-3 text-[0.78rem]"><strong>Avance</strong>
         <span class="rounded-full px-3 py-1 text-[0.66rem] font-bold tracking-[0.08em] uppercase ${STAGE_CLASSES[stage]}">${STAGE_NAMES[stage]}</span></span>
         <div class="h-2.5 overflow-hidden rounded-full bg-[#06317618]"><div class="h-full rounded-full bg-neutral" style="width: ${percent}%"></div></div>
       </div>
@@ -59,7 +63,7 @@ export function renderWorks(section: HTMLElement) {
         ${field({ id: "obra-nota", label: "Nota", value: work.nota, max: 600, area: true })}
         <div>
           <span class="block text-[0.82rem] font-bold">Hitos</span>
-          <p class="m-0 mb-1.5 text-[0.74rem] text-[#50617d]">Marca cada fase cuando termine; el porcentaje y la etapa se actualizan.</p>
+          <p class="m-0 mb-1.5 text-[0.74rem] text-[#50617d]">Marca cada fase cuando termine.</p>
           <div id="obra-hitos">${hitos}</div>
           <button type="button" id="hito-agregar" class="${GHOST} mt-2.5" ${work.hitos.length >= MAX_MILESTONES ? "disabled" : ""}>${iconSvg("plus", 18)} Añadir hito</button>
         </div>
@@ -70,7 +74,7 @@ export function renderWorks(section: HTMLElement) {
           ${fotos}
           <label class="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-[4px] border-2 border-dashed border-[#acbacb] p-2.5 text-center text-neutral ${work.fotos.length >= MAX_PHOTOS ? "hidden" : ""}">
             ${iconSvg("upload", 26)}<strong class="text-[0.82rem] text-primary">Subir fotos</strong>
-            <span class="text-[0.7rem] text-[#50617d]">Varias a la vez · hasta 8 MB cada una</span>
+            <span class="text-[0.7rem] text-[#50617d]">Varias a la vez · hasta 8 MB cada una · medida recomendada 595 × 495 px</span>
             <input id="obra-fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple class="sr-only" />
           </label>
         </div>
@@ -99,7 +103,6 @@ function bind(section: HTMLElement) {
     work = null;
     renderWorks(section);
   });
-  // Marcar un hito recalcula el avance al momento, sin esperar a guardar.
   form.querySelectorAll<HTMLInputElement>('[name="completado"]').forEach((c) => c.addEventListener("change", () => edit(() => {})));
   form.querySelector("#hito-agregar")!.addEventListener("click", () => edit(() => work!.hitos.push({ nombre: "", completado: false })));
   form.querySelectorAll<HTMLButtonElement>("[data-quitar-hito]").forEach((b) => b.addEventListener("click", () =>
@@ -114,14 +117,23 @@ function bind(section: HTMLElement) {
     const files = [...((e.target as HTMLInputElement).files ?? [])].slice(0, MAX_PHOTOS - work!.fotos.length);
     if (!files.length) return;
     capture(form);
+    const slug = work!.slug;
     void busy(null, async () => {
       for (const [i, file] of files.entries()) {
         notify(`Subiendo foto ${i + 1} de ${files.length}…`);
-        work!.fotos.push({ ...(await adminApi.upload(file)), pie: "" });
+        // Primero la subida y después leer `work`: mientras sube, otra lectura del formulario puede
+        // reemplazar la copia de trabajo, y la foto se añadiría a la lista vieja.
+        const foto = await adminApi.upload(file);
+        if (work?.slug !== slug) return notify("Cambiaste de obra mientras se subían las fotos; vuelve a subirlas en esa obra.", true);
+        work.fotos.push({ ...foto, pie: "" });
         renderWorks(section);
       }
       notify("Fotos subidas. Escribe un pie para cada una y guarda el borrador.");
     });
+  });
+  vigilarCambios(form, form.querySelector("button[type=submit]")!, saved(state.draft!.obras.find((w) => w.slug === work!.slug)!), () => {
+    capture(form);
+    return saved(work!);
   });
   form.addEventListener("submit", (e) => {
     e.preventDefault();

@@ -2,14 +2,16 @@
 import Layout from "../../layouts/Layout.astro";
 import Icon from "../../components/Icon.astro";
 
-// Usuarios solo se muestra con permiso: el script la destapa según /api/me.
+// Participación y Usuarios solo se muestran con permiso: el script las destapa según el perfil.
 const pestanias = [
   { id: "propuestas", nombre: "Propuestas" },
   { id: "biografia", nombre: "Biografía" },
   { id: "obras", nombre: "Obras" },
-  { id: "textos", nombre: "Textos del sitio" },
-  { id: "publicaciones", nombre: "Publicaciones" },
+  { id: "textos", nombre: "Textos y redes" },
+  { id: "chat", nombre: "Chat" },
+  { id: "participacion", nombre: "Participación" },
   { id: "usuarios", nombre: "Usuarios" },
+  { id: "publicaciones", nombre: "Publicaciones" },
 ];
 ---
 
@@ -43,7 +45,7 @@ const pestanias = [
             aria-selected="false"
             data-pestania={p.id}
             class="relative min-h-11 py-4 text-[0.88rem] font-bold text-neutral aria-selected:text-primary aria-selected:after:absolute aria-selected:after:inset-x-0 aria-selected:after:-bottom-px aria-selected:after:h-[3px] aria-selected:after:bg-secondary aria-selected:after:content-['']"
-            hidden={p.id === "usuarios"}
+            hidden={p.id === "usuarios" || p.id === "participacion"}
           >
             {p.nombre}
           </button>

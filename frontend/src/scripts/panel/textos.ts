@@ -1,6 +1,7 @@
 import { TEXTOS, type TextKey } from "../../lib/contenido/textos";
 import { adminApi } from "../../lib/data/http/admin-api";
 import { renderPagination } from "../../lib/paginacion";
+import { renderSocial } from "./redes";
 import { busy, DRAFT_PILL, esc, GHOST, iconSvg, isPending, notify, PILL, reloadDraft, reloadPending, state } from "./ui";
 
 const PAGE_SIZE = 20;
@@ -17,6 +18,8 @@ export function renderTexts(section: HTMLElement) {
       </select>
     </div>`;
   section.innerHTML = `
+    <div id="panel-redes" class="mb-7"></div>
+    <h2 class="m-0 mb-4 text-[2rem] leading-[1.05] max-tablet:text-[1.8rem]">Textos del sitio</h2>
     <div class="mb-[18px] flex items-end gap-3.5 max-tablet:grid max-tablet:grid-cols-2 max-tablet:gap-2.5">
       <div class="flex flex-1 flex-col gap-1.5 max-tablet:col-span-2">
         <label for="textos-buscar" class="text-[0.76rem] font-bold">Buscar</label>
@@ -40,6 +43,7 @@ export function renderTexts(section: HTMLElement) {
       filters.pagina = 1;
       drawList(section);
     });
+  renderSocial(section.querySelector<HTMLElement>("#panel-redes")!);
   drawList(section);
 }
 

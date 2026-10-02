@@ -18,7 +18,6 @@ export interface UserFilters {
   pagina: number;
 }
 
-/** Crea la consulta, el cambio de rol y la activación de cuentas del panel. */
 export function createAdminUsers(sql: SQL, authorization: Authorization) {
   /** Carga la cuenta objetivo y aplica la jerarquía antes de tocar la base. */
   async function target(actor: UserRow, targetId: number) {
@@ -30,7 +29,6 @@ export function createAdminUsers(sql: SQL, authorization: Authorization) {
   }
 
   return {
-    /** Lista cuentas filtradas con lo que el actor puede hacer en cada una. */
     async list(access: string | undefined, filters: UserFilters) {
       const actor = await authorization.require(access, PERMISSIONS.usersView);
       const term = filters.q?.trim() ? filters.q.trim().replace(/[\\%_]/g, '\\$&') : null;
@@ -47,8 +45,6 @@ export function createAdminUsers(sql: SQL, authorization: Authorization) {
           return {
             id: row.id_usuario, correo: row.correo, nombresCompletos: row.nombres_completos,
             rol: row.rol, estado: row.estado,
-            // Solo el propio maestro sabe cuál es la cuenta maestra; para el resto es un admin más.
-            ...(actor.es_maestro ? { esMaestro: row.es_maestro } : {}),
             rolesAsignables: rule.allowed ? ASSIGNABLE_ROLES : [],
             puedeCambiarEstado: rule.allowed,
             motivoBloqueo: rule.allowed ? null : rule.reason,

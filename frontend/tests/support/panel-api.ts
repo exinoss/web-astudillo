@@ -5,7 +5,7 @@ const PIXEL = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQ
 const photo = (id: number) => ({ idMedio: id, nombre: `foto-${id}`, ancho: 1600, alto: 1200, anchos: [480, 960, 1600] });
 
 export function panelData(rol: 'admin' | 'coadmin') {
-  const permisos = ['contenido.editar', 'contenido.publicar', 'medios.subir',
+  const permisos = ['contenido.editar', 'contenido.publicar', 'medios.subir', 'participacion.ver', 'participacion.gestionar',
     ...(rol === 'admin' ? ['usuarios.ver', 'usuarios.rol.cambiar', 'usuarios.estado.cambiar'] : [])];
   return {
     profile: { id: 1, correo: 'ana@example.com', nombresCompletos: 'Ana Torres', direccion: null, rol,
@@ -27,14 +27,24 @@ export function panelData(rol: 'admin' | 'coadmin') {
         hitos: [{ nombre: 'Estudios', completado: true }, { nombre: 'Diseño', completado: false }],
         fotos: [{ ...photo(2), pie: 'Tubería instalada' }],
       }],
+      chat: [
+        { pregunta: 'Ver propuestas', palabrasClave: 'propuesta, plan', respuesta: 'Revisa las siete propuestas.',
+          enlaceTexto: 'Ver propuestas', enlaceRuta: '/#propuestas', destacada: true },
+      ],
       // Como la API real: un texto sin cambiar no tiene versión. Los valores son md5 de ejemplo.
       versiones: {
         textos: { 'pie.lema': 'a'.repeat(32) } as Record<string, string>,
         propuestas: { 'agua-potable': 'b'.repeat(32), educacion: 'c'.repeat(32) } as Record<string, string>,
         biografia: 'd'.repeat(32),
         obras: { 'agua-potable': 'e'.repeat(32) } as Record<string, string>,
+        chat: 'f'.repeat(32),
       },
     },
+    alertas: [
+      { id: 7, tipo: 'agua', sector: 'Barrio Central', referencia: null, descripcion: 'Fuga de agua en la tubería principal.',
+        estado: 'recibida', creadoEn: '2026-09-30T15:00:00Z', foto: null, autor: 'María', correo: 'maria@example.com' },
+    ],
+    sinRespuesta: [{ clave: 'cuando hay caravana', ejemplo: '¿Cuándo hay caravana?', veces: 3, ultimaVez: '2026-09-30T15:00:00Z' }],
     pending: [] as { tipo: string; descripcion: string }[],
     users: Array.from({ length: 23 }, (_, i) => ({
       id: i + 2, correo: `persona${i + 2}@example.com`, nombresCompletos: `Persona ${i + 2}`,
@@ -78,10 +88,50 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
     if (work) {
       const { version, ...fields } = body();
       if (version !== data.draft.versiones.obras[work[1]]) return conflict();
-      Object.assign(data.draft.obras.find(o => o.slug === work[1])!, { ...fields, fotos: data.draft.obras[0].fotos });
+      Object.assign(data.draft.obras.find(o => o.slug === work[1])!, {
+        ...fields, fotos: fields.fotos.map((f: { idMedio: number; pie: string }) => ({ ...photo(f.idMedio), pie: f.pie })),
+      });
       data.draft.versiones.obras[work[1]] = nextVersion();
       data.pending.push({ tipo: 'Obra', descripcion: 'Agua potable' });
       return json({ version: data.draft.versiones.obras[work[1]] });
+    }
+    if (path === '/api/admin/medios') return json(photo(90));
+    const proposal = path.match(/^\/api\/admin\/contenido\/propuestas\/(.+)$/);
+    if (proposal) {
+      const { version, ...fields } = body();
+      if (version !== data.draft.versiones.propuestas[proposal[1]]) return conflict();
+      Object.assign(data.draft.propuestas.find(p => p.slug === proposal[1])!, fields);
+      data.draft.versiones.propuestas[proposal[1]] = nextVersion();
+      data.pending.push({ tipo: 'Propuesta', descripcion: fields.nombre });
+      return json({ version: data.draft.versiones.propuestas[proposal[1]] });
+    }
+    if (path === '/api/admin/contenido/chat') {
+      if (body().version !== data.draft.versiones.chat) return conflict();
+      data.draft.chat = body().respuestas;
+      data.draft.versiones.chat = nextVersion();
+      data.pending.push({ tipo: 'Chat', descripcion: 'Preguntas frecuentes' });
+      return json({ version: data.draft.versiones.chat });
+    }
+    if (path === '/api/admin/chat/sin-respuesta') return json({ preguntas: data.sinRespuesta });
+    if (path.startsWith('/api/admin/chat/sin-respuesta/')) {
+      data.sinRespuesta = data.sinRespuesta.filter(p => p.clave !== decodeURIComponent(path.split('/').pop()!));
+      return json({ ok: true });
+    }
+    if (path === '/api/admin/participacion/alertas' || path === '/api/admin/participacion/sugerencias') {
+      const estado = url.searchParams.get('estado');
+      const conteo = (list: { estado: string }[]) => Object.fromEntries(['recibida', 'en_revision', 'atendida']
+        .map(s => [s, list.filter(i => i.estado === s).length]));
+      const items = path.endsWith('alertas') ? data.alertas : [];
+      return json({ items: items.filter(i => !estado || i.estado === estado), pagina: 1, porPagina: 20,
+        conteo: { alertas: conteo(data.alertas), sugerencias: conteo([]) } });
+    }
+    const review = path.match(/^\/api\/admin\/participacion\/alertas\/(\d+)\/estado$/);
+    if (review) {
+      const alerta = data.alertas.find(a => a.id === Number(review[1]))!;
+      if (alerta.estado !== body().estado && alerta.estado !== body().estadoAnterior)
+        return json({ error: 'Otra persona cambió el estado mientras tanto; recarga la lista.' }, 409);
+      alerta.estado = body().estado;
+      return json({ estado: alerta.estado });
     }
     if (path === '/api/admin/usuarios') {
       const q = url.searchParams.get('q')?.toLowerCase() ?? '';

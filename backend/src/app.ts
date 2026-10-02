@@ -9,10 +9,10 @@ import { createAuthorization } from "./auth/services/authorization";
 import { ApiError } from "./http";
 import { mapHttpError } from "./http-errors";
 import type { Mailer } from "./mailer";
+import { participationRoutes } from "./participation/routes";
 import { profileRoutes } from "./profile/routes";
 import type { Security } from "./security";
 
-/** Ensambla Elysia, controles HTTP y los grupos de rutas del backend. */
 export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; security: Security }) {
   const { sql, config, mailer, security } = deps;
   const authorization = createAuthorization(sql, security);
@@ -34,6 +34,7 @@ export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; secu
     .use(profileRoutes(sql, authorization))
     .use(adminRoutes(sql, authorization))
     .use(contentRoutes(sql, authorization, config.mediaDir))
+    .use(participationRoutes(sql, authorization, config.privateMediaDir))
     // En producción nginx sirve /medios desde el mismo volumen; esto solo cubre el desarrollo.
     .use(config.production ? new Elysia() : mediaFileRoutes(config.mediaDir));
 }

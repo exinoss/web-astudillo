@@ -1,5 +1,3 @@
-// Componente global de paginación para listas generadas en el navegador. En escritorio muestra
-// números con elipsis; en móvil, «Página X de Y» con flechas. Todos los botones miden 44 px.
 import { esc } from "./html";
 
 export interface PageInfo {
@@ -21,7 +19,6 @@ function visiblePages(current: number, last: number): (number | "…")[] {
   return sorted.flatMap((p, i) => (i && p - sorted[i - 1] > 1 ? ["…" as const, p] : [p]));
 }
 
-/** Pinta la paginación en `container` y llama a `onChange` con la página elegida. */
 export function renderPagination(container: HTMLElement, info: PageInfo, onChange: (page: number) => void) {
   const last = Math.max(1, Math.ceil(info.total / info.porPagina));
   const current = Math.min(info.pagina, last);

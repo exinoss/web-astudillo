@@ -4,7 +4,6 @@ import { clearSession, email, ipOf, redirectToAccount, setSession, strict, token
 
 const LINK_SENT = 'Por seguridad te enviamos un enlace a tu correo para terminar de entrar';
 
-/** Expone inicio, renovación y cierre de sesión mediante cookies HttpOnly. */
 export function sessionRoutes(context: AuthContext) {
   const { login, sessions, config } = context;
   return new Elysia({ prefix: '/api/auth', normalize: false })

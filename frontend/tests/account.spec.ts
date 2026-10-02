@@ -114,18 +114,27 @@ test('acceso, perfil y cambio de contraseña muestran solo los datos aprobados',
   await page.locator('#login-correo').fill('maria@example.com');
   await page.locator('#login-contrasenia').fill('Ab1!xy');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
-  await expect(page.locator('#profile-panel')).toBeVisible();
+  // Todo inicio de sesión correcto lleva a la portada.
+  await expect(page).toHaveURL(/:\d+\/$/);
   await expect(page.getByRole('banner').getByRole('link', { name: 'Mi cuenta' })).toBeVisible();
+  await page.goto('/cuenta/');
+  await expect(page.locator('#profile-panel')).toBeVisible();
   const logout = page.locator('#logout-button');
   await expect(logout).toBeVisible();
   expect((await logout.boundingBox())!.height).toBeGreaterThanOrEqual(48);
   expect((await logout.boundingBox())!.width).toBeGreaterThan(250);
   await expect(page.locator('#profile-panel')).not.toContainText('maria@example.com');
   await expect(page.locator('#profile-panel')).not.toContainText('votante');
+  // «Guardar cambios» solo se activa (azul) cuando algo difiere de lo guardado.
+  const save = page.getByRole('button', { name: 'Guardar cambios' });
+  await expect(save).toBeDisabled();
+  await expect(save).toHaveCSS('background-color', 'rgb(213, 219, 227)');
   await page.locator('#profile-name').fill('María Nueva');
   await page.locator('#profile-address').fill('Centro');
-  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(save).toBeEnabled();
+  await save.click();
   await expect(page.locator('#account-status')).toContainText('Datos guardados');
+  await expect(save).toBeDisabled();
   await page.locator('#current-password').fill('Mal1!xy');
   await page.locator('#new-password').fill('Cd2@xy');
   await page.locator('#confirm-new-password').fill('Cd2@xy');
@@ -175,46 +184,27 @@ test('cuenta Google muestra el mismo cierre de sesión y actualiza el menú', as
   expect(logouts).toBe(1);
 });
 
-test('al entrar con Google se puede añadir contraseña sin repetir el acceso', async ({ page }) => {
-  const credential = 'credencial-google-reciente';
+test('al entrar con Google se va a la portada', async ({ page }) => {
   let loggedIn = false;
-  let hasPassword = false;
-  let additions = 0;
-  await mockGoogleButton(page, credential);
+  await mockGoogleButton(page, 'credencial-google');
   await page.route('**/api/**', route => {
-    const request = route.request();
-    const path = new URL(request.url()).pathname;
+    const path = new URL(route.request().url()).pathname;
     const json = (status: number, body: object) => route.fulfill({ status,
       contentType: 'application/json', body: JSON.stringify(body) });
-    if (path === '/api/auth/refresh') return json(401, { error: 'Sin sesión' });
     if (path === '/api/auth/google') {
       loggedIn = true;
       return json(200, { user: { id: 1 } });
     }
-    if (path === '/api/me') return json(loggedIn ? 200 : 401,
-      loggedIn ? { id: 1, correo: 'maria@example.com', rol: 'votante',
-        nombresCompletos: 'María Pérez', direccion: '', tieneContrasenia: hasPassword,
-        tieneGoogle: true } : { error: 'Sin sesión' });
-    if (path === '/api/auth/password') {
-      expect(request.postDataJSON().credential).toBe(credential);
-      additions++;
-      hasPassword = true;
-      return json(200, { message: 'Contraseña agregada' });
-    }
-    return json(404, { error: 'Ruta inesperada' });
+    if (path === '/api/me' && loggedIn) return json(200, { id: 1, correo: 'maria@gmail.com', rol: 'votante',
+      nombresCompletos: 'María Pérez', direccion: '', tieneContrasenia: false, tieneGoogle: true });
+    return json(401, { error: 'Sin sesión' });
   });
   await page.goto('/cuenta/');
   await expect(page.locator('#google-login-button button, #google-login-unavailable:not([hidden])')).toBeVisible();
   test.skip(await page.locator('#google-login-unavailable').isVisible(), 'Requiere PUBLIC_GOOGLE_CLIENT_ID para probar el acceso Google.');
   await page.locator('#google-login-button button').click();
-  await expect(page.locator('#add-password-panel')).toBeVisible();
-  await expect(page.locator('#google-password-step')).toBeHidden();
-  await page.locator('#add-password').fill('Ab1!xy');
-  await page.locator('#add-confirm').fill('Ab1!xy');
-  await page.getByRole('button', { name: 'Guardar contraseña' }).click();
-  await expect(page.locator('#change-password-panel')).toBeVisible();
-  await expect(page.locator('#add-password-panel')).toBeHidden();
-  expect(additions).toBe(1);
+  await expect(page).toHaveURL(/:\d+\/$/);
+  await expect(page.getByRole('banner').getByRole('link', { name: 'Mi cuenta' })).toBeVisible();
 });
 
 test('una sesión Google anterior confirma la identidad antes de añadir contraseña', async ({ page }) => {
@@ -351,7 +341,7 @@ test('si el acceso termina por correo se avisa, y el enlace inicia la sesión', 
   await expect(page.locator('#account-status')).toContainText('te enviamos un enlace a tu correo');
   await expect(page.locator('#login-form')).toBeVisible();
   await page.goto(`/cuenta/acceso/?token=${token}`);
-  await expect(page).toHaveURL(/\/cuenta\/$/);
+  await expect(page).toHaveURL(/:\d+\/$/);
   expect(confirmed).toBe(true);
 });
 
@@ -374,4 +364,27 @@ test('la cuenta se usa en móvil y conserva los modos de accesibilidad', async (
     await page.setViewportSize({ width, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
   }
+});
+
+test('con sesión, el botón de cuenta no muestra «Iniciar sesión» ni un instante al cambiar de página', async ({ page }) => {
+  let loggedIn = true;
+  await page.route('**/api/**', async route => {
+    const path = new URL(route.request().url()).pathname;
+    // La API tarda: lo que se ve antes de su respuesta es lo que la persona notaría como parpadeo.
+    if (path === '/api/me') await new Promise(r => setTimeout(r, 1500));
+    return route.fulfill({ status: path === '/api/me' && loggedIn ? 200 : 401, contentType: 'application/json',
+      body: JSON.stringify(path === '/api/me' && loggedIn ? { id: 1, correo: 'maria@example.com', rol: 'votante', permisos: [] } : { error: 'Inicia sesión' }) });
+  });
+  const cuenta = page.getByRole('banner').locator('.account-link');
+  await page.goto('/');
+  await expect(cuenta).toHaveAccessibleName('Mi cuenta', { timeout: 5000 });
+  // Página siguiente: antes de que la API conteste ya dice «Mi cuenta».
+  await page.goto('/propuestas/agua-potable/', { waitUntil: 'domcontentloaded' });
+  expect(await cuenta.innerText()).toBe('Mi cuenta');
+  // Si la sesión venció, se corrige en cuanto contesta la API.
+  loggedIn = false;
+  await page.goto('/ciudadania/chat/', { waitUntil: 'domcontentloaded' });
+  await expect(cuenta).toHaveAccessibleName('Iniciar sesión', { timeout: 5000 });
+  await page.goto('/', { waitUntil: 'domcontentloaded' });
+  expect(await cuenta.innerText()).toBe('Iniciar sesión');
 });

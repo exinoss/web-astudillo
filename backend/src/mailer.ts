@@ -9,7 +9,6 @@ const assets = fileURLToPath(new URL("../assets/correo/", import.meta.url));
 /** Las imágenes van dentro del correo: se ven sin depender de que el sitio sea accesible desde el lector. */
 const attachments = Object.values(IMAGENES).map(img => ({ filename: img.archivo, path: assets + img.archivo, cid: img.cid }));
 
-/** Crea el transporte SMTP y envía los correos de cuenta en HTML con la marca, más su versión de texto. */
 export function createMailer(config: Config): Mailer {
   const transport = nodemailer.createTransport({
     host: config.smtp.host, port: config.smtp.port, secure: config.smtp.port === 465,

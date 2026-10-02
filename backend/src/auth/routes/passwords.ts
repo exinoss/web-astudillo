@@ -3,7 +3,6 @@ import { normalizeEmail } from '../../security';
 import { PERMISSIONS } from '../permissions';
 import { clearSession, email, ipOf, password, redirectToAccount, strict, token, type AuthContext } from './common';
 
-/** Expone recuperación, cambio y alta de contraseña con validación de permisos. */
 export function passwordRoutes(context: AuthContext) {
   const { passwords, limit, authorization, config } = context;
   return new Elysia({ prefix: '/api/auth', normalize: false })

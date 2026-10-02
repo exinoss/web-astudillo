@@ -11,7 +11,6 @@ export function showStatus(element: HTMLElement, message: string, error = false)
   element.hidden = false;
 }
 
-/** Limpia los errores accesibles añadidos a los campos del formulario. */
 export function clearFieldErrors(form: HTMLFormElement) {
   form.querySelectorAll<HTMLInputElement>('input[aria-invalid="true"]').forEach(input => {
     input.removeAttribute('aria-invalid');
@@ -20,7 +19,6 @@ export function clearFieldErrors(form: HTMLFormElement) {
   });
 }
 
-/** Asocia un mensaje de error al campo y opcionalmente le devuelve el foco. */
 export function fieldError(form: HTMLFormElement, name: string, message: string, focus = true) {
   const input = form.elements.namedItem(name);
   if (!(input instanceof HTMLInputElement)) return;
@@ -74,7 +72,6 @@ export function waitText(seconds: number) {
   return hours ? `${plural(days, 'día')} y ${plural(hours, 'hora')}` : plural(days, 'día');
 }
 
-/** Convierte errores de API o runtime en un mensaje visible para la persona. */
 export function errorText(error: unknown) {
   if (error instanceof ApiError && error.status === 429 && error.retryAfter)
     return `Demasiados intentos. Podrás intentarlo de nuevo en ${waitText(error.retryAfter)}.`;

@@ -1,0 +1,104 @@
+# Producción en el VPS: PostgreSQL, backend, publicador y nginx. Cloudflare va delante como proxy.
+# Las variables salen de server-produccion/.env (copia de .env.example). Pasos en README.md.
+name: astudillo
+
+x-logs: &logs
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+x-database: &database
+  # Mismo usuario, clave y base que crea el servicio db; dentro de Docker el servidor se llama «db».
+  DATABASE_URL: postgresql://${POSTGRES_USER:?Falta POSTGRES_USER}:${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:?Falta POSTGRES_DB}
+
+services:
+  # La base vive en un volumen y no publica ningún puerto en el VPS.
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    logging: *logs
+
+  backend:
+    image: astudillo-backend
+    build:
+      context: ../backend
+      target: runtime
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      <<: *database
+      NODE_ENV: production
+      APP_ORIGIN: https://${DOMINIO:?Falta DOMINIO}
+      BIND_HOST: 0.0.0.0
+      PORT: "3000"
+      # nginx sobrescribe X-Real-IP con la IP real del visitante (la que envía Cloudflare).
+      TRUST_PROXY_IP: "true"
+    volumes:
+      - medios:/app/medios
+      - privados:/app/medios-privados
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bun", "-e", "const r = await fetch('http://127.0.0.1:3000/api/health'); if (!r.ok) process.exit(1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging: *logs
+
+  # Compila el sitio con cada publicación del panel y lo deja en el volumen que sirve nginx.
+  publicador:
+    image: astudillo-publicador
+    build:
+      context: ..
+      dockerfile: server-produccion/Dockerfile.publicador
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      <<: *database
+      API_PROXY_TARGET: http://backend:3000
+      # El cliente de Google del sitio es el mismo que valida el backend.
+      PUBLIC_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:?Falta GOOGLE_CLIENT_ID}
+    volumes:
+      - sitio:/srv/sitio
+    depends_on:
+      backend:
+        condition: service_healthy
+    logging: *logs
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/cloudflare.conf:/etc/nginx/conf.d/00-cloudflare.conf:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # Certificado de origen de Cloudflare (origen.pem y origen.key); no se sube a Git.
+      - ./certificados:/etc/nginx/certificados:ro
+      - sitio:/srv/sitio:ro
+      - medios:/srv/medios:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    logging: *logs
+
+volumes:
+  pgdata:
+  medios:
+  privados:
+  sitio:

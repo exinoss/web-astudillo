@@ -16,7 +16,6 @@ import { passwordRoutes } from './passwords';
 import { registrationRoutes } from './registration';
 import { sessionRoutes } from './sessions';
 
-/** Construye servicios compartidos y monta las rutas de autenticación. */
 export function authRoutes(sql: SQL, config: Config, mailer: Mailer,
   security: Security, authorization: Authorization) {
   const sessions = createSessions(sql, security);

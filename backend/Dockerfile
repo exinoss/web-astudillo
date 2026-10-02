@@ -26,11 +26,8 @@ COPY assets ./assets
 COPY drizzle ./drizzle
 COPY database/fn.sql database/datains.sql ./database/
 ENV NODE_ENV=production
-# Carpeta del volumen de fotos: si no existe con este dueño, Docker la crea como root.
-RUN mkdir -p /app/medios && chown bun:bun /app/medios
+# Carpetas de los volúmenes de fotos (públicas y privadas): si no existen con este dueño, Docker las crea como root.
+RUN mkdir -p /app/medios /app/medios-privados && chown bun:bun /app/medios /app/medios-privados
 USER bun
 EXPOSE 3000
 CMD ["bun", "run", "start"]
-
-FROM nginx:1.25.5-alpine AS nginx
-COPY nginx.conf /etc/nginx/conf.d/default.conf

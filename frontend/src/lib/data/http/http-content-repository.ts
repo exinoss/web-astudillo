@@ -14,6 +14,8 @@ interface Snapshot {
     hitos: { nombre: string; completado: boolean }[];
     fotos: (UploadedPicture & { pie: string })[];
   }[];
+  /** Ausente en publicaciones anteriores al chat editable. */
+  chat?: { pregunta: string; destacada: boolean }[];
 }
 
 // Misma dirección del backend que usa el proxy de astro.config.mjs.
@@ -96,5 +98,10 @@ export class HttpContentRepository implements ContentRepository {
 
   async getTexts() {
     return (await this.#load())?.textos ?? this.#seed.getTexts();
+  }
+
+  async getChatQuickReplies() {
+    const chat = (await this.#load())?.chat;
+    return chat ? chat.filter((c) => c.destacada).map((c) => c.pregunta) : this.#seed.getChatQuickReplies();
   }
 }

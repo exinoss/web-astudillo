@@ -3,7 +3,6 @@ import type { SQL } from "bun";
 import type { Authorization } from "../../auth/types";
 import { createProfile } from "../services/profile";
 
-/** Expone consulta y edición limitada del perfil autenticado. */
 export function profileRoutes(sql: SQL, authorization: Authorization) {
   const profile = createProfile(sql, authorization);
   return new Elysia({ prefix: "/api/me", normalize: false })

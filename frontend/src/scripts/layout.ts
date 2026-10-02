@@ -31,7 +31,6 @@ function setDropdown(el: HTMLElement, open: boolean) {
   el.querySelector<HTMLElement>(".dropdown-panel")!.hidden = !open;
 }
 
-/** Cierra todos los submenús de navegación abiertos. */
 function closeDropdowns() {
   dropdowns.forEach((el) => setDropdown(el, false));
 }
@@ -107,7 +106,6 @@ const access = document.querySelector<HTMLElement>("#access-panel")!;
 const accessToggle =
   document.querySelector<HTMLButtonElement>(".access-toggle")!;
 
-/** Abre el panel de accesibilidad y enfoca su primer control. */
 const setAccess = (open: boolean) => {
   access.hidden = !open;
   accessToggle.setAttribute("aria-expanded", String(open));

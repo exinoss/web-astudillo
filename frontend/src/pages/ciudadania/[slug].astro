@@ -1,33 +1,31 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import Icon from "../../components/Icon.astro";
 import Breadcrumb from "../../components/Breadcrumb.astro";
 import DetailBanner from "../../components/DetailBanner.astro";
+import Alerta from "../../components/ciudadania/Alerta.astro";
+import Chat from "../../components/ciudadania/Chat.astro";
+import Sugerencia from "../../components/ciudadania/Sugerencia.astro";
 import { contentRepository } from "../../lib/data";
 import type { CitizenLink, Proposal } from "../../lib/data/types";
 
 interface Props {
   item: CitizenLink;
   proposals: Proposal[];
+  quickReplies: string[];
 }
 
-/** Genera rutas estáticas para los enlaces de ciudadanía disponibles. */
 export async function getStaticPaths() {
-  const [citizenLinks, proposals] = await Promise.all([
+  const [citizenLinks, proposals, quickReplies] = await Promise.all([
     contentRepository.getCitizenLinks(),
     contentRepository.getProposals(),
+    contentRepository.getChatQuickReplies(),
   ]);
   return citizenLinks.map((p) => ({
     params: { slug: p.slug },
-    props: { item: p, proposals },
+    props: { item: p, proposals, quickReplies },
   }));
 }
-const { item, proposals } = Astro.props;
-const alert = item.slug === "alerta-ciudadana";
-const chat = item.slug === "chat";
-
-const formLabel = "mt-5 mr-0 mb-[9px] ml-0 block text-[0.9rem] font-bold";
-const formLabelHint = "font-normal text-base-content";
+const { item, proposals, quickReplies } = Astro.props;
 ---
 
 <Layout title={`${item.name} · Carlos Astudillo`}>
@@ -45,209 +43,5 @@ const formLabelHint = "font-normal text-base-content";
     iconSize={64}
     lead={item.description}
   />
-  <section class="site-container grid max-w-[1100px] grid-cols-[1fr_1.2fr] items-start gap-[100px] pt-8 pb-14 max-nav:gap-[35px] max-tablet:pt-6 max-tablet:pb-10 max-tablet:grid-cols-1 max-tablet:gap-[30px]">
-    <div class="citizen-explanation">
-      <span class="eyebrow">UN ESPACIO PARA TI</span>
-      <h2>
-        {chat
-          ? "¿Qué quieres conocer?"
-          : alert
-            ? "Cuéntanos lo que pasa."
-            : "Las ideas empiezan contigo."}
-      </h2>
-      <p>
-        {chat
-          ? "Selecciona un tema para encontrar información del sitio."
-          : alert
-            ? "Indica el barrio, describe el daño y adjunta una foto para ayudarnos a entender la situación."
-            : "Elige un tema y comparte tu sugerencia de forma clara."}
-      </p>
-      {alert && (
-        <p class="content-note">
-          Este espacio no recibe emergencias ni genera reportes oficiales.
-        </p>
-      )}
-    </div>
-    {chat ? (
-      <div class="overflow-hidden rounded-[5px] border border-primary bg-accent">
-        <div class="flex gap-[15px] bg-primary p-[22px] text-primary-content">
-          <Icon name="chat" />
-          <div>
-            <strong>Orientación ciudadana</strong>
-            <small class="mt-[5px] block text-[0.68rem] text-footer-muted">
-              Información y orientación
-            </small>
-          </div>
-        </div>
-        <div
-          class="chat-messages flex h-[310px] flex-col gap-[15px] overflow-auto bg-base-200 p-6 max-tablet:h-[300px] max-tablet:p-[18px]"
-          role="log"
-          aria-live="polite"
-          aria-relevant="additions"
-          aria-label="Conversación"
-        >
-          <div class="chat-message">
-            Hola. Puedes consultar las propuestas, conocer a Carlos o encontrar
-            la sección de contacto.
-          </div>
-        </div>
-        <div class="flex flex-wrap gap-2 p-[15px]">
-          {[
-            { key: "propuestas", label: "Ver propuestas" },
-            { key: "carlos", label: "Conocer a Carlos" },
-            { key: "contacto", label: "Contacto" },
-          ].map((option) => (
-            <button
-              data-chat={option.key}
-              class="rounded-[30px] border border-base-300 bg-base-100 px-[13px] py-2.5 text-[0.7rem] text-neutral hover:bg-accent"
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        <form id="chat-form" class="flex gap-2.5 px-[15px] pb-[15px]">
-          <label class="sr-only" for="chat-input">
-            Escribe tu consulta
-          </label>
-          <input
-            id="chat-input"
-            placeholder="Escribe tu consulta…"
-            maxlength="300"
-            required
-            autocomplete="off"
-          />
-          <button class="button px-[15px] py-2.5" aria-label="Enviar consulta">
-            <Icon name="arrow" size={20} />
-          </button>
-        </form>
-      </div>
-    ) : (
-      <form class="citizen-form rounded-[5px] [border-right:1px_solid_#06317630] [border-bottom:1px_solid_#06317630] [border-left:1px_solid_#06317630] [border-top:5px_solid_var(--color-secondary)] bg-base-100 p-[30px] [box-shadow:0_8px_30px_#06317606] max-nav:p-[22px]">
-        <div class="mb-5 flex items-center justify-between gap-[15px] max-nav:flex-col max-nav:items-start max-nav:gap-2">
-          <h3 class="m-0 max-tablet:text-[1.1rem]">
-            {alert ? "Nueva alerta" : "Tu sugerencia"}
-          </h3>
-          <span class="text-[0.73rem] text-base-content">
-            * Campos obligatorios
-          </span>
-        </div>
-        <label class={formLabel} for="name">
-          Nombre <span class={formLabelHint}>(opcional)</span>
-        </label>
-        <input
-          id="name"
-          name="nombre"
-          autocomplete="given-name"
-          maxlength="80"
-          placeholder="¿Cómo te llamas?"
-        />
-        <label class={formLabel} for="topic">
-          {alert ? "Sector o barrio *" : "Tema *"}
-        </label>
-        {alert ? (
-          <input
-            id="topic"
-            name="sector"
-            placeholder="Indica el sector"
-            required
-            maxlength="120"
-          />
-        ) : (
-          <select id="topic" name="tema" required>
-            <option value="">Selecciona un tema</option>
-            {proposals.map((p) => (
-              <option value={p.slug}>{p.name}</option>
-            ))}
-            <option value="otro">Otra idea</option>
-          </select>
-        )}
-        {alert && (
-          <>
-            <label class={formLabel} for="reference">
-              Dirección o punto de referencia{" "}
-              <span class={formLabelHint}>(opcional)</span>
-            </label>
-            <input
-              id="reference"
-              name="referencia"
-              maxlength="180"
-              placeholder="Por ejemplo: frente al parque, calle principal"
-            />
-          </>
-        )}
-        <label class={formLabel} for="message">
-          {alert ? "¿Qué está ocurriendo? *" : "¿Qué te gustaría proponer? *"}
-        </label>
-        <textarea
-          id="message"
-          name="mensaje"
-          rows="5"
-          minlength="15"
-          maxlength="1500"
-          required
-          placeholder={
-            alert
-              ? "Describe la situación y dónde ocurre…"
-              : "Cuéntanos tu idea…"
-          }
-        ></textarea>
-        <div class="mt-2 mr-0 mb-[22px] ml-0 text-[0.78rem] text-base-content">
-          Mínimo 15 caracteres. Evita incluir datos sensibles.
-        </div>
-        {alert && (
-          <div class="my-6">
-            <label class={formLabel} for="damage-photo">
-              Foto del daño <span class={formLabelHint}>(opcional)</span>
-            </label>
-            <p id="photo-help" class="mb-3 text-[0.8rem] leading-[1.6]">
-              Adjunta una foto de tu galería o usa la cámara de tu teléfono.
-              JPG, PNG o WebP · máximo 10 MB.
-            </p>
-            <input
-              type="file"
-              id="damage-photo"
-              name="foto"
-              accept="image/jpeg,image/png,image/webp"
-              aria-describedby="photo-help photo-error"
-              class="bg-base-100 p-3 text-[0.82rem] file:mr-2.5 file:cursor-pointer file:rounded-[3px] file:border-0 file:bg-primary file:px-3 file:py-2.5 file:[font:inherit] file:text-primary-content"
-            />
-            <p
-              id="photo-error"
-              class="mt-2.5 mb-3 text-[0.8rem] leading-[1.6] font-bold text-error"
-              role="alert"
-              hidden
-            ></p>
-            <div
-              class="photo-preview mt-4 rounded-[4px] border border-base-300 p-3"
-              hidden
-            >
-              <img
-                class="max-h-[230px] w-full object-contain"
-                alt="Vista previa de la foto del daño"
-              />
-              <div class="mt-3 flex items-center justify-between gap-[15px]">
-                <span class="photo-name min-w-0 text-[0.78rem] [overflow-wrap:anywhere]"></span>
-                <button
-                  type="button"
-                  class="photo-remove rounded-[3px] border border-primary bg-base-100 p-2.5 text-[0.8rem] whitespace-nowrap"
-                >
-                  Quitar foto
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-        <button class="button" type="submit">
-          Enviar {alert ? "alerta" : "sugerencia"}{" "}
-          <Icon name="arrow" size={18} />
-        </button>
-        <p
-          class="form-status mt-5 mr-0 mb-0 ml-0 bg-base-200 [border-left:3px_solid_var(--color-neutral)] p-[15px] text-[0.85rem]"
-          role="status"
-          hidden
-        ></p>
-      </form>
-    )}
-  </section>
-  <script src="../../scripts/citizen.ts"></script>
+  {item.slug === "alerta-ciudadana" ? <Alerta /> : item.slug === "chat" ? <Chat quickReplies={quickReplies} /> : <Sugerencia proposals={proposals} />}
 </Layout>

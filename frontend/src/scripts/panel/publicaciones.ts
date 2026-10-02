@@ -26,7 +26,7 @@ export async function renderPublications(section: HTMLElement) {
         <span class="${PILL} border border-base-300">${esc(c.tipo)}</span><strong class="text-[0.88rem]">${esc(c.descripcion)}</strong>
       </div>`).join("") : `<p class="m-0 py-3 text-[0.86rem]">No hay cambios por publicar.</p>`}
     <button type="button" id="publicar-ahora" class="button mt-4 w-full" ${changes.length ? "" : "disabled"}>${iconSvg("upload", 18)} Publicar ${changes.length || ""} ${changes.length === 1 ? "cambio" : "cambios"}</button>
-    <p class="m-0 mt-2.5 text-center text-[0.74rem] text-[#50617d]">Tarda cerca de un minuto. Si algo falla, el sitio sigue con la versión anterior.</p>`);
+    <p class="m-0 mt-2.5 text-center text-[0.74rem] text-[#50617d]">Tarda cerca de un minuto.</p>`);
   section.innerHTML = `
     <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] items-start gap-6 max-tablet:grid-cols-1">
       ${pending}

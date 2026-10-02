@@ -33,6 +33,16 @@ export interface WorkContent {
   fotos: (Photo & { pie: string })[];
 }
 
+/** Pregunta frecuente del chat. `enlaceRuta` es siempre una ruta del propio sitio. */
+export interface ChatAnswer {
+  pregunta: string;
+  palabrasClave: string;
+  respuesta: string;
+  enlaceTexto: string | null;
+  enlaceRuta: string | null;
+  destacada: boolean;
+}
+
 /**
  * Versión (md5 del estado) de cada parte editable del borrador. El panel la devuelve al guardar;
  * si no coincide con la actual, otra persona guardó antes y el guardado responde 409.
@@ -43,6 +53,7 @@ export interface ContentVersions {
   propuestas: Record<string, string>;
   biografia: string;
   obras: Record<string, string>;
+  chat: string;
 }
 
 /**
@@ -55,4 +66,6 @@ export interface Snapshot {
   propuestas: ProposalContent[];
   biografia: BiographyItem[];
   obras: WorkContent[];
+  /** Ausente en publicaciones anteriores al chat editable. */
+  chat?: ChatAnswer[];
 }

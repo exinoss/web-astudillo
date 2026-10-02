@@ -3,9 +3,9 @@ import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
-import type { BiographyItem, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
+import type { BiographyItem, ChatAnswer, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
 import { toPhoto } from './media';
-import { plainText } from './validation';
+import { linkValue, plainText, sitePath, year } from './validation';
 
 export const PUBLICATIONS_PAGE_SIZE = 10;
 /** Otra persona guardó antes: no se sobrescribe su trabajo. */
@@ -22,6 +22,11 @@ type WorkRow = {
   fotos: (Omit<WorkContent['fotos'][number], 'idMedio'> & { idMedio: number })[];
 };
 
+type ChatRow = {
+  pregunta: string; palabras_clave: string; respuesta: string;
+  enlace_texto: string | null; enlace_ruta: string | null; destacada: boolean;
+};
+
 export interface ProposalInput { nombre: string; categoria: string; introduccion: string; kpis: Kpi[] }
 export interface BiographyInput { anios: string; titulo: string; texto: string; idMedio: number | null; alt: string | null }
 export interface WorkInput {
@@ -30,15 +35,15 @@ export interface WorkInput {
   fotos: { idMedio: number; pie: string }[];
 }
 
-/** Crea la gestión del contenido editable y de sus publicaciones. */
 export function createContent(sql: SQL, authorization: Authorization) {
   /** Lee el borrador actual completo, con la misma forma que se congela al publicar. */
   async function snapshot(): Promise<Snapshot> {
-    const [texts, proposals, biography, works] = await Promise.all([
+    const [texts, proposals, biography, works, chat] = await Promise.all([
       callPg<{ clave: string; valor: string }>(sql, 'textsList'),
       callPg<ProposalRow>(sql, 'proposalsList'),
       callPg<BiographyRow>(sql, 'biographyList'),
       callPg<WorkRow>(sql, 'worksList'),
+      callPg<ChatRow>(sql, 'chatList'),
     ]);
     return {
       version: 1,
@@ -55,10 +60,13 @@ export function createContent(sql: SQL, authorization: Authorization) {
         slug: w.slug, nota: w.nota, actualizadoEn: new Date(w.actualizado_en).toISOString(),
         hitos: w.hitos, fotos: w.fotos,
       })),
+      chat: chat.map((c): ChatAnswer => ({
+        pregunta: c.pregunta, palabrasClave: c.palabras_clave, respuesta: c.respuesta,
+        enlaceTexto: c.enlace_texto, enlaceRuta: c.enlace_ruta, destacada: c.destacada,
+      })),
     };
   }
 
-  /** Comprueba que las fotos referenciadas existen antes de guardarlas. */
   async function requirePhotos(ids: number[]) {
     const unique = [...new Set(ids)];
     if (!unique.length) return;
@@ -93,7 +101,9 @@ export function createContent(sql: SQL, authorization: Authorization) {
     async saveText(access: string | undefined, key: string, value: string | null, version: string | null) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       if (!KEY.test(key) || key.length > 120) throw new ApiError(422, 'Clave de texto no válida');
-      const text = value === null ? null : plainText(value, 'Texto', 1000, { multiline: true });
+      // Los enlaces de redes van a un href: se validan aparte para que no entre nada que no sea su red.
+      const text = value === null ? null
+        : key.startsWith('enlace.') ? linkValue(key, value) : plainText(value, 'Texto', 1000, { multiline: true });
       return saved(await callPg<SaveRow>(sql, 'textSave', [actor.id_usuario, key, text, version]));
     },
 
@@ -112,7 +122,7 @@ export function createContent(sql: SQL, authorization: Authorization) {
     async saveBiography(access: string | undefined, items: BiographyInput[], version: string) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       const clean = items.map((h, i) => ({
-        anios: plainText(h.anios, `Hito ${i + 1} · años`, 40),
+        anios: year(h.anios, `Hito ${i + 1} · año`),
         titulo: plainText(h.titulo, `Hito ${i + 1} · título`, 120),
         texto: plainText(h.texto, `Hito ${i + 1} · texto`, 3000, { multiline: true }),
         idMedio: h.idMedio,
@@ -131,6 +141,37 @@ export function createContent(sql: SQL, authorization: Authorization) {
         actor.id_usuario, slug, plainText(input.nota, 'Nota', 600, { multiline: true }),
         hitos, fotos, version,
       ]));
+    },
+
+    /** Reemplaza las preguntas frecuentes del chat (lista completa, en orden). */
+    async saveChat(access: string | undefined, items: ChatAnswer[], version: string) {
+      const actor = await authorization.require(access, PERMISSIONS.contentEdit);
+      const clean = items.map((c, i) => {
+        const field = `Pregunta ${i + 1}`;
+        const linkText = c.enlaceTexto?.trim() ? plainText(c.enlaceTexto, `${field} · texto del enlace`, 60) : null;
+        const linkPath = c.enlaceRuta?.trim() ? sitePath(c.enlaceRuta, `${field} · página del sitio`) : null;
+        if (!linkText !== !linkPath) throw new ApiError(422, `${field}: el enlace necesita texto y página`);
+        return {
+          pregunta: plainText(c.pregunta, `${field} · pregunta`, 160),
+          palabrasClave: plainText(c.palabrasClave, `${field} · palabras clave`, 300),
+          respuesta: plainText(c.respuesta, `${field} · respuesta`, 1000, { multiline: true }),
+          enlaceTexto: linkText, enlaceRuta: linkPath, destacada: c.destacada,
+        };
+      });
+      return saved(await callPg<SaveRow>(sql, 'chatSave', [actor.id_usuario, clean, version]));
+    },
+
+    async unanswered(access: string | undefined) {
+      const actor = await authorization.require(access, PERMISSIONS.contentEdit);
+      const rows = await callPg<{ texto_normalizado: string; ejemplo: string; veces: number; ultima_vez: string }>(
+        sql, 'chatUnansweredList', [actor.id_usuario, 50]);
+      return { preguntas: rows.map(r => ({ clave: r.texto_normalizado, ejemplo: r.ejemplo, veces: r.veces, ultimaVez: r.ultima_vez })) };
+    },
+
+    async discardUnanswered(access: string | undefined, key: string) {
+      const actor = await authorization.require(access, PERMISSIONS.contentEdit);
+      await callPg(sql, 'chatUnansweredDelete', [actor.id_usuario, key]);
+      return { ok: true };
     },
 
     /** Lista lo que cambió respecto de lo último enviado a publicar (en cola, compilándose o publicado). */
@@ -204,6 +245,7 @@ export function diff(before: Snapshot | null, after: Snapshot) {
     const name = after.propuestas.find(p => p.slug === o.slug)?.nombre ?? o.slug;
     if (!same({ ...old, actualizadoEn: 0 }, { ...o, actualizadoEn: 0 })) changes.push({ tipo: 'Obra', descripcion: name });
   }
+  if (!same(before.chat ?? [], after.chat ?? [])) changes.push({ tipo: 'Chat', descripcion: 'Preguntas frecuentes' });
   return changes;
 }
 

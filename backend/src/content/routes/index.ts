@@ -11,7 +11,6 @@ const strict = { additionalProperties: false };
 // Versión que el panel cargó (md5); con ella se detecta si otra persona guardó antes.
 const version = t.String({ pattern: '^[a-f0-9]{32}$' });
 
-/** Rutas del contenido editable, las fotos y las publicaciones del panel. */
 export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: string) {
   const content = createContent(sql, authorization);
   const media = createMedia(sql, authorization, mediaDir);
@@ -50,6 +49,19 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
         fotos: t.Array(t.Object({ idMedio: t.Integer({ minimum: 1 }), pie: text(200) }, strict), { maxItems: 24 }),
         version,
       }, strict),
+    })
+    .put('/contenido/chat', ({ cookie, body }) => content.saveChat(access(cookie), body.respuestas, body.version), {
+      body: t.Object({
+        respuestas: t.Array(t.Object({
+          pregunta: text(160), palabrasClave: text(300), respuesta: text(1000),
+          enlaceTexto: t.Union([text(60), t.Null()]), enlaceRuta: t.Union([text(200), t.Null()]), destacada: t.Boolean(),
+        }, strict), { maxItems: 60 }),
+        version,
+      }, strict),
+    })
+    .get('/chat/sin-respuesta', ({ cookie }) => content.unanswered(access(cookie)))
+    .delete('/chat/sin-respuesta/:clave', ({ cookie, params }) => content.discardUnanswered(access(cookie), params.clave), {
+      params: t.Object({ clave: t.String({ maxLength: 300 }) }),
     })
     .post('/medios', ({ cookie, body }) => media.upload(access(cookie), body.foto), {
       body: t.Object({ foto: t.File() }, strict),

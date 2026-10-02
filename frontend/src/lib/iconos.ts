@@ -28,7 +28,6 @@ export const ICON_PATHS: Record<string, string> = {
   close: "m6 6 12 12M6 18 18 6",
   logout: "M10 17l5-5-5-5M15 12H3M21 3v18",
   chevronUp: "m6 15 6-6 6 6",
-  // Iconos del panel de accesibilidad
   zoomIn:
     "M17.5 11a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Zm3 9.5-4.9-4.9M8.5 11h5M11 8.5v5",
   zoomOut:
@@ -58,6 +57,14 @@ export const ICON_PATHS: Record<string, string> = {
   edit: "M4 20h4L19 9l-4-4L4 16v4ZM14 6l4 4",
   lock: "M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4",
   eye: "M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Zm10 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
+  camera: "M4 8h3l2-3h6l2 3h3v11H4V8Zm8 9a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z",
+  bulb: "M9 18h6m-5 3h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3Z",
+  road: "M8 3 4 21M16 3l4 18M12 4v2m0 4v3m0 4v3",
+  shield: "M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6l-8-3Z",
+  dots: "M5 12h.01M12 12h.01M19 12h.01",
+  mic: "M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3ZM5 11a7 7 0 0 0 14 0M12 18v3",
+  volume: "M4 9v6h4l5 4V5L8 9H4Zm12 0a4 4 0 0 1 0 6m2.5-8.5a7.5 7.5 0 0 1 0 11",
+  volumeOff: "M4 9v6h4l5 4V5L8 9H4Zm12 1 5 5m0-5-5 5",
 };
 
 const FILLED = new Set(["facebook", "tiktok", "whatsapp"]);

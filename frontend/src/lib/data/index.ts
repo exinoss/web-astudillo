@@ -1,8 +1,6 @@
-import { MockAlertRepository } from "./mock/mock-alert-repository";
-import { MockChatRepository } from "./mock/mock-chat-repository";
 import { HttpContentRepository } from "./http/http-content-repository";
+import { httpAlertRepository, httpChatRepository, httpSuggestionRepository } from "./http/http-participation";
 import { MockContentRepository } from "./mock/mock-content-repository";
-import { MockSuggestionRepository } from "./mock/mock-suggestion-repository";
 import type { AlertRepository } from './alert-repository';
 import type { ChatRepository } from './chat-repository';
 import type { ContentRepository } from './content-repository';
@@ -13,6 +11,7 @@ import type { SuggestionRepository } from './suggestion-repository';
 export const contentRepository: ContentRepository = import.meta.env.MODE === "test"
   ? new MockContentRepository()
   : new HttpContentRepository();
-export const suggestionRepository: SuggestionRepository = new MockSuggestionRepository();
-export const alertRepository: AlertRepository = new MockAlertRepository();
-export const chatRepository: ChatRepository = new MockChatRepository();
+// Lo que envían los votantes va siempre a la API (en las pruebas, Playwright la simula).
+export const suggestionRepository: SuggestionRepository = httpSuggestionRepository;
+export const alertRepository: AlertRepository = httpAlertRepository;
+export const chatRepository: ChatRepository = httpChatRepository;

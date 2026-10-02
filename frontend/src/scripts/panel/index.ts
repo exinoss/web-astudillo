@@ -3,7 +3,9 @@ import { setAccountNav } from "../../lib/auth/navigation";
 import { authRepository } from "../../lib/data/auth";
 import { ApiError } from "../../lib/data/http/api-client";
 import { renderBiography } from "./biografia";
+import { renderChat } from "./chat";
 import { renderWorks } from "./obras";
+import { renderParticipation } from "./participacion";
 import { renderProposals } from "./propuestas";
 import { publish, renderPublications } from "./publicaciones";
 import { renderTexts } from "./textos";
@@ -14,7 +16,9 @@ const TABS: Record<string, { title: string; render: (section: HTMLElement) => un
   propuestas: { title: "Propuestas", render: renderProposals },
   biografia: { title: "Biografía", render: renderBiography },
   obras: { title: "Obras en ejecución", render: renderWorks },
-  textos: { title: "Textos del sitio", render: renderTexts },
+  textos: { title: "Textos y redes sociales", render: renderTexts },
+  chat: { title: "Chat", render: renderChat },
+  participacion: { title: "Participación ciudadana", render: renderParticipation },
   publicaciones: { title: "Publicaciones", render: renderPublications },
   usuarios: { title: "Usuarios", render: renderUsers },
 };
@@ -87,6 +91,7 @@ async function start() {
   publishButton.hidden = !can("contenido.publicar");
   tabs.find((t) => t.dataset.pestania === "publicaciones")!.hidden = !can("contenido.publicar");
   tabs.find((t) => t.dataset.pestania === "usuarios")!.hidden = !can("usuarios.ver");
+  tabs.find((t) => t.dataset.pestania === "participacion")!.hidden = !can("participacion.ver");
   tablist.hidden = false;
   bindTabs();
   open(location.hash.slice(1));

@@ -67,6 +67,7 @@ const accessButton =
     <meta name="theme-color" content="#063176" />
     <link rel="icon" type="image/jpeg" href="/favicon.jpg" />
     <title>{title}</title>
+    <script is:inline>try { if (localStorage.getItem("astudillo:sesion") === "1") document.documentElement.setAttribute("data-sesion", ""); } catch {}</script>
   </head>
   <body class="flex min-h-dvh flex-col">
     <a
@@ -117,7 +118,7 @@ const accessButton =
           aria-current={current === "/cuenta/" ? "page" : undefined}
         >
           <Icon name="user" size={19} />
-          <span class="account-label">Iniciar sesión</span>
+          <span class="account-label"><span class="cuenta-fuera">Iniciar sesión</span><span class="cuenta-dentro">Mi cuenta</span></span>
         </a>
         <button
           class="menu-toggle order-3 hidden h-11 w-11 items-center justify-center rounded-[3px] border border-base-300 bg-transparent text-primary max-nav:flex max-tablet:w-10 max-tablet:min-w-10"
@@ -274,7 +275,7 @@ const accessButton =
       role="status"
       hidden
     >
-      <div class="transicion-lienzo aspect-[6/5] w-[180px] max-tablet:w-[140px]" aria-hidden="true"></div>
+      <div class="transicion-lienzo aspect-[6/5] w-[240px] max-tablet:w-[190px]" aria-hidden="true"></div>
       <span class="sr-only">Cargando página…</span>
     </div>
     <script src="../scripts/layout.ts"></script>

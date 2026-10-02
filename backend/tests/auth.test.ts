@@ -16,7 +16,7 @@ const config: Config = {
   googleClientId: "cliente-de-prueba", port: 3000, bindHost: "127.0.0.1",
   trustProxyIp: false, production: false,
   smtp: { host: "localhost", port: 1025, user: "test", pass: "test", from: "test@example.test", name: "Test" },
-  mediaDir: "medios-pruebas",
+  mediaDir: "medios-pruebas", privateMediaDir: "medios-pruebas-privados",
 };
 const sent: Array<{ to: string; url: string }> = [];
 const mailer: Mailer = { async send(to, mensaje) { sent.push({ to, url: mensaje.url }); } };

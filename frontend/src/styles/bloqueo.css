@@ -1,15 +1,21 @@
-/* Botón bloqueado por el límite de intentos y su candado: nodos que crea lib/auth/bloqueo.ts.
-   Con «Reducir movimiento» (accessibility.css anula las animaciones) el candado queda cerrado. */
+/* Botón desactivado: sin cambios que guardar o publicar, petición en curso, o bloqueado por el límite
+   de intentos (con candado y cuenta atrás, nodos que crea lib/auth/bloqueo.ts). Fuera de las capas
+   para ganar al :hover de .button. Con «Reducir movimiento» el candado queda cerrado. */
 
+.button:disabled,
 .button[data-bloqueo] {
-  gap: 10px;
   background: #d5dbe3;
   color: #50617d;
   cursor: not-allowed;
   transform: none;
+}
+
+.button[data-bloqueo] {
+  gap: 10px;
   font-variant-numeric: tabular-nums;
 }
 
+.high-contrast .button:disabled,
 .high-contrast .button[data-bloqueo] {
   color: var(--color-primary);
 }

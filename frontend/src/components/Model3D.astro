@@ -67,7 +67,6 @@ const posterClases =
 
   let libreria: Promise<unknown> | undefined;
   let intentos = 0;
-  /** Descarga decodificador y visor antes del primer modelo. */
   const cargarLibreria = () =>
     (libreria ??= (async () => {
       const respuesta = await fetch(decodificadorUrl);
@@ -95,7 +94,6 @@ const posterClases =
   const html = document.documentElement;
   const sinMovimiento = () => html.classList.contains("reduce-motion");
 
-  /** Monta el visor en el bloque y ofrece reintento si falla la carga. */
   async function montar(bloque: HTMLElement) {
     try {
       await cargarLibreria();
@@ -173,7 +171,6 @@ const posterClases =
     }
   }).observe(html, { attributes: true, attributeFilter: ["class"] });
 
-  /** Deja el modelo bajo demanda cuando falla la carga o hay ahorro de datos. */
   function ofrecerBoton(bloque: HTMLElement) {
     const boton = bloque.querySelector<HTMLButtonElement>(".model-3d-cargar")!;
     boton.hidden = false;

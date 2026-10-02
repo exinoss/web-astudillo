@@ -9,6 +9,9 @@ export const PERMISSIONS = {
   usersView: 'usuarios.ver',
   usersRoleChange: 'usuarios.rol.cambiar',
   usersStateChange: 'usuarios.estado.cambiar',
+  participationSend: 'participacion.enviar',
+  participationView: 'participacion.ver',
+  participationManage: 'participacion.gestionar',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];

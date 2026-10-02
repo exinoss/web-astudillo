@@ -1,4 +1,4 @@
-/* Estos nodos los crea `src/scripts/citizen.ts` en runtime con `className`
+/* Estos nodos los crea `src/scripts/ciudadania/chat.ts` en runtime con `className`
    fijo. El JIT de Tailwind solo ve las clases presentes en el código fuente,
    así que estos estilos NO pueden ser utilidades: dejarían de generarse. */
 
@@ -24,4 +24,15 @@
   color: var(--color-primary-content);
   align-self: end;
   border-radius: 10px 0 10px 10px;
+}
+
+/* Micrófono escuchando: pulso rojo mientras el reconocimiento de voz está activo. Con «Reducir
+   movimiento» (accessibility.css anula las animaciones) queda rojo y quieto. */
+.chat-mic[aria-pressed="true"] {
+  animation: chat-pulso 1.2s ease-out infinite;
+}
+
+@keyframes chat-pulso {
+  0% { box-shadow: 0 0 0 0 #e0121f80; }
+  100% { box-shadow: 0 0 0 12px #e0121f00; }
 }

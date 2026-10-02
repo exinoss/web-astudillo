@@ -2,7 +2,6 @@ import { Elysia, t } from 'elysia';
 import { publicAccount } from '../../http';
 import { ipOf, setSession, strict, type AuthContext } from './common';
 
-/** Expone el acceso con Google (solo correos de Gmail o Google Workspace). */
 export function googleRoutes(context: AuthContext) {
   const { config, google, limit } = context;
   return new Elysia({ prefix: '/api/auth', normalize: false })

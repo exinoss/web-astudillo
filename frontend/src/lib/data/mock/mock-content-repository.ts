@@ -1,7 +1,6 @@
 import type { ContentRepository } from "../content-repository";
-import { biography, citizenLinks, proposals, works } from "./seed-data";
+import { biography, chatQuickReplies, citizenLinks, proposals, works } from "./seed-data";
 
-/** Lee contenido estático de semilla; no consulta ni modifica el backend. */
 export class MockContentRepository implements ContentRepository {
   async getProposals() {
     return proposals;
@@ -25,5 +24,9 @@ export class MockContentRepository implements ContentRepository {
 
   async getTexts() {
     return {};
+  }
+
+  async getChatQuickReplies() {
+    return chatQuickReplies;
   }
 }

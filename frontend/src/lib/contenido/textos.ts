@@ -1,7 +1,5 @@
-// Registro de los textos editables del sitio: su valor por defecto (el del diseño aprobado), dónde
-// aparecen y su largo máximo. Un texto cambiado desde el panel sustituye al valor por defecto.
-// Un salto de línea en el valor se pinta como <br>. Botones y destinos de enlaces no están aquí:
-// son fijos a propósito. Sin dependencias: también lo usa el panel en el navegador.
+// Botones y destinos de enlaces no están aquí a propósito (salvo las redes, en redes.ts).
+// Sin dependencias: también lo usa el panel en el navegador.
 export interface TextDefinition {
   texto: string;
   lugar: string;
@@ -67,13 +65,13 @@ export const TEXTOS = {
   "propuesta.titulo": t("Detalle de propuesta (las 7)", "Título", "Conoce este eje.", 60),
   "propuesta.texto": t("Detalle de propuesta (las 7)", "Texto",
     "Este es uno de los siete temas presentados para la candidatura de Carlos Astudillo a la alcaldía de San Lorenzo.", 300),
+  "propuesta.obra.antetitulo": t("Detalle de propuesta (las 7)", "Avance de la obra · título", "AVANCE DE LA OBRA", 40),
   "propuesta.preparacion.titulo": t("Detalle de propuesta (las 7)", "Aviso · título", "Contenido en preparación", 60),
   "propuesta.preparacion.texto": t("Detalle de propuesta (las 7)", "Aviso · texto",
     "Los objetivos, acciones y detalles de esta propuesta se incorporarán cuando estén disponibles.", 300),
   "propuesta.perspectiva.titulo": t("Detalle de propuesta (las 7)", "Sugerencias · título", "Tu perspectiva también cuenta.", 80),
   "propuesta.perspectiva.texto": t("Detalle de propuesta (las 7)", "Sugerencias · texto (va seguido del nombre de la propuesta)",
     "Comparte una idea relacionada con", 120),
-  "propuesta.explora": t("Detalle de propuesta (las 7)", "Lista lateral · título", "Explora las propuestas", 60),
 
   "acerca.antetitulo": t("Acerca de nosotros", "Antetítulo", "CONOCE AL CANDIDATO", 40),
   "acerca.nombre": t("Acerca de nosotros", "Nombre", "Carlos", 40),

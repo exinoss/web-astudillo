@@ -1,5 +1,3 @@
-// Piezas de interfaz compartidas por las pestañas del panel. Las clases replican los campos y
-// tarjetas de las páginas de cuenta para que el panel hable el mismo lenguaje visual.
 import { showStatus } from "../../lib/auth/page";
 import type { Profile } from "../../lib/data/auth-repository";
 import { adminApi, type Draft } from "../../lib/data/http/admin-api";
@@ -41,7 +39,6 @@ export function field(o: { id: string; label: string; value: string; max: number
 export const value = (root: ParentNode, selector: string) =>
   (root.querySelector<HTMLInputElement | HTMLTextAreaElement>(selector)?.value ?? "").trim();
 
-// ---------- Estado compartido ----------
 
 export const state = {
   profile: null as Profile | null,

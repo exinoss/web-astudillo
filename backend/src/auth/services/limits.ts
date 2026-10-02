@@ -20,7 +20,6 @@ export function createLimiter() {
   return limit;
 }
 
-// ---------- Fallos de contraseña: sanción progresiva en PostgreSQL ----------
 
 /** Fallos libres por clave antes de la primera espera; la escalada está en fn_limit_fail. */
 const PAIR_FREE = 5;
@@ -83,7 +82,6 @@ export function createAttempts(sql: SQL) {
   };
 }
 
-// ---------- Tope de hashes simultáneos ----------
 
 const MAX_HASHES = 8;
 let hashing = 0;

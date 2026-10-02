@@ -43,6 +43,13 @@
       "when": 1790790327538,
       "tag": "0005_google_solo_gmail",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790844592528,
+      "tag": "0006_participacion",
+      "breakpoints": true
     }
   ]
 }

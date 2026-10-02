@@ -1,0 +1,65 @@
+---
+import Icon from "../Icon.astro";
+
+interface Props {
+  quickReplies: string[];
+}
+const { quickReplies } = Astro.props;
+---
+
+<section class="site-container grid max-w-[1100px] grid-cols-[1fr_1.2fr] items-start gap-[100px] pt-8 pb-14 max-nav:gap-[35px] max-tablet:pt-6 max-tablet:pb-10 max-tablet:grid-cols-1 max-tablet:gap-[30px]">
+  <div class="citizen-explanation">
+    <span class="eyebrow">UN ESPACIO PARA TI</span>
+    <h2>¿Qué quieres conocer?</h2>
+    <p id="chat-ayuda">Escribe tu pregunta o elige un tema para encontrar información del sitio.</p>
+  </div>
+  <div class="overflow-hidden rounded-[5px] border border-primary bg-accent">
+    <div class="flex items-center gap-[15px] bg-primary px-[22px] py-[18px] text-primary-content max-mobile:flex-wrap">
+      <Icon name="chat" />
+      <div class="min-w-0 flex-1">
+        <strong>Orientación ciudadana</strong>
+        <small class="mt-[5px] block text-[0.68rem] text-footer-muted">Respuestas automáticas · Información del sitio</small>
+      </div>
+      <button id="chat-voz" type="button" aria-pressed="false" hidden
+        class="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#ffffff55] bg-transparent px-3.5 text-[0.74rem] font-bold aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-primary">
+        <span class="voz-activa" hidden><Icon name="volume" size={18} /></span>
+        <span class="voz-silencio"><Icon name="volumeOff" size={18} /></span>
+        Leer en voz alta
+      </button>
+    </div>
+    <div
+      class="chat-messages flex h-[340px] flex-col gap-[15px] overflow-auto bg-base-200 p-6 max-tablet:h-[320px] max-tablet:p-[18px]"
+      role="log"
+      aria-live="polite"
+      aria-relevant="additions"
+      aria-label="Conversación"
+    >
+      <div class="chat-message">Hola. Pregúntame por las propuestas, por Carlos o por cómo participar.</div>
+    </div>
+    <div class="flex flex-wrap gap-2 p-[15px]">
+      {quickReplies.map((pregunta) => (
+        <button data-chat class="min-h-11 rounded-[30px] border border-base-300 bg-base-100 px-[13px] py-2 text-[0.7rem] text-neutral hover:bg-accent">
+          {pregunta}
+        </button>
+      ))}
+    </div>
+    <p id="chat-escuchando" class="m-0 flex items-center gap-2 px-[15px] pb-2.5 text-[0.78rem] font-bold text-primary" role="status" hidden>
+      <i class="inline-block size-2 rounded-full bg-campaign-red"></i> Escuchando… habla ahora
+    </p>
+    <p id="chat-recuperada" class="mx-[15px] mt-0 mb-2.5 border-l-4 border-neutral bg-[#eef4fb] px-3 py-2 text-[0.8rem]" role="status" hidden>
+      Recuperamos tu consulta. Revísala y toca «Enviar» para preguntar.
+    </p>
+    <form id="chat-form" class="flex gap-2 px-[15px] pb-[15px]" novalidate>
+      <label class="sr-only" for="chat-input">Escribe tu consulta</label>
+      <input id="chat-input" class="min-w-0 flex-1" placeholder="Escribe tu consulta…" maxlength="300" autocomplete="off" aria-describedby="chat-ayuda" />
+      <button id="chat-mic" type="button" aria-label="Preguntar con tu voz" aria-pressed="false" hidden
+        class="chat-mic grid w-[50px] min-w-[50px] place-items-center rounded-[3px] border border-primary bg-base-100 text-primary aria-pressed:border-campaign-red aria-pressed:bg-campaign-red aria-pressed:text-primary-content">
+        <Icon name="mic" size={22} />
+      </button>
+      <button class="button px-[15px] py-2.5" aria-label="Enviar consulta">
+        <Icon name="arrow" size={20} />
+      </button>
+    </form>
+  </div>
+</section>
+<script src="../../scripts/ciudadania/chat.ts"></script>

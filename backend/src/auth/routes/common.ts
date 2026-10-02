@@ -29,12 +29,10 @@ export function redirectToAccount(origin: string, path: string, tokenValue: stri
   } });
 }
 
-/** Expira una cookie usando el mismo path con el que fue creada. */
 export function clearCookie(cookie: Cookie<unknown>, config: AuthContextType['config'], path: string) {
   cookie.set({ value: '', ...cookieOptions(config, 0, path), expires: new Date(0) });
 }
 
-/** Borra las cookies de acceso y renovación del navegador. */
 export function clearSession(context: AuthContextType, cookie: Record<string, Cookie<unknown>>) {
   clearCookie(cookie.access, context.config, '/api');
   clearCookie(cookie.refresh, context.config, '/api/auth');

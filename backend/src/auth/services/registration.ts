@@ -10,7 +10,6 @@ import { normalizeEmail, randomToken, tokenHash } from "../../security";
 import { requireConfirmation, requireNewPassword } from '../password-policy';
 import { passwordHash } from './limits';
 
-/** Crea solicitudes de registro y su confirmación de correo de un solo uso. */
 export function createRegistration(sql: SQL, mailer: Mailer, config: Config) {
   return {
     /** Guarda la solicitud temporal y envía el enlace sin reservar el correo; el enlace vale en cualquier navegador. */
@@ -38,7 +37,6 @@ export function createRegistration(sql: SQL, mailer: Mailer, config: Config) {
         throw new ApiError(503, "No se pudo enviar el correo");
       }
     },
-    /** Completa el alta con el enlace de un solo uso. */
     async verify(token: string) {
       const hash = tokenHash(token);
       return sql.begin(async tx => {

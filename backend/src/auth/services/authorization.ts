@@ -5,7 +5,6 @@ import { ApiError } from '../../http';
 import type { Security } from '../../security/types';
 import type { Permission } from '../permissions';
 
-/** Crea la verificación conjunta de JWT, estado de cuenta y permiso vigente. */
 export function createAuthorization(sql: SQL, security: Security) {
   return {
     /** Devuelve el usuario autorizado o distingue sesión inválida de permiso denegado. */

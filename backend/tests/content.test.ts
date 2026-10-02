@@ -115,6 +115,9 @@ test("biografía y obras guardan fotos existentes; el porcentaje no se guarda", 
   const v = await versiones();
   expect((await call("/api/admin/contenido/biografia", "PUT", { hitos: [hito], version: v.biografia }, cookies.coadmin)).status).toBe(200);
   expect((await call("/api/admin/contenido/biografia", "PUT", { hitos: [{ ...hito, idMedio: 99999 }], version: v.biografia }, cookies.coadmin)).status).toBe(422);
+  // El año solo admite cuatro cifras: ni letras ni años imposibles.
+  for (const anios of ["19XX", "1990 a 1995", "185", "3000"])
+    expect((await call("/api/admin/contenido/biografia", "PUT", { hitos: [{ ...hito, anios }], version: v.biografia }, cookies.coadmin)).status, anios).toBe(422);
   const obra = { nota: "Avanza la red.", hitos: [{ nombre: "Diseño", completado: true }, { nombre: "Obra", completado: false }],
     fotos: [{ idMedio: foto.idMedio, pie: "Tubería nueva" }] };
   expect((await call("/api/admin/contenido/obras/agua-potable", "PUT", { ...obra, version: v.obras["agua-potable"] }, cookies.coadmin)).status).toBe(200);

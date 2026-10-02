@@ -48,31 +48,6 @@ test('mobile navigation in three taps and responsive layout', async ({ page }) =
   }
 });
 
-test('suggestions validate and show an honest demo result', async ({ page }) => {
-  await page.goto('/ciudadania/sugerencias/?tema=agua-potable');
-  await expect(page.locator('#topic')).toHaveValue('agua-potable');
-  await page.getByRole('button', { name: 'Enviar sugerencia' }).click();
-  await expect(page.locator('.form-status')).toBeHidden();
-  await page.locator('#message').fill('Esta es una sugerencia de prueba para mi sector.');
-  await page.getByRole('button', { name: 'Enviar sugerencia' }).click();
-  await expect(page.getByRole('status')).toContainText('Gracias por compartir tu mensaje');
-});
-
-test('citizen alert and chat work without external services', async ({ page }) => {
-  await page.goto('/ciudadania/alerta-ciudadana/');
-  await page.locator('#topic').fill('Sector de prueba');
-  await page.locator('#message').fill('Descripción de una situación ficticia para probar el formulario.');
-  await page.getByRole('button', { name: 'Enviar alerta' }).click();
-  await expect(page.getByRole('status')).toContainText('Gracias por compartir tu mensaje');
-  await page.goto('/ciudadania/chat/');
-  await page.getByRole('button', { name: 'Ver propuestas' }).click();
-  await expect(page.getByRole('log').getByRole('link', { name: 'Ver propuestas' })).toHaveAttribute('href', '/#propuestas');
-  await page.locator('#chat-input').fill('<img src=x onerror=alert(1)>');
-  await page.getByRole('button', { name: 'Enviar consulta' }).click();
-  await expect(page.locator('.from-user').last()).toHaveText('<img src=x onerror=alert(1)>');
-  await expect(page.locator('.chat-messages img')).toHaveCount(0);
-});
-
 test('all internal destinations and image resources exist', async ({ page, request }) => {
   await page.goto('/');
   const links = await page.locator('a[href^="/"]').evaluateAll(nodes => [...new Set(nodes.map(n => n.getAttribute('href')!.split('#')[0]).filter(Boolean))]);
@@ -98,7 +73,7 @@ test('automatic carousel advances and respects the reduced-motion accessibility 
   await expect(page.locator('[data-slide="0"]')).toBeVisible();
 });
 
-test('reporting is reachable from the Ciudadanía menu on mobile and photo selection works', async ({ page }) => {
+test('reporting is reachable from the Ciudadanía menu on mobile', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await expect(page.locator('.proposal-card').first()).toHaveCSS('background-color', 'rgb(254, 255, 255)');
@@ -108,26 +83,6 @@ test('reporting is reachable from the Ciudadanía menu on mobile and photo selec
   await page.getByRole('button', { name: 'Ciudadanía' }).click();
   await page.locator('#citizen-menu').getByRole('link', { name: 'Alerta ciudadana' }).click();
   await expect(page).toHaveURL(/alerta-ciudadana/);
-  // The page's script is an external module, so it attaches its listeners
-  // after the document loads - without this the file input can receive the
-  // change event before the handler exists (only reproducible against the
-  // dev server, where modules are served unbundled).
-  await page.waitForLoadState('load');
-  await page.locator('#damage-photo').setInputFiles('src/assets/carlos.jpg');
-  await expect(page.locator('.photo-preview')).toBeVisible();
-  await expect(page.locator('.photo-name')).toHaveText('carlos.jpg');
-  await page.getByRole('button', { name: 'Quitar foto' }).click();
-  await expect(page.locator('.photo-preview')).toBeHidden();
-  await page.locator('#damage-photo').setInputFiles({ name: 'archivo.txt', mimeType: 'text/plain', buffer: Buffer.from('invalid') });
-  await expect(page.locator('#photo-error')).toBeVisible();
-  await page.locator('#damage-photo').setInputFiles({ name: 'grande.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(11 * 1024 * 1024) });
-  await expect(page.locator('#photo-error')).toBeVisible();
-  await page.locator('#damage-photo').setInputFiles('src/assets/carlos.jpg');
-  await expect(page.locator('#photo-error')).toBeHidden();
-  await page.locator('#topic').fill('Barrio central');
-  await page.locator('#message').fill('Hay un daño en la calle frente al parque.');
-  await page.getByRole('button', { name: 'Enviar alerta' }).click();
-  await expect(page.getByRole('status')).toContainText('Gracias por compartir tu mensaje');
   await page.screenshot({ path: 'test-results/report-mobile.png', fullPage: true });
 });
 

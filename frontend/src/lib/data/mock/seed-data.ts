@@ -158,7 +158,6 @@ function evidencias(slug: string): WorkEvidence[] {
     }));
 }
 
-// Avances de ejemplo para el desarrollo sin base de datos; el porcentaje sale de los hitos.
 export const works: WorkProgress[] = [
   {
     proposalSlug: "agua-potable",
@@ -250,3 +249,6 @@ export const works: WorkProgress[] = [
     evidence: evidencias("tecnologias-emergentes"),
   },
 ];
+
+/** Respuestas rápidas del chat antes de la primera publicación (las mismas que siembra el backend). */
+export const chatQuickReplies = ["Ver propuestas", "Conocer a Carlos", "¿Cómo reporto un daño en mi barrio?", "Contacto"];

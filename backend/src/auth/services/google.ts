@@ -13,7 +13,6 @@ function isGoogleMailbox(identity: GoogleIdentity) {
   );
 }
 
-/** Crea el acceso con Google: entra, o crea o vincula la cuenta del mismo correo. */
 export function createGoogleAuth(sql: SQL, security: Security, sessions: Sessions) {
   /** Vincula un sub verificado al usuario del mismo correo dentro de una transacción. */
   async function link(identity: GoogleIdentity) {

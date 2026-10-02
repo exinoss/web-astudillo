@@ -10,7 +10,6 @@ export function requireNewPassword(value: string) {
   }
 }
 
-/** Exige que la confirmación coincida exactamente con la contraseña. */
 export function requireConfirmation(password: string, confirmation: string) {
   if (password !== confirmation) throw new ApiError(422, 'Las contraseñas no coinciden');
 }

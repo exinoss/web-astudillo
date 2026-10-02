@@ -11,7 +11,6 @@ import type { Attempts } from "../types";
 import { requireConfirmation, requireNewPassword } from '../password-policy';
 import { passwordHash, passwordVerify } from './limits';
 
-/** Crea los flujos de recuperación y administración de contraseñas. */
 export function createPasswords(sql: SQL, security: Security, attempts: Attempts, mailer: Mailer, config: Config) {
   /** Indica si `password` ya es la contraseña de la cuenta; permite repetir una operación sin error. */
   async function isCurrentPassword(correo: string, password: string) {

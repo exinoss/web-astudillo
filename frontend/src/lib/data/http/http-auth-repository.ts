@@ -1,7 +1,6 @@
 import type { Account, AuthRepository, Profile } from '../auth-repository';
 import { apiRequest } from './api-client';
 
-/** Adapta el contrato de autenticación a los endpoints HTTP del backend. */
 export class HttpAuthRepository implements AuthRepository {
   async register(input: { nombresCompletos: string; direccion?: string; correo: string; contrasenia: string;
     confirmarContrasenia: string }) {

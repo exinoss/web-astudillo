@@ -55,3 +55,9 @@
     width: 16px;
   }
 }
+
+/* `data-sesion` lo pone Layout.astro antes de pintar: evita el parpadeo de «Iniciar sesión». */
+[data-sesion] .cuenta-fuera,
+html:not([data-sesion]) .cuenta-dentro {
+  display: none;
+}

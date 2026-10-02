@@ -124,7 +124,7 @@ export function mostrarCarga(zona: HTMLElement, texto = "Enviando…") {
     "absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-base-100/90 text-sm font-bold text-primary";
   capa.setAttribute("role", "status");
   const lienzo = document.createElement("div");
-  lienzo.className = "size-24";
+  lienzo.className = "size-32";
   lienzo.setAttribute("aria-hidden", "true");
   const leyenda = document.createElement("span");
   leyenda.textContent = texto;

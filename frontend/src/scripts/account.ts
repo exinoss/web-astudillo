@@ -6,6 +6,7 @@ import { authRepository } from '../lib/data/auth';
 import type { Profile } from '../lib/data/auth-repository';
 import { ApiError } from '../lib/data/http/api-client';
 import { mostrarCarga } from '../lib/animaciones';
+import { avisoDeAcceso, destinoTrasAcceso } from '../lib/participacion/borrador';
 
 const loginPanel = document.querySelector<HTMLElement>('#login-panel')!;
 const profilePanel = document.querySelector<HTMLElement>('#profile-panel')!;
@@ -23,10 +24,11 @@ const passwordGoogleStep = document.querySelector<HTMLElement>('#google-password
 const passwordGoogleUnavailable = document.querySelector<HTMLElement>('#google-password-unavailable')!;
 const loading = document.querySelector<HTMLElement>('#account-loading')!;
 let current: Profile | undefined;
-let recentGoogle: { credential: string; until: number } | undefined;
 let addingPassword = false;
 
-/** Sincroniza título, encabezado y ruta visible de la página de cuenta. */
+/** Todo inicio de sesión correcto lleva a la portada o, si quedó un envío a medias, a su formulario. */
+const afterLogin = () => location.assign(destinoTrasAcceso());
+
 function heading(title: string, lead: string) {
   document.title = `${title} · Carlos Astudillo`;
   document.querySelector<HTMLElement>('#account-title')!.textContent = title;
@@ -38,7 +40,6 @@ function heading(title: string, lead: string) {
 function showAccountError(error: unknown) {
   loading.hidden = true;
   if (error instanceof ApiError && error.status === 403) {
-    recentGoogle = undefined;
     setAccountNav(true);
     loginPanel.hidden = true;
     profilePanel.hidden = true;
@@ -50,10 +51,11 @@ function showAccountError(error: unknown) {
 /** Prepara el acceso por contraseña y Google cuando no hay perfil cargado. */
 async function showLogin() {
   current = undefined;
-  recentGoogle = undefined;
   setAccountNav(false);
   loading.hidden = true;
   heading('Mi cuenta', 'Accede para gestionar tus datos y participar.');
+  const aviso = avisoDeAcceso();
+  if (aviso) showStatus(status, aviso);
   profilePanel.hidden = true;
   blockedPanel.hidden = true;
   loginPanel.hidden = false;
@@ -62,8 +64,7 @@ async function showLogin() {
       const terminarCarga = mostrarCarga(loginPanel);
       try {
         await authRepository.googleLogin(credential);
-        recentGoogle = { credential, until: Date.now() + 4 * 60_000 };
-        await loadProfile();
+        afterLogin();
       } catch (error) {
         showAccountError(error);
       } finally {
@@ -79,7 +80,6 @@ async function showLogin() {
 /** Rellena el perfil y muestra controles según sus métodos de autenticación. */
 async function showProfile(profile: Profile) {
   current = profile;
-  if (!profile.tieneGoogle || profile.tieneContrasenia) recentGoogle = undefined;
   setAccountNav(true);
   loading.hidden = true;
   heading('Mi perfil', 'Actualiza tus datos y protege el acceso a tu cuenta.');
@@ -88,20 +88,19 @@ async function showProfile(profile: Profile) {
   profilePanel.hidden = false;
   profileForm.querySelector<HTMLInputElement>('[name="nombresCompletos"]')!.value = profile.nombresCompletos ?? '';
   profileForm.querySelector<HTMLInputElement>('[name="direccion"]')!.value = profile.direccion ?? '';
+  syncProfileButton();
   document.querySelector<HTMLElement>('#admin-panel-link')!.hidden = !profile.permisos?.includes('contenido.editar');
   passwordPanel.hidden = !profile.tieneGoogle || profile.tieneContrasenia;
   changePasswordPanel.hidden = !profile.tieneContrasenia;
   passwordGoogleStep.hidden = true;
 }
 
-/** Obtiene el perfil autenticado y lo aplica a la pantalla. */
 async function loadProfile() {
   const profile = await authRepository.getProfile();
   status.hidden = true;
   await showProfile(profile);
 }
 
-// Valida credenciales, inicia sesión y carga el perfil devuelto por la API.
 loginForm.addEventListener('submit', async event => {
   event.preventDefault();
   const submit = loginForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
@@ -117,7 +116,7 @@ loginForm.addEventListener('submit', async event => {
       showStatus(status, 'Por seguridad te enviamos un enlace a tu correo para terminar de entrar. Revisa también la carpeta de spam.');
       return;
     }
-    await loadProfile();
+    afterLogin();
   } catch (error) {
     if (error instanceof ApiError && error.status === 429) showFormError(status, error, submit, value(loginForm, 'correo'));
     else showAccountError(error);
@@ -127,12 +126,18 @@ loginForm.addEventListener('submit', async event => {
   }
 });
 
+const profileSubmit = profileForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+const syncProfileButton = () => {
+  profileSubmit.disabled = !current || (value(profileForm, 'nombresCompletos').trim() === (current.nombresCompletos ?? '')
+    && value(profileForm, 'direccion').trim() === (current.direccion ?? ''));
+};
+profileForm.addEventListener('input', syncProfileButton);
+
 // Envía únicamente nombre y dirección, los campos editables del perfil.
 profileForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (!current) return;
-  const submit = profileForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-  submit.disabled = true;
+  profileSubmit.disabled = true;
   const terminarCarga = mostrarCarga(profileForm);
   try {
     if (!validateFields(profileForm)) {
@@ -149,7 +154,7 @@ profileForm.addEventListener('submit', async event => {
     showStatus(status, errorText(error), true);
   } finally {
     terminarCarga();
-    submit.disabled = false;
+    syncProfileButton();
   }
 });
 
@@ -179,17 +184,12 @@ async function saveGooglePassword(credential: string) {
   const terminarCarga = mostrarCarga(passwordForm);
   try {
     await authRepository.addPassword(credential, value(passwordForm, 'contrasenia'));
-    recentGoogle = undefined;
     passwordForm.reset();
     const updated = await authRepository.getProfile();
     await showProfile(updated);
     showStatus(status, 'Contraseña agregada. Ya puedes entrar también con tu correo.');
   } catch (error) {
-    if (recentGoogle?.credential === credential && error instanceof ApiError && error.status === 401) {
-      recentGoogle = undefined;
-      await confirmGoogleForPassword();
-      showStatus(status, 'Confirma tu cuenta con Google para guardar la contraseña.');
-    } else showStatus(status, errorText(error), true);
+    showStatus(status, errorText(error), true);
   } finally {
     addingPassword = false;
     terminarCarga();
@@ -197,19 +197,13 @@ async function saveGooglePassword(credential: string) {
   }
 }
 
-// Reutiliza una credencial Google reciente o pide una nueva confirmación.
 passwordForm.addEventListener('submit', async event => {
   event.preventDefault();
   if (!validateFields(passwordForm)) {
     showStatus(status, 'Revisa los campos marcados.', true);
     return;
   }
-  const credential = recentGoogle && Date.now() < recentGoogle.until ? recentGoogle.credential : undefined;
-  if (credential) await saveGooglePassword(credential);
-  else {
-    recentGoogle = undefined;
-    await confirmGoogleForPassword();
-  }
+  await confirmGoogleForPassword();
 });
 
 // Cambia la contraseña y fuerza un nuevo inicio de sesión tras la rotación.

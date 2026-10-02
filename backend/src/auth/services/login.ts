@@ -12,7 +12,6 @@ import { passwordVerify } from "./limits";
 const dummyHash = Bun.password.hash("contraseña-de-comparación-no-válida", "argon2id");
 const LINK_SECONDS = 900;
 
-/** Crea el inicio de sesión con contraseña, con sanción progresiva y acceso por enlace ante ataques repartidos. */
 export function createLogin(sql: SQL, sessions: Sessions, attempts: Attempts, mailer: Mailer, config: Config) {
   /** Envía el enlace de acceso; si ya salió uno hace un momento no manda otro (fn_auth_token_create). */
   async function sendLink(user: PasswordUserRow, correo: string) {

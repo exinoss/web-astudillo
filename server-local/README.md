@@ -31,7 +31,7 @@ Volver a abrirlo detecta lo que ya existe o ya está encendido y continúa: no r
 | --- | --- |
 | `iniciar.cmd` | Abre `iniciar.ps1` con doble clic, sin cambiar la política de ejecución de PowerShell |
 | `iniciar.ps1` | Los pasos de arriba |
-| `compose.local.yml` | Los contenedores. Reutiliza `backend/Dockerfile` y `backend/Dockerfile.publicador` |
+| `compose.local.yml` | Los contenedores. Reutiliza `backend/Dockerfile` y `server-produccion/Dockerfile.publicador` |
 
 ## Notas
 

@@ -32,7 +32,6 @@ function paint(el: HTMLElement, value: string) {
   el.innerHTML = value.split("\n").map(esc).join("<br>");
 }
 
-// ---------- Barra ----------
 
 const bar = document.createElement("div");
 bar.className = "bg-primary text-primary-content";
@@ -48,7 +47,7 @@ bar.innerHTML = `
     <span class="flex items-center gap-3 max-tablet:gap-2">
       <span id="edicion-pendientes" class="text-[0.82rem] max-nav:hidden"></span>
       <a href="/cuenta/panel/#publicaciones" class="${BUTTON} border border-[#ffffff55] text-primary-content max-nav:hidden">Ver pendientes</a>
-      <button type="button" id="edicion-publicar" class="${BUTTON} bg-accent text-primary disabled:opacity-60" hidden>${iconSvg("upload", 18)}Publicar</button>
+      <button type="button" id="edicion-publicar" class="${BUTTON} bg-accent text-primary disabled:bg-[#d5dbe3] disabled:text-[#50617d]" hidden>${iconSvg("upload", 18)}Publicar</button>
     </span>
   </div>`;
 const toggle = bar.querySelector<HTMLButtonElement>("#edicion-interruptor")!;
@@ -76,7 +75,6 @@ async function refreshPending() {
   drawBar();
 }
 
-// ---------- Aviso ----------
 
 const toast = document.createElement("p");
 toast.setAttribute("role", "status");
@@ -92,7 +90,6 @@ function notify(message: string, error = false) {
   toastTimer = window.setTimeout(() => { toast.hidden = true; }, 5000);
 }
 
-// ---------- Edición en línea (escritorio) ----------
 
 const chip = document.createElement("span");
 chip.className = "pointer-events-none fixed z-[940] flex items-center gap-2 rounded-[3px] bg-secondary px-2.5 py-[5px] text-[0.68rem] font-bold text-primary";
@@ -106,11 +103,14 @@ function placeChip() {
   chip.style.top = `${Math.max(8, rect.top - 38)}px`;
 }
 
+/** Texto tal como se guarda: sin espacios de más al inicio y al final de cada línea. */
+const clean = (raw: string) => raw.replace(/\r/g, "").replace(/\u00a0/g, " ").split("\n").map((l) => l.trim()).join("\n").trim();
+
 /** Valida y guarda en el borrador; si falla, el texto vuelve a como estaba. */
 async function save(el: HTMLElement, raw: string, before: string) {
   const key = el.dataset.editable!;
   const def = definition(el);
-  const value = raw.replace(/\r/g, "").replace(/\u00a0/g, " ").split("\n").map((l) => l.trim()).join("\n").trim();
+  const value = clean(raw);
   if (value === current(key)) return true;
   if (!value) { notify("El texto no puede quedar vacío.", true); paint(el, before); return false; }
   if (value.length > def.max) { notify(`Máximo ${def.max} caracteres.`, true); paint(el, before); return false; }
@@ -158,7 +158,6 @@ function finishInline(keep: boolean) {
   else paint(el, before);
 }
 
-// ---------- Hoja de edición (móvil) ----------
 
 const sheet = document.createElement("div");
 sheet.className = "fixed inset-0 z-[945] flex items-end bg-[#06317640]";
@@ -170,18 +169,21 @@ sheet.innerHTML = `
       <strong id="edicion-hoja-titulo" class="flex items-center gap-2 text-[0.95rem]">${iconSvg("edit", 18)} Editar texto</strong>
       <button type="button" data-cerrar class="grid size-11 place-items-center" aria-label="Cerrar">${iconSvg("close", 20)}</button>
     </div>
-    <span class="text-[0.74rem] text-[#50617d]">En móvil el texto se edita en esta hoja para que el teclado no tape la página.</span>
     <div class="flex flex-col gap-[7px]">
       <label for="edicion-hoja-campo" id="edicion-hoja-etiqueta" class="text-[0.82rem] font-bold"></label>
       <textarea id="edicion-hoja-campo" rows="4" class="min-h-24 w-full rounded-[3px] border border-[#acbacb] bg-base-100 px-3.5 py-3 text-[0.88rem] leading-normal text-primary"></textarea>
     </div>
     <div class="flex gap-2.5">
       <button type="button" data-cerrar class="${BUTTON} flex-1 border border-[#06317640] text-primary">Cancelar</button>
-      <button type="button" id="edicion-hoja-guardar" class="${BUTTON} flex-1 bg-primary text-primary-content">Guardar borrador</button>
+      <button type="button" id="edicion-hoja-guardar" class="${BUTTON} flex-1 bg-primary text-primary-content disabled:bg-[#d5dbe3] disabled:text-[#50617d]">Guardar borrador</button>
     </div>
   </div>`;
 const sheetField = sheet.querySelector<HTMLTextAreaElement>("#edicion-hoja-campo")!;
+const sheetSave = sheet.querySelector<HTMLButtonElement>("#edicion-hoja-guardar")!;
 let sheetTarget: HTMLElement | null = null;
+
+const syncSheet = () => { sheetSave.disabled = !sheetTarget || clean(sheetField.value) === current(sheetTarget.dataset.editable!); };
+sheetField.addEventListener("input", syncSheet);
 
 function openSheet(el: HTMLElement) {
   sheetTarget = el;
@@ -189,6 +191,7 @@ function openSheet(el: HTMLElement) {
   sheet.querySelector("#edicion-hoja-etiqueta")!.textContent = `${def.lugar} · ${def.campo}`;
   sheetField.value = current(el.dataset.editable!);
   sheetField.maxLength = def.max;
+  syncSheet();
   sheet.hidden = false;
   sheetField.focus();
 }
@@ -212,16 +215,14 @@ sheet.addEventListener("keydown", (e) => {
     else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
   }
 });
-sheet.querySelector<HTMLButtonElement>("#edicion-hoja-guardar")!.addEventListener("click", async (e) => {
-  const button = e.currentTarget as HTMLButtonElement;
+sheetSave.addEventListener("click", async () => {
   const el = sheetTarget!;
-  button.disabled = true;
+  sheetSave.disabled = true;
   const ok = await save(el, sheetField.value, current(el.dataset.editable!));
-  button.disabled = false;
   if (ok) closeSheet();
+  else syncSheet();
 });
 
-// ---------- Activar y desactivar ----------
 
 const edit = (el: HTMLElement) => (mobile.matches ? openSheet(el) : startInline(el));
 

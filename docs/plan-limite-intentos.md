@@ -1,6 +1,6 @@
 # Plan — Límite de intentos progresivo (OWASP), candado con cronómetro y correos con la marca
 
-**Estado (2026-09-30): implementado.** Queda pendiente solo lo de despliegue (`limit_req` en nginx e IP real detrás de Vercel; ver `backend/README.md`).
+**Estado (2026-09-30): implementado.** Lo de despliegue quedó resuelto el 2026-10-01 en `server-produccion/`: `limit_req` en nginx y la IP real detrás de Cloudflare (`CF-Connecting-IP`, solo desde sus rangos). Vercel ya no se usa.
 
 ## Contexto
 

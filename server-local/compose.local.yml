@@ -42,6 +42,7 @@ services:
       PORT: "3000"
     volumes:
       - medios:/app/medios
+      - privados:/app/medios-privados
     depends_on:
       db:
         condition: service_healthy
@@ -51,12 +52,12 @@ services:
       timeout: 5s
       retries: 30
 
-  # Mismo contenedor que el publicador, con el servidor de desarrollo de Astro (lee lo publicado de la API).
+  # Misma imagen que el publicador, con el servidor de desarrollo de Astro (lee lo publicado de la API).
   frontend:
     image: astudillo-local-sitio
     build:
       context: ..
-      dockerfile: backend/Dockerfile.publicador
+      dockerfile: server-produccion/Dockerfile.publicador
     working_dir: /app/frontend
     command: ["bun", "run", "dev", "--host", "0.0.0.0", "--port", "4321"]
     env_file: ../frontend/.env
@@ -98,3 +99,4 @@ services:
 volumes:
   pgdata:
   medios:
+  privados:

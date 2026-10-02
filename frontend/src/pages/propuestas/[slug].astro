@@ -4,25 +4,28 @@ import Icon from "../../components/Icon.astro";
 import Breadcrumb from "../../components/Breadcrumb.astro";
 import Editable from "../../components/Editable.astro";
 import DetailBanner from "../../components/DetailBanner.astro";
+import EvidenceCarousel from "../../components/EvidenceCarousel.astro";
 import KpiStrip from "../../components/KpiStrip.astro";
 import Model3D from "../../components/Model3D.astro";
+import ObraProgreso from "../../components/ObraProgreso.astro";
 import { contentRepository } from "../../lib/data";
-import type { Proposal } from "../../lib/data/types";
+import type { Proposal, WorkProgress } from "../../lib/data/types";
 
 interface Props {
   proposal: Proposal;
-  proposals: Proposal[];
+  work?: WorkProgress;
 }
 
-/** Genera una ruta estática por cada propuesta del repositorio de contenido. */
 export async function getStaticPaths() {
-  const proposals = await contentRepository.getProposals();
+  const [proposals, works] = await Promise.all([contentRepository.getProposals(), contentRepository.getWorks()]);
   return proposals.map((p) => ({
     params: { slug: p.slug },
-    props: { proposal: p, proposals },
+    props: { proposal: p, work: works.find((w) => w.proposalSlug === p.slug) },
   }));
 }
-const { proposal, proposals } = Astro.props;
+const { proposal, work } = Astro.props;
+// El visor 3D trae su propio margen superior; dentro de la fila de la obra lo marca la rejilla.
+const fila = "mt-3.5 grid grid-cols-2 gap-[18px] max-tablet:grid-cols-1 max-tablet:gap-3 [&>.model-3d]:mt-0";
 ---
 
 <Layout title={`${proposal.name} · Carlos Astudillo`}>
@@ -41,46 +44,49 @@ const { proposal, proposals } = Astro.props;
     lead={proposal.intro}
   />
   <KpiStrip kpis={proposal.kpis} label={`Cifras de la propuesta ${proposal.name}`} />
-  <div class="site-container grid grid-cols-[minmax(0,1.7fr)_minmax(250px,1fr)] gap-[90px] pt-8 pb-14 max-desktop-sm:gap-[45px] max-tablet:pt-6 max-tablet:pb-10 max-tablet:grid-cols-1">
-    <article>
-      <Editable clave="propuesta.antetitulo" class="eyebrow" />
-      <Editable as="h2" clave="propuesta.titulo" class="mt-[15px] max-tablet:text-[2.6rem]" />
-      <Editable as="p" clave="propuesta.texto" class="max-w-[680px]" />
-      {proposal.model && <Model3D {...proposal.model} />}
-      <div class="mt-[30px] mb-10 flex items-start gap-[18px] [border-left:3px_solid_var(--color-accent)] bg-base-200 p-[25px]">
-        <Icon name="book" size={24} />
-        <div>
-          <Editable as="strong" clave="propuesta.preparacion.titulo" />
-          <Editable as="p" clave="propuesta.preparacion.texto" class="mt-2 mr-0 mb-0 ml-0 text-[0.88rem]" />
+  <article class="site-container pt-8 pb-14 max-tablet:pt-6 max-tablet:pb-10">
+    <Editable clave="propuesta.antetitulo" class="eyebrow" />
+    <Editable as="h2" clave="propuesta.titulo" class="mt-[15px] max-tablet:text-[2.6rem]" />
+    <Editable as="p" clave="propuesta.texto" class="max-w-[680px]" />
+    {work ? (
+      <section class="pt-8" aria-labelledby="obra-titulo">
+        <Editable as="h3" clave="propuesta.obra.antetitulo" id="obra-titulo" class="eyebrow m-0" />
+        {proposal.model ? (
+          <>
+            <div class={fila}>
+              <Model3D {...proposal.model} />
+              <EvidenceCarousel id={proposal.slug} evidence={work.evidence} name={proposal.name} />
+            </div>
+            <ObraProgreso work={work} proposal={proposal} enPropuesta ancho class="mt-[18px]" />
+          </>
+        ) : (
+          <div class={fila}>
+            <ObraProgreso work={work} proposal={proposal} enPropuesta />
+            <EvidenceCarousel id={proposal.slug} evidence={work.evidence} name={proposal.name} />
+          </div>
+        )}
+      </section>
+    ) : (
+      <>
+        {proposal.model && <div class="max-w-[860px]"><Model3D {...proposal.model} /></div>}
+        <div class="mt-[30px] flex max-w-[860px] items-start gap-[18px] [border-left:3px_solid_var(--color-accent)] bg-base-200 p-[25px]">
+          <Icon name="book" size={24} />
+          <div>
+            <Editable as="strong" clave="propuesta.preparacion.titulo" />
+            <Editable as="p" clave="propuesta.preparacion.texto" class="mt-2 mr-0 mb-0 ml-0 text-[0.88rem]" />
+          </div>
         </div>
-      </div>
-      <Editable as="h3" clave="propuesta.perspectiva.titulo" />
-      <p class="max-w-[680px]">
-        <Editable clave="propuesta.perspectiva.texto" /> {proposal.name.toLowerCase()}.
-      </p>
-      <a
-        class="button max-tablet:gap-3.5 max-tablet:text-[0.75rem]"
-        href={`/ciudadania/sugerencias/?tema=${proposal.slug}`}
-      >
-        Compartir una sugerencia <Icon name="arrow" size={18} />
-      </a>
-    </article>
-    <aside class="related-proposals self-start rounded-[4px] border border-base-300 p-[25px]">
-      <Editable as="h3" clave="propuesta.explora" class="mb-5 text-[1rem]" />
-      {proposals.map((p) => (
-        <a
-          href={`/propuestas/${p.slug}/`}
-          aria-current={p.slug === proposal.slug ? "page" : undefined}
-          class:list={[
-            "flex items-center gap-3 border-t border-t-base-300 px-2 py-[15px] text-[0.78rem] hover:bg-base-200",
-            p.slug === proposal.slug && "bg-accent font-bold",
-          ]}
-        >
-          <Icon name={p.icon} size={20} />
-          {p.name}
-          <Icon name="arrow" size={16} />
-        </a>
-      ))}
-    </aside>
-  </div>
+      </>
+    )}
+    <Editable as="h3" clave="propuesta.perspectiva.titulo" class="mt-10" />
+    <p class="max-w-[680px]">
+      <Editable clave="propuesta.perspectiva.texto" /> {proposal.name.toLowerCase()}.
+    </p>
+    <a
+      class="button max-tablet:gap-3.5 max-tablet:text-[0.75rem]"
+      href={`/ciudadania/sugerencias/?tema=${proposal.slug}`}
+    >
+      Compartir una sugerencia <Icon name="arrow" size={18} />
+    </a>
+  </article>
 </Layout>

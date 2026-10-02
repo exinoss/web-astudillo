@@ -6,7 +6,6 @@ const status = document.querySelector<HTMLElement>('#account-status')!;
 const done = document.querySelector<HTMLElement>('#verify-done')!;
 const token = readToken();
 
-// El enlace vale en cualquier navegador: basta el token para activar la cuenta.
 if (!token) {
   showStatus(status, 'El enlace de verificación no es válido. Solicita uno nuevo desde el registro.', true);
 } else {

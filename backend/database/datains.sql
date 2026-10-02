@@ -17,7 +17,10 @@ WITH permisos_iniciales(codigo, descripcion, roles) AS (
     ('medios.subir', 'Subir fotos de biografia y obras', ARRAY['coadmin', 'admin']::text[]),
     ('usuarios.ver', 'Consultar la lista de cuentas', ARRAY['admin']::text[]),
     ('usuarios.rol.cambiar', 'Cambiar el rol de otras cuentas segun la jerarquia', ARRAY['admin']::text[]),
-    ('usuarios.estado.cambiar', 'Activar o desactivar otras cuentas segun la jerarquia', ARRAY['admin']::text[])
+    ('usuarios.estado.cambiar', 'Activar o desactivar otras cuentas segun la jerarquia', ARRAY['admin']::text[]),
+    ('participacion.enviar', 'Enviar alertas, sugerencias y consultas al chat', ARRAY['votante', 'analista', 'coadmin', 'admin']::text[]),
+    ('participacion.ver', 'Consultar las alertas y sugerencias recibidas', ARRAY['analista', 'coadmin', 'admin']::text[]),
+    ('participacion.gestionar', 'Cambiar el estado de alertas y sugerencias', ARRAY['coadmin', 'admin']::text[])
 ), permisos_guardados AS (
   INSERT INTO tb_permisos (codigo, descripcion)
   SELECT codigo, descripcion FROM permisos_iniciales
@@ -127,3 +130,13 @@ SELECT v.* FROM (VALUES
   ('tecnologias-emergentes', 4, 'Puesta en marcha', false)
 ) AS v(slug, orden, nombre, completado)
 WHERE NOT EXISTS (SELECT 1 FROM tb_obra_hitos);
+
+-- Preguntas frecuentes iniciales del chat (las mismas respuestas que tenía el sitio); solo si no hay ninguna.
+INSERT INTO tb_chat_respuestas (orden, pregunta, palabras_clave, respuesta, enlace_texto, enlace_ruta, destacada)
+SELECT v.* FROM (VALUES
+  (1, 'Ver propuestas', 'propuesta, propuestas, plan, ejes, proyectos', 'Puedes revisar las siete propuestas para San Lorenzo en la sección de propuestas.', 'Ver propuestas', '/#propuestas', true),
+  (2, 'Conocer a Carlos', 'carlos, astudillo, candidato, biografia, quien es', 'Conoce la historia y el camino de Carlos Astudillo.', 'Conocer a Carlos', '/acerca-de-nosotros/', true),
+  (3, '¿Cómo reporto un daño en mi barrio?', 'reportar, reporto, dano, alerta, bache, basura, alumbrado, agua, barrio', 'Puedes enviar una alerta ciudadana con el tipo de problema, el sector y una foto.', 'Enviar una alerta', '/ciudadania/alerta-ciudadana/', true),
+  (4, 'Contacto', 'contacto, contactar, whatsapp, facebook, tiktok, telefono, numero', 'Encuentra los canales de contacto de la campaña.', 'Ir a contacto', '/#contacto', true)
+) AS v(orden, pregunta, palabras_clave, respuesta, enlace_texto, enlace_ruta, destacada)
+WHERE NOT EXISTS (SELECT 1 FROM tb_chat_respuestas);

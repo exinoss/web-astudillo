@@ -15,3 +15,6 @@ backend/medios
 backend/medios-pruebas*
 design
 docs
+frontend/dist-*
+backend/medios-privados
+server-produccion/certificados

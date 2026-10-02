@@ -1,12 +1,8 @@
-/* `.breadcrumb a:hover` afecta a enlaces sin clase propia; el resto son
-   reglas sobre <svg>, que `Icon.astro` no puede recibir por prop. */
+/* `.breadcrumb a:hover` afecta a enlaces sin clase propia y `.detail-title > svg` es un <svg>
+   que `Icon.astro` no puede recibir por prop: no pueden ser utilidades. */
 
 .breadcrumb a:hover {
   text-decoration: underline;
-}
-
-.related-proposals a > svg:last-child {
-  margin-left: auto;
 }
 
 .content-note {

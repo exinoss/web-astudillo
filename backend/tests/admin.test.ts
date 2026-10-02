@@ -23,10 +23,14 @@ beforeAll(async () => {
 });
 afterAll(async () => { await sql.close(); });
 
-test("/api/me informa rol, maestro y permisos", async () => {
+test("/api/me informa rol y permisos sin exponer esMaestro", async () => {
   const admin = await (await call("/api/me", "GET", undefined, cookies.admin1)).json();
-  expect(admin).toMatchObject({ rol: "admin", esMaestro: false });
+  expect(admin).toMatchObject({ rol: "admin" });
+  expect(admin).not.toHaveProperty("esMaestro");
   expect(admin.permisos).toEqual(expect.arrayContaining(["usuarios.ver", "usuarios.rol.cambiar", "contenido.editar"]));
+  const maestro = await (await call("/api/me", "GET", undefined, cookies.maestro)).json();
+  expect(maestro).toMatchObject({ rol: "admin", permisos: admin.permisos });
+  expect(maestro).not.toHaveProperty("esMaestro");
   const coadmin = await (await call("/api/me", "GET", undefined, cookies.coadmin1)).json();
   expect(coadmin.permisos).toContain("contenido.publicar");
   expect(coadmin.permisos).not.toContain("usuarios.ver");
@@ -50,7 +54,9 @@ test("solo los admin ven la lista, sin delatar qué cuenta es la maestra", async
   expect(fila("admin1").motivoBloqueo).toBe("No puedes modificar tu propia cuenta");
   expect(fila("votante1")).toMatchObject({ rolesAsignables: ["votante", "coadmin", "admin"], puedeCambiarEstado: true });
   const delMaestro = await (await call("/api/admin/usuarios", "GET", undefined, cookies.maestro)).json();
-  expect(delMaestro.usuarios.find((u: { correo: string }) => u.correo === "maestro@example.com").esMaestro).toBe(true);
+  expect(delMaestro.usuarios.some((u: object) => "esMaestro" in u)).toBe(false);
+  expect(delMaestro.usuarios.find((u: { correo: string }) => u.correo === "admin2@example.com"))
+    .toMatchObject({ rolesAsignables: ["votante", "coadmin", "admin"], puedeCambiarEstado: true });
 });
 
 test("la lista se filtra por texto, rol y estado, y pagina", async () => {

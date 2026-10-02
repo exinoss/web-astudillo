@@ -11,7 +11,7 @@ export const PASSWORD = "Ab1!xyz";
  * App real contra la base de pruebas, con correo simulado y cuentas creadas a medida.
  * Con `trustProxyIp`, `call` puede simular la IP del visitante (cabecera X-Real-IP).
  */
-export function testApp(mediaDir = "medios-pruebas", trustProxyIp = false) {
+export function testApp(mediaDir = "medios-pruebas", trustProxyIp = false, privateMediaDir = `${mediaDir}-privados`) {
   const url = process.env.TEST_DATABASE_URL;
   if (!url) throw new Error("TEST_DATABASE_URL debe apuntar a una base de pruebas desechable");
   const sql = new SQL(url);
@@ -21,7 +21,7 @@ export function testApp(mediaDir = "medios-pruebas", trustProxyIp = false) {
     googleClientId: "cliente-de-prueba", port: 3000, bindHost: "127.0.0.1",
     trustProxyIp, production: false,
     smtp: { host: "localhost", port: 1025, user: "test", pass: "test", from: "test@example.test", name: "Test" },
-    mediaDir,
+    mediaDir, privateMediaDir,
   };
   const sent: { to: string; subject: string; url: string }[] = [];
   const mailer: Mailer = { async send(to, mensaje) { sent.push({ to, subject: mensaje.asunto, url: mensaje.url }); } };

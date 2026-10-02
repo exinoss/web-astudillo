@@ -9,7 +9,6 @@ const SEVEN_DAYS = 7 * 24 * 60 * 60;
 /** Crea sesiones con refresh tokens aleatorios almacenados solo como hash. */
 export function createSessions(sql: SQL, security: Security) {
   return {
-    /** Persiste el refresh token y emite el JWT inicial de acceso. */
     async start(user: Account) {
       const refresh = randomToken();
       await callPg(sql, "sessionCreate", [user.id_usuario, tokenHash(refresh)]);
@@ -28,7 +27,6 @@ export function createSessions(sql: SQL, security: Security) {
       if (!recent) throw new ApiError(401, "Sesión no válida");
       return { access: await security.sign(recent), refresh: null, user: recent };
     },
-    /** Revoca en PostgreSQL la sesión asociada al refresh token. */
     async revoke(refresh: string | undefined) {
       if (refresh) await callPg(sql, "sessionRevoke", [tokenHash(refresh)]);
     },

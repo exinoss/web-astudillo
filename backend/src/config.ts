@@ -12,9 +12,10 @@ export interface Config {
   smtp: { host: string; port: number; user: string; pass: string; from: string; name: string };
   /** Carpeta donde se guardan las fotos subidas desde el panel. */
   mediaDir: string;
+  /** Fotos de las alertas ciudadanas: privadas, solo se sirven a su autor y a quien las revisa. */
+  privateMediaDir: string;
 }
 
-/** Lee y valida la configuración obligatoria antes de iniciar el servidor. */
 export function loadConfig(env = process.env): Config {
   const required = (key: string) => {
     const value = env[key]?.trim();
@@ -39,6 +40,7 @@ export function loadConfig(env = process.env): Config {
     origin, jwtSecret, googleClientId: required("GOOGLE_CLIENT_ID"), port,
     bindHost, trustProxyIp: proxyOption === "true", production,
     mediaDir: resolve(env.MEDIA_DIR?.trim() || "medios"),
+    privateMediaDir: resolve(env.MEDIA_PRIVADA_DIR?.trim() || "medios-privados"),
     smtp: {
       host: required("SMTP_HOST"), port: smtpPort, user: required("SMTP_USER"),
       pass: required("SMTP_PASS"), from: required("SMTP_FROM"),

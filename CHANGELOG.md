@@ -8,6 +8,17 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ### Added
 
+- Participación ciudadana real, guardada en la base y solo con sesión iniciada:
+  - **Alertas**: el tipo se elige con botones (agua, basura, alumbrado, baches, seguridad, otro). Para la foto hay una zona grande que en el celular ofrece cámara o galería; admite hasta 5 MB y se guarda sin datos de ubicación, en una carpeta privada que solo ven su autor y el equipo. Junto al formulario está el historial «Tus alertas» con el estado de cada una.
+  - **Sugerencias**: el tema se elige con fichas.
+  - **Chat**: responde con preguntas frecuentes editables desde el panel. Tiene micrófono (voz a texto) y «Leer en voz alta», que solo aparecen en los navegadores que lo permiten, y anota lo que no sabe responder.
+  - Sin sesión, lo escrito y la foto se guardan; tras iniciar sesión (o crear la cuenta y entrar) se vuelve al formulario relleno. Reenviar no duplica nada.
+- Panel:
+  - pestaña **Participación** para revisar alertas y sugerencias y cambiar su estado (Recibida, En revisión, Atendida); si otra persona lo cambió antes, se avisa y no se pisa;
+  - pestaña **Chat** con las preguntas frecuentes y las preguntas que quedaron sin respuesta;
+  - sección **Redes sociales** con los enlaces de Facebook, TikTok y WhatsApp; WhatsApp se escribe como número.
+- La página de cada propuesta muestra el avance de su obra (porcentaje, etapa, hitos y fotos; con modelo 3D, el modelo al lado de las fotos) en lugar de «Contenido en preparación» cuando hay una obra registrada.
+- Despliegue de producción en `server-produccion/` (VPS con Docker detrás de Cloudflare): PostgreSQL, backend, publicador y nginx. Incluye la IP real del visitante (solo se acepta desde los rangos de Cloudflare), un límite de peticiones al acceso y los pasos completos en su README.
 - Entorno local con Docker en `server-local/`: doble clic en `iniciar.cmd` comprueba los `.env`, instala o arranca Docker si hace falta, levanta PostgreSQL (con el usuario y la base de `DATABASE_URL`) y aplica las migraciones, levanta backend, sitio, publicador y Mailpit si el correo es local, y la primera vez pide el admin maestro. Ctrl+C lo detiene; cerrar la ventana lo deja encendido, y volver a abrirlo continúa donde estaba.
 - Administración del contenido sin tocar el código. Todo cambio queda como borrador hasta que alguien pulsa «Publicar»; entonces el publicador (`bun run publicador`) recompila el sitio estático con el contenido publicado, que lee de la API, en pocos segundos; si la compilación falla, el sitio sigue con la versión anterior. En desarrollo basta recargar la página.
   - **Panel** en `/cuenta/panel/`: propuestas con sus cifras, línea de tiempo de la biografía con fotos, obras con hitos y fotos de evidencia, lista de textos del sitio, historial de publicaciones y usuarios. Se entra desde «Mi cuenta» con los permisos necesarios.
@@ -30,6 +41,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ### Changed
 
+- Todo inicio de sesión correcto (contraseña, Google o enlace por correo) lleva a la portada, o al formulario que quedó a medias.
+- Los botones de guardar y publicar del panel, del perfil y del modo edición se ven grises y quedan desactivados mientras no hay cambios. Los formularios que validan al pulsar (acceso, registro, alertas…) siguen siempre activos.
+- La franja de cifras (KPI) de cada propuesta queda centrada: antes `m-0` anulaba el centrado de `site-container`. Cada cifra va centrada en su columna, y con muchas cifras pasan a otra fila.
+- En la página de una propuesta, «Conoce este eje» va primero y se retira la lista lateral «Explora las propuestas».
+- Portada: el acceso a Alertas pasa a rojo y el de Sugerencias a amarillo; el del chat no cambia.
+- Animaciones de carga más grandes: la del cambio de página pasa de 180 a 240 px (de 140 a 190 px en móvil) y la de envío o carga de datos, de 96 a 128 px.
+- Los selectores llevan su propia flecha, con margen.
+- El publicador acepta `SITE_DIR` para dejar el sitio en el volumen que sirve nginx.
 - Cuando se activa el límite de intentos, el botón del formulario pasa a gris con un candado que se cierra y la cuenta atrás («Espera 0:59», «Espera 2 d 23 h»); al terminar vuelve a su estado. En el acceso, el aviso ofrece restablecer la contraseña con el correo ya escrito. Con «Reducir movimiento» el candado aparece cerrado, sin animación.
 - Los correos de cuenta (confirmar el correo, restablecer la contraseña y terminar de entrar) son HTML con la marca: logo, foto de campaña, título como las cabeceras del sitio, botón y pie con #lanuevahistoria. Llevan las imágenes incrustadas y una versión de texto.
 - Límite de intentos según OWASP: los fallos de contraseña tienen una sanción que crece (1 min, 5 min, 15 min, 1 h, 6 h y después 3 días) por correo+IP y por IP, guardada en la base para que sobreviva a reinicios. Quien acierta desde otra IP entra aunque haya un atacante bloqueado; las esperas son solo para ese correo desde esa IP, así que quien se olvidó la contraseña espera y entra. Quien llega al tope (3 días) se trata como atacante y su IP queda bloqueada para cualquier correo; si dos IPs llegan al tope con el mismo correo, el dueño entra con un enlace enviado a su correo. El aviso dice cuánto esperar y, en el primer bloqueo, sugiere restablecer la contraseña. Restablecerla levanta el bloqueo.
@@ -49,4 +68,7 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ### Removed
 
+- Vercel (`frontend/vercel.json`) y Jenkins (`backend/Jenkinsfile`), junto con `backend/docker-compose.yml` y `backend/nginx.conf`: el despliegue vive ahora en `server-produccion/`.
+- El campo «Nombre» de alertas y sugerencias, que ahora se toma de la cuenta.
+- Las respuestas simuladas de alertas, sugerencias y chat.
 - Dependencia `daisyui`: no se usaba ninguna de sus clases ni su mecanismo de temas; sus tokens de color pasaron a `@theme`.

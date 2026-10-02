@@ -8,7 +8,6 @@ const literals = (values: readonly string[]) => t.Union(values.map(value => t.Li
 const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;
 const ALL_ROLES = ['votante', 'analista', 'coadmin', 'admin'];
 
-/** Rutas del panel de administración protegidas por permiso. */
 export function adminRoutes(sql: SQL, authorization: Authorization) {
   const users = createAdminUsers(sql, authorization);
   return new Elysia({ prefix: '/api/admin', normalize: false })

@@ -1,3 +1,4 @@
+import { vigilarCambios } from "../../lib/cambios";
 import { adminApi, type AdminUser } from "../../lib/data/http/admin-api";
 import { renderPagination } from "../../lib/paginacion";
 import { busy, DANGER, esc, GHOST, iconSvg, notify, PILL } from "./ui";
@@ -110,14 +111,17 @@ async function load(section: HTMLElement) {
 
 function bind(section: HTMLElement, list: HTMLElement) {
   const reload = () => { confirming = null; return load(section); };
-  list.querySelectorAll<HTMLButtonElement>("[data-guardar-rol]").forEach((b) => b.addEventListener("click", () => {
-    const id = Number(b.dataset.guardarRol);
+  list.querySelectorAll<HTMLButtonElement>("[data-guardar-rol]").forEach((b) => {
     // Tabla y tarjetas repiten el selector: vale el que está junto al botón pulsado.
-    const rol = b.parentElement!.querySelector<HTMLSelectElement>("select")!.value;
-    if (!rol) return notify("Elige el nuevo rol.", true);
+    const select = b.parentElement!.querySelector<HTMLSelectElement>("select")!;
+    vigilarCambios(b.parentElement!, b, b.dataset.rolActual, () => select.value || b.dataset.rolActual);
     // Se envía el rol que muestra la lista: si otro admin lo cambió mientras tanto, la API responde 409.
-    void busy(b, async () => { await adminApi.changeRole(id, rol, b.dataset.rolActual!); await reload(); notify("Rol actualizado."); });
-  }));
+    b.addEventListener("click", () => void busy(b, async () => {
+      await adminApi.changeRole(Number(b.dataset.guardarRol), select.value, b.dataset.rolActual!);
+      await reload();
+      notify("Rol actualizado.");
+    }));
+  });
   list.querySelectorAll<HTMLButtonElement>("[data-desactivar]").forEach((b) => b.addEventListener("click", () => {
     confirming = Number(b.dataset.desactivar);
     void load(section);

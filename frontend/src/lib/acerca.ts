@@ -1,4 +1,3 @@
-// Páginas de «Acerca de nosotros»: las comparten el menú y la portada de la sección.
 export const aboutLinks = [
   { href: "/acerca-de-nosotros/biografia/", name: "Biografía", icon: "book" },
   {

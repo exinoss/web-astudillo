@@ -1,6 +1,6 @@
 # Backend — Carlos Astudillo
 
-API de autenticación y perfil en Bun, Elysia y PostgreSQL. El cliente HTTP de Astro apunta a estas rutas bajo `/api` en el mismo origen. Las tablas de contenido y participación ciudadana se añadirán después.
+API de autenticación, contenido y participación ciudadana en Bun, Elysia y PostgreSQL. El cliente HTTP de Astro apunta a estas rutas bajo `/api` en el mismo origen.
 
 ## Preparación
 
@@ -71,15 +71,17 @@ El maestro se gestiona solo por comando, desde `backend/` y con `DATABASE_URL` c
 - `bun run admin:crear` pide correo, nombre y contraseña (sin mostrarla) y crea el maestro. Se niega si ya existe uno o si el correo ya tiene cuenta.
 - `bun run admin:transferir <correo>` pasa el rol de maestro a una cuenta activa y deja al anterior como admin normal, en una sola transacción. La persona debe estar registrada antes.
 
-`GET /api/admin/usuarios` (`usuarios.ver`) admite `q` (nombre o correo), `rol`, `estado` (`activo` o `bloqueado`) y `pagina`; responde `{ total, pagina, porPagina, usuarios }` con 20 cuentas por página, y cada cuenta trae `rolesAsignables`, `puedeCambiarEstado` y `motivoBloqueo` calculados para quien consulta. `PATCH /api/admin/usuarios/:id/rol` (`usuarios.rol.cambiar`, cuerpo `{ rol, rolAnterior }`) cambia el rol y `PATCH /api/admin/usuarios/:id/estado` (`usuarios.estado.cambiar`, cuerpo `{ estado, estadoAnterior }`) activa o desactiva la cuenta. `rolAnterior`/`estadoAnterior` es lo que mostraba la lista: si otro admin cambió la cuenta mientras tanto responde 409; pedir lo que ya tiene es idempotente; desactivar revoca sus sesiones y el acceso vigente deja de servir de inmediato. La regla está en `src/admin/services/hierarchy.ts` y se repite en `fn_role_change` y `fn_user_state_change` dentro de PostgreSQL; cada cambio queda en `tb_auditoria`. `GET /api/me` incluye `rol`, `esMaestro` y `permisos` para que el frontend muestre solo lo permitido.
+`GET /api/admin/usuarios` (`usuarios.ver`) admite `q` (nombre o correo), `rol`, `estado` (`activo` o `bloqueado`) y `pagina`; responde `{ total, pagina, porPagina, usuarios }` con 20 cuentas por página, y cada cuenta trae `rolesAsignables`, `puedeCambiarEstado` y `motivoBloqueo` calculados para quien consulta. `PATCH /api/admin/usuarios/:id/rol` (`usuarios.rol.cambiar`, cuerpo `{ rol, rolAnterior }`) cambia el rol y `PATCH /api/admin/usuarios/:id/estado` (`usuarios.estado.cambiar`, cuerpo `{ estado, estadoAnterior }`) activa o desactiva la cuenta. `rolAnterior`/`estadoAnterior` es lo que mostraba la lista: si otro admin cambió la cuenta mientras tanto responde 409; pedir lo que ya tiene es idempotente; desactivar revoca sus sesiones y el acceso vigente deja de servir de inmediato. La regla está en `src/admin/services/hierarchy.ts` y se repite en `fn_role_change` y `fn_user_state_change` dentro de PostgreSQL; cada cambio queda en `tb_auditoria`. `GET /api/me` incluye `rol` y `permisos` para que el frontend muestre solo lo permitido.
 
-La API no revela qué cuenta es la maestra: solo el propio maestro recibe `esMaestro` en la lista, el orden no la delata y cualquier bloqueo responde con el mismo mensaje genérico.
+Las respuestas de cuenta y del listado de usuarios no incluyen `esMaestro`, tampoco al consultar como maestro. El indicador `es_maestro` se conserva en PostgreSQL y en las comprobaciones internas de jerarquía; el índice único y la creación o transferencia por comando siguen vigentes. El orden de la lista no identifica al maestro y los bloqueos de jerarquía usan un mensaje genérico.
 
 ## Contenido y publicación
 
 Coadmin y admin editan el contenido desde `/cuenta/panel/` (propuestas y sus KPI, biografía, obras, usuarios) y los textos sueltos sobre el propio sitio, con el modo edición. Todo se guarda como **borrador** en las tablas `tb_textos`, `tb_propuestas`, `tb_propuesta_kpis`, `tb_biografia_hitos`, `tb_obras`, `tb_obra_hitos` y `tb_obra_fotos`; el sitio público no cambia hasta que alguien pulsa «Publicar».
 
 - **Textos**: solo se aceptan las claves del registro `frontend/src/lib/contenido/textos.ts` y texto plano (se rechaza cualquier marca HTML y los caracteres de control). Guardar `null` devuelve el texto al del diseño.
+- **Redes sociales**: claves `enlace.facebook`, `enlace.tiktok` y `enlace.whatsapp`, guardadas como textos (misma versión y publicación). Facebook y TikTok solo aceptan `https://` a su propio dominio, para que nada como `javascript:` llegue a un `href`; WhatsApp acepta el número como se marca (`0985658595`, `+593 98 565 8595`) y lo guarda como `593985658595` para `wa.me`.
+- **Chat** (`PUT /api/admin/contenido/chat`, cuerpo `{ respuestas, version }`): lista completa de preguntas frecuentes (pregunta, palabras clave, respuesta, enlace opcional a una página del sitio y si es botón de respuesta rápida), con la misma versión que la biografía. Va en la publicación como `chat`.
 - **Fotos** (`POST /api/admin/medios`, permiso `medios.subir`): JPEG, PNG o WebP de hasta 8 MB, comprobados por su contenido. `sharp` las gira según su orientación, genera variantes WebP de 480, 960 y 1600 px y **elimina los metadatos EXIF** (incluida la ubicación GPS). Se guardan en `MEDIA_DIR` con un nombre que nunca se reutiliza, y la base guarda solo el nombre y los anchos. En desarrollo el backend las sirve en `/medios/`; en producción las sirve nginx.
 - **Avance de obras**: no se guarda. Se calcula a partir de los hitos (`frontend/src/lib/obras.ts`): 0 % es «Por iniciar», 100 % «Terminada» y el resto «En ejecución».
 - **Versiones y conflictos**: `GET /api/admin/contenido` devuelve también `versiones` (md5 del estado de cada texto, propuesta, obra y de la biografía, calculado en PostgreSQL). Cada `PUT` envía la `version` que cargó: si otra persona guardó antes responde 409 y no escribe; si el contenido ya es el enviado responde 200 sin tocar nada (repetir es seguro). La comparación ocurre dentro de la función SQL, bajo `pg_advisory_xact_lock`.
@@ -87,13 +89,20 @@ Coadmin y admin editan el contenido desde `/cuenta/panel/` (propuestas y sus KPI
 
 - **Contenido vigente** (`GET /api/contenido/publicado`, público): el que se está compilando o, si no hay, el último publicado; 404 si nunca se publicó. Nunca devuelve borradores. El frontend lo lee en `bun run dev` (en cada recarga) y en `bun run build`; sin publicaciones usa la semilla del código.
 
-El **publicador** (`bun run publicador`) toma la publicación en cola y ejecuta `bun run build` del frontend, que lee esa publicación de la API. Compila en `frontend/dist-nueva` y, solo si termina bien, la pasa a `frontend/dist` y la marca como publicada. Si falla, queda como fallida y tanto `dist` como la API siguen con la versión anterior; el panel muestra un mensaje genérico y el registro técnico queda en la base. Variables: `DATABASE_URL`, `FRONTEND_DIR` (por defecto `../frontend`) y `API_PROXY_TARGET` (dirección del backend, por defecto `http://127.0.0.1:3000`).
+El **publicador** (`bun run publicador`) toma la publicación en cola y ejecuta `bun run build` del frontend, que lee esa publicación de la API. Compila en `frontend/dist-nueva` y, solo si termina bien, la pasa a `<SITE_DIR>/dist` y la marca como publicada (si `SITE_DIR` es otro disco, como el volumen de nginx, primero copia la compilación allí; el cambio final siempre es un rename atómico). Si falla, queda como fallida y tanto `dist` como la API siguen con la versión anterior; el panel muestra un mensaje genérico y el registro técnico queda en la base. Variables: `DATABASE_URL`, `FRONTEND_DIR` (por defecto `../frontend`), `SITE_DIR` (por defecto, la carpeta del frontend) y `API_PROXY_TARGET` (dirección del backend, por defecto `http://127.0.0.1:3000`).
 
 En local: backend (`bun run dev`), `bun run publicador` y el frontend (`bun run dev`). Al pulsar «Publicar», cuando el panel la marca como publicada basta recargar la página.
 
-Pendiente para el despliegue del límite de intentos: añadir `limit_req` en `nginx.conf` como primera barrera, y resolver la IP real del visitante. Detrás de Vercel el backend ve la IP de Vercel, así que las claves `ip:` y `par:` agruparían a muchos visitantes (un atacante podría bloquear a otros); en un servidor con nginx directo funciona tal cual.
+## Participación ciudadana
 
-Pendiente para el despliegue: `Dockerfile.publicador`, el servicio `publicador` de compose y el bloque de nginx que sirve `/srv/sitio` responden al diseño anterior (versiones en `sitio/actual`) y deben revisarse al desplegar, según dónde viva el frontend.
+Alertas, sugerencias y chat requieren sesión (permiso `participacion.enviar`, que tienen todas las cuentas). Sin sesión responden 401 y el sitio guarda lo escrito para enviarlo tras iniciar sesión.
+
+- **Alertas** (`POST /api/participacion/alertas`, multipart): `idempotencia` (UUID que genera el navegador), `tipo` (agua, basura, alumbrado, baches, seguridad u otro), `sector`, `referencia` opcional, `descripcion` (mínimo 10 caracteres) y `foto` opcional de hasta 5 MB. Repetir el envío con la misma `idempotencia` devuelve la misma alerta, también si llegan a la vez (`ON CONFLICT` en la base). La foto pasa por el mismo proceso que las del panel (formato por contenido, sin EXIF ni GPS) y se guarda en **`MEDIA_PRIVADA_DIR`**, que nginx no sirve: solo la entrega `GET /api/participacion/fotos/:archivo` a quien envió la alerta o a quien tiene `participacion.ver`; para el resto responde 404. Su nombre sale del SHA-256 de la imagen, así la misma foto no se guarda dos veces.
+- **Sugerencias** (`POST /api/participacion/sugerencias`, JSON): `idempotencia`, `tema` (slug de una propuesta u `otro`) y `mensaje` (mínimo 15 caracteres).
+- **Historial**: `GET /api/participacion/alertas/mias` y `…/sugerencias/mias` devuelven las últimas 20 propias con su estado.
+- **Chat** (`POST /api/participacion/chat`, `{ mensaje }`): elige la pregunta frecuente **publicada** cuyas palabras clave más aparecen en el mensaje (sin tildes ni mayúsculas; una palabra clave de 4 letras o más vale como raíz). Si ninguna coincide responde con un texto genérico y anota la pregunta en `tb_chat_sin_respuesta`, que el panel muestra (`GET /api/admin/chat/sin-respuesta`, `DELETE …/:clave` para descartar).
+- **Límites** en memoria por cuenta: 5 alertas y 5 sugerencias cada 10 minutos y 30 mensajes de chat; luego 429 con `reintentarEn`.
+- **Revisión** (panel): `GET /api/admin/participacion/{alertas|sugerencias}?estado=&pagina=` (`participacion.ver`: analista, coadmin y admin) devuelve 20 por página con autor y el conteo por estado. `PATCH /api/admin/participacion/{alertas|sugerencias}/:id/estado` (`participacion.gestionar`: coadmin y admin), cuerpo `{ estado, estadoAnterior }`: `recibida`, `en_revision` o `atendida`; si otra persona lo cambió responde 409, repetir es idempotente y cada cambio queda en `tb_auditoria`.
 ## Pruebas
 
 Configurar `TEST_DATABASE_URL` apuntando exclusivamente a una base PostgreSQL **desechable** y correr `bun run check` y `bun run test` desde `backend/` (el script da 20 s por prueba: cada intento de acceso calcula un hash Argon2id, lento a propósito). Las pruebas de API aplican las migraciones y borran sus filas iniciales; no apuntarlas a una base con datos reales. SMTP y Google se sustituyen por dobles de prueba. La entrega SMTP real y el acceso con un ID token real requieren la configuración externa anterior.
@@ -102,42 +111,6 @@ Las reglas locales para Codex y Claude están en `AGENTS.md` y `CLAUDE.md` en la
 
 ## Despliegue
 
-Los archivos `Dockerfile`, `docker-compose.yml`, `nginx.conf` y `Jenkinsfile`
-están en `backend/`. Se conserva un único `.env.example`; el `.env` real no
-se incluye en Git ni en la imagen Docker.
+Todo lo de producción (VPS con Docker detrás de Cloudflare: PostgreSQL, backend, publicador y nginx) está en [`server-produccion/`](../server-produccion/README.md). Para probar en otra PC con Windows, [`server-local/`](../server-local/README.md).
 
-1. En Jenkins, configurar **Pipeline from SCM** con Script Path
-   `backend/Jenkinsfile`. El checkout conserva el repositorio completo; el
-   pipeline ejecuta los comandos dentro de `backend/`.
-2. Crear la credencial **Secret file** `astudillo-backend-env` con tu `.env`
-   de producción. Jenkins copia ese archivo a `backend/.env` durante el job y
-   elimina la copia al terminar, igual que en tu otro proyecto.
-   Usar `DATABASE_URL` accesible desde Docker, `APP_ORIGIN` con el origen HTTPS
-   del frontend, el ID real de Google y el bloque SMTP de producción.
-   `localhost` en el contenedor no apunta a PostgreSQL ni Mailpit del host.
-3. Ejecutar el job en el Docker del servidor del ejemplo. Compose utiliza el
-   volumen externo `nginxfiles` en lectura y publica **9617:443**. Nginx usa
-   `ssl/__uteq_edu_ec2026Enero_cert_out.pem` y `ssl/__uteq_edu_ec.key` dentro
-   de ese volumen, para `aplicaciones.uteq.edu.ec`.
-
-La construcción verifica los tipos con TypeScript y ejecuta `bun test tests/proxy.test.ts`;
-si fallan, no se construye la imagen del backend. Jenkins despliega y espera
-el healthcheck, luego verifica Nginx y `/api/health` por HTTPS interno. Las
-pruebas completas de autenticación se ejecutan aparte como se describe en
-**Pruebas**, con una base desechable. El pipeline no crea bases ni ejecuta
-migraciones de producción: usa la base que ya migraste.
-
-Comprobar externamente `https://aplicaciones.uteq.edu.ec:9617/api/health` para
-validar también el dominio y el certificado; la comprobación HTTPS interna
-omite esa validación porque usa la dirección loopback.
-
-**Sitio y fotos.** Compose también levanta el servicio `publicador` (`Dockerfile.publicador`, construido desde la raíz del repositorio porque necesita `frontend/`). Comparte con nginx dos volúmenes: `sitio`, donde nginx sirve `actual` en `/`, y `medios`, las fotos subidas, que también escribe el backend. nginx admite subidas de hasta 10 MB solo en `/api/admin/medios`; el resto conserva 1 MB. El frontend toma `PUBLIC_GOOGLE_CLIENT_ID` de `GOOGLE_CLIENT_ID` del `.env`. En el primer despliegue el sitio está vacío hasta la primera publicación: crea el maestro (`bun run admin:crear`), entra al panel y pulsa «Publicar».
-
-Con el sitio servido por nginx, lo que se publica desde el panel se ve en ese servidor. Una copia en Vercel no se actualiza con las publicaciones del panel. Si se usa Vercel, configurar la reescritura de `/api/:path*` hacia
-`https://aplicaciones.uteq.edu.ec:9617/api/:path*` y el mismo ID Google en
-`PUBLIC_GOOGLE_CLIENT_ID`. Los enlaces de correo usan `APP_ORIGIN`, por lo
-que el flujo completo requiere el frontend publicado en ese origen.
-
-Los límites por IP detrás de Vercel pueden agrupar visitantes por la IP de
-salida del proxy. La identificación individual requiere configurar una
-cadena de proxies confiable antes de depender de ese límite por visitante.
+La imagen del backend (`Dockerfile`) verifica los tipos y ejecuta las pruebas que no necesitan base antes de construirse. Las migraciones no se aplican solas: el README de producción indica cuándo ejecutar `bun run db:migrate`.

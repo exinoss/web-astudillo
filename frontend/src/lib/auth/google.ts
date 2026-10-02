@@ -69,7 +69,6 @@ export async function showGoogleButton(
   observers.set(element, observer);
 }
 
-/** Desactiva la selección automática de la cuenta Google anterior. */
 export function clearGoogleSelection() {
   window.google?.accounts.id.disableAutoSelect();
 }

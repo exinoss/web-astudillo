@@ -6,7 +6,6 @@ import { mostrarCarga } from '../lib/animaciones';
 const form = document.querySelector<HTMLFormElement>('#register-form')!;
 const status = document.querySelector<HTMLElement>('#account-status')!;
 
-// Valida los datos y solicita el enlace de verificación por correo.
 form.addEventListener('submit', async event => {
   event.preventDefault();
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;

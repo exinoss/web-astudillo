@@ -1,3 +1,4 @@
+import { vigilarCambios } from "../../lib/cambios";
 import { adminApi, type DraftProposal } from "../../lib/data/http/admin-api";
 import { busy, card, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, notify, reloadDraft, reloadPending, state, value } from "./ui";
 
@@ -16,7 +17,6 @@ const kpiRow = (k: { etiqueta: string; valor: string }, i: number, total: number
     </div>
   </div>`;
 
-/** Lee del formulario las cifras tal como están escritas ahora. */
 const readKpis = (form: HTMLElement) => [...form.querySelectorAll<HTMLElement>(".kpi")].map((row) => ({
   etiqueta: value(row, '[name="etiqueta"]'), valor: value(row, '[name="valor"]'),
 }));
@@ -83,12 +83,16 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
     [list[i], list[j]] = [list[j], list[i]];
     redraw(list);
   }));
+  const read = () => ({
+    nombre: value(formEl, "#propuesta-nombre"), categoria: value(formEl, "#propuesta-categoria"),
+    introduccion: value(formEl, "#propuesta-intro"), kpis: readKpis(formEl),
+  });
+  const saved = proposals.find((p) => p.slug === current.slug)!;
+  vigilarCambios(formEl, formEl.querySelector("button[type=submit]")!,
+    { nombre: saved.nombre, categoria: saved.categoria, introduccion: saved.introduccion, kpis: saved.kpis }, read);
   formEl.addEventListener("submit", (e) => {
     e.preventDefault();
-    const body = {
-      nombre: value(formEl, "#propuesta-nombre"), categoria: value(formEl, "#propuesta-categoria"),
-      introduccion: value(formEl, "#propuesta-intro"), kpis: readKpis(formEl),
-    };
+    const body = read();
     if (!body.nombre || !body.categoria || !body.introduccion || body.kpis.some((k) => !k.etiqueta || !k.valor))
       return notify("Completa todos los campos, también etiqueta y cifra de cada KPI.", true);
     void busy(formEl.querySelector("button[type=submit]"), async () => {

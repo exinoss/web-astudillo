@@ -8,9 +8,11 @@ import carlos from "../assets/carlos-vertical.png";
 import carlos2 from "../assets/carlos2.jpg";
 import carlos3 from "../assets/carlos3.jpg";
 import { contentRepository } from "../lib/data";
+import { enlaceRed } from "../lib/contenido";
 
 const proposals = await contentRepository.getProposals();
 const citizenLinks = await contentRepository.getCitizenLinks();
+const [facebookUrl, tiktokUrl, whatsappUrl] = await Promise.all([enlaceRed("facebook"), enlaceRed("tiktok"), enlaceRed("whatsapp")]);
 ---
 
 <Layout>
@@ -126,21 +128,21 @@ const citizenLinks = await contentRepository.getCitizenLinks();
             Number(a.slug === "alerta-ciudadana"),
         )
         .map((p) => {
-          const primary = p.slug === "alerta-ciudadana";
+          const tone = { "alerta-ciudadana": "rojo", sugerencias: "amarillo" }[p.slug];
           return (
             <a
               class:list={[
                 "citizen-link flex min-h-[70px] items-center gap-[15px] [transition:color_0.18s] max-desktop-sm:gap-2.5 max-tablet:min-h-[80px] max-tablet:gap-[18px]",
-                primary
-                  ? "rounded-[4px] bg-accent p-[18px] text-primary hover:bg-base-100 hover:text-primary max-tablet:mb-2.5"
-                  : "[border-left:1px_solid_#ffffff30] pl-6 hover:text-accent max-nav:pl-5 max-tablet:[border-left:0] max-tablet:[border-top:1px_solid_#ffffff30] max-tablet:py-[18px] max-tablet:pl-0",
+                tone === "rojo" && "rounded-[4px] bg-campaign-red p-[18px] text-primary-content hover:bg-[#b80e18] max-tablet:mb-2.5",
+                tone === "amarillo" && "rounded-[4px] bg-accent p-[18px] text-primary hover:bg-base-100 hover:text-primary max-tablet:mb-2.5",
+                !tone && "[border-left:1px_solid_#ffffff30] pl-6 hover:text-accent max-nav:pl-5 max-tablet:[border-left:0] max-tablet:[border-top:1px_solid_#ffffff30] max-tablet:py-[18px] max-tablet:pl-0",
               ]}
               href={`/ciudadania/${p.slug}/`}
             >
               <span
                 class:list={[
                   "citizen-icon",
-                  primary ? "text-primary" : "text-accent",
+                  tone === "rojo" ? "text-primary-content" : tone ? "text-primary" : "text-accent",
                 ]}
               >
                 <Icon name={p.icon} size={26} />
@@ -150,7 +152,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
                 <small
                   class:list={[
                     "mt-1.5 block max-w-[155px] text-[0.78rem] leading-[1.6] max-nav:max-w-none max-tablet:mt-1",
-                    primary ? "text-primary" : "text-footer-muted",
+                    tone === "rojo" ? "text-primary-content" : tone ? "text-primary" : "text-footer-muted",
                   ]}
                 >
                   {p.description}
@@ -330,7 +332,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
               icon: "facebook",
               handle: "inicio.contacto.facebook.usuario",
               copy: "inicio.contacto.facebook.texto",
-              url: "https://www.facebook.com/carlosastudillo7",
+              url: facebookUrl,
               action: "Ir a Facebook",
             },
             {
@@ -338,7 +340,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
               icon: "tiktok",
               handle: "inicio.contacto.tiktok.usuario",
               copy: "inicio.contacto.tiktok.texto",
-              url: "https://www.tiktok.com/@carlosastudillo01",
+              url: tiktokUrl,
               action: "Ver en TikTok",
             },
           ] as const).map((s) => (
@@ -376,7 +378,7 @@ const citizenLinks = await contentRepository.getCitizenLinks();
         </div>
         <a
           class="whatsapp-note mt-6 flex items-center gap-4 rounded-lg border border-[#06317625] bg-base-100 p-5 text-primary [transition:border-color_0.18s] hover:border-primary max-tablet:flex-wrap max-tablet:p-[18px]"
-          href="https://wa.me/593961368214"
+          href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Escribir por WhatsApp a Carlos Astudillo (abre en otra pestaña)"

@@ -11,7 +11,6 @@ export const tokenHash = (value: string) => createHash("sha256").update(value).d
 export const normalizeEmail = (value: string) => value.trim().toLowerCase();
 export type { Account, GoogleIdentity, Security } from './security/types';
 
-/** Crea las operaciones JWT de acceso y verificación de credenciales Google. */
 export function createSecurity(config: Config): SecurityContract {
   const key = new TextEncoder().encode(config.jwtSecret);
   const googleKeys = createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));

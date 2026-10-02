@@ -15,5 +15,5 @@ export function cookieOptions(config: Config, seconds: number, path: string) {
 /** Proyecta los campos de cuenta que puede recibir el cliente. */
 export const publicAccount = (user: import("./security").Account) => ({
   id: user.id_usuario, correo: user.correo, nombresCompletos: user.nombres_completos,
-  direccion: user.direccion, rol: user.rol, esMaestro: user.es_maestro,
+  direccion: user.direccion, rol: user.rol,
 });

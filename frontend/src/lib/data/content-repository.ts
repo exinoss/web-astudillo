@@ -8,4 +8,6 @@ export interface ContentRepository {
   getWorks(): Promise<WorkProgress[]>;
   /** Textos del sitio cambiados desde el panel; lo que no esté aquí usa el valor de `lib/contenido.ts`. */
   getTexts(): Promise<Record<string, string>>;
+  /** Preguntas del chat marcadas como respuesta rápida, en orden. */
+  getChatQuickReplies(): Promise<string[]>;
 }

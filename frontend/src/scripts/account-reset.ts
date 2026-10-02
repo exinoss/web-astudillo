@@ -12,7 +12,6 @@ if (!token) {
   showStatus(status, 'El enlace para restablecer la contraseña no es válido.', true);
 }
 
-// Envía la contraseña nueva con el token de un solo uso del enlace.
 form.addEventListener('submit', async event => {
   event.preventDefault();
   if (!token) return;

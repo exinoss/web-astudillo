@@ -1,5 +1,3 @@
-// Límite de intentos en los formularios de cuenta: botón gris con candado y cuenta atrás, y un aviso
-// con cuánto falta. Los estilos del candado están en styles/bloqueo.css (nodos creados aquí).
 import { ApiError } from '../data/http/api-client';
 import { errorText, showStatus, waitText } from './page';
 
@@ -43,7 +41,6 @@ function lockButton(button: HTMLButtonElement, seconds: number, onEnd: () => voi
   tick();
 }
 
-/** Enlace a restablecer la contraseña con el correo ya escrito. */
 function recoveryLink(text: string, correo: string, alone: boolean) {
   const link = document.createElement('a');
   link.href = `/cuenta/recuperar/${correo ? `?correo=${encodeURIComponent(correo)}` : ''}`;

@@ -6,7 +6,6 @@ import type { UserRow } from '../../db/types';
 import { ApiError, publicAccount } from '../../http';
 import type { ProfileUpdateInput } from '../types';
 
-/** Crea lectura y actualización de perfil protegidas por permisos. */
 export function createProfile(sql: SQL, authorization: Authorization) {
   return {
     /** Devuelve datos públicos del perfil e indicadores de métodos de acceso. */
