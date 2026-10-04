@@ -4,7 +4,8 @@ import { defineConfig } from '@playwright/test';
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:4329';
 export default defineConfig({
   testDir: './tests',
-  use: { baseURL, channel: 'msedge', headless: true },
+  // GitHub Actions (CI=true) no trae Edge: usa el Chromium de Playwright.
+  use: { baseURL, channel: process.env.CI ? undefined : 'msedge', headless: true },
   webServer: process.env.PLAYWRIGHT_EXTERNAL_SERVER === '1' ? undefined : {
     command: 'bunx astro build --mode test --outDir dist-test && bunx astro preview --outDir dist-test --port 4329 --ignore-lock',
     url: baseURL,

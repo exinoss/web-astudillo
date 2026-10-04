@@ -1,72 +1,76 @@
 # Despliegue en producción (VPS + Cloudflare)
 
-Todo el sitio corre en un VPS (Hostinger) con Docker. Cloudflare va delante como proxy y gestiona el dominio.
+VPS de Hostinger con Docker Compose, Cloudflare como DNS y proxy, y despliegue desde GitHub Actions. El dominio sigue registrado en Hostinger. Los pasos completos, desde cero, están en [la guía de despliegue](../docs/guia-despliegue-hostinger.md).
 
 ```
 Visitante ──HTTPS──▶ Cloudflare ──HTTPS (certificado de origen)──▶ nginx ─┬─ /            sitio compilado (volumen sitio)
                                                                           ├─ /medios/     fotos del panel (volumen medios)
                                                                           └─ /api/        backend ── PostgreSQL
-                                                         publicador ──▶ compila el sitio en cada «Publicar» del panel
+                                                         publicador ──▶ compila el sitio en cada «Publicar» y con cada versión nueva
+GitHub Actions ──pruebas──▶ imágenes en GHCR (etiqueta = SHA) ──SSH por Tailscale──▶ desplegar.sh <sha>
 ```
 
 | Archivo | Para qué |
 | --- | --- |
-| `compose.yml` | Los cuatro contenedores: `db`, `backend`, `publicador` y `nginx` |
+| `compose.yml` | `db`, `backend`, `publicador`, `nginx` y `migrar` (solo se lanza al desplegar) |
+| `desplegar.sh` | Instala o actualiza una versión: imágenes, respaldo, migración, arranque y comprobaciones |
+| `postgres/roles.sh` | Crea los usuarios de PostgreSQL y la base en el primer arranque |
 | `Dockerfile.publicador` | Imagen que compila el frontend (también la usa `server-local/`) |
 | `nginx/default.conf` | Sitio, API, fotos, límites de subida y de peticiones al acceso |
+| `nginx/cabeceras.conf` | Cabeceras de seguridad comunes |
 | `nginx/cloudflare.conf` | Recupera la IP real del visitante (solo si la petición viene de Cloudflare) |
 | `.env.example` | Variables que hay que completar en `.env` |
 
 **¿Por qué nginx si ya está Cloudflare?** Cloudflare solo es el proxy y la caché que está delante. En el VPS hace falta alguien que sirva los archivos del sitio y las fotos, envíe `/api/` al backend, presente el certificado y limite el tamaño de las subidas.
 
-## Primera instalación
+## PostgreSQL
 
-1. **VPS**: Ubuntu 24.04 con Docker ([instrucciones oficiales](https://docs.docker.com/engine/install/ubuntu/)). Cortafuegos: solo SSH, 80 y 443.
-   ```bash
-   sudo ufw allow OpenSSH && sudo ufw allow 80/tcp && sudo ufw allow 443/tcp && sudo ufw enable
-   ```
-2. **Código**: `git clone <repositorio> astudillo && cd astudillo/server-produccion`.
-3. **Variables**: `cp .env.example .env` y completarlo (dominio, clave de PostgreSQL, `JWT_SECRET`, Google y SMTP).
-4. **Cloudflare**:
-   - DNS: registro `A` del dominio (y de `www` si se usa) con la IP del VPS, con la nube **naranja** (proxy activado).
-   - SSL/TLS → modo **Full (strict)**.
-   - SSL/TLS → Origin Server → *Create certificate*. Guardar el certificado como `certificados/origen.pem` y la clave como `certificados/origen.key` (carpeta ignorada por Git). Dura 15 años, así que no hay que renovarlo.
-   - Reglas de caché: que no se guarde en caché `/api/*`. nginx ya envía `no-store` en la API.
-5. **Google Auth Platform**: añadir `https://DOMINIO` como origen autorizado del cliente web.
-6. **Levantar**:
-   ```bash
-   docker compose up -d --build db
-   docker compose run --rm backend bun run db:migrate
-   docker compose up -d --build
-   docker compose exec backend bun run admin:crear
-   ```
-   El sitio queda vacío hasta la primera publicación: entrar al panel con el admin maestro y pulsar «Publicar».
-7. **Comprobar**: `https://DOMINIO/api/health` responde `{"ok":true}`.
+Corre en el contenedor `db` (imagen oficial `postgres:17-alpine`), con los datos en el volumen `astudillo_pgdata` y sin ningún puerto publicado: solo lo alcanzan los demás contenedores. La autenticación es por contraseña (SCRAM).
 
-## Actualizar a una versión nueva
+| Usuario | Lo usa | Puede |
+| --- | --- | --- |
+| `postgres` | Nadie de forma automática; mantenimiento y `desplegar.sh` para el respaldo | Todo (superusuario) |
+| `astudillo_migra` | `migrar` | Dueño de la base `astudillo`: crea y cambia tablas y funciones |
+| `astudillo_app` | `backend` | Leer y escribir datos y ejecutar funciones; no puede cambiar el esquema |
+| `astudillo_pub` | `publicador` | Solo tomar y cerrar publicaciones |
+
+Cada uno tiene su clave en `.env`. `postgres/roles.sh` las aplica solo la primera vez que arranca la base (volumen vacío); los privilegios los vuelve a aplicar cada migración (`backend/database/permisos.sql`).
+
+Cambiar una clave más adelante:
 
 ```bash
-cd astudillo && git pull
-cd server-produccion
-docker compose run --rm backend bun run db:migrate   # aplica migraciones nuevas, si las hay
-docker compose up -d --build
+cd /opt/astudillo/repo/server-produccion
+docker compose exec -T db psql -U postgres -c "ALTER ROLE astudillo_app PASSWORD 'clave-nueva'"
+# Poner la misma clave en .env (DB_APP_PASSWORD) y recrear quien la usa:
+docker compose up -d backend
 ```
 
-Lo publicado desde el panel no se pierde: vive en la base y en el volumen `sitio`. Si cambió el código del sitio, basta con volver a pulsar «Publicar» para recompilarlo con el código nuevo.
+## Desplegar y volver atrás
 
-## Respaldos
-
-La base y las fotos están en volúmenes de Docker (`astudillo_pgdata`, `astudillo_medios`, `astudillo_privados`). Respaldo manual de la base:
+Lo hace GitHub Actions con cada push a `main`. A mano, como el usuario `despliegue`:
 
 ```bash
-docker compose exec -T db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' | gzip > respaldo-$(date +%F).sql.gz
+bash /opt/astudillo/repo/server-produccion/desplegar.sh <sha-completo>
 ```
 
-Conviene copiarlo fuera del VPS. Las fotos se respaldan copiando los volúmenes (`docker run --rm -v astudillo_medios:/v -v "$PWD":/r alpine tar czf /r/medios.tgz -C /v .`).
+Para volver a una versión anterior: *Actions* → *Pruebas y despliegue* → *Run workflow* con el SHA (los instalados están en `/opt/astudillo/versiones`). Solo si esa versión es compatible con la base ya migrada; nunca se revierte la base de forma automática.
+
+`desplegar.sh` guarda un respaldo de la base antes de cada migración en `/opt/astudillo/respaldos/` (los 5 últimos). Al arrancar una versión nueva, el publicador recompila lo último publicado con el código nuevo; los borradores no se publican.
+
+No usar nunca `docker compose down -v`: borra la base y las fotos.
+
+## Respaldos manuales
+
+```bash
+docker compose exec -T db pg_dump -U postgres -Fc astudillo > respaldo-$(date +%F).dump
+docker run --rm -v astudillo_medios:/v -v "$PWD":/r alpine tar czf /r/medios.tgz -C /v .
+docker run --rm -v astudillo_privados:/v -v "$PWD":/r alpine tar czf /r/privados.tgz -C /v .
+```
+
+Copiarlos fuera del VPS. El respaldo automático externo está en la fase 9 de la guía.
 
 ## Notas
 
-- **IP real**: nginx solo cree la cabecera `CF-Connecting-IP` si la conexión llega desde un rango de Cloudflare (`nginx/cloudflare.conf`). Así el límite de intentos del backend cuenta por visitante. Si Cloudflare publica rangos nuevos en <https://www.cloudflare.com/ips/>, hay que añadirlos ahí.
+- **IP real**: nginx solo cree la cabecera `CF-Connecting-IP` si la conexión llega desde un rango de Cloudflare (`nginx/cloudflare.conf`). Así el límite de intentos del backend cuenta por visitante. Si Cloudflare publica rangos nuevos en <https://www.cloudflare.com/ips/>, hay que añadirlos ahí y en el cortafuegos de Hostinger.
 - **Fotos de las alertas**: están en el volumen `privados`, que nginx no monta. Solo las entrega la API, a su autor y a quien revisa la participación.
-- **CI/CD**: no hay ninguno configurado. Cuando se elija una herramienta, solo tiene que ejecutar por SSH los comandos de «Actualizar».
 - **Probar en una PC con Windows**: usar `server-local/` (no necesita Cloudflare ni certificados).

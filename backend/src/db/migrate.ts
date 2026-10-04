@@ -15,6 +15,7 @@ const journalPath = new URL('../../drizzle/meta/_journal.json', import.meta.url)
 const scripts = [
   new URL('../../database/fn.sql', import.meta.url),
   new URL('../../database/datains.sql', import.meta.url),
+  new URL('../../database/permisos.sql', import.meta.url),
 ];
 const modelTables = [
   tbRoles, tbPermisos, tbRolPermisos, tbUsuarios, tbIdentidadesAutenticacion,

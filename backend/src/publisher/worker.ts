@@ -8,6 +8,7 @@ import { join, resolve } from 'node:path';
 import { callPg } from '../db/call';
 
 const POLL_MS = 3000;
+const RETRY_MS = 60_000;
 const LOG_LINES = 30;
 
 const url = process.env.DATABASE_URL;
@@ -15,6 +16,8 @@ if (!url) throw new Error('Falta DATABASE_URL');
 const frontendDir = resolve(process.env.FRONTEND_DIR ?? '../frontend');
 // dist, dist-nueva y dist-anterior viven en el mismo disco o volumen: el cambio final es un rename atómico.
 const siteDir = resolve(process.env.SITE_DIR ?? frontendDir);
+// Versión del código (SHA de la imagen). server-produccion/desplegar.sh espera a ver este valor en `version`.
+const appVersion = process.env.APP_VERSION?.trim();
 const sql = new SQL(url);
 
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
@@ -22,6 +25,7 @@ const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 const dist = join(siteDir, 'dist');
 const next = join(siteDir, 'dist-nueva');
 const previous = join(siteDir, 'dist-anterior');
+const versionFile = join(siteDir, 'version');
 // Astro mueve archivos desde su caché (frontend/.astro) a la salida: compila en el mismo disco que ella.
 const buildDir = join(frontendDir, 'dist-nueva');
 
@@ -38,18 +42,15 @@ async function swap() {
 /**
  * Compila en `dist-nueva` (Astro vacía su carpeta de salida al empezar) y solo si sale bien la pasa a `dist`.
  * Si el sitio se sirve desde otro disco (el volumen de nginx), primero copia la compilación a ese disco.
+ * Devuelve el final del registro si la compilación falla.
  */
-async function build(id: number) {
-  const started = Date.now();
+async function compile(): Promise<string | null> {
   await rm(buildDir, { recursive: true, force: true });
   const proc = Bun.spawn(['bun', 'run', 'build', '--outDir', buildDir], { cwd: frontendDir, stdout: 'pipe', stderr: 'pipe' });
   const [out, err, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
   if (code !== 0) {
     await rm(buildDir, { recursive: true, force: true });
-    const log = `${out}\n${err}`.trim().split('\n').slice(-LOG_LINES).join('\n');
-    await callPg(sql, 'publicationFinish', [id, false, log]);
-    console.error(`Publicación ${id} falló (código ${code}):\n${log}`);
-    return;
+    return `Código ${code}\n${`${out}\n${err}`.trim().split('\n').slice(-LOG_LINES).join('\n')}`;
   }
   if (buildDir !== next) {
     await rm(next, { recursive: true, force: true });
@@ -57,8 +58,36 @@ async function build(id: number) {
     await rm(buildDir, { recursive: true, force: true });
   }
   await swap();
+  if (appVersion) await Bun.write(versionFile, appVersion);
+  return null;
+}
+
+async function build(id: number) {
+  const started = Date.now();
+  const log = await compile();
+  if (log) {
+    await callPg(sql, 'publicationFinish', [id, false, log]);
+    console.error(`Publicación ${id} falló:\n${log}`);
+    return;
+  }
   await callPg(sql, 'publicationFinish', [id, true, `Compilada en ${Math.round((Date.now() - started) / 1000)} s`]);
   console.log(`Publicación ${id} compilada en ${dist}`);
+}
+
+let retryAt = 0;
+
+/**
+ * Con código nuevo, recompila lo último publicado (la API lo entrega mientras no haya otra en curso).
+ * No crea publicaciones ni auditoría; si falla, `dist` sigue intacto y se reintenta más tarde.
+ */
+async function rebuildIfOutdated() {
+  if (!appVersion || Date.now() < retryAt) return;
+  if (await Bun.file(versionFile).text().catch(() => '') === appVersion) return;
+  const log = await compile().catch((error: unknown) => error instanceof Error ? error.message : String(error));
+  if (log) {
+    retryAt = Date.now() + RETRY_MS;
+    console.error(`Reconstrucción de la versión ${appVersion} falló:\n${log}`);
+  } else console.log(`Sitio reconstruido con la versión ${appVersion}`);
 }
 
 await callPg(sql, 'publicationRecover');
@@ -67,6 +96,7 @@ for (;;) {
   try {
     const [job] = await callPg<{ id_publicacion: number }>(sql, 'publicationClaim');
     if (!job) {
+      await rebuildIfOutdated();
       await wait(POLL_MS);
       continue;
     }

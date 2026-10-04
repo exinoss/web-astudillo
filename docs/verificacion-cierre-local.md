@@ -18,7 +18,7 @@ El informe registra cero errores JavaScript, cero desbordamientos horizontales y
 
 Las comparaciones originales y la respuesta **«Apruebo todas las correcciones visuales»** precedieron a su implementación. La ampliación de ejemplos dentro de campos, bordes y foco se presentó en `controles.html` y recibió **«si apruebo»**. Se aplicó en cuenta, participación y panel con tokens y utilidades de Tailwind, manteniendo tamaños, posiciones, textos y aspecto de la casilla. Las seis capturas finales de registro y alerta, en móvil y escritorio y modos normal, gris y negativo, tienen las mismas dimensiones y **cero píxeles distintos** respecto a la propuesta aprobada.
 
-Tras esa aplicación se repitieron `bun run check`, la compilación normal, la compilación de pruebas y las **79 pruebas Playwright**, con resultado correcto. El backend no cambió en esta ampliación; su resultado de 69 pruebas corresponde a la ejecución del bloque anterior. El punto 33 queda cerrado en local. Evidencia en `design/propuestas/cierre-plan/`: `propuestas.html`, `controles.html`, `auditoria-controles-final.json`, `comparacion-implementada.json`, registros y capturas finales.
+Tras esa aplicación se repitieron `bun run check`, la compilación normal, la compilación de pruebas y las **79 pruebas Playwright**, con resultado correcto. El backend no cambió en esta ampliación; su resultado de 69 pruebas corresponde a la ejecución del bloque anterior. El punto 33 queda cerrado en local. Evidencia en `design/propuestas/cierre-plan/`: `propuestas.html`, `controles.html`, `auditoria-controles-final.json`, `comparacion-implementada.json` y capturas finales.
 
 ## Contenido y buscadores
 

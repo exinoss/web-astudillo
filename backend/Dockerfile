@@ -24,7 +24,7 @@ COPY --from=checked /app/src ./src
 # Imágenes incrustadas en los correos de cuenta (src/mail/plantilla.ts).
 COPY assets ./assets
 COPY drizzle ./drizzle
-COPY database/fn.sql database/datains.sql ./database/
+COPY database ./database
 ENV NODE_ENV=production
 # Carpetas de los volúmenes de fotos (públicas y privadas): si no existen con este dueño, Docker las crea como root.
 RUN mkdir -p /app/medios /app/medios-privados && chown bun:bun /app/medios /app/medios-privados
