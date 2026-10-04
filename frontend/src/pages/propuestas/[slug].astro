@@ -28,7 +28,7 @@ const { proposal, work } = Astro.props;
 const fila = "mt-3.5 grid grid-cols-2 gap-[18px] max-tablet:grid-cols-1 max-tablet:gap-3 [&>.model-3d]:mt-0";
 ---
 
-<Layout title={`${proposal.name} · Carlos Astudillo`}>
+<Layout title={`${proposal.name} · Carlos Astudillo`} description={`${proposal.name}: ${proposal.intro}`}>
   <Breadcrumb
     items={[
       { label: "Inicio", href: "/" },

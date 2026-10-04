@@ -7,6 +7,7 @@ import type { Profile } from '../lib/data/auth-repository';
 import { ApiError } from '../lib/data/http/api-client';
 import { mostrarCarga } from '../lib/animaciones';
 import { avisoDeAcceso, destinoTrasAcceso } from '../lib/participacion/borrador';
+import { acceptanceOf } from '../lib/auth/acceptance';
 
 const loginPanel = document.querySelector<HTMLElement>('#login-panel')!;
 const profilePanel = document.querySelector<HTMLElement>('#profile-panel')!;
@@ -19,12 +20,17 @@ const changePasswordForm = document.querySelector<HTMLFormElement>('#change-pass
 const changePasswordPanel = document.querySelector<HTMLElement>('#change-password-panel')!;
 const status = document.querySelector<HTMLElement>('#account-status')!;
 const loginGoogle = document.querySelector<HTMLElement>('#google-login-button')!;
+const googleRegistration = document.querySelector<HTMLElement>('#google-registration-panel')!;
+const googleRegistrationForm = document.querySelector<HTMLFormElement>('#google-registration-form')!;
 const passwordGoogle = document.querySelector<HTMLElement>('#google-password-button')!;
 const passwordGoogleStep = document.querySelector<HTMLElement>('#google-password-step')!;
 const passwordGoogleUnavailable = document.querySelector<HTMLElement>('#google-password-unavailable')!;
 const loading = document.querySelector<HTMLElement>('#account-loading')!;
 let current: Profile | undefined;
 let addingPassword = false;
+let savingProfile = false;
+let googleCredential: string | undefined;
+let signingWithGoogle = false;
 
 /** Todo inicio de sesión correcto lleva a la portada o, si quedó un envío a medias, a su formulario. */
 const afterLogin = () => location.assign(destinoTrasAcceso());
@@ -51,6 +57,8 @@ function showAccountError(error: unknown) {
 /** Prepara el acceso por contraseña y Google cuando no hay perfil cargado. */
 async function showLogin() {
   current = undefined;
+  googleCredential = undefined;
+  googleRegistration.hidden = true;
   setAccountNav(false);
   loading.hidden = true;
   heading('Mi cuenta', 'Accede para gestionar tus datos y participar.');
@@ -61,13 +69,25 @@ async function showLogin() {
   loginPanel.hidden = false;
   try {
     await showGoogleButton(loginGoogle, async credential => {
+      if (signingWithGoogle) return;
+      signingWithGoogle = true;
       const terminarCarga = mostrarCarga(loginPanel);
       try {
-        await authRepository.googleLogin(credential);
-        afterLogin();
+        const pending = await authRepository.googleLogin(credential);
+        if (pending) {
+          googleCredential = credential;
+          googleRegistrationForm.reset();
+          status.hidden = true;
+          loginPanel.hidden = true;
+          googleRegistration.hidden = false;
+          document.querySelector<HTMLElement>('#google-registration-name')!.textContent = pending.nombresCompletos ?? '';
+          document.querySelector<HTMLElement>('#google-registration-email')!.textContent = pending.correo;
+          googleRegistrationForm.querySelector<HTMLInputElement>('input')!.focus();
+        } else afterLogin();
       } catch (error) {
         showAccountError(error);
       } finally {
+        signingWithGoogle = false;
         terminarCarga();
       }
     });
@@ -84,6 +104,7 @@ async function showProfile(profile: Profile) {
   loading.hidden = true;
   heading('Mi perfil', 'Actualiza tus datos y protege el acceso a tu cuenta.');
   loginPanel.hidden = true;
+  googleRegistration.hidden = true;
   blockedPanel.hidden = true;
   profilePanel.hidden = false;
   profileForm.querySelector<HTMLInputElement>('[name="nombresCompletos"]')!.value = profile.nombresCompletos ?? '';
@@ -126,17 +147,43 @@ loginForm.addEventListener('submit', async event => {
   }
 });
 
+googleRegistrationForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!googleCredential || signingWithGoogle || !validateFields(googleRegistrationForm)) return;
+  signingWithGoogle = true;
+  const button = googleRegistrationForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+  button.disabled = true;
+  const terminarCarga = mostrarCarga(googleRegistrationForm);
+  try {
+    const pending = await authRepository.googleLogin(googleCredential, acceptanceOf(googleRegistrationForm)!);
+    if (!pending) afterLogin();
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      await showLogin();
+      showStatus(status, 'Vuelve a entrar con Google para continuar.', true);
+    } else showStatus(status, errorText(error), true);
+  } finally {
+    signingWithGoogle = false;
+    button.disabled = false;
+    terminarCarga();
+  }
+});
+
 const profileSubmit = profileForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
 const syncProfileButton = () => {
-  profileSubmit.disabled = !current || (value(profileForm, 'nombresCompletos').trim() === (current.nombresCompletos ?? '')
+  profileSubmit.disabled = savingProfile || !current || (value(profileForm, 'nombresCompletos').trim() === (current.nombresCompletos ?? '')
     && value(profileForm, 'direccion').trim() === (current.direccion ?? ''));
 };
 profileForm.addEventListener('input', syncProfileButton);
 
-// Envía únicamente nombre y dirección, los campos editables del perfil.
 profileForm.addEventListener('submit', async event => {
   event.preventDefault();
-  if (!current) return;
+  if (!current || savingProfile) return;
+  if (!Number.isInteger(current.versionPerfil) || current.versionPerfil < 1) {
+    showStatus(status, 'Recarga la página antes de guardar tus datos.', true);
+    return;
+  }
+  savingProfile = true;
   profileSubmit.disabled = true;
   const terminarCarga = mostrarCarga(profileForm);
   try {
@@ -147,6 +194,7 @@ profileForm.addEventListener('submit', async event => {
     const updated = await authRepository.updateProfile({
       nombresCompletos: value(profileForm, 'nombresCompletos'),
       direccion: value(profileForm, 'direccion'),
+      versionPerfil: current.versionPerfil,
     });
     current = { ...current, ...updated };
     showStatus(status, 'Datos guardados.');
@@ -154,6 +202,7 @@ profileForm.addEventListener('submit', async event => {
     showStatus(status, errorText(error), true);
   } finally {
     terminarCarga();
+    savingProfile = false;
     syncProfileButton();
   }
 });

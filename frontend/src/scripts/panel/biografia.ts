@@ -68,7 +68,7 @@ export function renderBiography(section: HTMLElement) {
         <div class="grid grid-cols-[260px_minmax(0,1fr)] items-center gap-4 max-nav:grid-cols-1">
           ${photoPreview(item, true)}
           <div class="flex flex-col gap-2">
-            <label class="${GHOST} cursor-pointer self-start max-tablet:self-stretch">${iconSvg("upload", 18)} ${item.foto ? "Cambiar foto" : "Subir foto"}
+            <label class="${GHOST} cursor-pointer self-start border-field-border focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral max-tablet:self-stretch">${iconSvg("upload", 18)} ${item.foto ? "Cambiar foto" : "Subir foto"}
               <input id="hito-foto" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" /></label>
             <p class="m-0 text-[0.74rem] text-[#50617d]">JPG, PNG o WebP de hasta 8 MB. Medida recomendada: 429 × 273 px (horizontal) o 429 × 637 px (vertical).</p>
             ${item.foto ? `<button type="button" id="hito-quitar-foto" class="${GHOST} self-start">Quitar foto</button>` : ""}
@@ -88,7 +88,7 @@ export function renderBiography(section: HTMLElement) {
     <div class="grid grid-cols-[340px_minmax(0,1fr)] items-start gap-6 max-nav:grid-cols-[240px_minmax(0,1fr)] max-tablet:grid-cols-1">
       <div class="flex flex-col gap-2.5">
         <label for="hito-selector" class="hidden text-[0.82rem] font-bold max-tablet:block">Hito ${selected + 1} de ${items.length}</label>
-        <select id="hito-selector" class="hidden min-h-12 w-full rounded-[3px] border border-[#acbacb] bg-base-100 px-3.5 text-sm text-primary max-tablet:block">
+        <select id="hito-selector" class="hidden min-h-12 w-full rounded-[3px] border border-field-border bg-base-100 px-3.5 text-sm text-primary max-tablet:block">
           ${items.map((h, i) => `<option value="${i}" ${i === selected ? "selected" : ""}>${esc(`${yearOf(h.anios) || "Sin año"} · ${h.titulo}`)}</option>`).join("")}
         </select>
         <div class="flex flex-col gap-2.5 max-tablet:hidden">${list}</div>

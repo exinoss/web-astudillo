@@ -35,7 +35,7 @@ export function renderWorks(section: HTMLElement) {
   const hitos = work.hitos.map((h, i) => `
     <div class="obra-hito flex items-center gap-2 border-t border-t-base-300 py-1.5 first:border-t-0">
       <input type="checkbox" name="completado" id="hito-completado-${i}" ${h.completado ? "checked" : ""} class="size-6 shrink-0 accent-neutral" aria-label="Hito ${i + 1} completado" />
-      <input name="hito" value="${esc(h.nombre)}" maxlength="120" aria-label="Nombre del hito ${i + 1}" class="min-h-11 min-w-0 flex-1 rounded-[3px] border border-transparent px-2 text-[0.9rem] text-primary hover:border-[#acbacb] focus-visible:border-[#acbacb]" />
+      <input name="hito" value="${esc(h.nombre)}" maxlength="120" aria-label="Nombre del hito ${i + 1}" class="min-h-11 min-w-0 flex-1 rounded-[3px] border border-transparent px-2 text-[0.9rem] text-primary hover:border-field-border focus-visible:border-field-border" />
       <button type="button" class="${ICON_BUTTON}" data-mover="-1" data-indice="${i}" aria-label="Subir hito ${i + 1}" ${i === 0 ? "disabled" : ""}>${iconSvg("up", 18)}</button>
       <button type="button" class="${ICON_BUTTON}" data-mover="1" data-indice="${i}" aria-label="Bajar hito ${i + 1}" ${i === work!.hitos.length - 1 ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>
       <button type="button" class="${ICON_BUTTON} text-error" data-quitar-hito="${i}" aria-label="Quitar hito ${i + 1}">${iconSvg("trash", 18)}</button>
@@ -72,7 +72,7 @@ export function renderWorks(section: HTMLElement) {
         <span class="mb-2.5 block text-[0.82rem] font-bold">Fotos de evidencia</span>
         <div class="grid grid-cols-2 gap-4 max-tablet:gap-2.5">
           ${fotos}
-          <label class="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-[4px] border-2 border-dashed border-[#acbacb] p-2.5 text-center text-neutral ${work.fotos.length >= MAX_PHOTOS ? "hidden" : ""}">
+          <label class="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-[4px] border-2 border-dashed border-field-border p-2.5 text-center text-neutral focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral ${work.fotos.length >= MAX_PHOTOS ? "hidden" : ""}">
             ${iconSvg("upload", 26)}<strong class="text-[0.82rem] text-primary">Subir fotos</strong>
             <span class="text-[0.7rem] text-[#50617d]">Varias a la vez · hasta 8 MB cada una · medida recomendada 595 × 495 px</span>
             <input id="obra-fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple class="sr-only" />
@@ -87,7 +87,7 @@ export function renderWorks(section: HTMLElement) {
   section.innerHTML = `
     <div class="mb-5 flex items-center gap-3.5 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-1.5">
       <label for="obra-selector" class="text-[0.82rem] font-bold">Obra</label>
-      <select id="obra-selector" class="min-h-12 min-w-[320px] rounded-[3px] border border-[#acbacb] bg-base-100 px-3.5 text-sm text-primary max-tablet:min-w-0">
+      <select id="obra-selector" class="min-h-12 min-w-[320px] rounded-[3px] border border-field-border bg-base-100 px-3.5 text-sm text-primary max-tablet:min-w-0">
         ${state.draft!.obras.map((w) => `<option value="${esc(w.slug)}" ${w.slug === selected ? "selected" : ""}>${esc(nameOf(w.slug))}</option>`).join("")}
       </select>
     </div>

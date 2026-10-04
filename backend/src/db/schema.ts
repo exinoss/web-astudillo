@@ -25,6 +25,7 @@ export const tbUsuarios = pgTable("tb_usuarios", {
 	correo: varchar({ length: 320 }).notNull(),
 	nombresCompletos: varchar("nombres_completos", { length: 200 }),
 	direccion: text(),
+	versionPerfil: integer("version_perfil").default(1).notNull(),
 	correoVerificadoEn: timestamp("correo_verificado_en", { withTimezone: true, mode: 'string' }).notNull(),
 	rol: varchar({ length: 40 }).default('votante').notNull(),
 	estado: varchar({ length: 20 }).default('activo').notNull(),
@@ -43,6 +44,18 @@ export const tbUsuarios = pgTable("tb_usuarios", {
 	check("tb_usuarios_estado_check", sql`(estado)::text = ANY ((ARRAY['activo'::character varying, 'bloqueado'::character varying])::text[])`),
 	check("ck_usuarios_maestro_admin", sql`NOT es_maestro OR (rol)::text = 'admin'::text`),
 	check("ck_usuarios_correo_limpio", sql`((correo)::text = btrim((correo)::text)) AND ((correo)::text <> ''::text)`),
+]);
+
+export const tbAceptacionesLegales = pgTable("tb_aceptaciones_legales", {
+	idUsuario: integer("id_usuario").notNull(),
+	version: varchar({ length: 32 }).notNull(),
+	texto: text().notNull(),
+	aceptadoEn: timestamp("aceptado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => [
+	primaryKey({ columns: [table.idUsuario, table.version], name: "tb_aceptaciones_legales_pkey" }),
+	foreignKey({ columns: [table.idUsuario], foreignColumns: [tbUsuarios.idUsuario], name: "tb_aceptaciones_legales_usuario_fkey" }).onDelete("cascade"),
+	check("ck_aceptacion_version", sql`btrim(version) <> ''`),
+	check("ck_aceptacion_texto", sql`btrim(texto) <> ''`),
 ]);
 
 export const tbIdentidadesAutenticacion = pgTable("tb_identidades_autenticacion", {
@@ -96,6 +109,9 @@ export const tbRegistrosPendientes = pgTable("tb_registros_pendientes", {
 	nombresCompletos: varchar("nombres_completos", { length: 200 }).notNull(),
 	direccion: text(),
 	contraseniaHash: text("contrasenia_hash").notNull(),
+	versionLegal: varchar("version_legal", { length: 32 }),
+	textoAceptacion: text("texto_aceptacion"),
+	aceptadoEn: timestamp("aceptado_en", { withTimezone: true, mode: 'string' }),
 }, (table) => [
 	foreignKey({
 			columns: [table.idTokenAutenticacion],
@@ -104,6 +120,7 @@ export const tbRegistrosPendientes = pgTable("tb_registros_pendientes", {
 		}).onDelete("cascade"),
 	check("tb_registros_pendientes_nombres_completos_check", sql`btrim((nombres_completos)::text) <> ''::text`),
 	check("tb_registros_pendientes_contrasenia_hash_check", sql`contrasenia_hash <> ''::text`),
+	check("ck_registro_aceptacion", sql`(version_legal IS NULL AND texto_aceptacion IS NULL AND aceptado_en IS NULL) OR (version_legal IS NOT NULL AND btrim(version_legal) <> '' AND texto_aceptacion IS NOT NULL AND btrim(texto_aceptacion) <> '' AND aceptado_en IS NOT NULL)`),
 ]);
 
 export const tbSesiones = pgTable("tb_sesiones", {
@@ -186,6 +203,14 @@ export const tbMedios = pgTable("tb_medios", {
 	unique("uq_medios_hash_contenido").on(table.hashContenido),
 	foreignKey({ columns: [table.creadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_medios_creado_por_fkey" }).onDelete("set null"),
 	check("ck_medios_nombre", sql`nombre ~ '^[a-z0-9-]{8,80}$'`),
+]);
+
+export const tbTextosIniciales = pgTable("tb_textos_iniciales", {
+	clave: varchar({ length: 120 }).primaryKey(),
+	valor: text().notNull(),
+}, (table) => [
+	check("ck_textos_iniciales_clave", sql`clave ~ '^[a-z0-9]+([.-][a-z0-9]+)*$'`),
+	check("ck_textos_iniciales_valor", sql`char_length(valor) BETWEEN 1 AND 1000`),
 ]);
 
 export const tbTextos = pgTable("tb_textos", {
@@ -370,4 +395,17 @@ export const tbChatSinRespuesta = pgTable("tb_chat_sin_respuesta", {
 	ultimaVez: timestamp("ultima_vez", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
 }, (table) => [
 	index("idx_chat_sin_respuesta_veces").on(table.veces),
+]);
+
+export const tbChatEnvios = pgTable("tb_chat_envios", {
+	idUsuario: integer("id_usuario").notNull(),
+	claveIdempotencia: uuid("clave_idempotencia").notNull(),
+	mensajeHash: varchar("mensaje_hash", { length: 64 }).notNull(),
+	respuesta: jsonb().notNull(),
+	creadoEn: timestamp("creado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => [
+	primaryKey({ columns: [table.idUsuario, table.claveIdempotencia] }),
+	foreignKey({ columns: [table.idUsuario], foreignColumns: [tbUsuarios.idUsuario], name: "tb_chat_envios_usuario_fkey" }).onDelete("cascade"),
+	check("ck_chat_envios_hash", sql`mensaje_hash ~ '^[0-9a-f]{64}$'`),
+	check("ck_chat_envios_respuesta", sql`jsonb_typeof(respuesta) = 'object'`),
 ]);

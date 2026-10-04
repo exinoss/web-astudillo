@@ -5,6 +5,10 @@ import sharp from "sharp";
 import { callPg } from "../src/db/call";
 import { migrate } from "../src/db/migrate";
 import { testApp } from "./helpers";
+import initial from '../database/contenido-inicial.json';
+import { seedContent } from '../src/db/seed';
+import { savePhoto } from '../src/content/services/media';
+import { readdir } from 'node:fs/promises';
 
 const MEDIA = "medios-pruebas-contenido";
 const { sql, cookies, call, account, resetAccounts } = testApp(MEDIA);
@@ -48,7 +52,8 @@ test("el contenido inicial viene de la semilla y solo lo leen quienes editan", a
   ] });
   expect(c.biografia).toHaveLength(6);
   expect(c.obras[0].hitos).toHaveLength(5);
-  expect(c.textos).toEqual({});
+  expect(c.textos).toEqual(initial.textos);
+  expect(c.originales).toEqual(initial.textos);
 });
 
 test("los textos se guardan como texto plano y vuelven al valor por defecto con null", async () => {
@@ -63,7 +68,7 @@ test("los textos se guardan como texto plano y vuelven al valor por defecto con 
   expect(c.textos["inicio.cita"]).toBe("«Por ti, San Lorenzo»");
   expect((await put("inicio.cita", null)).status).toBe(200);
   c = await (await call("/api/admin/contenido", "GET", undefined, cookies.coadmin)).json();
-  expect(c.textos).toEqual({});
+  expect(c.textos).toEqual(initial.textos);
 });
 
 test("propuestas y cifras se guardan juntas", async () => {
@@ -76,6 +81,35 @@ test("propuestas y cifras se guardan juntas", async () => {
   expect((await call("/api/admin/contenido/propuestas/agua-potable", "PUT", muchas, cookies.coadmin)).status).toBe(422);
   const c = await (await call("/api/admin/contenido", "GET", undefined, cookies.coadmin)).json();
   expect(c.propuestas[0]).toMatchObject({ introduccion: "Agua para todos.", kpis: body.kpis });
+});
+
+test('repetir la semilla conserva originales, borradores y publicaciones', async () => {
+  const before=await sql`SELECT contenido FROM tb_publicaciones ORDER BY id_publicacion`;
+  const key='global.lema', original=initial.textos[key];
+  expect((await call(`/api/admin/contenido/textos/${key}`, 'PUT', {valor:'Un lema editado.',version:null},cookies.coadmin)).status).toBe(200);
+  await Promise.all([sql.begin(tx=>seedContent(tx)),sql.begin(tx=>seedContent(tx))]);
+  const draft=await (await call('/api/admin/contenido','GET',undefined,cookies.coadmin)).json();
+  expect(draft.textos[key]).toBe('Un lema editado.');
+  expect(draft.originales[key]).toBe(original);
+  expect(await sql`SELECT contenido FROM tb_publicaciones ORDER BY id_publicacion`).toEqual(before);
+  const version=draft.versiones.textos[key];
+  const reset=()=>call(`/api/admin/contenido/textos/${key}`,'PUT',{valor:null,version},cookies.coadmin);
+  const replies=await Promise.all([reset(),reset()]);
+  expect(replies.map(r=>r.status)).toEqual([200,200]);
+  const restored=await (await call('/api/admin/contenido','GET',undefined,cookies.coadmin)).json();
+  expect(restored.textos[key]).toBe(original);
+  expect(restored.versiones.textos[key]).toBeUndefined();
+});
+
+test('subidas simultáneas de una misma foto dejan variantes completas y sin temporales', async () => {
+  const buffer=await png();
+  await Promise.all(Array.from({length:12},()=>savePhoto(buffer,MEDIA,'concurrente',[480,1280],true)));
+  for(const width of [480,1280]) {
+    const metadata=await sharp(join(MEDIA,`concurrente-${width}.webp`)).metadata();
+    expect(metadata.format).toBe('webp');
+    expect(metadata.width).toBe(Math.min(width,1200));
+  }
+  expect((await readdir(MEDIA)).filter(name=>name.endsWith('.tmp'))).toEqual([]);
 });
 
 test("las fotos se validan por su contenido, se optimizan y pierden los metadatos", async () => {
@@ -130,14 +164,14 @@ test("biografía y obras guardan fotos existentes; el porcentaje no se guarda", 
 
 test("publicar congela el contenido, calcula lo pendiente y agrupa la cola", async () => {
   const pendientes = async () => (await (await call("/api/admin/publicaciones/pendientes", "GET", undefined, cookies.coadmin)).json()).cambios;
-  expect(await pendientes()).toEqual([{ tipo: "Sitio", descripcion: "Primera publicación con el contenido del panel" }]);
+  expect(await pendientes()).toEqual(expect.arrayContaining([{ tipo: 'Propuesta', descripcion: 'Agua potable' }]));
   expect((await call("/api/admin/publicaciones", "POST", undefined, cookies.votante)).status).toBe(403);
   const primera = await (await call("/api/admin/publicaciones", "POST", undefined, cookies.coadmin)).json();
   const segunda = await (await call("/api/admin/publicaciones", "POST", undefined, cookies.admin)).json();
   expect(segunda.id).toBe(primera.id); // sigue en cola: se reemplaza, no se compila dos veces
   expect(await pendientes()).toEqual([]); // lo enviado a publicar ya no cuenta como pendiente
   // En cola todavía no es público; al compilarse sí, sin sesión.
-  expect((await call("/api/contenido/publicado")).status).toBe(404);
+  expect((await (await call("/api/contenido/publicado")).json()).textos).toEqual(initial.textos);
   const [tomada] = await callPg<{ id_publicacion: number; contenido: { propuestas: unknown[] } }>(sql, "publicationClaim");
   expect(tomada.id_publicacion).toBe(primera.id);
   expect(tomada.contenido.propuestas).toHaveLength(7);
@@ -158,12 +192,13 @@ test("publicar congela el contenido, calcula lo pendiente y agrupa la cola", asy
   const fallida = await (await call("/api/admin/publicaciones", "POST", undefined, cookies.coadmin)).json();
   await callPg(sql, "publicationClaim");
   await callPg(sql, "publicationFinish", [fallida.id, false, "error"]);
-  expect((await (await call("/api/contenido/publicado")).json()).textos).toEqual({});
+  expect((await (await call("/api/contenido/publicado")).json()).textos).toEqual(initial.textos);
   const historial = await (await call("/api/admin/publicaciones?pagina=1", "GET", undefined, cookies.coadmin)).json();
-  expect(historial).toMatchObject({ total: 2, pagina: 1, porPagina: 10, publicaciones: [
+  expect(historial).toMatchObject({ total: 3, pagina: 1, porPagina: 10, publicaciones: [
     { id: fallida.id, estado: "fallida" }, { id: primera.id, estado: "publicada" },
+    { estado:'publicada' },
   ] });
-  expect((await (await call("/api/admin/publicaciones?pagina=5", "GET", undefined, cookies.coadmin)).json()).total).toBe(2);
+  expect((await (await call("/api/admin/publicaciones?pagina=5", "GET", undefined, cookies.coadmin)).json()).total).toBe(3);
 });
 
 test("dos personas editando lo mismo: gana la primera y la segunda recibe 409; repetir es seguro", async () => {

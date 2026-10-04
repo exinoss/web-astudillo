@@ -21,7 +21,7 @@ export const httpSuggestionRepository: SuggestionRepository = {
 };
 
 export const httpChatRepository: ChatRepository = {
-  ask: (mensaje) => call<{ texto: string; enlaceTexto: string | null; enlaceRuta: string | null }>(
-    '/api/participacion/chat', 'POST', { mensaje },
+  ask: (mensaje, idempotencia) => call<{ texto: string; enlaceTexto: string | null; enlaceRuta: string | null }>(
+    '/api/participacion/chat', 'POST', { mensaje, idempotencia },
   ).then((r) => ({ text: r.texto, linkHref: r.enlaceRuta ?? undefined, linkText: r.enlaceTexto ?? undefined })),
 };

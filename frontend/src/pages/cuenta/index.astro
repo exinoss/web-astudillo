@@ -5,6 +5,7 @@ import AccountField from '../../components/account/AccountField.astro';
 import AccountStatus from '../../components/account/AccountStatus.astro';
 import AccountSignOut from '../../components/account/AccountSignOut.astro';
 import Icon from '../../components/Icon.astro';
+import LegalAcceptance from '../../components/LegalAcceptance.astro';
 ---
 
 <AccountShell title="Mi cuenta" lead="Accede para gestionar tus datos y participar.">
@@ -24,6 +25,18 @@ import Icon from '../../components/Icon.astro';
         <a class="inline-flex min-h-11 items-center underline" href="/cuenta/registro/">Registrarme</a>
         <a class="inline-flex min-h-11 items-center underline" href="/cuenta/recuperar/">Olvidé mi contraseña</a>
       </div>
+    </AccountCard>
+  </div>
+
+  <div id="google-registration-panel" class="mx-auto max-w-[560px]" hidden>
+    <AccountCard heading="Completa tu registro">
+      <p id="google-registration-name" class="m-0 mb-1 text-[0.9rem] font-medium"></p>
+      <p id="google-registration-email" class="m-0 text-[0.87rem] [overflow-wrap:anywhere]"></p>
+      <form id="google-registration-form" novalidate>
+        <LegalAcceptance id="google-aceptacion" />
+        <button type="submit" class="button mt-[18px] w-full">Crear mi cuenta</button>
+      </form>
+      <a href="/cuenta/" class="mt-4 inline-flex min-h-11 items-center text-[0.82rem] underline">Volver a acceder</a>
     </AccountCard>
   </div>
 

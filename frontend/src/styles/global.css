@@ -61,6 +61,8 @@
   --color-base-content: #063176;
   --color-error: #a50913;
   --color-campaign-red: #e0121f;
+  --color-field-border: #6b7c93;
+  --color-field-placeholder: #52647c;
 
   /* Texto secundario sobre el fondo azul del pie de página. */
   --color-footer-muted: #d5e0f2;

@@ -6,8 +6,8 @@ export interface ContentRepository {
   getCitizenLinks(): Promise<CitizenLink[]>;
   getBiography(): Promise<BiographyMilestone[]>;
   getWorks(): Promise<WorkProgress[]>;
-  /** Textos del sitio cambiados desde el panel; lo que no esté aquí usa el valor de `lib/contenido.ts`. */
   getTexts(): Promise<Record<string, string>>;
+  getInitialTexts(): Promise<Record<string, string>>;
   /** Preguntas del chat marcadas como respuesta rápida, en orden. */
   getChatQuickReplies(): Promise<string[]>;
 }

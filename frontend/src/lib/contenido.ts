@@ -4,12 +4,13 @@ import { TEXTOS, type TextKey } from "./contenido/textos";
 
 export { TEXTOS, type TextKey };
 
-/** Valor vigente de un texto: el publicado desde el panel o, si no hay, el del diseño. */
 export async function texto(clave: TextKey) {
-  return (await contentRepository.getTexts())[clave] ?? TEXTOS[clave].texto;
+  const valor = (await contentRepository.getTexts())[clave];
+  if (valor === undefined) throw new Error(`Falta el texto publicado ${clave}`);
+  return valor;
 }
 
 export async function enlaceRed(red: Red) {
-  const valor = (await contentRepository.getTexts())[REDES[red].clave] ?? REDES[red].porDefecto;
+  const valor = (await contentRepository.getTexts())[REDES[red].clave];
   return red === "whatsapp" ? whatsappUrl(valor) : valor;
 }

@@ -2,12 +2,16 @@ import { authRepository } from '../lib/data/auth';
 import { releaseButton, showFormError } from '../lib/auth/bloqueo';
 import { showStatus, validateFields, value } from '../lib/auth/page';
 import { mostrarCarga } from '../lib/animaciones';
+import { acceptanceOf } from '../lib/auth/acceptance';
 
 const form = document.querySelector<HTMLFormElement>('#register-form')!;
 const status = document.querySelector<HTMLElement>('#account-status')!;
+let registering = false;
 
 form.addEventListener('submit', async event => {
   event.preventDefault();
+  if (registering) return;
+  registering = true;
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
   submit.disabled = true;
   const terminarCarga = mostrarCarga(form);
@@ -23,6 +27,7 @@ form.addEventListener('submit', async event => {
       direccion: value(form, 'direccion'),
       correo: value(form, 'correo'),
       contrasenia, confirmarContrasenia,
+      aceptacion: acceptanceOf(form)!,
     });
     form.hidden = true;
     showStatus(status, 'Si el correo puede registrarse, recibirás un enlace para confirmarlo. Revisa también la carpeta de spam.');
@@ -30,6 +35,7 @@ form.addEventListener('submit', async event => {
     showFormError(status, error, submit);
   } finally {
     terminarCarga();
+    registering = false;
     releaseButton(submit);
   }
 });

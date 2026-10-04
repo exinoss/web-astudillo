@@ -28,7 +28,7 @@ export async function getStaticPaths() {
 const { item, proposals, quickReplies } = Astro.props;
 ---
 
-<Layout title={`${item.name} · Carlos Astudillo`}>
+<Layout title={`${item.name} · Carlos Astudillo`} description={item.description}>
   <Breadcrumb
     items={[
       { label: "Inicio", href: "/" },
@@ -42,6 +42,7 @@ const { item, proposals, quickReplies } = Astro.props;
     icon={item.icon}
     iconSize={64}
     lead={item.description}
+    claves={{title:`ciudadania.${item.slug}.nombre`,lead:`ciudadania.${item.slug}.descripcion`}}
   />
   {item.slug === "alerta-ciudadana" ? <Alerta /> : item.slug === "chat" ? <Chat quickReplies={quickReplies} /> : <Sugerencia proposals={proposals} />}
 </Layout>

@@ -10,6 +10,7 @@ RUN cd backend && bun install --frozen-lockfile --production
 
 COPY frontend ./frontend
 COPY backend/src ./backend/src
+COPY backend/database ./backend/database
 # Astro escribe su caché dentro de frontend/ al compilar; el volumen del sitio lo crea el usuario bun.
 RUN mkdir -p /srv/sitio && chown -R bun:bun /app/frontend /srv/sitio
 

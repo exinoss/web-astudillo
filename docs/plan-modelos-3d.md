@@ -6,7 +6,7 @@
 
 1. Copiar el `.glb` del proveedor a `frontend/modelos-fuente/<slug>.glb` (el original, sin tocar).
 2. `bun run modelos` (desde `frontend/`) → genera `public/models/<slug>.glb` optimizado y su póster en `src/assets/models/<slug>.png`, con el mismo encuadre que el visor.
-3. Añadir `model: { src, poster, alt }` a la propuesta en `frontend/src/lib/data/mock/seed-data.ts`.
+3. Añadir `{ src, poster, alt }` al catálogo `proposalModels` de `frontend/src/lib/data/presentation.ts`, bajo el slug de la propuesta.
 
 ## Lo que enseñó el primer modelo
 
@@ -157,7 +157,7 @@ Medir antes y después, y dejar la cifra registrada en el CHANGELOG.
   model?: { src: string; poster: string; alt: string };
   ```
   Opcional, para que las propuestas sin modelo sigan funcionando.
-- `frontend/src/lib/data/mock/seed-data.ts` — rellenar `model` en cada propuesta.
+- `frontend/src/lib/data/presentation.ts` — catálogo `proposalModels` por slug; los datos de negocio vienen de la publicación de la base.
 - `frontend/src/lib/data/http/http-content-repository.ts` — mapear el campo cuando venga de la API.
 - `backend/README.md` — documentar el campo en la entidad `Proposal`.
 

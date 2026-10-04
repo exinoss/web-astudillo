@@ -8,6 +8,7 @@ const proxy = { '/api': backend, '/medios': backend };
 
 // https://astro.build/config
 export default defineConfig({
+  site: 'https://lanuevahistoria.tech',
   output: 'static',
   server: { host: true },
   vite: {

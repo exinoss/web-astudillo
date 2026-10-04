@@ -9,11 +9,14 @@ import { MENSAJES } from "../../mail/plantilla";
 import { normalizeEmail, randomToken, tokenHash } from "../../security";
 import { requireConfirmation, requireNewPassword } from '../password-policy';
 import { passwordHash } from './limits';
+import { requireAcceptance } from './consent';
+import { TEXTO_ACEPTACION, VERSION_LEGAL } from '../../contracts/legal';
 
 export function createRegistration(sql: SQL, mailer: Mailer, config: Config) {
   return {
     /** Guarda la solicitud temporal y envía el enlace sin reservar el correo; el enlace vale en cualquier navegador. */
     async request(input: RegistrationInput) {
+      requireAcceptance(input.aceptacion);
       requireNewPassword(input.contrasenia);
       requireConfirmation(input.contrasenia, input.confirmarContrasenia);
       const correo = normalizeEmail(input.correo);
@@ -25,7 +28,7 @@ export function createRegistration(sql: SQL, mailer: Mailer, config: Config) {
       const token = randomToken();
       const hash = await passwordHash(input.contrasenia);
       const [created] = await callPg<{ id_token_autenticacion: number }>(
-        sql, "pendingCreate", [correo, tokenHash(token), name, input.direccion?.trim() || null, hash],
+        sql, "pendingCreate", [correo, tokenHash(token), name, input.direccion?.trim() || null, hash, VERSION_LEGAL, TEXTO_ACEPTACION],
       );
       // Ya hay una solicitud de hace un momento (doble envío): no se crea otra ni se reenvía el correo.
       if (!created) return;

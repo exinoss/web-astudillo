@@ -4,6 +4,7 @@ import { getTableColumns, getTableName } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/bun-sql';
 import { migrate as runDrizzleMigrations } from 'drizzle-orm/bun-sql/migrator';
 import { fileURLToPath } from 'node:url';
+import { seedContent } from './seed';
 import {
   tbAuditoria, tbIdentidadesAutenticacion, tbPermisos, tbRegistrosPendientes,
   tbRoles, tbRolPermisos, tbSesiones, tbTokenAutenticacion, tbUsuarios,
@@ -70,6 +71,7 @@ export async function migrate(sql: SQL) {
   await runDrizzleMigrations(drizzle({ client: sql }), { migrationsFolder });
   await sql.begin(async tx => {
     for (const path of scripts) await tx.unsafe(await Bun.file(path).text());
+    await seedContent(tx);
   });
 }
 
@@ -84,9 +86,13 @@ export async function assertMigrated(sql: SQL) {
     throw new Error('Hay migraciones pendientes: ejecuta bun run db:migrate');
 
   const [ready] = await sql`SELECT
-    to_regclass('public.tb_usuarios') IS NOT NULL AS schema_ready,
+    to_regclass('public.tb_usuarios') IS NOT NULL
+      AND to_regclass('public.tb_textos_iniciales') IS NOT NULL
+      AND to_regclass('public.tb_aceptaciones_legales') IS NOT NULL AS schema_ready,
     to_regprocedure('public.fn_authorized_user(integer, text)') IS NOT NULL
+      AND to_regprocedure('public.fn_texts_initial()') IS NOT NULL
       AND to_regprocedure('public.fn_account_methods(integer)') IS NOT NULL
+      AND to_regprocedure('public.fn_legal_accept(integer, text, text)') IS NOT NULL
       AND to_regprocedure('public.fn_password_change(integer, text)') IS NOT NULL
       AND to_regprocedure('public.fn_role_change(integer, integer, text, text)') IS NOT NULL AS functions_ready`;
   if (!ready?.schema_ready || !ready?.functions_ready)

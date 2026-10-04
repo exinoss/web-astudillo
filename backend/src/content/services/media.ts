@@ -1,5 +1,5 @@
 import type { SQL } from 'bun';
-import { mkdir, rename, rm } from 'node:fs/promises';
+import { link, mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { createHash, randomBytes } from 'node:crypto';
 import sharp from 'sharp';
@@ -28,7 +28,7 @@ export const sha256 = (input: Buffer) => createHash('sha256').update(input).dige
  * Valida la foto por su contenido y la guarda como `<nombre>-<ancho>.webp` en cada ancho de `sizes`.
  * Aplica la orientación EXIF y descarta los metadatos (GPS incluido). Con `allSizes` escribe todos los
  * anchos aunque la foto sea menor (sin ampliarla); si no, solo los que caben más el tamaño original.
- * Cada archivo se escribe aparte y se renombra al final: dos escrituras simultáneas no lo dejan a medias.
+ * Un enlace atómico publica cada archivo completo; repetir una foto no reemplaza un archivo abierto.
  */
 export async function savePhoto(input: Buffer, dir: string, name: string, sizes: number[], allSizes = false) {
   const metadata = await sharp(input, { limitInputPixels: MAX_PIXELS }).metadata()
@@ -45,8 +45,15 @@ export async function savePhoto(input: Buffer, dir: string, name: string, sizes:
   await Promise.all(widths.map(async w => {
     const target = join(dir, `${name}-${w}.webp`);
     const temporary = `${target}.${randomBytes(4).toString('hex')}.tmp`;
-    await base.clone().resize({ width: w, withoutEnlargement: true }).webp({ quality: 80 }).toFile(temporary);
-    await rename(temporary, target);
+    try {
+      await base.clone().resize({ width: w, withoutEnlargement: true }).webp({ quality: 80 }).toFile(temporary);
+      // El destino completo se crea una sola vez: Windows no reemplaza un archivo que otro envío lee.
+      await link(temporary, target).catch((error: NodeJS.ErrnoException) => {
+        if (error.code !== 'EEXIST') throw error;
+      });
+    } finally {
+      await rm(temporary, { force: true });
+    }
   }));
   return { width, height, widths };
 }

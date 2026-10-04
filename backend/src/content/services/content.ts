@@ -83,6 +83,8 @@ export function createContent(sql: SQL, authorization: Authorization) {
     return { version: row.version };
   };
   type Latest = { id_publicacion: number; estado: string; contenido: Snapshot };
+  const initialTexts = async () => Object.fromEntries(
+    (await callPg<{ clave: string; valor: string }>(sql, 'textsInitial')).map(t => [t.clave, t.valor]));
 
   return {
     snapshot,
@@ -94,10 +96,10 @@ export function createContent(sql: SQL, authorization: Authorization) {
     async get(access: string | undefined) {
       await authorization.require(access, PERMISSIONS.contentEdit);
       const [{ versiones }] = await callPg<{ versiones: ContentVersions }>(sql, 'contentVersions');
-      return { ...(await snapshot()), versiones };
+      return { ...(await snapshot()), originales: await initialTexts(), versiones };
     },
 
-    /** Guarda un texto del sitio; `null` lo devuelve al texto por defecto del código. */
+    /** `null` recupera el original conservado en la base. */
     async saveText(access: string | undefined, key: string, value: string | null, version: string | null) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       if (!KEY.test(key) || key.length > 120) throw new ApiError(422, 'Clave de texto no válida');
@@ -178,7 +180,8 @@ export function createContent(sql: SQL, authorization: Authorization) {
     async pending(access: string | undefined) {
       await authorization.require(access, PERMISSIONS.contentPublish);
       const [[last], current] = await Promise.all([callPg<Latest>(sql, 'publicationLatest'), snapshot()]);
-      return { cambios: diff(last?.contenido ?? null, current) };
+      const originales=await initialTexts();
+      return { cambios: diff(last ? { ...last.contenido,textos:{...originales,...last.contenido.textos} } : null, current) };
     },
 
     /**
@@ -188,7 +191,8 @@ export function createContent(sql: SQL, authorization: Authorization) {
     async publish(access: string | undefined) {
       const actor = await authorization.require(access, PERMISSIONS.contentPublish);
       const [[last], current] = await Promise.all([callPg<Latest>(sql, 'publicationLatest'), snapshot()]);
-      if (last && !diff(last.contenido, current).length) {
+      const originales=await initialTexts();
+      if (last && !diff({ ...last.contenido,textos:{...originales,...last.contenido.textos} }, current).length) {
         if (last.estado === 'publicada') throw new ApiError(409, 'No hay cambios para publicar');
         return { id: last.id_publicacion, estado: last.estado };
       }
@@ -201,7 +205,8 @@ export function createContent(sql: SQL, authorization: Authorization) {
     async current(): Promise<Snapshot> {
       const [row] = await callPg<{ contenido: Snapshot }>(sql, 'publicationCurrent');
       if (!row) throw new ApiError(404, 'Aún no hay contenido publicado');
-      return row.contenido;
+      const originales = await initialTexts();
+      return { ...row.contenido, textos: { ...originales, ...row.contenido.textos }, originales };
     },
 
     async publications(access: string | undefined, page: number) {

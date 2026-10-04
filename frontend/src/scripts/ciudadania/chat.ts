@@ -1,16 +1,26 @@
 import { errorText } from "../../lib/auth/page";
-import { chatRepository } from "../../lib/data";
+import { chatRepository } from "../../lib/data/participation";
 import { borrar, leer } from "../../lib/participacion/borrador";
 import { enviarConSesion } from "../../lib/participacion/envio";
+import { prepararAceptacion } from '../../lib/participacion/aceptacion';
 
 const form = document.querySelector<HTMLFormElement>("#chat-form")!;
 const input = form.querySelector<HTMLInputElement>("#chat-input")!;
+prepararAceptacion(form);
 const log = document.querySelector<HTMLElement>(".chat-messages")!;
 const mic = form.querySelector<HTMLButtonElement>("#chat-mic")!;
 const escuchando = document.querySelector<HTMLElement>("#chat-escuchando")!;
 const voz = document.querySelector<HTMLButtonElement>("#chat-voz")!;
 const PREFERENCIA = "astudillo:chat-voz";
 let ocupado = false;
+let pendiente: { mensaje: string; idempotencia: string } | undefined;
+const botones = form.querySelectorAll<HTMLButtonElement>('button');
+const respuestasRapidas = document.querySelectorAll<HTMLButtonElement>('[data-chat]');
+
+function bloquear(activo: boolean) {
+  ocupado = activo;
+  for (const boton of [...botones, ...respuestasRapidas]) boton.disabled = activo;
+}
 
 /** Burbuja del chat; el texto siempre se pinta como texto, nunca como HTML. */
 function burbuja(texto: string, deVotante = false, enlace?: { href: string; texto: string }) {
@@ -32,25 +42,42 @@ function burbuja(texto: string, deVotante = false, enlace?: { href: string; text
 async function preguntar(texto: string) {
   const pregunta = texto.trim();
   if (!pregunta || ocupado) return;
-  ocupado = true;
-  burbuja(pregunta, true);
-  input.value = "";
-  const escribiendo = burbuja("Escribiendo…");
+  const borrador = leer('chat');
+  if (pendiente?.mensaje !== pregunta) pendiente = {
+    mensaje: pregunta,
+    idempotencia: borrador?.campos.mensaje === pregunta ? borrador.idempotencia : crypto.randomUUID(),
+  };
+  const envio = pendiente;
+  bloquear(true);
+  input.value = pregunta;
+  let escribiendo: HTMLElement | undefined;
+  let enviada: HTMLElement | undefined;
   try {
     const respuesta = await enviarConSesion({
-      formulario: "chat", campos: { mensaje: pregunta }, idempotencia: crypto.randomUUID(),
-      enviar: () => chatRepository.ask(pregunta),
+      form, formulario: "chat", campos: { mensaje: pregunta }, idempotencia: envio.idempotencia,
+      antesDeEnviar: () => {
+        enviada = burbuja(pregunta, true);
+        if (input.value.trim() === pregunta) input.value = '';
+        escribiendo = burbuja('Escribiendo…');
+      },
+      enviar: () => chatRepository.ask(pregunta, envio.idempotencia),
     });
-    escribiendo.remove();
-    if (!respuesta) return;
+    escribiendo?.remove();
+    if (!respuesta) {
+      enviada?.remove();
+      if (!input.value) input.value = pregunta;
+      return;
+    }
     borrar();
+    pendiente = undefined;
     burbuja(respuesta.text, false, respuesta.linkHref && respuesta.linkText ? { href: respuesta.linkHref, texto: respuesta.linkText } : undefined);
     leerEnVozAlta(respuesta.linkText ? `${respuesta.text} ${respuesta.linkText}.` : respuesta.text);
   } catch (error) {
-    escribiendo.remove();
+    escribiendo?.remove();
     burbuja(errorText(error));
+    if (!input.value) input.value = pregunta;
   } finally {
-    ocupado = false;
+    bloquear(false);
   }
 }
 

@@ -19,7 +19,7 @@ const obras = works.flatMap((work) => {
 const [antetitulo, titulo, intro] = await Promise.all([texto("obras.antetitulo"), texto("obras.titulo"), texto("obras.intro")]);
 ---
 
-<Layout title="Obras en ejecución · Carlos Astudillo">
+<Layout title="Obras en ejecución · Carlos Astudillo" description="Consulta los avances, etapas y fotografías de las obras asociadas a las propuestas para San Lorenzo.">
   <Breadcrumb
     items={[
       { label: "Inicio", href: "/" },

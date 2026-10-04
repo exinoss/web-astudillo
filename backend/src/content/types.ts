@@ -63,6 +63,7 @@ export interface ContentVersions {
 export interface Snapshot {
   version: 1;
   textos: Record<string, string>;
+  originales?: Record<string, string>;
   propuestas: ProposalContent[];
   biografia: BiographyItem[];
   obras: WorkContent[];

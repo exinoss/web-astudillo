@@ -4,6 +4,8 @@ import { ApiError } from "../../http";
 import type { Account, Security } from "../../security/types";
 import type { Sessions } from "../types";
 import type { GoogleIdentity } from '../../security/types';
+import { TEXTO_ACEPTACION, VERSION_LEGAL, type AceptacionLegal } from '../../contracts/legal';
+import { requireAcceptance } from './consent';
 
 /** Google solo garantiza el correo si es suyo: Gmail o el dominio de Google Workspace de la cuenta. */
 function isGoogleMailbox(identity: GoogleIdentity) {
@@ -15,11 +17,12 @@ function isGoogleMailbox(identity: GoogleIdentity) {
 
 export function createGoogleAuth(sql: SQL, security: Security, sessions: Sessions) {
   /** Vincula un sub verificado al usuario del mismo correo dentro de una transacción. */
-  async function link(identity: GoogleIdentity) {
+  async function link(identity: GoogleIdentity, acceptance?: AceptacionLegal) {
     return sql.begin(async tx => {
       let rows = await callPg<Account>(tx, "userByEmailLocked", [identity.email]);
       if (!rows.length) {
-        rows = await callPg<Account>(tx, "googleUserCreate", [identity.email, identity.name]);
+        if (!acceptance) return null;
+        rows = await callPg<Account>(tx, "googleUserCreate", [identity.email, identity.name, VERSION_LEGAL, TEXTO_ACEPTACION]);
         if (!rows.length) rows = await callPg<Account>(tx, "userByEmailLocked", [identity.email]);
       }
       const user = rows[0];
@@ -37,11 +40,13 @@ export function createGoogleAuth(sql: SQL, security: Security, sessions: Session
      * Con un correo que no es de Google (una cuenta de Google hecha con Outlook, por ejemplo) no se
      * puede entrar con Google: se pide usar correo y contraseña.
      */
-    async login(credential: string) {
+    async login(credential: string, acceptance?: AceptacionLegal) {
+      if (acceptance) requireAcceptance(acceptance);
       const identity = await security.verifyGoogle(credential);
       const [linked] = await callPg<Account>(sql, "googleUser", [identity.sub]);
-      const user = linked ?? (isGoogleMailbox(identity) ? await link(identity) : null);
-      if (!user) throw new ApiError(422, "Con Google solo puedes entrar si tu correo es de Gmail. Entra con tu correo y contraseña.");
+      if (!linked && !isGoogleMailbox(identity)) throw new ApiError(422, "Con Google solo puedes entrar si tu correo es de Gmail. Entra con tu correo y contraseña.");
+      const user = linked ?? await link(identity, acceptance);
+      if (!user) return { requiereAceptacion: true as const, correo: identity.email, nombresCompletos: identity.name };
       if (user.estado !== "activo") throw new ApiError(403, "Cuenta no disponible");
       return { user, tokens: await sessions.start(user) };
     },

@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import initial from '../../../backend/database/contenido-inicial.json' with { type:'json' };
 
 // API simulada del panel: guarda el borrador en memoria para que los tests vean el efecto de cada acción.
 const PIXEL = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
@@ -11,7 +12,8 @@ export function panelData(rol: 'admin' | 'coadmin') {
     profile: { id: 1, correo: 'ana@example.com', nombresCompletos: 'Ana Torres', direccion: null, rol,
       tieneContrasenia: true, tieneGoogle: false, permisos },
     draft: {
-      textos: { 'pie.lema': 'Por ti, San Lorenzo.' } as Record<string, string>,
+      textos: { ...initial.textos, 'pie.lema': 'Por ti, San Lorenzo.' } as Record<string, string>,
+      originales: initial.textos,
       propuestas: [
         { slug: 'agua-potable', nombre: 'Agua potable', categoria: 'Servicios básicos', introduccion: 'Agua segura para cada hogar.',
           kpis: [{ etiqueta: 'Cobertura meta', valor: '98%' }, { etiqueta: 'Comunidades', valor: '32' }, { etiqueta: 'Plazo', valor: '36 meses' }] },
@@ -79,8 +81,9 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
     if (text) {
       const key = decodeURIComponent(text[1]);
       if (body().version !== (data.draft.versiones.textos[key] ?? null)) return conflict();
-      data.draft.textos[key] = body().valor;
-      data.draft.versiones.textos[key] = nextVersion();
+      data.draft.textos[key] = body().valor ?? data.draft.originales[key as keyof typeof initial.textos];
+      if (body().valor === null) delete data.draft.versiones.textos[key];
+      else data.draft.versiones.textos[key] = nextVersion();
       data.pending.push({ tipo: 'Texto', descripcion: key });
       return json({ version: data.draft.versiones.textos[key] });
     }

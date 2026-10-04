@@ -2,6 +2,71 @@ import { expect, test, type Page } from '@playwright/test';
 
 const token = 'A'.repeat(43);
 
+test('dos pestañas del perfil conservan la versión y muestran el conflicto sin sobrescribir', async ({ context, page }) => {
+  let profile = { id: 1, nombresCompletos: 'María', direccion: 'Centro', versionPerfil: 1,
+    tieneContrasenia: true, tieneGoogle: false, permisos: ['perfil.editar'] };
+  const received: object[] = [];
+  let release!: () => void;
+  const waiting = new Promise<void>(resolve => { release = resolve; });
+  await context.route('**/api/**', async route => {
+    const request = route.request();
+    if (new URL(request.url()).pathname !== '/api/me') return route.fulfill({ status: 401 });
+    const json = (status: number, body: object) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+    if (request.method() === 'GET') return json(200, profile);
+    const body = request.postDataJSON();
+    received.push(body);
+    if (received.length === 1) await waiting;
+    if (body.versionPerfil !== profile.versionPerfil) return json(409, {
+      error: 'Tus datos cambiaron. Recarga la página y revísalos antes de guardar',
+    });
+    profile = { ...profile, ...body, versionPerfil: profile.versionPerfil + 1 };
+    return json(200, profile);
+  });
+  const other = await context.newPage();
+  await Promise.all([page.goto('/cuenta/'), other.goto('/cuenta/')]);
+  await expect(page.locator('#profile-name')).toHaveValue('María');
+  await expect(other.locator('#profile-name')).toHaveValue('María');
+  await page.locator('#profile-name').fill('María nueva');
+  await page.locator('#profile-form button[type="submit"]').click();
+  await expect.poll(() => received.length).toBe(1);
+  await page.locator('#profile-address').fill('Barrio');
+  await expect(page.locator('#profile-form button[type="submit"]')).toBeDisabled();
+  await page.locator('#profile-form').dispatchEvent('submit');
+  expect(received).toHaveLength(1);
+  release();
+  await expect(page.locator('#account-status')).toContainText('Datos guardados');
+  await other.locator('#profile-name').fill('María otra');
+  await other.locator('#profile-form button[type="submit"]').click();
+  await expect(other.locator('#account-status')).toContainText('Recarga la página');
+  await expect(other.locator('#profile-name')).toHaveValue('María otra');
+  expect(profile.nombresCompletos).toBe('María nueva');
+  expect(received).toEqual([
+    { nombresCompletos: 'María nueva', direccion: 'Centro', versionPerfil: 1 },
+    { nombresCompletos: 'María otra', direccion: 'Centro', versionPerfil: 1 },
+  ]);
+  await other.reload();
+  await expect(other.locator('#profile-name')).toHaveValue('María nueva');
+  await other.locator('#profile-name').fill('María revisada');
+  await other.locator('#profile-form button[type="submit"]').click();
+  await expect(other.locator('#account-status')).toContainText('Datos guardados');
+  expect(profile.versionPerfil).toBe(3);
+});
+
+test('un perfil sin versión pide recargar antes de enviar cambios', async ({ page }) => {
+  let writes = 0;
+  await page.route('**/api/**', route => {
+    if (route.request().method() !== 'GET') writes++;
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify({
+      nombresCompletos: 'María', direccion: '', tieneContrasenia: true, tieneGoogle: false,
+    }) });
+  });
+  await page.goto('/cuenta/');
+  await page.locator('#profile-name').fill('María nueva');
+  await page.locator('#profile-form button[type="submit"]').click();
+  await expect(page.locator('#account-status')).toContainText('Recarga la página');
+  expect(writes).toBe(0);
+});
+
 async function mockGoogleButton(page: Page, credential: string) {
   await page.route('https://accounts.google.com/gsi/client', route => route.fulfill({
     contentType: 'text/javascript', body: `window.google={accounts:{id:{
@@ -69,6 +134,14 @@ test('registro valida correo, política, confirmación y visibilidad antes de en
   await page.locator('#register-confirm').fill('abcdef');
   await page.getByRole('button', { name: 'Enviar enlace de verificación' }).click();
   await expect(page.locator('#register-password-error')).toContainText('número y un símbolo');
+  for (const password of ['1234567*a', 'abcde123*', 'Abcd1*', '7654a*']) {
+    await page.locator('#register-password').fill(password);
+    await page.locator('#register-confirm').fill(password);
+    await page.getByRole('button', { name: 'Enviar enlace de verificación' }).click();
+    await expect(page.locator('#register-password-error')).toContainText('Evita secuencias');
+    await expect(page.locator('#register-password')).toBeFocused();
+    expect(sent).toBe(0);
+  }
   await page.locator('#register-password').fill('Ab1!xy');
   await page.locator('#register-confirm').fill('Ab1!xz');
   await page.getByRole('button', { name: 'Enviar enlace de verificación' }).click();
@@ -76,6 +149,10 @@ test('registro valida correo, política, confirmación y visibilidad antes de en
   await page.locator('#register-confirm').fill('Ab1!xy');
   await page.getByRole('button', { name: 'Mostrar contraseña', exact: true }).click();
   await expect(page.locator('#register-password')).toHaveAttribute('type', 'text');
+  await page.getByRole('button', { name: 'Enviar enlace de verificación' }).click();
+  await expect(page.locator('#register-aceptacion-error')).toHaveText('Marca la casilla para continuar.');
+  expect(sent).toBe(0);
+  await page.locator('#register-aceptacion').check();
   await page.getByRole('button', { name: 'Enviar enlace de verificación' }).click();
   await expect(page.locator('#register-form')).toBeHidden();
   await expect(page.locator('#account-status')).toContainText('recibirás un enlace');
@@ -91,12 +168,18 @@ test('acceso, perfil y cambio de contraseña muestran solo los datos aprobados',
     const json = (status: number, body: object) => route.fulfill({ status,
       contentType: 'application/json', body: JSON.stringify(body) });
     if (path === '/api/auth/refresh') return json(401, { error: 'Sesión no válida' });
-    if (path === '/api/auth/login') { loggedIn = true; return json(200, { user: {} }); }
+    if (path === '/api/auth/login') {
+      expect(request.postDataJSON().contrasenia).toBe('Abcd1*');
+      loggedIn = true;
+      return json(200, { user: {} });
+    }
     if (path === '/api/me' && request.method() === 'GET') return json(loggedIn ? 200 : 401,
       loggedIn ? { id: 1, correo: 'maria@example.com', rol: 'votante',
+        versionPerfil: 1,
         nombresCompletos: 'María Pérez', direccion: 'Barrio central',
         tieneContrasenia: true, tieneGoogle: false } : { error: 'Inicia sesión' });
     if (path === '/api/me' && request.method() === 'PATCH') return json(200, {
+      versionPerfil: 2,
       id: 1, correo: 'maria@example.com', rol: 'votante',
       nombresCompletos: 'María Nueva', direccion: 'Centro',
     });
@@ -112,7 +195,7 @@ test('acceso, perfil y cambio de contraseña muestran solo los datos aprobados',
   await expect(page.locator('#login-panel')).toBeVisible();
   await expect(page.getByRole('banner').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
   await page.locator('#login-correo').fill('maria@example.com');
-  await page.locator('#login-contrasenia').fill('Ab1!xy');
+  await page.locator('#login-contrasenia').fill('Abcd1*');
   await page.getByRole('button', { name: 'Entrar', exact: true }).click();
   // Todo inicio de sesión correcto lleva a la portada.
   await expect(page).toHaveURL(/:\d+\/$/);
@@ -136,11 +219,16 @@ test('acceso, perfil y cambio de contraseña muestran solo los datos aprobados',
   await expect(page.locator('#account-status')).toContainText('Datos guardados');
   await expect(save).toBeDisabled();
   await page.locator('#current-password').fill('Mal1!xy');
+  await page.locator('#new-password').fill('7654a*');
+  await page.locator('#confirm-new-password').fill('7654a*');
+  await page.getByRole('button', { name: 'Actualizar contraseña' }).click();
+  await expect(page.locator('#new-password-error')).toContainText('Evita secuencias');
+  expect(changeCount).toBe(0);
   await page.locator('#new-password').fill('Cd2@xy');
   await page.locator('#confirm-new-password').fill('Cd2@xy');
   await page.getByRole('button', { name: 'Actualizar contraseña' }).click();
   await expect(page.locator('#account-status')).toContainText('actual es incorrecta');
-  await page.locator('#current-password').fill('Ab1!xy');
+  await page.locator('#current-password').fill('Abcd1*');
   await page.getByRole('button', { name: 'Actualizar contraseña' }).click();
   await expect(page.locator('#login-panel')).toBeVisible();
   await expect(page.getByRole('banner').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
@@ -182,6 +270,44 @@ test('cuenta Google muestra el mismo cierre de sesión y actualiza el menú', as
   await expect(page.locator('#login-panel')).toBeVisible();
   await expect(page.getByRole('banner').getByRole('link', { name: 'Iniciar sesión' })).toBeVisible();
   expect(logouts).toBe(1);
+});
+
+test('una cuenta Google nueva confirma la casilla antes de crear la cuenta y entrar', async ({ page }) => {
+  let loggedIn = false;
+  const requests: Record<string, unknown>[] = [];
+  await mockGoogleButton(page, 'credencial-google');
+  await page.route('**/api/**', route => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    const json = (status: number, body: object) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+    if (path === '/api/auth/google') {
+      const body = request.postDataJSON();
+      requests.push(body);
+      if (!body.aceptacion) return json(200, { requiereAceptacion: true, nombresCompletos: 'María Google', correo: 'maria@gmail.com' });
+      expect(body.aceptacion.aceptada).toBe(true);
+      loggedIn = true;
+      return json(200, { user: { id: 1 } });
+    }
+    if (path === '/api/me' && loggedIn) return json(200, { id: 1, nombresCompletos: 'María Google', terminosAceptados: true });
+    return json(401, { error: 'Sin sesión' });
+  });
+  await page.goto('/cuenta/');
+  await expect(page.locator('#google-login-button button, #google-login-unavailable:not([hidden])')).toBeVisible();
+  test.skip(await page.locator('#google-login-unavailable').isVisible(), 'Requiere PUBLIC_GOOGLE_CLIENT_ID para probar Google.');
+  await page.locator('#google-login-button button').click();
+  await expect(page.locator('#google-registration-panel')).toBeVisible();
+  await expect(page.locator('#google-registration-name')).toHaveText('María Google');
+  await expect(page.locator('#google-registration-email')).toHaveText('maria@gmail.com');
+  await expect(page.locator('#google-aceptacion')).not.toBeChecked();
+  expect(loggedIn).toBe(false);
+  await page.getByRole('button', { name: 'Crear mi cuenta' }).click();
+  await expect(page.locator('#google-aceptacion-error')).toHaveText('Marca la casilla para continuar.');
+  expect(requests).toHaveLength(1);
+  await page.locator('#google-aceptacion').check();
+  await page.getByRole('button', { name: 'Crear mi cuenta' }).click();
+  await expect(page).toHaveURL(/:\d+\/$/);
+  expect(requests).toHaveLength(2);
+  expect(loggedIn).toBe(true);
 });
 
 test('al entrar con Google se va a la portada', async ({ page }) => {
@@ -230,6 +356,12 @@ test('una sesión Google anterior confirma la identidad antes de añadir contras
   });
   await page.goto('/cuenta/');
   await expect(page.locator('#add-password-panel')).toBeVisible();
+  await page.locator('#add-password').fill('Abcd1*');
+  await page.locator('#add-confirm').fill('Abcd1*');
+  await page.getByRole('button', { name: 'Guardar contraseña' }).click();
+  await expect(page.locator('#add-password-error')).toContainText('Evita secuencias');
+  await expect(page.locator('#google-password-step')).toBeHidden();
+  expect(additions).toBe(0);
   await page.locator('#add-password').fill('Ab1!xy');
   await page.locator('#add-confirm').fill('Ab1!xy');
   await page.getByRole('button', { name: 'Guardar contraseña' }).click();
@@ -243,8 +375,10 @@ test('una sesión Google anterior confirma la identidad antes de añadir contras
 
 test('recuperación, restablecimiento y verificación conservan los enlaces de un uso', async ({ page }) => {
   const verifications: unknown[] = [];
+  let resets = 0;
   await page.route('**/api/**', route => {
     if (new URL(route.request().url()).pathname === '/api/auth/verify-email') verifications.push(route.request().postDataJSON());
+    if (new URL(route.request().url()).pathname === '/api/auth/password/reset') resets++;
     return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ message: 'ok' }) });
   });
   await page.goto('/cuenta/recuperar/');
@@ -256,10 +390,16 @@ test('recuperación, restablecimiento y verificación conservan los enlaces de u
   await expect(page.locator('#recovery-form')).toBeHidden();
   await page.goto(`/cuenta/restablecer/?token=${token}`);
   await expect(page).not.toHaveURL(/token=/);
+  await page.locator('#reset-password').fill('1234a*');
+  await page.locator('#reset-confirm').fill('1234a*');
+  await page.getByRole('button', { name: 'Guardar contraseña' }).click();
+  await expect(page.locator('#reset-password-error')).toContainText('Evita secuencias');
+  expect(resets).toBe(0);
   await page.locator('#reset-password').fill('Ab1!xy');
   await page.locator('#reset-confirm').fill('Ab1!xy');
   await page.getByRole('button', { name: 'Guardar contraseña' }).click();
   await expect(page.locator('#reset-done')).toBeVisible();
+  expect(resets).toBe(1);
   // El enlace de registro vale en cualquier navegador: no pide la contraseña.
   await page.goto(`/cuenta/verificar/?token=${token}`);
   await expect(page.locator('#verify-done')).toBeVisible();

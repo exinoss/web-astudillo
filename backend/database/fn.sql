@@ -42,11 +42,39 @@ LANGUAGE sql STABLE AS $$
       WHERE id_usuario = p_user AND proveedor = 'google');
 $$;
 
--- Guarda datos temporales y hashes para un alta aún no verificada. El enlace vale en cualquier
--- navegador: no hay verificador de navegador.
+CREATE OR REPLACE FUNCTION fn_legal_accepted(p_user integer, p_version text)
+RETURNS TABLE(aceptado boolean) LANGUAGE sql STABLE AS $$
+  SELECT EXISTS (SELECT 1 FROM tb_aceptaciones_legales a WHERE a.id_usuario = p_user AND a.version = p_version);
+$$;
+
+CREATE OR REPLACE FUNCTION fn_legal_accept(p_user integer, p_version text, p_text text)
+RETURNS TABLE(resultado text, aceptado_en timestamptz) LANGUAGE plpgsql AS $$
+DECLARE v_accept tb_aceptaciones_legales%ROWTYPE;
+BEGIN
+  -- El bloqueo serializa confirmaciones de varias pestañas y conserva la primera fecha.
+  PERFORM 1 FROM tb_usuarios WHERE id_usuario = p_user AND estado = 'activo' FOR UPDATE;
+  IF NOT FOUND THEN RETURN; END IF;
+  IF NOT fn_has_permission(p_user, 'perfil.ver') THEN RETURN; END IF;
+  SELECT a.* INTO v_accept FROM tb_aceptaciones_legales a WHERE a.id_usuario = p_user AND a.version = p_version;
+  IF FOUND THEN
+    IF v_accept.texto <> p_text THEN
+      RETURN QUERY SELECT 'conflicto'::text, NULL::timestamptz;
+    ELSE
+      RETURN QUERY SELECT 'guardado'::text, v_accept.aceptado_en;
+    END IF;
+    RETURN;
+  END IF;
+  INSERT INTO tb_aceptaciones_legales (id_usuario, version, texto) VALUES (p_user, p_version, p_text)
+  RETURNING * INTO v_accept;
+  RETURN QUERY SELECT 'guardado'::text, v_accept.aceptado_en;
+END;
+$$;
+
+-- El enlace de registro vale en cualquier navegador: no hay verificador de navegador.
 DROP FUNCTION IF EXISTS fn_pending_create(text, text, text, text, text, text);
+DROP FUNCTION IF EXISTS fn_pending_create(text, text, text, text, text);
 CREATE OR REPLACE FUNCTION fn_pending_create(
-  p_email text, p_token_hash text, p_name text, p_address text, p_password_hash text
+  p_email text, p_token_hash text, p_name text, p_address text, p_password_hash text, p_version text, p_text text
 ) RETURNS TABLE(id_token_autenticacion integer) LANGUAGE plpgsql AS $$
 -- Una sola solicitud válida por correo. Si hay una de hace menos de un minuto (doble envío,
 -- reintento de red, dos pestañas) no crea otra ni hace enviar otro correo: devuelve vacío.
@@ -56,7 +84,9 @@ BEGIN
   PERFORM pg_advisory_xact_lock(hashtext('registro:' || lower(p_email)));
   IF EXISTS (SELECT 1 FROM tb_token_autenticacion t
     WHERE lower(t.correo) = lower(p_email) AND t.proposito = 'registro_correo'
-      AND t.consumido_en IS NULL AND t.expira_en > now() AND t.creado_en > now() - interval '1 minute') THEN
+      AND t.consumido_en IS NULL AND t.expira_en > now() AND t.creado_en > now() - interval '1 minute'
+      AND EXISTS (SELECT 1 FROM tb_registros_pendientes p WHERE p.id_token_autenticacion = t.id_token_autenticacion
+        AND p.version_legal = p_version AND p.texto_aceptacion = p_text AND p.aceptado_en IS NOT NULL)) THEN
     RETURN;
   END IF;
   DELETE FROM tb_token_autenticacion t
@@ -64,8 +94,9 @@ BEGIN
   INSERT INTO tb_token_autenticacion (correo, proposito, token_hash, expira_en)
   VALUES (p_email, 'registro_correo', p_token_hash, now() + interval '30 minutes')
   RETURNING tb_token_autenticacion.id_token_autenticacion INTO v_id;
-  INSERT INTO tb_registros_pendientes (id_token_autenticacion, nombres_completos, direccion, contrasenia_hash)
-  VALUES (v_id, p_name, p_address, p_password_hash);
+  INSERT INTO tb_registros_pendientes (id_token_autenticacion, nombres_completos, direccion, contrasenia_hash,
+    version_legal, texto_aceptacion, aceptado_en)
+  VALUES (v_id, p_name, p_address, p_password_hash, p_version, p_text, now());
   RETURN QUERY SELECT v_id;
 END;
 $$;
@@ -75,10 +106,11 @@ DROP FUNCTION IF EXISTS fn_pending_get(text);
 CREATE OR REPLACE FUNCTION fn_pending_get(p_hash text)
 RETURNS TABLE(
   id_token_autenticacion integer, correo varchar(320), expira_en timestamptz,
-  consumido_en timestamptz, nombres_completos varchar(200), direccion text, contrasenia_hash text
+  consumido_en timestamptz, nombres_completos varchar(200), direccion text, contrasenia_hash text,
+  version_legal varchar(32), texto_aceptacion text, aceptado_en timestamptz
 ) LANGUAGE sql VOLATILE AS $$
   SELECT t.id_token_autenticacion, t.correo, t.expira_en, t.consumido_en,
-    p.nombres_completos, p.direccion, p.contrasenia_hash
+    p.nombres_completos, p.direccion, p.contrasenia_hash, p.version_legal, p.texto_aceptacion, p.aceptado_en
   FROM tb_token_autenticacion t JOIN tb_registros_pendientes p
     ON p.id_token_autenticacion = t.id_token_autenticacion
   WHERE t.token_hash = p_hash AND t.proposito = 'registro_correo'
@@ -99,11 +131,12 @@ CREATE OR REPLACE FUNCTION fn_registration_complete(p_token integer)
 RETURNS TABLE(id_usuario integer) LANGUAGE plpgsql AS $$
 DECLARE v_token record; v_user integer;
 BEGIN
-  SELECT t.correo, p.nombres_completos, p.direccion, p.contrasenia_hash
+  SELECT t.correo, p.nombres_completos, p.direccion, p.contrasenia_hash,
+    p.version_legal, p.texto_aceptacion, p.aceptado_en
   INTO v_token FROM tb_token_autenticacion t JOIN tb_registros_pendientes p
     ON p.id_token_autenticacion = t.id_token_autenticacion
   WHERE t.id_token_autenticacion = p_token AND t.proposito = 'registro_correo'
-    AND t.consumido_en IS NULL AND t.expira_en > now()
+    AND t.consumido_en IS NULL AND t.expira_en > now() AND p.version_legal IS NOT NULL
   FOR UPDATE OF t;
   IF NOT FOUND THEN RETURN; END IF;
   INSERT INTO tb_usuarios (correo, nombres_completos, direccion, correo_verificado_en)
@@ -111,6 +144,8 @@ BEGIN
   RETURNING tb_usuarios.id_usuario INTO v_user;
   INSERT INTO tb_identidades_autenticacion (id_usuario, proveedor, contrasenia_hash)
   VALUES (v_user, 'correo', v_token.contrasenia_hash);
+  INSERT INTO tb_aceptaciones_legales (id_usuario, version, texto, aceptado_en)
+  VALUES (v_user, v_token.version_legal, v_token.texto_aceptacion, v_token.aceptado_en);
   UPDATE tb_token_autenticacion SET consumido_en = now() WHERE id_token_autenticacion = p_token;
   DELETE FROM tb_registros_pendientes WHERE id_token_autenticacion = p_token;
   INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro)
@@ -127,10 +162,17 @@ RETURNS SETOF tb_usuarios LANGUAGE sql STABLE AS $$
 $$;
 
 -- Crea una cuenta Google si el correo todavía no está registrado.
-CREATE OR REPLACE FUNCTION fn_google_user_create(p_email text, p_name text)
-RETURNS SETOF tb_usuarios LANGUAGE sql VOLATILE AS $$
+DROP FUNCTION IF EXISTS fn_google_user_create(text, text);
+CREATE OR REPLACE FUNCTION fn_google_user_create(p_email text, p_name text, p_version text, p_text text)
+RETURNS SETOF tb_usuarios LANGUAGE plpgsql AS $$
+DECLARE v_user tb_usuarios%ROWTYPE;
+BEGIN
   INSERT INTO tb_usuarios (correo, nombres_completos, correo_verificado_en)
-  VALUES (p_email, p_name, now()) ON CONFLICT DO NOTHING RETURNING *;
+  VALUES (p_email, p_name, now()) ON CONFLICT DO NOTHING RETURNING * INTO v_user;
+  IF NOT FOUND THEN RETURN; END IF;
+  INSERT INTO tb_aceptaciones_legales (id_usuario, version, texto) VALUES (v_user.id_usuario, p_version, p_text);
+  RETURN NEXT v_user;
+END;
 $$;
 
 -- Vincula el sub de Google al usuario y registra la auditoría.
@@ -338,23 +380,34 @@ RETURNS void LANGUAGE sql AS $$
   WHERE token_hash = p_hash AND revocado_en IS NULL;
 $$;
 
--- Actualiza nombre y dirección si la cuenta activa tiene permiso de edición.
-CREATE OR REPLACE FUNCTION fn_profile_update(p_user integer, p_name text, p_address text)
-RETURNS SETOF tb_usuarios LANGUAGE plpgsql AS $$
+DROP FUNCTION IF EXISTS fn_profile_update(integer, text, text);
+CREATE OR REPLACE FUNCTION fn_profile_update(p_user integer, p_name text, p_address text, p_version integer)
+RETURNS TABLE(resultado text, usuario jsonb, version_perfil integer) LANGUAGE plpgsql AS $$
 DECLARE v_user tb_usuarios%ROWTYPE;
 BEGIN
-  UPDATE tb_usuarios u SET nombres_completos = p_name, direccion = p_address,
-    actualizado_en = now()
-  WHERE u.id_usuario = p_user AND u.estado = 'activo' AND EXISTS (
-    SELECT 1 FROM tb_roles r JOIN tb_rol_permisos rp ON rp.id_rol = r.id_rol
-    JOIN tb_permisos p ON p.id_permiso = rp.id_permiso
-    WHERE r.rol = u.rol AND p.codigo = 'perfil.editar'
-  ) RETURNING u.* INTO v_user;
+  SELECT u.* INTO v_user FROM tb_usuarios u
+  WHERE u.id_usuario = p_user AND fn_has_permission(p_user, 'perfil.editar') FOR UPDATE;
   IF NOT FOUND THEN RETURN; END IF;
+  IF p_version IS NULL OR p_version < 1 THEN
+    RETURN QUERY SELECT 'conflicto'::text, NULL::jsonb, v_user.version_perfil;
+    RETURN;
+  END IF;
+  -- Comparar primero los datos permite reconocer un guardado cuyo éxito no llegó al navegador.
+  IF v_user.nombres_completos IS NOT DISTINCT FROM p_name AND v_user.direccion IS NOT DISTINCT FROM p_address THEN
+    RETURN QUERY SELECT 'guardado'::text, to_jsonb(v_user), v_user.version_perfil;
+    RETURN;
+  END IF;
+  IF v_user.version_perfil <> p_version THEN
+    RETURN QUERY SELECT 'conflicto'::text, NULL::jsonb, v_user.version_perfil;
+    RETURN;
+  END IF;
+  UPDATE tb_usuarios u SET nombres_completos = p_name, direccion = p_address,
+    actualizado_en = now(), version_perfil = u.version_perfil + 1
+  WHERE u.id_usuario = p_user RETURNING u.* INTO v_user;
   INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro, cambios)
   VALUES (p_user, 'perfil_actualizado', 'tb_usuarios', p_user,
     '{"campos":["nombres_completos","direccion"]}'::jsonb);
-  RETURN NEXT v_user;
+  RETURN QUERY SELECT 'guardado'::text, to_jsonb(v_user), v_user.version_perfil;
 END;
 $$;
 
@@ -512,10 +565,15 @@ RETURNS boolean LANGUAGE sql STABLE AS $$
   SELECT EXISTS (SELECT 1 FROM fn_authorized_user(p_user, p_permission));
 $$;
 
--- Textos del sitio que difieren del valor por defecto del código.
 CREATE OR REPLACE FUNCTION fn_texts_list()
 RETURNS TABLE(clave varchar, valor text, actualizado_en timestamptz) LANGUAGE sql STABLE AS $$
-  SELECT t.clave, t.valor, t.actualizado_en FROM tb_textos t ORDER BY t.clave;
+  SELECT COALESCE(t.clave, i.clave), COALESCE(t.valor, i.valor), t.actualizado_en
+  FROM tb_textos_iniciales i FULL JOIN tb_textos t USING (clave) ORDER BY 1;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_texts_initial()
+RETURNS TABLE(clave varchar, valor text) LANGUAGE sql STABLE AS $$
+  SELECT i.clave, i.valor FROM tb_textos_iniciales i ORDER BY i.clave;
 $$;
 
 -- ---------- Control de concurrencia del contenido ----------
@@ -950,6 +1008,32 @@ RETURNS void LANGUAGE sql AS $$
   ON CONFLICT (texto_normalizado) DO UPDATE SET veces = tb_chat_sin_respuesta.veces + 1, ultima_vez = now();
 $$;
 
+DROP FUNCTION IF EXISTS fn_chat_send(integer, uuid, text, jsonb, text, text);
+CREATE OR REPLACE FUNCTION fn_chat_send(
+  p_user integer, p_key uuid, p_hash text, p_response jsonb, p_unanswered text, p_example text, p_version text)
+RETURNS TABLE(resultado text, respuesta jsonb) LANGUAGE plpgsql AS $$
+DECLARE v_send tb_chat_envios%ROWTYPE;
+BEGIN
+  IF NOT fn_has_permission(p_user, 'participacion.enviar') THEN RETURN; END IF;
+  IF NOT (SELECT aceptado FROM fn_legal_accepted(p_user, p_version)) THEN RETURN; END IF;
+  -- La clave se bloquea también antes de que exista la fila, y el contador se guarda en esta transacción.
+  PERFORM pg_advisory_xact_lock(p_user, hashtext('chat:' || p_key::text));
+  SELECT e.* INTO v_send FROM tb_chat_envios e WHERE e.id_usuario = p_user AND e.clave_idempotencia = p_key;
+  IF FOUND THEN
+    IF v_send.mensaje_hash <> p_hash THEN
+      RETURN QUERY SELECT 'conflicto'::text, NULL::jsonb;
+    ELSE
+      RETURN QUERY SELECT 'guardado'::text, v_send.respuesta;
+    END IF;
+    RETURN;
+  END IF;
+  INSERT INTO tb_chat_envios (id_usuario, clave_idempotencia, mensaje_hash, respuesta)
+  VALUES (p_user, p_key, p_hash, p_response);
+  IF p_unanswered IS NOT NULL THEN PERFORM fn_chat_unanswered_note(p_unanswered, p_example); END IF;
+  RETURN QUERY SELECT 'guardado'::text, p_response;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION fn_chat_unanswered_list(p_actor integer, p_limit integer)
 RETURNS TABLE(texto_normalizado varchar, ejemplo varchar, veces integer, ultima_vez timestamptz)
 LANGUAGE sql STABLE AS $$
@@ -972,8 +1056,9 @@ $$;
 -- Crear es idempotente por (usuario, clave): repetir el envío devuelve la misma fila con
 -- `nueva = false`. La base repite la comprobación del permiso aunque la API ya lo hiciera.
 
+DROP FUNCTION IF EXISTS fn_alert_create(integer, uuid, text, text, text, text, text);
 CREATE OR REPLACE FUNCTION fn_alert_create(p_user integer, p_key uuid, p_type text, p_sector text,
-  p_reference text, p_description text, p_photo text)
+  p_reference text, p_description text, p_photo text, p_version text)
 RETURNS TABLE(id_alerta integer, tipo varchar, sector varchar, referencia varchar, descripcion varchar,
   foto varchar, estado varchar, creado_en timestamptz, nueva boolean)
 LANGUAGE plpgsql AS $$
@@ -981,6 +1066,7 @@ LANGUAGE plpgsql AS $$
 DECLARE v_rows integer;
 BEGIN
   IF NOT fn_has_permission(p_user, 'participacion.enviar') THEN RETURN; END IF;
+  IF NOT (SELECT aceptado FROM fn_legal_accepted(p_user, p_version)) THEN RETURN; END IF;
   INSERT INTO tb_alertas (id_usuario, clave_idempotencia, tipo, sector, referencia, descripcion, foto)
   VALUES (p_user, p_key, p_type, p_sector, p_reference, p_description, p_photo)
   ON CONFLICT ON CONSTRAINT uq_alertas_idempotencia DO NOTHING;
@@ -1008,13 +1094,15 @@ LANGUAGE sql STABLE AS $$
   FROM tb_alertas a WHERE a.id_usuario = p_user ORDER BY a.id_alerta DESC LIMIT p_limit;
 $$;
 
-CREATE OR REPLACE FUNCTION fn_suggestion_create(p_user integer, p_key uuid, p_topic text, p_message text)
+DROP FUNCTION IF EXISTS fn_suggestion_create(integer, uuid, text, text);
+CREATE OR REPLACE FUNCTION fn_suggestion_create(p_user integer, p_key uuid, p_topic text, p_message text, p_version text)
 RETURNS TABLE(id_sugerencia integer, tema varchar, mensaje varchar, estado varchar, creado_en timestamptz, nueva boolean)
 LANGUAGE plpgsql AS $$
 #variable_conflict use_column
 DECLARE v_rows integer;
 BEGIN
   IF NOT fn_has_permission(p_user, 'participacion.enviar') THEN RETURN; END IF;
+  IF NOT (SELECT aceptado FROM fn_legal_accepted(p_user, p_version)) THEN RETURN; END IF;
   INSERT INTO tb_sugerencias (id_usuario, clave_idempotencia, tema, mensaje)
   VALUES (p_user, p_key, p_topic, p_message)
   ON CONFLICT ON CONSTRAINT uq_sugerencias_idempotencia DO NOTHING;

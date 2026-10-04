@@ -17,7 +17,7 @@ const topicName = (slug: string) => slug === "otro" ? "Otra idea" : state.draft!
 const stateControl = (id: number, current: ParticipationState) => can("participacion.gestionar") ? `
   <span class="flex flex-wrap items-center gap-2" data-estado-de="${id}" data-actual="${current}">
     <label class="sr-only" for="estado-${id}">Estado</label>
-    <select id="estado-${id}" class="min-h-11 rounded-[3px] border border-[#acbacb] bg-base-100 px-3 text-sm text-primary">
+    <select id="estado-${id}" class="min-h-11 rounded-[3px] border border-field-border bg-base-100 px-3 text-sm text-primary">
       ${STATES.map((s) => `<option value="${s}" ${s === current ? "selected" : ""}>${ESTADOS[s].nombre}</option>`).join("")}
     </select>
     <button type="button" class="button min-h-11 px-4 py-0">Guardar</button>

@@ -1,9 +1,9 @@
-import type { Account, AuthRepository, Profile } from '../auth-repository';
+import type { Account, AuthRepository, PendingGoogleRegistration, Profile, RegistrationInput } from '../auth-repository';
+import type { AceptacionLegal } from '../../legal';
 import { apiRequest } from './api-client';
 
 export class HttpAuthRepository implements AuthRepository {
-  async register(input: { nombresCompletos: string; direccion?: string; correo: string; contrasenia: string;
-    confirmarContrasenia: string }) {
+  async register(input: RegistrationInput) {
     await apiRequest('/api/auth/register', 'POST', input);
   }
 
@@ -20,8 +20,13 @@ export class HttpAuthRepository implements AuthRepository {
     await apiRequest('/api/auth/login/confirm', 'POST', { token });
   }
 
-  async googleLogin(credential: string) {
-    await apiRequest('/api/auth/google', 'POST', { credential });
+  async googleLogin(credential: string, aceptacion?: AceptacionLegal) {
+    const result = await apiRequest<PendingGoogleRegistration | { user: Account }>('/api/auth/google', 'POST', { credential, aceptacion });
+    return 'requiereAceptacion' in result ? result : null;
+  }
+
+  async acceptTerms(aceptacion: AceptacionLegal) {
+    await apiRequest('/api/auth/accept-terms', 'POST', { aceptacion }, true);
   }
 
   async requestReset(correo: string) {
@@ -45,8 +50,8 @@ export class HttpAuthRepository implements AuthRepository {
     return apiRequest<Profile>('/api/me', 'GET', undefined, true);
   }
 
-  updateProfile(input: { nombresCompletos: string; direccion?: string }) {
-    return apiRequest<Account>('/api/me', 'PATCH', input, true);
+  updateProfile(input: { nombresCompletos: string; direccion?: string; versionPerfil: number }) {
+    return apiRequest<Account & { versionPerfil: number }>('/api/me', 'PATCH', input, true);
   }
 
   async logout() {

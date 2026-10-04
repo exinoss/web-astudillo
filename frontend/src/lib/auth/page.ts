@@ -36,7 +36,8 @@ export function validateFields(form: HTMLFormElement) {
   };
   for (const input of form.querySelectorAll<HTMLInputElement>('input')) {
     let message = '';
-    if (input.required && !input.value.trim()) message = 'Completa este campo.';
+    if (input.required && input.type === 'checkbox' && !input.checked) message = 'Marca la casilla para continuar.';
+    else if (input.required && !input.value.trim()) message = 'Completa este campo.';
     else if (input.type === 'email' && input.value &&
       (!input.validity.valid || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value)))
       message = 'Escribe un correo válido, por ejemplo nombre@ejemplo.com.';

@@ -1,4 +1,5 @@
 import type { Config } from '../config';
+import type { AceptacionLegal } from '../contracts/legal';
 import type { createAuthorization } from './services/authorization';
 import type { createGoogleAuth } from './services/google';
 import type { createAttempts, createLimiter } from './services/limits';
@@ -22,6 +23,7 @@ export interface RegistrationInput {
   correo: string;
   contrasenia: string;
   confirmarContrasenia: string;
+  aceptacion: AceptacionLegal;
 }
 
 export type AuthContext = {

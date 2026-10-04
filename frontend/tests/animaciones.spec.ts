@@ -5,6 +5,7 @@ async function rellenarRegistro(page: Page) {
   await page.locator('#register-email').fill('maria@example.com');
   await page.locator('#register-password').fill('Ab1!xy');
   await page.locator('#register-confirm').fill('Ab1!xy');
+  await page.locator('#register-aceptacion').check();
 }
 
 test('el envío lento muestra el loader y lo retira al responder', async ({ page }) => {

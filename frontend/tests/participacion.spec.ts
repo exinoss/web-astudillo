@@ -1,12 +1,18 @@
 import { expect, test, type Page } from '@playwright/test';
+import { VERSION_LEGAL } from '../src/lib/legal';
 
 // API simulada de participación: sesión, alertas, sugerencias y chat en memoria.
-function mockApi(page: Page, opciones: { loggedIn?: boolean } = {}) {
+function mockApi(page: Page, opciones: { loggedIn?: boolean; accepted?: boolean } = {}) {
   const data = {
     loggedIn: opciones.loggedIn ?? false,
+    accepted: opciones.accepted ?? true,
+    aceptaciones: [] as object[],
+    fallarAceptacion: false,
+    rechazarSiguienteEnvio: false,
     alertas: [] as Record<string, unknown>[],
     envios: [] as { path: string; campos: Record<string, string>; foto?: string }[],
     preguntas: [] as string[],
+    clavesChat: [] as string[],
   };
   void page.route('**/api/**', async (route) => {
     const request = route.request();
@@ -15,9 +21,20 @@ function mockApi(page: Page, opciones: { loggedIn?: boolean } = {}) {
     if (path === '/api/auth/refresh') return json(401, { error: 'Sin sesión' });
     if (path === '/api/auth/login') { data.loggedIn = true; return json(200, { user: {} }); }
     if (path === '/api/me') return data.loggedIn
-      ? json(200, { id: 1, correo: 'maria@example.com', rol: 'votante', nombresCompletos: 'María', direccion: '', tieneContrasenia: true, tieneGoogle: false, permisos: ['participacion.enviar'] })
+      ? json(200, { id: 1, correo: 'maria@example.com', rol: 'votante', terminosAceptados: data.accepted, nombresCompletos: 'María', direccion: '', tieneContrasenia: true, tieneGoogle: false, permisos: ['participacion.enviar'] })
       : json(401, { error: 'Inicia sesión' });
     if (!data.loggedIn) return json(401, { error: 'Inicia sesión' });
+    if (path === '/api/auth/accept-terms') {
+      data.aceptaciones.push(request.postDataJSON());
+      if (data.fallarAceptacion) return json(503, { error: 'Inténtalo de nuevo.' });
+      data.accepted = true;
+      return json(200, { terminosAceptados: true });
+    }
+    if (path.startsWith('/api/participacion/') && request.method() === 'POST' && (!data.accepted || data.rechazarSiguienteEnvio)) {
+      data.accepted = false;
+      data.rechazarSiguienteEnvio = false;
+      return json(428, { error: 'Confirma tu aceptación para continuar', requiereAceptacion: true });
+    }
     if (path === '/api/participacion/alertas/mias') return json(200, { alertas: data.alertas });
     if (path === '/api/participacion/alertas') {
       // El multipart se lee a mano: basta con los nombres de los campos y del archivo.
@@ -35,8 +52,10 @@ function mockApi(page: Page, opciones: { loggedIn?: boolean } = {}) {
       return json(200, { id: 1, ...request.postDataJSON(), estado: 'recibida', creadoEn: '2026-10-01T15:00:00Z' });
     }
     if (path === '/api/participacion/chat') {
-      const { mensaje } = request.postDataJSON();
+      const { mensaje, idempotencia } = request.postDataJSON();
+      expect(idempotencia).toMatch(/^[0-9a-f-]{36}$/);
       data.preguntas.push(mensaje);
+      data.clavesChat.push(idempotencia);
       return json(200, /propuesta/i.test(mensaje)
         ? { texto: 'Puedes revisar las siete propuestas.', enlaceTexto: 'Ver propuestas', enlaceRuta: '/#propuestas' }
         : { texto: 'Todavía no tengo una respuesta para eso.', enlaceTexto: 'Ir a contacto', enlaceRuta: '/#contacto' });
@@ -45,6 +64,139 @@ function mockApi(page: Page, opciones: { loggedIn?: boolean } = {}) {
   });
   return data;
 }
+
+test('la aceptación pendiente conserva la alerta y la foto, y se guarda para los demás formularios', async ({ page }) => {
+  const api = mockApi(page, { loggedIn: true, accepted: false });
+  await page.goto('/ciudadania/alerta-ciudadana/');
+  await expect(page.locator('#alerta-aceptacion-block')).toBeVisible();
+  await page.getByRole('radio', { name: 'Baches' }).check();
+  await page.locator('#alerta-sector').fill('Barrio Central');
+  await page.locator('#alerta-descripcion').fill('Hay un bache grande en la esquina');
+  await page.locator('#alerta-foto').setInputFiles('src/assets/carlos.jpg');
+  await page.getByRole('button', { name: 'Aceptar y enviar alerta' }).click();
+  await expect(page.locator('#alerta-aceptacion-error')).toHaveText('Marca la casilla para continuar.');
+  await expect(page.locator('#alerta-aceptacion')).toBeFocused();
+  await expect(page.locator('#alerta-sector')).toHaveValue('Barrio Central');
+  await expect(page.locator('#alerta-foto-nombre')).toContainText('carlos.jpg');
+  expect(api.envios).toHaveLength(0);
+  expect(api.aceptaciones).toHaveLength(0);
+  await page.locator('#alerta-aceptacion').press('Space');
+  await page.getByRole('button', { name: 'Aceptar y enviar alerta' }).click();
+  await expect(page.locator('#alerta-estado')).toContainText('Recibimos tu alerta');
+  await expect(page.locator('#alerta-aceptacion-block')).toBeHidden();
+  expect(api.envios).toHaveLength(1);
+  expect(api.envios[0].foto).toBe('carlos.jpg');
+  expect(api.aceptaciones).toEqual([{ aceptacion: { version: VERSION_LEGAL, aceptada: true } }]);
+  for (const [path, id] of [['/ciudadania/sugerencias/', 'sugerencia'], ['/ciudadania/chat/', 'chat'], ['/ciudadania/alerta-ciudadana/', 'alerta']]) {
+    await page.goto(path);
+    await expect(page.locator(`#${id}-aceptacion-block`)).toBeHidden();
+  }
+});
+
+test('un fallo al guardar la aceptación conserva la sugerencia y permite reintentar', async ({ page }) => {
+  const api = mockApi(page, { loggedIn: true, accepted: false });
+  api.fallarAceptacion = true;
+  await page.goto('/ciudadania/sugerencias/');
+  await expect(page.locator('#sugerencia-aceptacion-block')).toBeVisible();
+  await page.getByRole('radio', { name: 'Otra idea' }).check();
+  await page.locator('#sugerencia-mensaje').fill('Más iluminación alrededor del parque.');
+  await page.locator('#sugerencia-aceptacion').check();
+  await page.getByRole('button', { name: 'Aceptar y enviar sugerencia' }).click();
+  await expect(page.locator('#sugerencia-estado')).toContainText('Inténtalo de nuevo');
+  await expect(page.locator('#sugerencia-mensaje')).toHaveValue('Más iluminación alrededor del parque.');
+  await expect(page.locator('#sugerencia-aceptacion')).toBeChecked();
+  expect(api.envios).toHaveLength(0);
+  api.fallarAceptacion = false;
+  await page.getByRole('button', { name: 'Aceptar y enviar sugerencia' }).click();
+  await expect(page.locator('#sugerencia-estado')).toContainText('Gracias');
+  expect(api.envios).toHaveLength(1);
+  await expect(page.locator('#sugerencia-aceptacion-block')).toBeHidden();
+});
+
+test('un cambio de versión conserva la alerta y la foto al recargar para revisar las condiciones', async ({ page }) => {
+  const api = mockApi(page, { loggedIn: true, accepted: false });
+  await page.route('**/api/auth/accept-terms', route => route.fulfill({ status: 409,
+    contentType: 'application/json', body: '{"error":"Las condiciones cambiaron. Recarga la página para revisarlas"}' }));
+  await page.goto('/ciudadania/alerta-ciudadana/');
+  await expect(page.locator('#alerta-aceptacion-block')).toBeVisible();
+  await page.getByRole('radio', { name: 'Baches' }).check();
+  await page.locator('#alerta-sector').fill('Barrio Central');
+  await page.locator('#alerta-descripcion').fill('Hay un bache grande en la esquina');
+  await page.locator('#alerta-foto').setInputFiles('src/assets/carlos.jpg');
+  await page.locator('#alerta-aceptacion').check();
+  await page.getByRole('button', { name: 'Aceptar y enviar alerta' }).click();
+  await expect(page.locator('#alerta-estado')).toContainText('Recarga la página');
+  await page.reload();
+  await expect(page.locator('#alerta-recuperada')).toBeVisible();
+  await expect(page.locator('#alerta-sector')).toHaveValue('Barrio Central');
+  await expect(page.locator('#alerta-descripcion')).toHaveValue('Hay un bache grande en la esquina');
+  await expect(page.locator('#alerta-foto-nombre')).toContainText('carlos.jpg');
+  await expect(page.locator('#alerta-aceptacion')).not.toBeChecked();
+  expect(api.envios).toHaveLength(0);
+});
+
+test('la consulta rápida espera la aceptación sin vaciar el texto ni añadir mensajes', async ({ page }) => {
+  const api = mockApi(page, { loggedIn: true, accepted: false });
+  await page.goto('/ciudadania/chat/');
+  await expect(page.locator('#chat-aceptacion-block')).toBeVisible();
+  await page.getByRole('button', { name: 'Ver propuestas', exact: true }).click();
+  await expect(page.locator('#chat-input')).toHaveValue('Ver propuestas');
+  await expect(page.locator('#chat-aceptacion-error')).toBeVisible();
+  await expect(page.locator('.from-user')).toHaveCount(0);
+  expect(api.preguntas).toHaveLength(0);
+  await page.locator('#chat-aceptacion').check();
+  await page.getByRole('button', { name: 'Aceptar y enviar consulta' }).click();
+  await expect(page.locator('.from-user')).toHaveCount(1);
+  await expect(page.getByRole('log').getByRole('link', { name: 'Ver propuestas' })).toBeVisible();
+  await expect(page.locator('#chat-aceptacion-block')).toBeHidden();
+  await expect(page.locator('#chat-input')).toHaveValue('');
+  await expect(page.getByRole('button', { name: 'Enviar consulta', exact: true })).toBeVisible();
+  expect(api.preguntas).toEqual(['Ver propuestas']);
+  expect(api.aceptaciones).toHaveLength(1);
+});
+
+test('si la aceptación falta entre comprobar y enviar, el chat vuelve a pedirla conservando la consulta', async ({ page }) => {
+  const api = mockApi(page, { loggedIn: true });
+  api.rechazarSiguienteEnvio = true;
+  await page.goto('/ciudadania/chat/');
+  await expect(page.locator('#chat-aceptacion-block')).toBeHidden();
+  await page.locator('#chat-input').fill('¿Qué propuestas hay para el barrio?');
+  await page.getByRole('button', { name: 'Enviar consulta', exact: true }).click();
+  await expect(page.locator('#chat-aceptacion-block')).toBeVisible();
+  await expect(page.locator('#chat-input')).toHaveValue('¿Qué propuestas hay para el barrio?');
+  await expect(page.locator('.from-user')).toHaveCount(0);
+  await page.locator('#chat-aceptacion').check();
+  await page.getByRole('button', { name: 'Aceptar y enviar consulta' }).click();
+  await expect(page.locator('#chat-aceptacion-block')).toBeHidden();
+  expect(api.preguntas).toEqual(['¿Qué propuestas hay para el barrio?']);
+});
+
+test('el doble envío durante la aceptación no duplica confirmación ni participación', async ({ page }) => {
+  const api = mockApi(page, { loggedIn: true, accepted: false });
+  let confirmations = 0;
+  let release!: () => void;
+  const waiting = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/auth/accept-terms', async route => {
+    confirmations++;
+    await waiting;
+    api.accepted = true;
+    return route.fulfill({ contentType: 'application/json', body: '{"terminosAceptados":true}' });
+  });
+  await page.goto('/ciudadania/sugerencias/');
+  await expect(page.locator('#sugerencia-aceptacion-block')).toBeVisible();
+  await page.getByRole('radio', { name: 'Otra idea' }).check();
+  await page.locator('#sugerencia-mensaje').fill('Más iluminación alrededor del parque.');
+  await page.locator('#sugerencia-aceptacion').check();
+  const button = page.getByRole('button', { name: 'Aceptar y enviar sugerencia' });
+  await button.click();
+  await expect.poll(() => confirmations).toBe(1);
+  await expect(button).toBeDisabled();
+  await page.locator('#sugerencia-form').dispatchEvent('submit');
+  expect(confirmations).toBe(1);
+  release();
+  await expect(page.locator('#sugerencia-estado')).toContainText('Gracias');
+  expect(api.envios).toHaveLength(1);
+});
 
 test('una alerta sin sesión se guarda, pide entrar y vuelve rellena con su foto', async ({ page }) => {
   const api = mockApi(page);
@@ -151,6 +303,51 @@ test('el chat responde con enlaces, pinta todo como texto y pide sesión', async
   await page.getByRole('button', { name: 'Enviar consulta' }).click();
   await expect(page).toHaveURL(/\/cuenta\/$/);
   await expect(page.locator('#account-status')).toContainText('Inicia sesión para enviar tu consulta');
+  const key = await page.evaluate(() => JSON.parse(localStorage.getItem('astudillo:borrador')!).idempotencia);
+  api.loggedIn = true;
+  await page.goto('/ciudadania/chat/');
+  await page.getByRole('button', { name: 'Enviar consulta' }).click();
+  await expect.poll(() => api.clavesChat.at(-1)).toBe(key);
+});
+
+test('el chat conserva la clave tras perder la respuesta y bloquea envíos simultáneos', async ({ page }) => {
+  mockApi(page, { loggedIn: true });
+  const sent: { mensaje: string; idempotencia: string }[] = [];
+  const saved = new Map<string, object>();
+  let release!: () => void;
+  const waiting = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/api/participacion/chat', async route => {
+    const body = route.request().postDataJSON();
+    sent.push(body);
+    saved.set(body.idempotencia, { texto: 'Respuesta guardada', enlaceTexto: null, enlaceRuta: null });
+    if (sent.length === 1) {
+      await waiting;
+      return route.abort('failed');
+    }
+    return route.fulfill({ contentType: 'application/json', body: JSON.stringify(saved.get(body.idempotencia)) });
+  });
+  await page.goto('/ciudadania/chat/');
+  await page.locator('#chat-input').fill('Una pregunta');
+  await page.getByRole('button', { name: 'Enviar consulta' }).click();
+  await expect.poll(() => sent.length).toBe(1);
+  await expect(page.getByRole('button', { name: 'Enviar consulta' })).toBeDisabled();
+  for (const button of await page.locator('[data-chat]').all()) await expect(button).toBeDisabled();
+  await page.locator('#chat-input').fill('Una pregunta');
+  await page.locator('#chat-form').dispatchEvent('submit');
+  expect(sent).toHaveLength(1);
+  await page.locator('#chat-input').fill('');
+  release();
+  await expect(page.getByRole('log')).toContainText('No se pudo conectar');
+  await expect(page.locator('#chat-input')).toHaveValue('Una pregunta');
+  await page.locator('#chat-input').press('Enter');
+  await expect(page.getByRole('log')).toContainText('Respuesta guardada');
+  expect(sent[1]).toEqual(sent[0]);
+  expect(saved.size).toBe(1);
+  await page.locator('#chat-input').fill('Una pregunta');
+  await page.locator('#chat-input').press('Enter');
+  await expect.poll(() => sent.length).toBe(3);
+  expect(sent[2].idempotencia).not.toBe(sent[0].idempotencia);
+  expect(saved.size).toBe(2);
 });
 
 test('el micrófono escribe la pregunta y la envía al terminar de hablar', async ({ page }) => {

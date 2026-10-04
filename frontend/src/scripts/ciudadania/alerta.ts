@@ -1,11 +1,12 @@
 import { mostrarCarga } from "../../lib/animaciones";
 import { errorText, showStatus, signedIn } from "../../lib/auth/page";
-import { alertRepository } from "../../lib/data";
+import { alertRepository } from "../../lib/data/participation";
 import type { AlertType, SentAlert } from "../../lib/data/types";
 import { esc } from "../../lib/html";
 import { iconSvg } from "../../lib/iconos";
 import { borrar, leer, leerFoto } from "../../lib/participacion/borrador";
 import { enviarConSesion, marcarError } from "../../lib/participacion/envio";
+import { prepararAceptacion } from '../../lib/participacion/aceptacion';
 import { ESTADOS, MAX_FOTO_BYTES, MIN_DESCRIPCION, TIPOS_ALERTA } from "../../lib/participacion/tipos";
 
 const form = document.querySelector<HTMLFormElement>("#alerta-form")!;
@@ -18,6 +19,8 @@ const fotoZona = form.querySelector<HTMLElement>("#alerta-foto-zona")!;
 const fotoVista = form.querySelector<HTMLElement>("#alerta-foto-vista")!;
 const estado = form.querySelector<HTMLElement>("#alerta-estado")!;
 const historial = document.querySelector<HTMLElement>("#historial")!;
+prepararAceptacion(form);
+let enviando = false;
 
 let foto: File | null = null;
 let vistaUrl = "";
@@ -131,6 +134,7 @@ async function recuperarBorrador() {
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (enviando) return;
   const primero = validar();
   if (primero) {
     showStatus(estado, "Revisa los campos marcados.", true);
@@ -138,6 +142,7 @@ form.addEventListener("submit", async (e) => {
     return;
   }
   const boton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+  enviando = true;
   boton.disabled = true;
   estado.hidden = true;
   idempotencia ||= crypto.randomUUID();
@@ -145,7 +150,7 @@ form.addEventListener("submit", async (e) => {
   const terminarCarga = mostrarCarga(form);
   try {
     const enviada = await enviarConSesion({
-      formulario: "alerta", campos, idempotencia, foto: foto ?? undefined,
+      form, formulario: "alerta", campos, idempotencia, foto: foto ?? undefined,
       enviar: () => alertRepository.submit({ ...campos, tipo: campos.tipo as AlertType, idempotencia, foto: foto ?? undefined }),
     });
     if (!enviada) return;
@@ -160,6 +165,7 @@ form.addEventListener("submit", async (e) => {
     showStatus(estado, errorText(error), true);
   } finally {
     terminarCarga();
+    enviando = false;
     boton.disabled = false;
   }
 });

@@ -25,7 +25,7 @@ let canPublish = false;
 const read = () => { try { return localStorage.getItem(STORAGE) === "1"; } catch { return false; } };
 const remember = (value: boolean) => { try { localStorage.setItem(STORAGE, value ? "1" : "0"); } catch { /* sin almacenamiento */ } };
 const definition = (el: HTMLElement) => TEXTOS[el.dataset.editable as TextKey];
-const current = (key: string) => texts[key] ?? TEXTOS[key as TextKey]?.texto ?? "";
+const current = (key: string) => texts[key] ?? "";
 
 /** Pinta un valor como lo hace Editable.astro: cada salto de línea es un <br>. */
 function paint(el: HTMLElement, value: string) {
@@ -171,7 +171,7 @@ sheet.innerHTML = `
     </div>
     <div class="flex flex-col gap-[7px]">
       <label for="edicion-hoja-campo" id="edicion-hoja-etiqueta" class="text-[0.82rem] font-bold"></label>
-      <textarea id="edicion-hoja-campo" rows="4" class="min-h-24 w-full rounded-[3px] border border-[#acbacb] bg-base-100 px-3.5 py-3 text-[0.88rem] leading-normal text-primary"></textarea>
+      <textarea id="edicion-hoja-campo" rows="4" class="min-h-24 w-full rounded-[3px] border border-field-border bg-base-100 px-3.5 py-3 text-[0.88rem] leading-normal text-primary"></textarea>
     </div>
     <div class="flex gap-2.5">
       <button type="button" data-cerrar class="${BUTTON} flex-1 border border-[#06317640] text-primary">Cancelar</button>
@@ -284,7 +284,7 @@ export async function startEditMode(profile: Profile) {
     const el = (e.target as Element).closest?.<HTMLElement>("[data-editable]");
     if (!on || !el) return;
     if (editing?.el === el) {
-      const multiline = definition(el).texto.includes("\n");
+      const multiline = current(el.dataset.editable!).includes("\n");
       if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); finishInline(false); el.focus(); }
       else if (e.key === "Enter" && !(multiline && e.shiftKey)) { e.preventDefault(); finishInline(true); el.focus(); }
     } else if (e.key === "Enter" || e.key === " ") {

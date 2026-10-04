@@ -120,6 +120,7 @@ test('participación: el estado se cambia y un cambio ajeno no se pisa', async (
 
 test('redes sociales: WhatsApp se escribe como número y se guarda en formato internacional', async ({ page }) => {
   const data = panelData('admin');
+  const facebook = data.draft.textos['enlace.facebook'];
   await mockPanelApi(page, data);
   await page.goto('/cuenta/panel/#textos');
   const form = page.locator('#redes-form');
@@ -130,7 +131,7 @@ test('redes sociales: WhatsApp se escribe como número y se guarda en formato in
   await guardar.click();
   await expect(page.locator('#panel-estado')).toContainText('Enlaces guardados');
   expect(data.draft.textos['enlace.whatsapp']).toBe('593985658595');
-  expect(data.draft.textos['enlace.facebook']).toBeUndefined();
+  expect(data.draft.textos['enlace.facebook']).toBe(facebook);
   await expect(page.locator('#red-whatsapp')).toHaveValue('+593985658595');
 });
 

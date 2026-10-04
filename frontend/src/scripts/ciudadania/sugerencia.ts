@@ -1,14 +1,17 @@
 import { mostrarCarga } from "../../lib/animaciones";
 import { errorText, showStatus } from "../../lib/auth/page";
-import { suggestionRepository } from "../../lib/data";
+import { suggestionRepository } from "../../lib/data/participation";
 import { borrar, leer } from "../../lib/participacion/borrador";
 import { enviarConSesion, marcarError } from "../../lib/participacion/envio";
+import { prepararAceptacion } from '../../lib/participacion/aceptacion';
 import { MIN_SUGERENCIA } from "../../lib/participacion/tipos";
 
 const form = document.querySelector<HTMLFormElement>("#sugerencia-form")!;
 const temas = form.querySelector<HTMLFieldSetElement>("#sugerencia-tema")!;
 const mensaje = form.querySelector<HTMLTextAreaElement>("#sugerencia-mensaje")!;
 const estado = form.querySelector<HTMLElement>("#sugerencia-estado")!;
+prepararAceptacion(form);
+let enviando = false;
 let idempotencia = "";
 
 const marcarTema = (valor: string | null | undefined) =>
@@ -30,6 +33,7 @@ mensaje.addEventListener("input", () => mensaje.hasAttribute("aria-invalid") && 
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
+  if (enviando) return;
   const sinTema = !temaElegido();
   const corto = Array.from(mensaje.value.trim()).length < MIN_SUGERENCIA;
   marcarError(temas, sinTema ? "Elige un tema." : null);
@@ -40,6 +44,7 @@ form.addEventListener("submit", async (e) => {
     return;
   }
   const boton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+  enviando = true;
   boton.disabled = true;
   estado.hidden = true;
   idempotencia ||= crypto.randomUUID();
@@ -47,7 +52,7 @@ form.addEventListener("submit", async (e) => {
   const terminarCarga = mostrarCarga(form);
   try {
     const enviada = await enviarConSesion({
-      formulario: "sugerencia", campos, idempotencia,
+      form, formulario: "sugerencia", campos, idempotencia,
       enviar: () => suggestionRepository.submit({ ...campos, idempotencia }),
     });
     if (!enviada) return;
@@ -60,6 +65,7 @@ form.addEventListener("submit", async (e) => {
     showStatus(estado, errorText(error), true);
   } finally {
     terminarCarga();
+    enviando = false;
     boton.disabled = false;
   }
 });

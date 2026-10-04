@@ -1,0 +1,30 @@
+---
+import { contentRepository } from "../lib/data";
+import { REDES, normalizarWhatsapp, whatsappUrl } from "../lib/contenido/redes";
+import { CORREO_LEGAL } from "../lib/legal";
+const texts = await contentRepository.getTexts();
+const phone = normalizarWhatsapp(texts[REDES.whatsapp.clave] ?? "");
+// El número de la semilla es de prueba y no identifica al responsable.
+const originalPhone = (await contentRepository.getInitialTexts())[REDES.whatsapp.clave] ?? '';
+const publicPhone = /^\d{10,15}$/.test(phone) && phone !== normalizarWhatsapp(originalPhone) ? phone : null;
+const socialLinks = (Object.keys(REDES) as (keyof typeof REDES)[])
+  .filter(red => red !== "whatsapp")
+  .flatMap(red => {
+    const href = texts[REDES[red].clave];
+    if (!href) return [];
+    try {
+      const url = new URL(href);
+      const hosts = red === "facebook" ? ["facebook.com", "www.facebook.com", "m.facebook.com"] : ["tiktok.com", "www.tiktok.com"];
+      return url.protocol === "https:" && hosts.includes(url.hostname) ? [{ href, name: REDES[red].nombre }] : [];
+    } catch { return []; }
+  });
+---
+
+<ul>
+  <li><strong>Responsable del sitio y de tus datos:</strong> Carlos Astudillo.</li>
+  <li><strong>Domicilio indicado, sede del partido:</strong> Av. Esmeraldas y C. 29 de Abril, 080501 San Lorenzo, Esmeraldas, Ecuador.</li>
+  <li><strong>Correo de contacto y solicitudes sobre tus datos:</strong> <a href={`mailto:${CORREO_LEGAL}`}>{CORREO_LEGAL}</a>.</li>
+  {publicPhone && <li><strong>Teléfono / WhatsApp de atención:</strong> <a href={whatsappUrl(publicPhone)} rel="noopener noreferrer">+{publicPhone}</a>.</li>}
+  {socialLinks.length > 0 && <li><strong>Canales adicionales:</strong> {socialLinks.map((link, index) => <>{index > 0 && " · "}<a href={link.href} rel="noopener noreferrer">{link.name}</a></>)}.</li>}
+  <li><strong>Sitio web:</strong> <a href="https://lanuevahistoria.tech/">lanuevahistoria.tech</a>.</li>
+</ul>

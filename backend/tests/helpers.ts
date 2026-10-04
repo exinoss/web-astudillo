@@ -4,6 +4,8 @@ import { createApp } from "../src/app";
 import type { Config } from "../src/config";
 import type { Mailer } from "../src/mailer";
 import { createSecurity } from "../src/security";
+import { TEXTO_ACEPTACION, VERSION_LEGAL } from '../src/contracts/legal';
+import { callPg } from '../src/db/call';
 
 export const PASSWORD = "Ab1!xyz";
 
@@ -41,13 +43,14 @@ export function testApp(mediaDir = "medios-pruebas", trustProxyIp = false, priva
   }
 
   /** Crea una cuenta verificada con contraseña y guarda su cookie de acceso. */
-  async function account(name: string, rol: string, maestro = false) {
+  async function account(name: string, rol: string, maestro = false, accepted = true) {
     const hash = await Bun.password.hash(PASSWORD, "argon2id");
     const [row] = await sql`INSERT INTO tb_usuarios (correo, nombres_completos, correo_verificado_en, rol, es_maestro)
       VALUES (${name + "@example.com"}, ${name}, now(), ${rol}, ${maestro}) RETURNING id_usuario`;
     await sql`INSERT INTO tb_identidades_autenticacion (id_usuario, proveedor, contrasenia_hash)
       VALUES (${row.id_usuario}, 'correo', ${hash})`;
     ids[name] = row.id_usuario;
+    if (accepted) await callPg(sql, 'legalAccept', [row.id_usuario, VERSION_LEGAL, TEXTO_ACEPTACION]);
     const res = await call("/api/auth/login", "POST", { correo: name + "@example.com", contrasenia: PASSWORD });
     expect(res.status).toBe(200);
     cookies[name] = res.headers.getSetCookie().find(v => v.startsWith("access="))!.split(";")[0];

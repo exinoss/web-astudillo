@@ -44,8 +44,8 @@ export function participationRoutes(sql: SQL, authorization: Authorization, phot
       body: t.Object({ idempotencia: key, tema: t.String({ pattern: '^[a-z0-9-]{1,80}$' }), mensaje: text(1500) }, strict),
     })
     .get('/sugerencias/mias', ({ cookie }) => participation.mySuggestions(access(cookie)))
-    .post('/chat', ({ cookie, body }) => chat.ask(access(cookie), body.mensaje), {
-      body: t.Object({ mensaje: text(300) }, strict),
+    .post('/chat', ({ cookie, body }) => chat.ask(access(cookie), body.mensaje, body.idempotencia), {
+      body: t.Object({ mensaje: text(300), idempotencia: key }, strict),
     })
     // Fotos privadas de alertas: nginx no las sirve; aquí se comprueba quién las pide.
     .get('/fotos/:archivo', async ({ cookie, params, set }) => {

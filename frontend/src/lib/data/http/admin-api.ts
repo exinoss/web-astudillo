@@ -28,6 +28,7 @@ export interface DraftVersions {
 /** Borrador vivo del contenido; misma forma que se congela al publicar, más sus versiones. */
 export interface Draft {
   textos: Record<string, string>;
+  originales: Record<string, string>;
   propuestas: DraftProposal[];
   biografia: DraftBiographyItem[];
   obras: DraftWork[];

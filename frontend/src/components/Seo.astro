@@ -1,0 +1,38 @@
+---
+import { getImage } from 'astro:assets';
+import portada from '../assets/portada.jpg';
+import { contentRepository } from '../lib/data';
+import { absoluteUrl, jsonLd, plainDescription, SITE } from '../lib/seo';
+interface Props { title: string; description: string; path: string }
+const { title, description:raw, path } = Astro.props;
+const description=plainDescription(raw);
+const noindex=path.startsWith('/cuenta/')||path==='/404/'||path==='/404.html';
+const canonical=absoluteUrl(path.replace(/\/index\.html$/, '/'));
+const photo=await getImage({src:portada,width:1200,format:'jpg'});
+const texts=await contentRepository.getTexts();
+const sameAs=['enlace.facebook','enlace.tiktok'].map(k=>texts[k]).filter(url=>/^https:\/\/(?:www\.)?(?:facebook\.com|tiktok\.com)\//.test(url??''));
+const structured={ '@context':'https://schema.org','@graph':[
+  { '@type':'WebSite','@id':SITE+'/#sitio', url:SITE+'/',name:'Carlos Astudillo · San Lorenzo',inLanguage:'es',publisher:{'@id':SITE+'/#carlos'} },
+  { '@type':'Person','@id':SITE+'/#carlos',name:'Carlos Astudillo',url:SITE+'/',sameAs },
+]};
+---
+<meta name="description" content={description} />
+{noindex ? <meta name="robots" content="noindex, follow" /> : <>
+  <link rel="canonical" href={canonical} />
+  <meta property="og:type" content="website" />
+  <meta property="og:locale" content="es_EC" />
+  <meta property="og:site_name" content="Carlos Astudillo · San Lorenzo" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:image" content={absoluteUrl(photo.src)} />
+  <meta property="og:image:width" content={photo.attributes.width} />
+  <meta property="og:image:height" content={photo.attributes.height} />
+  <meta property="og:image:alt" content="Carlos Astudillo y la campaña La Nueva Historia" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={absoluteUrl(photo.src)} />
+  <meta name="twitter:image:alt" content="Carlos Astudillo y la campaña La Nueva Historia" />
+  <script type="application/ld+json" is:inline set:html={jsonLd(structured)} />
+</>}

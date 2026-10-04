@@ -36,7 +36,7 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
     </button>`).join("");
   const select = `
     <label for="propuesta-selector" class="mb-[7px] block text-[0.82rem] font-bold">Propuesta</label>
-    <select id="propuesta-selector" class="min-h-12 w-full rounded-[3px] border border-[#acbacb] bg-base-100 px-3.5 text-sm text-primary">
+    <select id="propuesta-selector" class="min-h-12 w-full rounded-[3px] border border-field-border bg-base-100 px-3.5 text-sm text-primary">
       ${proposals.map((p) => `<option value="${esc(p.slug)}" ${p.slug === current.slug ? "selected" : ""}>${esc(p.nombre)}</option>`).join("")}
     </select>`;
   const form = card(current.nombre, `

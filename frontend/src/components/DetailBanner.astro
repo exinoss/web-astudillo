@@ -8,7 +8,7 @@ interface Props {
   iconSize: number;
   lead: string;
   /** Claves de lib/contenido.ts cuando estos textos se editan desde el panel. */
-  claves?: { eyebrow: string; title: string; lead: string };
+  claves?: { eyebrow?: string; title: string; lead: string };
 }
 const { eyebrow, title, icon, iconSize, lead, claves } = Astro.props;
 ---

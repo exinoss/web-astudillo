@@ -51,16 +51,38 @@
 
 .grayscale {
   filter: grayscale(1);
+  --color-primary: #00132e;
+  --color-base-content: #00132e;
+  --color-neutral: #00132e;
 }
 
 .negative-contrast {
   filter: invert(1) hue-rotate(180deg);
+  --color-secondary: #fff;
+  --color-primary: #00132e;
+  --color-base-content: #00132e;
+  --color-neutral: #00132e;
 }
 
 .negative-contrast img,
-.negative-contrast svg,
 .negative-contrast video {
   filter: invert(1) hue-rotate(180deg);
+}
+
+:is(.readable-font, .text-large) .detail-title h1,
+:is(.readable-font, .text-large) .proposal-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+:is(.readable-font, .text-large) h1,
+:is(.readable-font, .text-large) h2 {
+  overflow-wrap: anywhere;
+}
+
+@media (width <= 480px) {
+  .text-large .account-link { white-space: normal; }
+  .text-large .account-label { max-width: 6ch; text-align: center; line-height: 1.25; }
 }
 
 .underline-links a {

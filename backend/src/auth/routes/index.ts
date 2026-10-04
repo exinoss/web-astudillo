@@ -15,6 +15,7 @@ import { googleRoutes } from './google';
 import { passwordRoutes } from './passwords';
 import { registrationRoutes } from './registration';
 import { sessionRoutes } from './sessions';
+import { consentRoutes } from './consent';
 
 export function authRoutes(sql: SQL, config: Config, mailer: Mailer,
   security: Security, authorization: Authorization) {
@@ -32,5 +33,6 @@ export function authRoutes(sql: SQL, config: Config, mailer: Mailer,
     .use(registrationRoutes(context))
     .use(googleRoutes(context))
     .use(sessionRoutes(context))
+    .use(consentRoutes(sql, authorization))
     .use(passwordRoutes(context));
 }

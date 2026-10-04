@@ -3,6 +3,7 @@ import AccountShell from '../../components/account/AccountShell.astro';
 import AccountCard from '../../components/account/AccountCard.astro';
 import AccountField from '../../components/account/AccountField.astro';
 import AccountStatus from '../../components/account/AccountStatus.astro';
+import LegalAcceptance from '../../components/LegalAcceptance.astro';
 ---
 
 <AccountShell title="Participa" lead="Registra tus datos y confirma tu correo para empezar.">
@@ -15,7 +16,8 @@ import AccountStatus from '../../components/account/AccountStatus.astro';
         <AccountField id="register-password" name="contrasenia" label="Contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" hint="Mínimo 6 caracteres; incluye una letra, un número y un símbolo." required maxLength={128} />
         <AccountField id="register-confirm" name="confirmarContrasenia" label="Repite la contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" required maxLength={128} />
         <AccountField id="register-address" name="direccion" label="Dirección (opcional)" placeholder="Barrio o dirección" autocomplete="street-address" maxLength={500} />
-        <button type="submit" class="button w-full">Enviar enlace de verificación</button>
+        <LegalAcceptance id="register-aceptacion" />
+        <button type="submit" class="button mt-[18px] w-full">Enviar enlace de verificación</button>
       </form>
       <a class="mt-5 inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/">Ya tengo cuenta</a>
     </AccountCard>

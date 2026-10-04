@@ -1,5 +1,6 @@
 ---
 import Icon from "../Icon.astro";
+import LegalAcceptance from '../LegalAcceptance.astro';
 
 interface Props {
   quickReplies: string[];
@@ -47,18 +48,22 @@ const { quickReplies } = Astro.props;
       <i class="inline-block size-2 rounded-full bg-campaign-red"></i> Escuchando… habla ahora
     </p>
     <p id="chat-recuperada" class="mx-[15px] mt-0 mb-2.5 border-l-4 border-neutral bg-[#eef4fb] px-3 py-2 text-[0.8rem]" role="status" hidden>
-      Recuperamos tu consulta. Revísala y toca «Enviar» para preguntar.
+      Recuperamos tu consulta. Revísala antes de enviarla.
     </p>
-    <form id="chat-form" class="flex gap-2 px-[15px] pb-[15px]" novalidate>
-      <label class="sr-only" for="chat-input">Escribe tu consulta</label>
-      <input id="chat-input" class="min-w-0 flex-1" placeholder="Escribe tu consulta…" maxlength="300" autocomplete="off" aria-describedby="chat-ayuda" />
+    <form id="chat-form" class="group flex flex-col gap-2 px-[15px] pb-[15px]" novalidate>
+      <div data-chat-controles class="flex w-full flex-wrap gap-2">
+      <label class="sr-only group-data-[aceptacion-pendiente=true]:not-sr-only group-data-[aceptacion-pendiente=true]:block group-data-[aceptacion-pendiente=true]:w-full group-data-[aceptacion-pendiente=true]:text-[0.87rem]" for="chat-input">Escribe tu consulta</label>
+      <input id="chat-input" class="min-w-0 flex-1 placeholder:text-field-placeholder placeholder:opacity-100" placeholder="Escribe tu consulta…" maxlength="300" autocomplete="off" aria-describedby="chat-ayuda" />
       <button id="chat-mic" type="button" aria-label="Preguntar con tu voz" aria-pressed="false" hidden
         class="chat-mic grid w-[50px] min-w-[50px] place-items-center rounded-[3px] border border-primary bg-base-100 text-primary aria-pressed:border-campaign-red aria-pressed:bg-campaign-red aria-pressed:text-primary-content">
         <Icon name="mic" size={22} />
       </button>
-      <button class="button px-[15px] py-2.5" aria-label="Enviar consulta">
+      <button type="submit" class="button px-[15px] py-2.5 data-[aceptacion-pendiente=true]:w-full" aria-label="Enviar consulta">
+        <span data-envio-texto hidden>Enviar consulta</span>
         <Icon name="arrow" size={20} />
       </button>
+      </div>
+      <LegalAcceptance id="chat-aceptacion" hidden prompt="Antes de enviar tu consulta, confirma:" />
     </form>
   </div>
 </section>

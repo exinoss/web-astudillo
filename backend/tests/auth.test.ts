@@ -1,11 +1,13 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { SQL } from "bun";
+import { fileURLToPath } from 'node:url';
 import { createApp } from "../src/app";
 import type { Config } from "../src/config";
 import { migrate } from "../src/db/migrate";
 import { ApiError } from "../src/http";
 import type { Mailer } from "../src/mailer";
 import { createSecurity, tokenHash } from "../src/security";
+import { VERSION_LEGAL } from '../src/contracts/legal';
 
 const url = process.env.TEST_DATABASE_URL;
 if (!url) throw new Error("TEST_DATABASE_URL debe apuntar a una base de pruebas desechable");
@@ -56,6 +58,8 @@ function cookieFrom(res: Response, name: string) {
   return res.headers.getSetCookie().find(value => value.startsWith(name + "="))?.split(";")[0];
 }
 async function call(path: string, method = "GET", body?: object, cookies: string[] = []) {
+  if (body && (path === '/api/auth/register' || path === '/api/auth/google'))
+    body = { aceptacion: { version: VERSION_LEGAL, aceptada: true }, ...body };
   const headers = new Headers();
   if (method !== "GET") headers.set("origin", config.origin);
   if (body) headers.set("content-type", "application/json");
@@ -128,7 +132,9 @@ test("registro, perfil, Google, sesiones y recuperación", async () => {
   expect((await call("/api/me", "PATCH", {
     nombresCompletos: "Ana Nueva", direccion: "Centro", rol: "admin",
   }, [access])).status).toBe(422);
-  const profile = await call("/api/me", "PATCH", { nombresCompletos: "Ana Nueva", direccion: "Centro" }, [access]);
+  const beforeProfile = await (await call('/api/me', 'GET', undefined, [access])).json();
+  const profile = await call("/api/me", "PATCH", { nombresCompletos: "Ana Nueva", direccion: "Centro",
+    versionPerfil: beforeProfile.versionPerfil }, [access]);
   expect((await profile.json()).rol).toBe("votante");
 
   const gmail = await call("/api/auth/google", "POST", { credential: "gmail".repeat(20) });
@@ -185,6 +191,14 @@ test("registro, perfil, Google, sesiones y recuperación", async () => {
   const resetRedirect = await call('/api/auth/password/reset?token=' + resetToken);
   expect(resetRedirect.status).toBe(303);
   expect(new URL(resetRedirect.headers.get('location')!).pathname).toBe('/cuenta/restablecer/');
+  expect((await call('/api/auth/password/reset', 'POST', {
+    token: resetToken, contrasenia: 'Abcd1*',
+  })).status).toBe(422);
+  expect((await sql`SELECT consumido_en FROM tb_token_autenticacion
+    WHERE token_hash = ${tokenHash(resetToken)}`)[0].consumido_en).toBeNull();
+  expect((await call('/api/auth/login', 'POST', {
+    correo: 'ana@gmail.com', contrasenia: 'una contraseña suficientemente larga1!',
+  })).status).toBe(200);
   expect((await call("/api/auth/password/reset", "POST", {
     token: resetToken, contrasenia: "otra contraseña suficientemente larga1!",
   })).status).toBe(200);
@@ -232,6 +246,11 @@ test("verificación desde otro navegador y Google externo", async () => {
   const googleAccess = cookieFrom(googleOnly, "access")!;
   expect(await (await call("/api/me", "GET", undefined, [googleAccess])).json())
     .toMatchObject({ tieneContrasenia: false, tieneGoogle: true });
+  expect((await call('/api/auth/password', 'POST', {
+    credential: 'nuevo'.repeat(20), contrasenia: '7654a*',
+  }, [googleAccess])).status).toBe(422);
+  expect(await (await call('/api/me', 'GET', undefined, [googleAccess])).json())
+    .toMatchObject({ tieneContrasenia: false });
   await sql`DELETE FROM tb_rol_permisos rp USING tb_roles r, tb_permisos p
     WHERE rp.id_rol = r.id_rol AND rp.id_permiso = p.id_permiso
       AND r.rol = 'votante' AND p.codigo = 'cuenta.contrasenia.agregar'`;
@@ -371,6 +390,11 @@ test("política de contraseña, confirmación y cambio de contraseña", async ()
     confirmarContrasenia: 'Cd2@xz' })).status).toBe(422);
   expect((await change({ contraseniaActual: 'Ab1!xy', contraseniaNueva: 'abcdef',
     confirmarContrasenia: 'abcdef' })).status).toBe(422);
+  expect((await change({ contraseniaActual: 'Ab1!xy', contraseniaNueva: 'a1234*',
+    confirmarContrasenia: 'a1234*' })).status).toBe(422);
+  expect((await call('/api/auth/login', 'POST', {
+    correo: 'cambio@example.com', contrasenia: 'Ab1!xy',
+  })).status).toBe(200);
   const changed = await change({ contraseniaActual: 'Ab1!xy', contraseniaNueva: 'Cd2@xy',
     confirmarContrasenia: 'Cd2@xy' });
   expect(changed.status).toBe(200);
@@ -384,5 +408,68 @@ test("política de contraseña, confirmación y cambio de contraseña", async ()
   })).status).toBe(401);
   expect((await call('/api/auth/login', 'POST', {
     correo: 'cambio@example.com', contrasenia: 'Cd2@xy',
+  })).status).toBe(200);
+});
+
+test('las sucesiones no crean solicitudes de registro ni envían correos', async () => {
+  const before = sent.length;
+  for (const password of ['Abcd1*', '7654a*']) {
+    const response = await call('/api/auth/register', 'POST', {
+      nombresCompletos: 'Sucesión', correo: 'sucesion@example.com',
+      contrasenia: password, confirmarContrasenia: password,
+    });
+    expect(response.status).toBe(422);
+    expect((await response.json()).error).toContain('Evita secuencias');
+  }
+  expect(sent.length).toBe(before);
+  expect((await sql`SELECT count(*)::int AS n FROM tb_registros_pendientes p
+    JOIN tb_token_autenticacion t USING (id_token_autenticacion)
+    WHERE t.correo = 'sucesion@example.com'`)[0].n).toBe(0);
+  expect((await sql`SELECT count(*)::int AS n FROM tb_usuarios
+    WHERE correo = 'sucesion@example.com'`)[0].n).toBe(0);
+});
+
+test('una contraseña existente con sucesión conserva el acceso', async () => {
+  const hash = await Bun.password.hash('Abcd1*', 'argon2id');
+  const [user] = await sql`INSERT INTO tb_usuarios (correo, nombres_completos, correo_verificado_en)
+    VALUES ('anterior@example.com', 'Anterior', now()) RETURNING id_usuario`;
+  await sql`INSERT INTO tb_identidades_autenticacion (id_usuario, proveedor, contrasenia_hash)
+    VALUES (${user.id_usuario}, 'correo', ${hash})`;
+  const login = await call('/api/auth/login', 'POST', {
+    correo: 'anterior@example.com', contrasenia: 'Abcd1*',
+  });
+  expect(login.status).toBe(200);
+  expect(cookieFrom(login, 'access')).toBeDefined();
+  expect((await sql`SELECT contrasenia_hash FROM tb_identidades_autenticacion
+    WHERE id_usuario = ${user.id_usuario}`)[0].contrasenia_hash).toBe(hash);
+});
+
+test('la creación por consola rechaza sucesiones y admite seis caracteres', async () => {
+  const create = async (password: string) => {
+    const command = Bun.spawn([process.execPath, fileURLToPath(new URL('../src/cli/admin.ts', import.meta.url)), 'crear'], {
+      env: { ...process.env, DATABASE_URL: url },
+      stdin: Buffer.from(['consola@example.com', 'Consola', password, password, ''].join('\n')),
+      stdout: 'pipe', stderr: 'pipe',
+    });
+    const [code, output, error] = await Promise.all([
+      command.exited, new Response(command.stdout).text(), new Response(command.stderr).text(),
+    ]);
+    expect(output + error).not.toContain(password);
+    return { code, error };
+  };
+  for (const password of ['Abcd1*', '7654a*']) {
+    const result = await create(password);
+    expect(result.code).toBe(1);
+    expect(result.error).toContain('Evita secuencias');
+  }
+  expect((await sql`SELECT count(*)::int AS n FROM tb_usuarios
+    WHERE correo = 'consola@example.com'`)[0].n).toBe(0);
+  expect((await create('Ab1!xy')).code).toBe(0);
+  const [created] = await sql`SELECT u.es_maestro, i.contrasenia_hash FROM tb_usuarios u
+    JOIN tb_identidades_autenticacion i USING (id_usuario) WHERE u.correo = 'consola@example.com'`;
+  expect(created.es_maestro).toBe(true);
+  expect(await Bun.password.verify('Ab1!xy', created.contrasenia_hash)).toBe(true);
+  expect((await call('/api/auth/login', 'POST', {
+    correo: 'consola@example.com', contrasenia: 'Ab1!xy',
   })).status).toBe(200);
 });

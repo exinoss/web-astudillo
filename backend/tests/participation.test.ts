@@ -3,6 +3,8 @@ import { rm } from "node:fs/promises";
 import sharp from "sharp";
 import { migrate } from "../src/db/migrate";
 import { testApp } from "./helpers";
+import { callPg } from '../src/db/call';
+import { VERSION_LEGAL } from '../src/contracts/legal';
 
 const MEDIA = "medios-pruebas-participacion";
 const { sql, cookies, call, account, resetAccounts } = testApp(MEDIA);
@@ -41,7 +43,7 @@ test("sin sesión no se envían alertas, sugerencias ni consultas", async () => 
   expect((await call("/api/participacion/alertas", "POST", alertForm(alert()))).status).toBe(401);
   expect((await call("/api/participacion/sugerencias", "POST",
     { idempotencia: crypto.randomUUID(), tema: "agua-potable", mensaje: "Una idea suficientemente larga" })).status).toBe(401);
-  expect((await call("/api/participacion/chat", "POST", { mensaje: "hola" })).status).toBe(401);
+  expect((await call("/api/participacion/chat", "POST", { mensaje: "hola", idempotencia: crypto.randomUUID() })).status).toBe(401);
 });
 
 test("una alerta repetida con la misma clave no se duplica, tampoco a la vez", async () => {
@@ -127,8 +129,10 @@ test("demasiados envíos seguidos responden 429 con la espera", async () => {
 });
 
 test("el chat responde con lo publicado y anota lo que no sabe", async () => {
-  const ask = async (mensaje: string) => (await (await call("/api/participacion/chat", "POST", { mensaje }, cookies.otro)).json());
-  // Sin publicación todavía: no hay respuestas y todo queda anotado.
+  const ask = async (mensaje: string) => (await (await call("/api/participacion/chat", "POST", { mensaje,
+    idempotencia: crypto.randomUUID() }, cookies.otro)).json());
+  await sql`TRUNCATE tb_publicaciones RESTART IDENTITY`;
+  // Sin publicación: no se usan los borradores del panel para responder.
   expect((await ask("¿Dónde están las PROPUESTAS?")).enlaceRuta).toBe("/#contacto");
   const pub = await call("/api/admin/publicaciones", "POST", undefined, cookies.admin);
   expect(pub.status).toBe(200);
@@ -140,6 +144,77 @@ test("el chat responde con lo publicado y anota lo que no sabe", async () => {
   const rows = await (await call("/api/admin/chat/sin-respuesta", "GET", undefined, cookies.admin)).json();
   expect(rows.preguntas.find((p: { clave: string }) => p.clave === "cuando hay caravana")?.veces).toBe(2);
   expect((await call("/api/admin/chat/sin-respuesta", "GET", undefined, cookies.votante)).status).toBe(403);
+});
+
+test('el chat cuenta una vez los reintentos concurrentes y distingue claves y cuentas', async () => {
+  const idempotencia = crypto.randomUUID();
+  const mensaje = 'Pregunta inusual zxqv';
+  const send = (key: string = idempotencia, text = mensaje, cookie = cookies.otro) =>
+    call('/api/participacion/chat', 'POST', { mensaje: text, idempotencia: key }, cookie);
+  const doubled = await Promise.all([send(), send()]);
+  expect(doubled.map(response => response.status)).toEqual([200, 200]);
+  const first = await doubled[0].json();
+  expect(await doubled[1].json()).toEqual(first);
+  expect(await (await send()).json()).toEqual(first);
+  const count = async () => (await sql`SELECT veces FROM tb_chat_sin_respuesta
+    WHERE texto_normalizado = 'pregunta inusual zxqv'`)[0].veces;
+  expect(await count()).toBe(1);
+  expect((await send(idempotencia, 'Otro mensaje zxqv')).status).toBe(409);
+  expect(await count()).toBe(1);
+  expect((await send(crypto.randomUUID())).status).toBe(200);
+  expect(await count()).toBe(2);
+  expect((await send(idempotencia, mensaje, cookies.votante)).status).toBe(200);
+  expect(await count()).toBe(3);
+  expect((await sql`SELECT count(*)::int AS n FROM tb_chat_envios WHERE clave_idempotencia = ${idempotencia}`)[0].n).toBe(2);
+  expect((await call('/api/participacion/chat', 'POST', { mensaje }, cookies.otro)).status).toBe(422);
+  expect((await send('no-es-un-uuid')).status).toBe(422);
+});
+
+test('el reintento conserva la respuesta aunque cambie el contenido publicado', async () => {
+  const [snapshot] = await sql`SELECT id_publicacion, contenido FROM tb_publicaciones
+    WHERE estado = 'publicada' ORDER BY id_publicacion DESC LIMIT 1`;
+  const mensaje = snapshot.contenido.chat[0].pregunta;
+  const idempotencia = crypto.randomUUID();
+  const send = (key: string) => call('/api/participacion/chat', 'POST', { mensaje, idempotencia: key }, cookies.votante);
+  const first = await (await send(idempotencia)).json();
+  try {
+    await sql`UPDATE tb_publicaciones SET contenido = jsonb_set(contenido, '{chat,0,respuesta}',
+      to_jsonb(${'Una respuesta distinta.'}::text)) WHERE id_publicacion = ${snapshot.id_publicacion}`;
+    expect(await (await send(idempotencia)).json()).toEqual(first);
+    expect(await (await send(crypto.randomUUID())).json()).toMatchObject({ texto: 'Una respuesta distinta.' });
+  } finally {
+    await sql`UPDATE tb_publicaciones SET contenido = ${snapshot.contenido}::jsonb
+      WHERE id_publicacion = ${snapshot.id_publicacion}`;
+  }
+});
+
+test('un fallo al anotar la pregunta revierte también su comprobante', async () => {
+  const [user] = await sql`SELECT id_usuario FROM tb_usuarios WHERE correo = 'otro@example.com'`;
+  const key = crypto.randomUUID();
+  await sql.begin(async tx => {
+    await tx.unsafe(`CREATE OR REPLACE FUNCTION pg_temp.chat_rollback(p_user integer, p_key uuid)
+      RETURNS boolean LANGUAGE plpgsql AS $$ BEGIN
+        PERFORM fn_chat_send(p_user, p_key, repeat('a', 64), '{"texto":"Prueba"}'::jsonb, repeat('x', 301), 'Prueba', '${VERSION_LEGAL}');
+        RETURN false;
+      EXCEPTION WHEN string_data_right_truncation THEN RETURN true; END $$`);
+    expect((await tx`SELECT pg_temp.chat_rollback(${user.id_usuario}, ${key}::uuid) AS revertido`)[0].revertido).toBe(true);
+    expect((await tx`SELECT count(*)::int AS n FROM tb_chat_envios WHERE clave_idempotencia = ${key}`)[0].n).toBe(0);
+    await tx`DROP FUNCTION pg_temp.chat_rollback(integer, uuid)`;
+  });
+});
+
+test('una cuenta bloqueada no puede recuperar respuestas guardadas ni usar la función SQL', async () => {
+  const [user] = await sql`SELECT id_usuario FROM tb_usuarios WHERE correo = 'votante@example.com'`;
+  const body = { mensaje: 'Prueba de permiso zxqv', idempotencia: crypto.randomUUID() };
+  expect((await call('/api/participacion/chat', 'POST', body, cookies.votante)).status).toBe(200);
+  await sql`UPDATE tb_usuarios SET estado = 'bloqueado' WHERE id_usuario = ${user.id_usuario}`;
+  try {
+    expect((await call('/api/participacion/chat', 'POST', body, cookies.votante)).status).toBe(401);
+    expect(await callPg(sql, 'chatSend', [user.id_usuario, body.idempotencia, 'a'.repeat(64),
+      { texto: 'Prueba' }, null, body.mensaje, VERSION_LEGAL])).toEqual([]);
+  } finally {
+    await sql`UPDATE tb_usuarios SET estado = 'activo' WHERE id_usuario = ${user.id_usuario}`;
+  }
 });
 
 test("las preguntas frecuentes se guardan con versión y solo enlazan dentro del sitio", async () => {

@@ -5,6 +5,8 @@ import { callPg } from '../../db/call';
 import { savePhoto, sha256 } from '../../content/services/media';
 import { plainText } from '../../content/services/validation';
 import { ApiError } from '../../http';
+import { requireParticipationAcceptance } from '../../auth/services/consent';
+import { VERSION_LEGAL } from '../../contracts/legal';
 
 export const ALERT_TYPES = ['agua', 'basura', 'alumbrado', 'baches', 'seguridad', 'otro'] as const;
 export const STATES = ['recibida', 'en_revision', 'atendida'] as const;
@@ -66,6 +68,7 @@ export function createParticipation(sql: SQL, authorization: Authorization, limi
      */
     async createAlert(access: string | undefined, input: AlertInput) {
       const user = await authorization.require(access, PERMISSIONS.participationSend);
+      await requireParticipationAcceptance(sql, user.id_usuario);
       const [existing] = await callPg<AlertRow>(sql, 'alertByKey', [user.id_usuario, input.idempotencia]);
       if (existing) return toAlert(existing);
       limit(`alerta:${user.id_usuario}`, SENDS_PER_WINDOW, WINDOW_MS);
@@ -81,7 +84,7 @@ export function createParticipation(sql: SQL, authorization: Authorization, limi
         await savePhoto(bytes, photoDir, photo, ALERT_PHOTO_WIDTHS, true);
       }
       const [row] = await callPg<AlertRow>(sql, 'alertCreate', [
-        user.id_usuario, input.idempotencia, input.tipo, sector, reference, description, photo,
+        user.id_usuario, input.idempotencia, input.tipo, sector, reference, description, photo, VERSION_LEGAL,
       ]);
       if (!row) throw new ApiError(403, 'Permiso insuficiente');
       return toAlert(row);
@@ -94,11 +97,12 @@ export function createParticipation(sql: SQL, authorization: Authorization, limi
 
     async createSuggestion(access: string | undefined, input: { idempotencia: string; tema: string; mensaje: string }) {
       const user = await authorization.require(access, PERMISSIONS.participationSend);
+      await requireParticipationAcceptance(sql, user.id_usuario);
       const message = plainText(input.mensaje, '¿Qué te gustaría proponer?', 1500, { multiline: true });
       if (Array.from(message).length < 15) throw new ApiError(422, '¿Qué te gustaría proponer?: escribe al menos 15 caracteres');
       limit(`sugerencia:${user.id_usuario}`, SENDS_PER_WINDOW, WINDOW_MS);
       // Un reintento con la misma `idempotencia` devuelve la sugerencia ya creada (`nueva = false`).
-      const [row] = await callPg<SuggestionRow>(sql, 'suggestionCreate', [user.id_usuario, input.idempotencia, input.tema, message]);
+      const [row] = await callPg<SuggestionRow>(sql, 'suggestionCreate', [user.id_usuario, input.idempotencia, input.tema, message, VERSION_LEGAL]);
       if (!row) throw new ApiError(403, 'Permiso insuficiente');
       return toSuggestion(row);
     },

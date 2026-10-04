@@ -1,8 +1,8 @@
 // Se guardan como textos con clave `enlace.*`. Sin dependencias: también lo usa el panel en el navegador.
 export const REDES = {
-  facebook: { clave: "enlace.facebook", nombre: "Facebook", porDefecto: "https://www.facebook.com/carlosastudillo7" },
-  tiktok: { clave: "enlace.tiktok", nombre: "TikTok", porDefecto: "https://www.tiktok.com/@carlosastudillo01" },
-  whatsapp: { clave: "enlace.whatsapp", nombre: "WhatsApp", porDefecto: "593961368214" },
+  facebook: { clave: "enlace.facebook", nombre: "Facebook" },
+  tiktok: { clave: "enlace.tiktok", nombre: "TikTok" },
+  whatsapp: { clave: "enlace.whatsapp", nombre: "WhatsApp" },
 } as const;
 
 export type Red = keyof typeof REDES;

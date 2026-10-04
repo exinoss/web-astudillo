@@ -8,6 +8,7 @@ export const email = t.String({ format: 'email', maxLength: 320 });
 export const password = t.String({ minLength: 6, maxLength: 128 });
 export const token = t.String({ pattern: '^[A-Za-z0-9_-]{43}$' });
 export const strict = { additionalProperties: false };
+export const acceptance = t.Object({ version: t.String({ minLength: 1, maxLength: 32 }), aceptada: t.Literal(true) }, strict);
 
 /** Usa X-Real-IP solo cuando un proxy privado y confiable lo sobrescribe. */
 export const ipOf = (

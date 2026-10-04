@@ -1,0 +1,488 @@
+{
+  "version": 1,
+  "textos": {
+    "global.ubicacion": "San Lorenzo, Esmeraldas",
+    "global.partido": "Partido Social Cristiano",
+    "global.lista": "LISTA 6",
+    "global.lema": "Por ti, San Lorenzo.",
+    "pie.nombre": "CARLOS ASTUDILLO",
+    "pie.linea-1": "Candidato a la alcaldía de San Lorenzo",
+    "pie.linea-2": "Partido Social Cristiano · Lista 6",
+    "inicio.carrusel.antetitulo": "PSC · LISTA 6",
+    "inicio.carrusel.titulo": "Por ti,\nSan Lorenzo.",
+    "inicio.carrusel.texto": "Carlos Astudillo\nCandidato a alcalde",
+    "inicio.carrusel-2.antetitulo": "CONOCE AL CANDIDATO",
+    "inicio.carrusel-2.titulo": "Respeto.\nCoherencia.",
+    "inicio.carrusel-2.destacado": "Claridad.",
+    "inicio.participa.antetitulo": "ESTAMOS PARA ESCUCHARTE",
+    "inicio.participa.titulo": "Tu voz cuenta.",
+    "inicio.conoce.antetitulo": "CONOCE A CARLOS",
+    "inicio.conoce.titulo": "Una ciudad.\nTodas sus",
+    "inicio.conoce.destacado": "voces.",
+    "inicio.conoce.cita": "«Creo en una ciudad donde el progreso no sea privilegio de pocos, sino derecho de todos».",
+    "inicio.conoce.texto": "Carlos Astudillo, candidato a la alcaldía de San Lorenzo por el Partido Social Cristiano, Lista 6.",
+    "inicio.valores.1": "Respeto",
+    "inicio.valores.2": "Coherencia",
+    "inicio.valores.3": "Claridad",
+    "inicio.propuestas.antetitulo": "CONOCE LOS EJES",
+    "inicio.propuestas.titulo": "Propuestas para",
+    "inicio.propuestas.destacado": "San Lorenzo.",
+    "inicio.propuestas.texto-1": "Explora cada tema.",
+    "inicio.propuestas.texto-2": "Conoce lo que se propone para tu ciudad.",
+    "inicio.contacto.antetitulo": "CERCA DE TI",
+    "inicio.contacto.titulo": "Conecta con",
+    "inicio.contacto.destacado": "Carlos.",
+    "inicio.contacto.texto": "Sigue las actividades, conoce el día a día y participa en la conversación.",
+    "inicio.contacto.facebook.usuario": "@carlosastudillo7",
+    "inicio.contacto.facebook.texto": "Encuentros, noticias y actividades en San Lorenzo.",
+    "inicio.contacto.tiktok.usuario": "@carlosastudillo01",
+    "inicio.contacto.tiktok.texto": "Historias y momentos, más cerca de Carlos.",
+    "inicio.contacto.whatsapp.texto": "Escríbenos directamente por WhatsApp.",
+    "propuesta.antetitulo": "INFORMACIÓN DE LA PROPUESTA",
+    "propuesta.titulo": "Conoce este eje.",
+    "propuesta.texto": "Este es uno de los siete temas presentados para la candidatura de Carlos Astudillo a la alcaldía de San Lorenzo.",
+    "propuesta.obra.antetitulo": "AVANCE DE LA OBRA",
+    "propuesta.preparacion.titulo": "Contenido en preparación",
+    "propuesta.preparacion.texto": "Los objetivos, acciones y detalles de esta propuesta se incorporarán cuando estén disponibles.",
+    "propuesta.perspectiva.titulo": "Tu perspectiva también cuenta.",
+    "propuesta.perspectiva.texto": "Comparte una idea relacionada con",
+    "acerca.antetitulo": "CONOCE AL CANDIDATO",
+    "acerca.nombre": "Carlos",
+    "acerca.apellido": "Astudillo.",
+    "acerca.subtitulo": "Candidato a la alcaldía de San Lorenzo.\nPartido Social Cristiano · Lista 6.",
+    "biografia.antetitulo": "CONOCE AL CANDIDATO",
+    "biografia.titulo": "Biografía",
+    "biografia.nota": "Los años, textos y fotos de esta línea de tiempo son provisionales.",
+    "biografia.recorre": "Recorre su historia",
+    "alcalde.antetitulo": "EN SUS PALABRAS",
+    "alcalde.titulo": "Por qué quiero ser alcalde",
+    "alcalde.cita": "«Creo en una ciudad donde el progreso no sea privilegio de pocos, sino derecho de todos».",
+    "alcalde.nota": "El mensaje completo del candidato se incorporará a esta sección.",
+    "conoce-mas.antetitulo": "CONOCE MÁS SOBRE CARLOS",
+    "conoce-mas.titulo": "Respeto. Coherencia. Claridad.",
+    "conoce-mas.texto": "Explora los ejes de sus propuestas o comparte una sugerencia para San Lorenzo.",
+    "obras.antetitulo": "CIUDADANÍA · TRANSPARENCIA",
+    "obras.titulo": "Obras en ejecución",
+    "obras.intro": "Sigue el avance de cada propuesta para San Lorenzo.",
+    "obras.nota": "Datos provisionales de ejemplo: los porcentajes, etapas e hitos se reemplazarán por los avances reales.",
+    "enlace.facebook": "https://www.facebook.com/carlosastudillo7",
+    "enlace.tiktok": "https://www.tiktok.com/@carlosastudillo01",
+    "enlace.whatsapp": "593961368214",
+    "ciudadania.sugerencias.nombre": "Sugerencias",
+    "ciudadania.sugerencias.descripcion": "Comparte una idea para San Lorenzo.",
+    "ciudadania.alerta-ciudadana.nombre": "Alerta ciudadana",
+    "ciudadania.alerta-ciudadana.descripcion": "Cuéntanos qué ocurre en tu sector.",
+    "ciudadania.chat.nombre": "Chat",
+    "ciudadania.chat.descripcion": "Encuentra información y orientación."
+  },
+  "propuestas": [
+    {
+      "slug": "agua-potable",
+      "nombre": "Agua potable",
+      "categoria": "Servicios básicos",
+      "introduccion": "Conoce este eje del plan para San Lorenzo.",
+      "kpis": [
+        {
+          "etiqueta": "Cobertura meta",
+          "valor": "98%"
+        },
+        {
+          "etiqueta": "Comunidades",
+          "valor": "32"
+        },
+        {
+          "etiqueta": "Plazo",
+          "valor": "36 meses"
+        }
+      ]
+    },
+    {
+      "slug": "centro-de-alto-rendimiento",
+      "nombre": "Centro de alto rendimiento",
+      "categoria": "Deporte",
+      "introduccion": "Un espacio para conocer la propuesta deportiva.",
+      "kpis": [
+        {
+          "etiqueta": "Deportistas",
+          "valor": "1,200"
+        },
+        {
+          "etiqueta": "Disciplinas",
+          "valor": "12"
+        },
+        {
+          "etiqueta": "Plazo",
+          "valor": "30 meses"
+        }
+      ]
+    },
+    {
+      "slug": "mercado-municipal",
+      "nombre": "Mercado municipal",
+      "categoria": "Comercio local",
+      "introduccion": "Consulta este eje sobre el comercio de la ciudad.",
+      "kpis": [
+        {
+          "etiqueta": "Puestos",
+          "valor": "420"
+        },
+        {
+          "etiqueta": "Empleos",
+          "valor": "+900"
+        },
+        {
+          "etiqueta": "Plazo",
+          "valor": "24 meses"
+        }
+      ]
+    },
+    {
+      "slug": "terminal-terrestre",
+      "nombre": "Terminal terrestre",
+      "categoria": "Movilidad",
+      "introduccion": "Conoce la propuesta de transporte terrestre.",
+      "kpis": [
+        {
+          "etiqueta": "Pasajeros/día",
+          "valor": "18,000"
+        },
+        {
+          "etiqueta": "Rutas",
+          "valor": "26"
+        },
+        {
+          "etiqueta": "Plazo",
+          "valor": "28 meses"
+        }
+      ]
+    },
+    {
+      "slug": "agronomia",
+      "nombre": "Agronomía",
+      "categoria": "Campo y producción",
+      "introduccion": "Consulta el eje dedicado al sector agrícola.",
+      "kpis": [
+        {
+          "etiqueta": "Productores",
+          "valor": "2,500"
+        },
+        {
+          "etiqueta": "Hectáreas",
+          "valor": "1,800"
+        },
+        {
+          "etiqueta": "Plazo",
+          "valor": "24 meses"
+        }
+      ]
+    },
+    {
+      "slug": "educacion",
+      "nombre": "Educación",
+      "categoria": "Aprendizaje",
+      "introduccion": "Conoce este eje del plan educativo.",
+      "kpis": [
+        {
+          "etiqueta": "Estudiantes",
+          "valor": "14,500"
+        },
+        {
+          "etiqueta": "Centros",
+          "valor": "38"
+        },
+        {
+          "etiqueta": "Plazo",
+          "valor": "36 meses"
+        }
+      ]
+    },
+    {
+      "slug": "tecnologias-emergentes",
+      "nombre": "Tecnologías emergentes",
+      "categoria": "Innovación",
+      "introduccion": "Consulta la propuesta sobre nuevas tecnologías.",
+      "kpis": [
+        {
+          "etiqueta": "Trámites digitales",
+          "valor": "40+"
+        },
+        {
+          "etiqueta": "Puntos Wi-Fi",
+          "valor": "60"
+        },
+        {
+          "etiqueta": "Plazo",
+          "valor": "18 meses"
+        }
+      ]
+    }
+  ],
+  "biografia": [
+    {
+      "anios": "19XX",
+      "titulo": "Sus raíces en San Lorenzo",
+      "texto": "Texto provisional. Aquí va dónde nace Carlos, quién es su familia y cómo fue crecer en el cantón.",
+      "foto": null,
+      "alt": null
+    },
+    {
+      "anios": "19XX",
+      "titulo": "Formación",
+      "texto": "Texto provisional. Aquí van sus estudios y las personas que marcaron su forma de ver la comunidad.",
+      "foto": null,
+      "alt": null
+    },
+    {
+      "anios": "20XX",
+      "titulo": "Primeros pasos en el trabajo",
+      "texto": "Texto provisional. Aquí va su oficio o profesión y cómo conoció de cerca los problemas de la ciudad.",
+      "foto": null,
+      "alt": null
+    },
+    {
+      "anios": "20XX",
+      "titulo": "Servicio a la comunidad",
+      "texto": "Texto provisional. Aquí van las organizaciones, el voluntariado y las obras en barrios en las que participó.",
+      "foto": null,
+      "alt": null
+    },
+    {
+      "anios": "20XX",
+      "titulo": "Llegada al Partido Social Cristiano",
+      "texto": "Texto provisional. Aquí va cuándo y por qué se une a la Lista 6.",
+      "foto": null,
+      "alt": null
+    },
+    {
+      "anios": "20XX",
+      "titulo": "Candidato a la alcaldía de San Lorenzo",
+      "texto": "Texto provisional. Aquí va qué lo impulsa a postularse y qué propone para la ciudad.",
+      "foto": null,
+      "alt": null
+    }
+  ],
+  "obras": [
+    {
+      "slug": "agua-potable",
+      "nota": "Datos de ejemplo. Se tiende la red de distribución en los barrios del centro.",
+      "actualizadoEn": "2026-09-15T00:00:00.000Z",
+      "hitos": [
+        {
+          "nombre": "Estudios y diseño",
+          "completado": true
+        },
+        {
+          "nombre": "Financiamiento",
+          "completado": true
+        },
+        {
+          "nombre": "Contratación",
+          "completado": true
+        },
+        {
+          "nombre": "Red de distribución",
+          "completado": false
+        },
+        {
+          "nombre": "Conexiones domiciliarias",
+          "completado": false
+        }
+      ],
+      "fotos": []
+    },
+    {
+      "slug": "centro-de-alto-rendimiento",
+      "nota": "Datos de ejemplo. Se revisan los estudios de suelo del terreno propuesto.",
+      "actualizadoEn": "2026-09-02T00:00:00.000Z",
+      "hitos": [
+        {
+          "nombre": "Selección del terreno",
+          "completado": true
+        },
+        {
+          "nombre": "Estudios técnicos",
+          "completado": false
+        },
+        {
+          "nombre": "Diseño definitivo",
+          "completado": false
+        },
+        {
+          "nombre": "Construcción",
+          "completado": false
+        },
+        {
+          "nombre": "Equipamiento",
+          "completado": false
+        }
+      ],
+      "fotos": []
+    },
+    {
+      "slug": "mercado-municipal",
+      "nota": "Datos de ejemplo. La estructura principal está terminada; siguen instalaciones y puestos.",
+      "actualizadoEn": "2026-09-18T00:00:00.000Z",
+      "hitos": [
+        {
+          "nombre": "Diseño",
+          "completado": true
+        },
+        {
+          "nombre": "Contratación",
+          "completado": true
+        },
+        {
+          "nombre": "Estructura",
+          "completado": true
+        },
+        {
+          "nombre": "Instalaciones",
+          "completado": false
+        },
+        {
+          "nombre": "Reubicación de comerciantes",
+          "completado": false
+        }
+      ],
+      "fotos": []
+    },
+    {
+      "slug": "terminal-terrestre",
+      "nota": "Datos de ejemplo. Se coordina con las cooperativas de transporte.",
+      "actualizadoEn": "2026-08-28T00:00:00.000Z",
+      "hitos": [
+        {
+          "nombre": "Estudio de movilidad",
+          "completado": true
+        },
+        {
+          "nombre": "Diseño",
+          "completado": false
+        },
+        {
+          "nombre": "Financiamiento",
+          "completado": false
+        },
+        {
+          "nombre": "Construcción",
+          "completado": false
+        },
+        {
+          "nombre": "Puesta en servicio",
+          "completado": false
+        }
+      ],
+      "fotos": []
+    },
+    {
+      "slug": "agronomia",
+      "nota": "Datos de ejemplo. Los primeros grupos de productores reciben asistencia técnica.",
+      "actualizadoEn": "2026-09-10T00:00:00.000Z",
+      "hitos": [
+        {
+          "nombre": "Censo de productores",
+          "completado": true
+        },
+        {
+          "nombre": "Convenios",
+          "completado": true
+        },
+        {
+          "nombre": "Capacitaciones",
+          "completado": false
+        },
+        {
+          "nombre": "Entrega de insumos",
+          "completado": false
+        },
+        {
+          "nombre": "Evaluación",
+          "completado": false
+        }
+      ],
+      "fotos": []
+    },
+    {
+      "slug": "educacion",
+      "nota": "Datos de ejemplo. Aulas rehabilitadas y entregadas a la comunidad educativa.",
+      "actualizadoEn": "2026-07-30T00:00:00.000Z",
+      "hitos": [
+        {
+          "nombre": "Diagnóstico",
+          "completado": true
+        },
+        {
+          "nombre": "Diseño",
+          "completado": true
+        },
+        {
+          "nombre": "Rehabilitación",
+          "completado": true
+        },
+        {
+          "nombre": "Entrega",
+          "completado": true
+        }
+      ],
+      "fotos": []
+    },
+    {
+      "slug": "tecnologias-emergentes",
+      "nota": "Datos de ejemplo. Pendiente de aprobación del presupuesto.",
+      "actualizadoEn": "2026-09-01T00:00:00.000Z",
+      "hitos": [
+        {
+          "nombre": "Presupuesto",
+          "completado": false
+        },
+        {
+          "nombre": "Diseño",
+          "completado": false
+        },
+        {
+          "nombre": "Instalación de paneles",
+          "completado": false
+        },
+        {
+          "nombre": "Puesta en marcha",
+          "completado": false
+        }
+      ],
+      "fotos": []
+    }
+  ],
+  "chat": [
+    {
+      "pregunta": "Ver propuestas",
+      "palabrasClave": "propuesta, propuestas, plan, ejes, proyectos",
+      "respuesta": "Puedes revisar las siete propuestas para San Lorenzo en la sección de propuestas.",
+      "enlaceTexto": "Ver propuestas",
+      "enlaceRuta": "/#propuestas",
+      "destacada": true
+    },
+    {
+      "pregunta": "Conocer a Carlos",
+      "palabrasClave": "carlos, astudillo, candidato, biografia, quien es",
+      "respuesta": "Conoce la historia y el camino de Carlos Astudillo.",
+      "enlaceTexto": "Conocer a Carlos",
+      "enlaceRuta": "/acerca-de-nosotros/",
+      "destacada": true
+    },
+    {
+      "pregunta": "¿Cómo reporto un daño en mi barrio?",
+      "palabrasClave": "reportar, reporto, dano, alerta, bache, basura, alumbrado, agua, barrio",
+      "respuesta": "Puedes enviar una alerta ciudadana con el tipo de problema, el sector y una foto.",
+      "enlaceTexto": "Enviar una alerta",
+      "enlaceRuta": "/ciudadania/alerta-ciudadana/",
+      "destacada": true
+    },
+    {
+      "pregunta": "Contacto",
+      "palabrasClave": "contacto, contactar, whatsapp, facebook, tiktok, telefono, numero",
+      "respuesta": "Encuentra los canales de contacto de la campaña.",
+      "enlaceTexto": "Ir a contacto",
+      "enlaceRuta": "/#contacto",
+      "destacada": true
+    }
+  ]
+}

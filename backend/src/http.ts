@@ -1,7 +1,7 @@
 import type { Config } from "./config";
 
 /** Datos extra que acompañan al error; `reintentarEn` (segundos) también sale como cabecera Retry-After. */
-export type ApiErrorDetail = { reintentarEn?: number; sugerirRecuperacion?: boolean };
+export type ApiErrorDetail = { reintentarEn?: number; sugerirRecuperacion?: boolean; requiereAceptacion?: boolean };
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public detail?: ApiErrorDetail) { super(message); }

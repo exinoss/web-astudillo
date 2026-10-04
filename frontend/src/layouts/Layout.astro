@@ -6,6 +6,7 @@ import Editable from "../components/Editable.astro";
 import NavLink from "../components/NavLink.astro";
 import DropdownPanel from "../components/DropdownPanel.astro";
 import DropdownLink from "../components/DropdownLink.astro";
+import Seo from '../components/Seo.astro';
 import { contentRepository } from "../lib/data";
 import { aboutLinks } from "../lib/acerca";
 import "@fontsource/barlow-condensed/600.css";
@@ -18,11 +19,13 @@ interface Props {
   title?: string;
   description?: string;
   referrerPolicy?: 'no-referrer';
+  contentClass?: string;
 }
 const {
   title = "Carlos Astudillo · San Lorenzo",
   description = "Conoce a Carlos Astudillo, candidato a la alcaldía de San Lorenzo por el Partido Social Cristiano, Lista 6. Propuestas y espacios de ciudadanía.",
   referrerPolicy,
+  contentClass,
 } = Astro.props;
 const current = Astro.url.pathname;
 const proposals = await contentRepository.getProposals();
@@ -62,7 +65,7 @@ const accessButton =
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content={description} />
+    <Seo title={title} description={description} path={current} />
     {referrerPolicy && <meta name="referrer" content={referrerPolicy} />}
     <meta name="theme-color" content="#063176" />
     <link rel="icon" type="image/jpeg" href="/favicon.jpg" />
@@ -121,7 +124,7 @@ const accessButton =
           <span class="account-label"><span class="cuenta-fuera">Iniciar sesión</span><span class="cuenta-dentro">Mi cuenta</span></span>
         </a>
         <button
-          class="menu-toggle order-3 hidden h-11 w-11 items-center justify-center rounded-[3px] border border-base-300 bg-transparent text-primary max-nav:flex max-tablet:w-10 max-tablet:min-w-10"
+          class="menu-toggle relative order-3 hidden h-11 w-11 items-center justify-center rounded-[3px] border border-base-300 bg-transparent text-primary before:absolute before:inset-[-2px] before:content-[''] max-nav:flex max-tablet:w-10 max-tablet:min-w-10"
           aria-label="Abrir menú"
           aria-controls="main-nav"
           aria-expanded="false"
@@ -194,7 +197,7 @@ const accessButton =
       </div>
     </header>
     {/* flex-1: en páginas cortas el pie queda al fondo sin alturas mínimas de relleno. */}
-    <main id="contenido" class="flex-1" tabindex="-1">
+    <main id="contenido" class:list={["flex-1", contentClass]} tabindex="-1">
       <slot />
     </main>
     <footer class="bg-primary text-primary-content pt-[45px] pb-[22px] max-desktop-sm:pb-[72px]">
@@ -212,9 +215,18 @@ const accessButton =
           Contáctanos <Icon name="arrow" size={18} />
         </a>
       </div>
-      <div class="site-container relative flex justify-between gap-5 border-t border-t-[#ffffff25] pt-[22px] text-[0.62rem] text-footer-muted max-tablet:flex-col max-tablet:gap-2.5 max-tablet:pr-[45px] max-tablet:leading-[1.7]">
-        <span>© {new Date().getFullYear()} Carlos Astudillo</span>
-        <Editable clave="global.lema" />
+      <div class="site-container relative grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-5 border-t border-t-[#ffffff25] pt-[22px] text-[0.62rem] text-footer-muted max-tablet:gap-2 max-tablet:leading-[1.7]">
+        <span class="[overflow-wrap:anywhere]">© {new Date().getFullYear()} Carlos Astudillo</span>
+        <nav aria-label="Información legal" class="flex items-center gap-4 text-[0.75rem] max-tablet:gap-1 max-tablet:text-[0.62rem]">
+          <a href="/aviso-legal/" class="inline-flex min-h-11 min-w-11 items-center justify-center text-center underline underline-offset-4">Aviso legal</a>
+          <a href="/politica-de-privacidad/" aria-label="Política de privacidad" class="inline-flex min-h-11 min-w-11 items-center justify-center text-center underline underline-offset-4">
+            <span class="max-tablet:hidden">Política de privacidad</span><span class="hidden max-tablet:inline">Privacidad</span>
+          </a>
+          <a href="/terminos-y-condiciones/" aria-label="Términos y condiciones" class="inline-flex min-h-11 min-w-11 items-center justify-center text-center underline underline-offset-4">
+            <span class="max-tablet:hidden">Términos y condiciones</span><span class="hidden max-tablet:inline">Términos</span>
+          </a>
+        </nav>
+        <Editable clave="global.lema" class="justify-self-end text-right [overflow-wrap:anywhere]" />
         {/* Por debajo de 1191px se ancla aquí en vez de flotar (ver layout.ts).
             El `::after` amplía el área táctil a 44px sin cambiar el tamaño
             visible. */}

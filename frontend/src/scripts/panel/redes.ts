@@ -4,7 +4,7 @@ import { adminApi } from "../../lib/data/http/admin-api";
 import { busy, card, DRAFT_PILL, field, isPending, notify, reloadDraft, reloadPending, state } from "./ui";
 
 const RED_LIST = Object.keys(REDES) as Red[];
-const guardado = (red: Red) => state.draft!.textos[REDES[red].clave] ?? REDES[red].porDefecto;
+const guardado = (red: Red) => state.draft!.textos[REDES[red].clave];
 /** Lo que se guardaría para cada red con lo escrito ahora (WhatsApp ya como 593…). */
 const leer = (form: HTMLElement) => Object.fromEntries(RED_LIST.map((red) => {
   const valor = form.querySelector<HTMLInputElement>(`#red-${red}`)!.value.trim();

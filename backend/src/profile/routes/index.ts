@@ -12,5 +12,6 @@ export function profileRoutes(sql: SQL, authorization: Authorization) {
     ), { body: t.Object({
       nombresCompletos: t.String({ minLength: 1, maxLength: 200 }),
       direccion: t.Optional(t.String({ maxLength: 500 })),
+      versionPerfil: t.Optional(t.Integer({ minimum: 1, maximum: 2147483647 })),
     }, { additionalProperties: false }) });
 }

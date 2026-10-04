@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia';
 import { normalizeEmail } from '../../security';
-import { email, ipOf, password, redirectToAccount, strict, token, type AuthContext } from './common';
+import { acceptance, email, ipOf, password, redirectToAccount, strict, token, type AuthContext } from './common';
 
 export function registrationRoutes({ config, registration, limit }: AuthContext) {
   return new Elysia({ prefix: '/api/auth', normalize: false })
@@ -14,6 +14,7 @@ export function registrationRoutes({ config, registration, limit }: AuthContext)
       nombresCompletos: t.String({ minLength: 1, maxLength: 200 }),
       direccion: t.Optional(t.String({ maxLength: 500 })),
       correo: email, contrasenia: password, confirmarContrasenia: password,
+      aceptacion: acceptance,
     }, strict) })
     .get('/verify-email', ({ query }) => redirectToAccount(config.origin, '/cuenta/verificar/', query.token),
       { query: t.Object({ token }) })

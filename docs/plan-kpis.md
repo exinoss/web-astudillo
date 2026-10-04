@@ -25,7 +25,7 @@ Replica el patrón repositorio ya usado por `Proposal` y `CitizenLink`; no intro
 
 2. **Interfaz**: añadir `getKpis(): Promise<Kpi[]>` a `ContentRepository` (`frontend/src/lib/data/content-repository.ts`).
 
-3. **Semilla**: array `kpis` en `frontend/src/lib/data/mock/seed-data.ts`.
+3. **Semilla**: array `kpis` de cada propuesta en `backend/database/contenido-inicial.json`, incorporado a PostgreSQL. El frontend consume el contenido publicado mediante su repositorio.
 
 4. **Implementaciones**:
    - `mock/mock-content-repository.ts` → `async getKpis() { return kpis; }`
