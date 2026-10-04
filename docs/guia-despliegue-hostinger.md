@@ -183,7 +183,7 @@ Hechos el 4 de octubre de 2026 y comprobados en local: `bun run check` y las 72 
 | Variables por servicio: el publicador ya no recibe JWT ni SMTP | `compose.yml` |
 | Con cada versión nueva, el publicador recompila lo último publicado (sin borradores, sin crear publicaciones) y escribe la versión en el volumen | `backend/src/publisher/worker.ts` |
 | Fotos fuera del contexto de construcción | `backend/.dockerignore` |
-| Nginx 1.30 (rama estable) y cabeceras de seguridad | `compose.yml`, `nginx/cabeceras.conf` |
+| Nginx 1.30 (rama estable) y cabeceras de seguridad | `compose.yml`, `nginx/cabeceras.inc` |
 | Playwright con Chromium en CI y Edge en local | `frontend/playwright.config.ts` |
 | Script de despliegue | `server-produccion/desplegar.sh` |
 | Workflow: pruebas → imágenes → despliegue, y vuelta atrás | `.github/workflows/despliegue.yml` |

@@ -17,7 +17,7 @@ GitHub Actions ──pruebas──▶ imágenes en GHCR (etiqueta = SHA) ──S
 | `postgres/roles.sh` | Crea los usuarios de PostgreSQL y la base en el primer arranque |
 | `Dockerfile.publicador` | Imagen que compila el frontend (también la usa `server-local/`) |
 | `nginx/default.conf` | Sitio, API, fotos, límites de subida y de peticiones al acceso |
-| `nginx/cabeceras.conf` | Cabeceras de seguridad comunes |
+| `nginx/cabeceras.inc` | Cabeceras de seguridad comunes |
 | `nginx/cloudflare.conf` | Recupera la IP real del visitante (solo si la petición viene de Cloudflare) |
 | `.env.example` | Variables que hay que completar en `.env` |
 

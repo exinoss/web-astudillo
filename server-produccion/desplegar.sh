@@ -48,6 +48,8 @@ main() {
 
   echo "Descargando imágenes de $VERSION…"
   docker compose pull --quiet
+  # Antes de tocar nada: con un error de sintaxis, nginx no arrancaría y el sitio quedaría caído.
+  docker compose run --rm --no-deps -T nginx nginx -t -q || falla "La configuración de nginx tiene errores"
 
   if docker compose ps --status running --services | grep -qx db; then
     echo "Respaldando la base antes de migrar…"
@@ -62,6 +64,8 @@ main() {
   echo "Aplicando migraciones…"
   docker compose run --rm migrar
   docker compose up -d --remove-orphans
+  # up -d no reinicia nginx si solo cambian sus archivos de configuración.
+  docker compose exec -T nginx nginx -s reload
 
   # Desde aquí los comandos manuales de docker compose usan esta versión sin exportar VERSION.
   if grep -q '^VERSION=' .env; then sed -i "s/^VERSION=.*/VERSION=$VERSION/" .env

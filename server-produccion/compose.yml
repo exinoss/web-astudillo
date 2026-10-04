@@ -98,9 +98,9 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/cloudflare.conf:/etc/nginx/conf.d/00-cloudflare.conf:ro
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./nginx/cabeceras.conf:/etc/nginx/cabeceras.conf:ro
+      # La carpeta entera: un archivo montado suelto seguiría mostrando la versión anterior tras el git checkout.
+      # nginx carga los *.conf; cabeceras.inc solo se incluye desde cada location.
+      - ./nginx:/etc/nginx/conf.d:ro
       # Certificado de origen de Cloudflare (origen.pem y origen.key); no se sube a Git.
       - ./certificados:/etc/nginx/certificados:ro
       - sitio:/srv/sitio:ro
