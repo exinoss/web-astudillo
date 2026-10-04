@@ -12,7 +12,8 @@ FROM deps AS checked
 COPY tsconfig.json ./
 COPY src ./src
 COPY assets ./assets
-COPY tests ./tests
+# Solo las pruebas que corren aquí: otras importan del frontend, que no está en este contexto.
+COPY tests/proxy.test.ts tests/http-errors.test.ts tests/mail.test.ts ./tests/
 COPY drizzle ./drizzle
 COPY database ./database
 # Bun 1.3.14 en Alpine resuelve tsc desde .bin y pierde la ruta de sus imports relativos.
