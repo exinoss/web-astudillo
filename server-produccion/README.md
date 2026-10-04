@@ -19,6 +19,7 @@ Visitante ──HTTPS──▶ Cloudflare ──HTTPS (certificado de origen)─
 | `nginx/cabeceras.inc` | Cabeceras de seguridad comunes |
 | `nginx/cloudflare.conf` | Recupera la IP real del visitante (solo si la petición viene de Cloudflare) |
 | `.env.example` | Variables que hay que completar en `.env` (nunca se sube a Git) |
+| `monitoreo/compose.yml` | Métricas del servidor y de los contenedores (Beszel), aparte de la app; solo accesible desde la red privada |
 
 **¿Por qué nginx si ya está Cloudflare?** Cloudflare solo es el proxy y la caché que está delante. En el servidor hace falta alguien que sirva los archivos del sitio y las fotos, envíe `/api/` al backend, presente el certificado y limite el tamaño de las subidas.
 

@@ -1,0 +1,44 @@
+# Monitoreo del VPS con Beszel: panel (hub) y agente. Va aparte de la app: desplegar.sh no lo toca.
+# El panel solo escucha en 127.0.0.1; se abre desde la red privada con `tailscale serve`.
+# BESZEL_KEY y BESZEL_TOKEN van en monitoreo/.env: los da el panel al añadir el sistema.
+name: monitoreo
+
+x-logs: &logs
+  driver: json-file
+  options:
+    max-size: "5m"
+    max-file: "2"
+
+services:
+  hub:
+    image: henrygd/beszel:0.21.0
+    restart: unless-stopped
+    environment:
+      APP_URL: http://vps-astudillo:8090
+    ports:
+      - "127.0.0.1:8090:8090"
+    volumes:
+      - hub_datos:/beszel_data
+      - socket:/beszel_socket
+    logging: *logs
+
+  agente:
+    image: henrygd/beszel-agent:0.21.0
+    restart: unless-stopped
+    # Red del host para medir el tráfico real del VPS; habla con el panel por el socket compartido.
+    network_mode: host
+    volumes:
+      - agente_datos:/var/lib/beszel-agent
+      - socket:/beszel_socket
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      LISTEN: /beszel_socket/beszel.sock
+      HUB_URL: http://localhost:8090
+      KEY: ${BESZEL_KEY}
+      TOKEN: ${BESZEL_TOKEN}
+    logging: *logs
+
+volumes:
+  hub_datos:
+  agente_datos:
+  socket:
