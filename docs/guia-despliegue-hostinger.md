@@ -2,7 +2,7 @@
 
 Actualizada el 4 de octubre de 2026. **Ruta elegida: Docker Compose directo en el VPS + GitHub Actions como interfaz de CI/CD.** Se descartó Dokploy: en un KVM 1 (1 núcleo, 4 GB) su panel, su PostgreSQL, Redis y Traefik consumen recursos permanentes, obligan a adaptar Nginx y los certificados, y añaden otro panel con poder de root. La recuperación ante caídas la da Docker (`restart: unless-stopped`) y la interfaz de despliegue, la pestaña *Actions* de GitHub.
 
-Estado al 4 de octubre: fases 1 a 6 terminadas (DNSSEC propagándose); la app todavía no está instalada. Cada fase termina con una **comprobación**: no pasar a la siguiente sin cumplirla. Marcar las casillas a medida que se avanza.
+Estado al 4 de octubre: fases 1 a 8 terminadas; el sitio está desplegado en https://lanuevahistoria.tech desde GitHub Actions (versión `520bc27`). Falta crear la cuenta administradora y las fases 9 y 10. Cada fase termina con una **comprobación**: no pasar a la siguiente sin cumplirla. Marcar las casillas a medida que se avanza.
 
 | Dato | Valor |
 | --- | --- |
@@ -35,8 +35,8 @@ flowchart LR
 | 4. Docker | Usuario | Docker y Compose instalados | ✅ |
 | 5. Certificado de origen | Usuario | HTTPS Full (strict) listo | ✅ |
 | 6. Ajustes del repositorio | Agente + revisión del usuario | Compose con imágenes de GHCR, usuarios de PostgreSQL, migración, reconstrucción del sitio, workflow | ✅ |
-| 7. Preparar el VPS para desplegar | Usuario | Cuenta `despliegue`, repositorio, `.env`, certificado y clave de CI | |
-| 8. Conectar GitHub y primer despliegue | Usuario | Push a `main` → pruebas → despliegue; admin creado | |
+| 7. Preparar el VPS para desplegar | Usuario | Cuenta `despliegue`, repositorio, `.env`, certificado y clave de CI | ✅ |
+| 8. Conectar GitHub y primer despliegue | Usuario | Push a `main` → pruebas → despliegue; admin creado | ✅ (admin pendiente) |
 | 9. Respaldos y avisos | Usuario | Copias externas restauradas al menos una vez |  |
 | 10. Abrir al público | Equipo | Lista final comprobada |  |
 
@@ -205,16 +205,19 @@ Todo en el VPS como `astudillo` (`ssh astudillo@vps-astudillo`), salvo donde dic
    sudo -u despliegue git clone https://github.com/exinoss/web-astudillo.git /opt/astudillo/repo
    ```
 
-2. **Secretos.** Las claves se generan en el servidor y no se muestran en pantalla:
+   `/opt/astudillo` solo lo abre `despliegue`: `astudillo` recibe `Permission denied` sin `sudo`, y es lo correcto.
+
+2. **Secretos.** Se trabaja como `despliegue` (`sudo -iu despliegue`; `exit` para volver). Las claves se generan en el servidor y no se muestran en pantalla:
 
    ```bash
+   sudo -iu despliegue
    cd /opt/astudillo/repo/server-produccion
-   sudo -u despliegue cp .env.example .env
-   sudo chmod 600 .env
+   cp .env.example .env
+   chmod 600 .env
    for v in POSTGRES_PASSWORD DB_MIGRA_PASSWORD DB_APP_PASSWORD DB_PUB_PASSWORD JWT_SECRET; do
-     sudo -u despliegue sed -i "s/^$v=.*/$v=$(openssl rand -hex 32)/" .env
+     sed -i "s/^$v=.*/$v=$(openssl rand -hex 32)/" .env
    done
-   sudo -u despliegue nano .env
+   nano .env
    ```
 
    En `nano` completa `GOOGLE_CLIENT_ID` y los `SMTP_*`. Si todavía no hay proveedor de correo, pon valores provisionales (por ejemplo `SMTP_HOST=smtp.invalid`): el sitio arranca, pero los correos de verificación no saldrán hasta la fase 10.
@@ -222,7 +225,171 @@ Todo en el VPS como `astudillo` (`ssh astudillo@vps-astudillo`), salvo donde dic
    Comprueba que no quedó ninguna variable vacía (no muestra los valores):
 
    ```bash
-   sudo grep -E '^[A-Z_]+=$' .env || echo "TODO COMPLETO"
+   grep -E '^[A-Z_]+=
+   ```
+
+3. **Certificado de origen.** En PowerShell del PC:
+
+   ```powershell
+   scp "$env:USERPROFILE\Documents\DOCUMENTSTEXT\astudillo-certificados\origin.pem" astudillo@vps-astudillo:origen.pem
+   scp "$env:USERPROFILE\Documents\DOCUMENTSTEXT\astudillo-certificados\origin.key" astudillo@vps-astudillo:origen.key
+   ```
+
+   En el VPS:
+
+   ```bash
+   C=/opt/astudillo/repo/server-produccion/certificados
+   sudo install -d -o despliegue -g despliegue -m 700 $C
+   sudo install -o despliegue -g despliegue -m 644 ~/origen.pem $C/origen.pem
+   sudo install -o despliegue -g despliegue -m 600 ~/origen.key $C/origen.key
+   rm ~/origen.pem ~/origen.key
+   ```
+
+4. **Clave de GitHub Actions.** En PowerShell del PC, sin frase (la usará un robot):
+
+   ```powershell
+   ssh-keygen -t ed25519 -N '""' -C github-actions -f "$env:USERPROFILE\Documents\DOCUMENTSTEXT\astudillo-certificados\ci_despliegue"
+   Get-Content "$env:USERPROFILE\Documents\DOCUMENTSTEXT\astudillo-certificados\ci_despliegue.pub"
+   ```
+
+   En el VPS, sustituyendo `ssh-ed25519 AAAA…` por la línea que mostró el comando anterior. `command=` hace que esa clave **solo** pueda ejecutar `desplegar.sh`:
+
+   ```bash
+   sudo install -d -o despliegue -g despliegue -m 700 /home/despliegue/.ssh
+   echo 'command="bash /opt/astudillo/repo/server-produccion/desplegar.sh",restrict ssh-ed25519 AAAA… github-actions' \
+     | sudo -u despliegue tee /home/despliegue/.ssh/authorized_keys >/dev/null
+   sudo chmod 600 /home/despliegue/.ssh/authorized_keys
+   ```
+
+**Comprobación:** en PowerShell del PC,
+
+```powershell
+ssh -i "$env:USERPROFILE\Documents\DOCUMENTSTEXT\astudillo-certificados\ci_despliegue" despliegue@vps-astudillo prueba
+```
+
+debe responder `ERROR: Uso: desplegar.sh <sha de 40 caracteres>`, y `ssh -i … despliegue@vps-astudillo bash` debe dar el mismo error y no abrir una consola.
+
+## Fase 8. Conectar GitHub y primer despliegue
+
+### Cómo funciona
+
+1. **Push a `main`** (o *Run workflow*): Actions comprueba tipos, ejecuta las pruebas del backend con una PostgreSQL desechable y las de Playwright.
+2. Construye las imágenes de backend y publicador y las sube a GHCR con el SHA del commit.
+3. Entra en Tailscale con una identidad temporal (`tag:ci`) y ejecuta `ssh despliegue@vps-astudillo <SHA>`.
+4. En el VPS, `desplegar.sh`:
+   1. impide dos despliegues a la vez y comprueba que queden 3 GB libres;
+   2. pone el repositorio en ese SHA (configuración de Nginx y compose de la misma versión) y descarga las imágenes;
+   3. si la base ya existe, guarda un respaldo (`/opt/astudillo/respaldos/`, los 5 últimos);
+   4. detiene el publicador, aplica las migraciones con la imagen nueva y arranca todo; si la migración falla, se detiene ahí;
+   5. espera a que el backend esté sano y a que el publicador haya recompilado el sitio con esa versión;
+   6. anota el SHA en `/opt/astudillo/versiones`.
+5. Actions comprueba `https://lanuevahistoria.tech/api/health` desde fuera.
+
+La primera vez, la misma ejecución crea la base: `roles.sh` crea los usuarios con las claves del `.env`, la migración crea las tablas y la semilla, y el publicador compila el sitio inicial.
+
+### Configuración
+
+1. **Tailscale → Access controls → JSON editor.** El VPS lleva la etiqueta `tag:servidor` (Machines → ⋯ → *Edit ACL tags*), así no puede iniciar conexiones hacia los equipos personales. La política aplicada:
+
+   ```jsonc
+   {
+     "tagOwners": { "tag:servidor": ["autogroup:admin"], "tag:ci": ["autogroup:admin"] },
+     "grants": [
+       {"src": ["autogroup:member"], "dst": ["*"], "ip": ["*"]},
+       {"src": ["tag:ci"], "dst": ["tag:servidor"], "ip": ["tcp:22"]},
+     ],
+     "tests": [
+       {"src": "tag:ci", "accept": ["tag:servidor:22"], "deny": ["tag:servidor:443", "tag:servidor:5432", "100.110.124.52:22"]},
+       {"src": "tag:servidor", "deny": ["100.110.124.52:22", "100.110.124.52:3389"]},
+     ],
+   }
+   ```
+
+   Más la sección `"ssh"` que trae Tailscale por defecto.
+
+2. **Tailscale → Settings → OAuth clients → Generate**: permiso *Auth Keys* de escritura con la etiqueta `tag:ci`. Guarda el *Client ID* y el *Client secret* (el secreto solo se muestra una vez).
+3. **SSH_KNOWN_HOSTS.** En PowerShell del PC, con Tailscale conectado: `ssh-keyscan vps-astudillo`. Copia todas las líneas que empiezan por `vps-astudillo`.
+4. **GitHub → repositorio → Settings → Environments → New environment** `production`:
+   - *Deployment branches and tags*: **Selected branches** → `main`.
+   - *Environment secrets*:
+
+     | Nombre | Valor |
+     | --- | --- |
+     | `TS_OAUTH_CLIENT_ID` | Client ID de Tailscale |
+     | `TS_OAUTH_SECRET` | Client secret de Tailscale |
+     | `SSH_CLAVE_DESPLIEGUE` | Contenido completo de `ci_despliegue` (la clave **privada**, sin `.pub`) |
+     | `SSH_KNOWN_HOSTS` | Las líneas del paso 3 |
+
+   Después, borra `ci_despliegue` del PC (la `.pub` puede quedarse).
+
+### Primer despliegue
+
+1. Comprueba en *Actions* que la ejecución del push de la fase 6 pasó las pruebas y el job `imagenes`.
+2. GHCR crea los paquetes como privados y el VPS no podría descargarlos. GitHub → tu perfil → *Packages* → `astudillo-backend` → *Package settings* → *Change visibility* → **Public**. Lo mismo con `astudillo-publicador`. El código ya es público, así que las imágenes no exponen nada nuevo; no contienen `.env` ni certificados.
+3. En esa ejecución, **Re-run failed jobs** (o *Run workflow* en `main`). El primer despliegue puede tardar varios minutos: compila el sitio en el VPS.
+4. Crea la cuenta administradora:
+
+   ```bash
+   sudo -iu despliegue
+   cd /opt/astudillo/repo/server-produccion
+   docker compose exec backend bun run admin:crear
+   exit
+   ```
+
+**Comprobación:**
+- `https://lanuevahistoria.tech/api/health` responde `{"ok":true}` y la portada carga.
+- Iniciar sesión con el admin funciona.
+- `cat /opt/astudillo/versiones` muestra el SHA.
+- En el VPS, `sudo ss -lntp | grep -E ':(5432|3000)'` no muestra nada.
+- Un commit pequeño posterior se despliega solo y termina en verde.
+
+### Volver a una versión anterior
+
+*Actions* → *Pruebas y despliegue* → *Run workflow* → escribir el SHA anterior (está en `/opt/astudillo/versiones` y en el historial de *Actions*). No se prueba ni se construye nada: sus imágenes ya están en GHCR. Solo funciona si esa versión es compatible con la base ya migrada; nunca se revierte la base de forma automática.
+
+### Publicación desde el panel
+
+Es independiente del despliegue de código: «Publicar» encola una compilación que hace el publicador en el VPS, sin pasar por GitHub. Si coincide con un despliegue, esa publicación queda como fallida y basta con volver a publicar. Medir cuánto tarda y cuánta memoria usa en el KVM 1.
+
+## Fase 9. Respaldos y avisos
+
+Antes de recibir datos reales:
+
+1. **Destino externo:** un bucket privado (por ejemplo Cloudflare R2 o Backblaze B2) con una credencial que solo pueda escribir en él.
+2. **Script diario** (cron del usuario `despliegue`): `pg_dump` + copia de los volúmenes `astudillo_medios` y `astudillo_privados`, cifrado con `age` o `rclone crypt`, subido con `rclone`. Conservar 7 diarias y 4 semanales. La clave para descifrar se guarda fuera del VPS.
+3. Para que la base y las fotos coincidan, hacer el respaldo con el publicador detenido y en un horario sin actividad, o aceptar y documentar la diferencia de segundos entre ambas copias.
+4. **Ensayo de restauración** en el PC con `server-local/`: comprobar cuentas, publicaciones y fotos privadas. Anotar fecha y resultado.
+5. **Monitor externo** gratuito (UptimeRobot o Better Stack) sobre la portada y `/api/health`, avisando por correo o Telegram. Añadir un aviso si el respaldo no se sube en 26 horas (por ejemplo, un *heartbeat* del mismo servicio).
+
+Los backups semanales de Hostinger son una capa adicional, no sustituyen la copia externa.
+
+**Comprobación:** existe un respaldo cifrado en el bucket, se restauró una vez y apagar el backend durante unos minutos genera un aviso.
+
+## Fase 10. Google, correo y apertura al público
+
+1. Google Auth Platform: añadir `https://lanuevahistoria.tech` como origen autorizado del cliente web; el mismo client ID en backend y frontend.
+2. SMTP saliente de un proveedor (no instalar servidor de correo en el VPS), con SPF, DKIM y DMARC en Cloudflare. Probar verificación de cuenta y restablecimiento de contraseña, también la llegada a spam.
+3. Completar en privacidad los proveedores reales: Hostinger (EE. UU.), Cloudflare, Google, SMTP, Tailscale y destino de respaldos.
+4. Publicar el contenido definitivo desde el panel y sustituir el WhatsApp de prueba.
+
+Lista final antes de anunciar el sitio:
+
+- [ ] DNS activo, Full (strict), redirecciones `http` → `https` y `www` → raíz sin bucles.
+- [ ] IP directa y puertos 22, 3000 y 5432 sin respuesta desde Internet.
+- [ ] La IP real del visitante llega al backend (probar el límite de intentos de acceso).
+- [ ] Cabeceras de seguridad en páginas, API y errores; ninguna respuesta de cuenta o alerta en caché.
+- [ ] Registro con correo y Google, aceptación de términos, recuperación de acceso y roles.
+- [ ] Fotos privadas de alertas solo visibles para su autor y quien revisa; reintentos y conflictos (409).
+- [ ] Editar → guardar → publicar actualiza el sitio; un despliegue de código también reconstruye el contenido aprobado.
+- [ ] 404 real, sitemap, robots, canonical, JSON-LD e imagen al compartir con el dominio definitivo.
+- [ ] Móvil desde 320 px, orientación, teclado, los ocho modos de accesibilidad y el visor 3D en el servidor real.
+- [ ] Carga medida en móvil y consumo durante una publicación.
+- [ ] Respaldo restaurado y aviso de caída recibido.
+- [ ] HSTS activado (sin preload) tras comprobar todo lo anterior.
+
+Después: Search Console y envío del sitemap. Marcar los pendientes del [plan previo](plan-previo-publicacion.md) solo con evidencia real.
+ .env || echo "TODO COMPLETO"
+   exit
    ```
 
 3. **Certificado de origen.** En PowerShell del PC:
