@@ -13,10 +13,13 @@ x-db-ready: &db-ready
     condition: service_healthy
 
 services:
-  # La base vive en un volumen y no publica ningún puerto en el VPS. Usuarios: postgres/roles.sh.
+  # La base vive en un volumen. Usuarios: postgres/roles.sh.
   db:
     image: postgres:17-alpine
     restart: unless-stopped
+    # Solo en la interfaz local del VPS, para DBeaver por túnel SSH; desde fuera no es alcanzable.
+    ports:
+      - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD}
       DB_MIGRA_PASSWORD: ${DB_MIGRA_PASSWORD:?Falta DB_MIGRA_PASSWORD}

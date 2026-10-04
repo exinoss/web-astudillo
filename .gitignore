@@ -35,3 +35,7 @@ npm-debug.log*
 # Producción: secretos y certificados del VPS
 server-produccion/.env
 server-produccion/certificados/
+
+# Guías de despliegue y operación: datos del servidor, solo en local
+docs/guia-despliegue-hostinger.md
+docs/guia.md

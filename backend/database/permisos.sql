@@ -20,4 +20,12 @@ BEGIN
     GRANT EXECUTE ON FUNCTION fn_publication_claim(), fn_publication_finish(integer, boolean, text),
       fn_publication_recover() TO astudillo_pub;
   END IF;
+
+  -- Consultas y copias (pg_dump) de solo lectura; no lo crea roles.sh, se crea a mano.
+  -- pg_dump necesita además el esquema drizzle y leer las secuencias.
+  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'astudillo_lectura') THEN
+    GRANT USAGE ON SCHEMA public, drizzle TO astudillo_lectura;
+    GRANT SELECT ON ALL TABLES IN SCHEMA public, drizzle TO astudillo_lectura;
+    GRANT SELECT ON ALL SEQUENCES IN SCHEMA public, drizzle TO astudillo_lectura;
+  END IF;
 END $$;

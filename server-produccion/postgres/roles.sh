@@ -1,5 +1,4 @@
 # La imagen de postgres lo ejecuta (con «source») solo al crear el volumen pgdata, en el primer arranque.
-# Cambiar una clave después: ALTER ROLE … PASSWORD … como postgres (ver README.md).
 # Los privilegios de cada usuario los aplica la migración: backend/database/permisos.sql.
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname postgres \
   -v migra="$DB_MIGRA_PASSWORD" -v app="$DB_APP_PASSWORD" -v pub="$DB_PUB_PASSWORD" <<'SQL'
