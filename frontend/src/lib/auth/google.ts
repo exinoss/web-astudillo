@@ -2,7 +2,10 @@ type CredentialResponse = { credential?: string };
 
 type GoogleSdk = {
   accounts: { id: {
-    initialize(options: { client_id: string; callback: (response: CredentialResponse) => void; auto_select: boolean }): void;
+    initialize(options: {
+      client_id: string; callback: (response: CredentialResponse) => void; auto_select: boolean;
+      use_fedcm_for_button: boolean; button_auto_select: boolean;
+    }): void;
     renderButton(element: HTMLElement, options: { type: 'standard'; theme: 'outline'; size: 'large'; width: number }): void;
     disableAutoSelect(): void;
   } };
@@ -43,7 +46,10 @@ export async function showGoogleButton(
   if (!window.google) throw new Error('No se pudo cargar el acceso con Google.');
   receiveCredential = onCredential;
   if (!initialized) {
+    // Chrome y Edge: quien ya entró antes con Google pasa directo con esa cuenta; Firefox no tiene FedCM y
+    // siempre muestra el selector de cuentas.
     window.google.accounts.id.initialize({ client_id: clientId, auto_select: false,
+      use_fedcm_for_button: true, button_auto_select: true,
       callback: response => {
         if (response.credential) receiveCredential?.(response.credential);
       },
