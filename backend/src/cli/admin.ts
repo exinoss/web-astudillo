@@ -4,6 +4,7 @@ import { SQL } from 'bun';
 import { requireConfirmation, requireNewPassword } from '../auth/password-policy';
 import { callPg } from '../db/call';
 import { assertMigrated } from '../db/migrate';
+import { plainText } from '../content/services/validation';
 
 type Resultado = { resultado: string; id_usuario: number | null };
 
@@ -63,9 +64,8 @@ async function crear(sql: SQL) {
   const correo = await hastaQueSeaValido(async () => (await preguntar('Correo del admin maestro:')).trim(), valor => {
     if (!correoValido(valor)) throw new Error('Correo no válido');
   });
-  const nombre = await hastaQueSeaValido(async () => (await preguntar('Nombre completo:')).trim(), valor => {
-    if (!valor || valor.length > 200) throw new Error('Escribe el nombre completo');
-  });
+  const nombre = await hastaQueSeaValido(async () => (await preguntar('Nombre completo:')).trim(),
+    valor => plainText(valor, 'Nombre completo', 200));
   // Si la confirmación no coincide se piden las dos de nuevo, por si el error estaba en la primera.
   const contrasenia = await hastaQueSeaValido(async () => {
     const primera = await hastaQueSeaValido(() => preguntar('Contraseña:', true), requireNewPassword);

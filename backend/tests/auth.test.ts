@@ -49,6 +49,9 @@ const security = {
     if (credential === "workspace".repeat(12)) return {
       sub: "google-workspace", email: "equipo@campana.ec", verified: true, hostedDomain: "campana.ec", name: "Equipo",
     };
+    if (credential === "marcado".repeat(20)) return {
+      sub: "google-marcado", email: "marcado@gmail.com", verified: true, hostedDomain: null, name: "<img src=x onerror=alert(1)>",
+    };
     throw new Error("Credencial Google de prueba inválida");
   },
 };
@@ -472,4 +475,21 @@ test('la creación por consola rechaza sucesiones y admite seis caracteres', asy
   expect((await call('/api/auth/login', 'POST', {
     correo: 'consola@example.com', contrasenia: 'Ab1!xy',
   })).status).toBe(200);
+});
+
+test("nombre y dirección del registro y de Google solo admiten texto plano", async () => {
+  const casos: [string, string | undefined][] = [
+    ["<script>alert(1)</script>", undefined], ["Ana\u202eadmin", undefined], ["Ana", "<a href=x>Calle</a>"],
+  ];
+  for (const [i, [nombresCompletos, direccion]] of casos.entries()) {
+    const res = await call("/api/auth/register", "POST", {
+      nombresCompletos, ...(direccion ? { direccion } : {}),
+      correo: `marcado${i}@example.com`, contrasenia: "Ab1!xy", confirmarContrasenia: "Ab1!xy",
+    });
+    expect(res.status).toBe(422);
+  }
+  // El nombre de Google lo escribe la persona: si trae marcado, la cuenta se crea sin nombre.
+  const google = await call("/api/auth/google", "POST", { credential: "marcado".repeat(20) });
+  expect(google.status).toBe(200);
+  expect((await google.json()).user.nombresCompletos).toBeNull();
 });

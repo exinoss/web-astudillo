@@ -469,6 +469,7 @@ BEGIN
   IF p_role NOT IN ('votante', 'coadmin', 'admin') OR p_actor = p_target THEN RETURN; END IF;
   SELECT * INTO v_actor FROM fn_authorized_user(p_actor, 'usuarios.rol.cambiar');
   IF NOT FOUND THEN RETURN; END IF;
+  IF p_role = 'admin' AND NOT v_actor.es_maestro THEN RETURN; END IF;
   SELECT * INTO v_target FROM tb_usuarios WHERE id_usuario = p_target FOR UPDATE;
   IF NOT FOUND OR v_target.es_maestro THEN RETURN; END IF;
   IF v_target.rol = 'admin' AND NOT v_actor.es_maestro THEN RETURN; END IF;

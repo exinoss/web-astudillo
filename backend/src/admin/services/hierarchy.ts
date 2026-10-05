@@ -5,9 +5,14 @@ export type AccountState = typeof ACCOUNT_STATES[number];
 
 // Un solo mensaje para cualquier bloqueo: no revela qué cuenta es la maestra ni cómo se gestiona.
 export const FORBIDDEN_ACCOUNT = 'No tienes permiso para modificar esta cuenta';
+export const FORBIDDEN_ROLE = 'No tienes permiso para asignar ese rol';
 const OWN_ACCOUNT = 'No puedes modificar tu propia cuenta';
 
 type Account = { id_usuario: number; rol: string; es_maestro: boolean };
+
+/** Solo el maestro nombra admins: una cuenta admin robada no puede crear otras. Igual en `fn_role_change`. */
+export const assignableRoles = (actor: Account): readonly AssignableRole[] =>
+  actor.es_maestro ? ASSIGNABLE_ROLES : ASSIGNABLE_ROLES.filter(role => role !== 'admin');
 
 /**
  * Indica si `actor` puede cambiar el rol o el estado de `target`.

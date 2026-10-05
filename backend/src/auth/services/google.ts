@@ -6,6 +6,12 @@ import type { Sessions } from "../types";
 import type { GoogleIdentity } from '../../security/types';
 import { TEXTO_ACEPTACION, VERSION_LEGAL, type AceptacionLegal } from '../../contracts/legal';
 import { requireAcceptance } from './consent';
+import { plainText } from '../../content/services/validation';
+
+/** El nombre lo escribe la persona en Google: si no es texto plano válido, la cuenta se crea sin nombre. */
+function safeName(name: string | null) {
+  try { return name ? plainText(name, 'Nombre completo', 200) : null; } catch { return null; }
+}
 
 /** Google solo garantiza el correo si es suyo: Gmail o el dominio de Google Workspace de la cuenta. */
 function isGoogleMailbox(identity: GoogleIdentity) {
@@ -22,7 +28,7 @@ export function createGoogleAuth(sql: SQL, security: Security, sessions: Session
       let rows = await callPg<Account>(tx, "userByEmailLocked", [identity.email]);
       if (!rows.length) {
         if (!acceptance) return null;
-        rows = await callPg<Account>(tx, "googleUserCreate", [identity.email, identity.name, VERSION_LEGAL, TEXTO_ACEPTACION]);
+        rows = await callPg<Account>(tx, "googleUserCreate", [identity.email, safeName(identity.name), VERSION_LEGAL, TEXTO_ACEPTACION]);
         if (!rows.length) rows = await callPg<Account>(tx, "userByEmailLocked", [identity.email]);
       }
       const user = rows[0];
@@ -46,7 +52,7 @@ export function createGoogleAuth(sql: SQL, security: Security, sessions: Session
       const [linked] = await callPg<Account>(sql, "googleUser", [identity.sub]);
       if (!linked && !isGoogleMailbox(identity)) throw new ApiError(422, "Con Google solo puedes entrar si tu correo es de Gmail. Entra con tu correo y contraseña.");
       const user = linked ?? await link(identity, acceptance);
-      if (!user) return { requiereAceptacion: true as const, correo: identity.email, nombresCompletos: identity.name };
+      if (!user) return { requiereAceptacion: true as const, correo: identity.email, nombresCompletos: safeName(identity.name) };
       if (user.estado !== "activo") throw new ApiError(403, "Cuenta no disponible");
       return { user, tokens: await sessions.start(user) };
     },
