@@ -13,7 +13,7 @@ import AccountStatus from '../../components/account/AccountStatus.astro';
         <AccountField id="recovery-email" name="correo" label="Correo electrónico" type="email" placeholder="nombre@ejemplo.com" autocomplete="email" required maxLength={320} />
         <button type="submit" class="button w-full">Enviar instrucciones</button>
       </form>
-      <a class="mt-5 inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/">Volver al acceso</a>
+      <p class="m-0 mt-5 text-center text-sm text-[#50617d]">¿La recordaste? <a class="inline-flex min-h-11 items-center font-bold text-primary underline" href="/cuenta/">Inicia sesión</a></p>
     </AccountCard>
   </div>
   <script src="../../scripts/account-recovery.ts"></script>
