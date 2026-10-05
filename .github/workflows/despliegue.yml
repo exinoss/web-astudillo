@@ -52,6 +52,9 @@ jobs:
     defaults:
       run:
         working-directory: frontend
+    env:
+      # El de producción (es público). Sin él se omiten las pruebas de Google, que lo simulan.
+      PUBLIC_GOOGLE_CLIENT_ID: 940381056814-v7i4f99j1s87pie3vloikgq8mgidghde.apps.googleusercontent.com
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # Astro 7 exige Node 22.12 o superior; bunx lo usa para sus binarios.
