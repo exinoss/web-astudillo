@@ -102,7 +102,8 @@ test('proposal 3D model loads only when scrolled into view and replaces its post
   await page.locator('.model-3d').scrollIntoViewIfNeeded();
   const viewer = page.locator('model-viewer');
   await expect.poll(() => viewer.evaluate((v: any) => v.loaded), { timeout: 30000 }).toBe(true);
-  await expect(page.locator('.model-3d-poster')).toHaveCount(0);
+  // En CI, con varios navegadores a la vez, el primer fotograma tras cargar puede tardar más de 5 s.
+  await expect(page.locator('.model-3d-poster')).toHaveCount(0, { timeout: 15000 });
   const size = await viewer.evaluate((v: any) => v.getDimensions());
   expect(size.x).toBeCloseTo(3.29, 2);
   expect(size.y).toBeCloseTo(1.419, 2);

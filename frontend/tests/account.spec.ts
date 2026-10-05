@@ -445,6 +445,7 @@ test('tras muchos intentos el botón se bloquea con candado y cuenta atrás, y s
 });
 
 test('un bloqueo de días ofrece restablecer la contraseña y, con Reducir movimiento, el candado no se anima', async ({ page }) => {
+  await mockGoogleButton(page, 'credencial-prueba');
   await page.route('**/api/**', route => new URL(route.request().url()).pathname === '/api/auth/login'
     ? route.fulfill({ status: 429, contentType: 'application/json', body: JSON.stringify({ error: 'x', reintentarEn: 255_600 }) })
     : route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":"Inicia sesión"}' }));
@@ -461,7 +462,9 @@ test('un bloqueo de días ofrece restablecer la contraseña y, con Reducir movim
   expect(await submit.locator('.candado .arco').evaluate(el => getComputedStyle(el).animationName)).toBe('none');
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `${width}px`).toBeLessThanOrEqual(1);
+    // El botón de Google se vuelve a dibujar tras cambiar el tamaño: se mide cuando el diseño se asienta.
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - innerWidth), { message: `${width}px` })
+      .toBeLessThanOrEqual(1);
   }
 });
 
