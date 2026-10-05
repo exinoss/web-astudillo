@@ -18,7 +18,11 @@ import "../styles/global.css";
 interface Props {
   title?: string;
   description?: string;
-  referrerPolicy?: 'no-referrer';
+  /**
+   * Páginas con tokens en la URL: a otros sitios solo llega el dominio. No `no-referrer`: el botón de Google
+   * valida el origen con esa cabecera y sin ella responde «origin is not allowed».
+   */
+  referrerPolicy?: 'strict-origin-when-cross-origin';
   contentClass?: string;
 }
 const {
