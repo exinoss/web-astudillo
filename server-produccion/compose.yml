@@ -13,7 +13,7 @@ x-db-ready: &db-ready
     condition: service_healthy
 
 services:
-  # La base vive en un volumen. Usuarios: postgres/roles.sh.
+  # Usuarios y base: postgres/roles.sh (solo en el primer arranque).
   db:
     image: postgres:17-alpine
     restart: unless-stopped

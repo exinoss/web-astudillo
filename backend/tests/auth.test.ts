@@ -488,7 +488,6 @@ test("nombre y dirección del registro y de Google solo admiten texto plano", as
     });
     expect(res.status).toBe(422);
   }
-  // El nombre de Google lo escribe la persona: si trae marcado, la cuenta se crea sin nombre.
   const google = await call("/api/auth/google", "POST", { credential: "marcado".repeat(20) });
   expect(google.status).toBe(200);
   expect((await google.json()).user.nombresCompletos).toBeNull();
