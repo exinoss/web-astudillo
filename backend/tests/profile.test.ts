@@ -73,3 +73,18 @@ test('la función SQL comprueba los permisos y no admite el contrato antiguo', a
   expect(await callPg(sql, 'profileUpdate', [ids.perfil, 'Sin permiso', null, before.version_perfil])).toEqual([]);
   expect(await state()).toEqual(before);
 });
+
+test('nombre y dirección del perfil solo admiten texto plano', async () => {
+  // La prueba anterior deja la cuenta bloqueada a propósito.
+  await sql`UPDATE tb_usuarios SET estado = 'activo' WHERE id_usuario = ${ids.perfil}`;
+  const { versionPerfil } = await read();
+  const patch = (nombresCompletos: string, direccion: string) =>
+    call('/api/me', 'PATCH', { nombresCompletos, direccion, versionPerfil }, cookies.perfil);
+  for (const [nombre, direccion] of [
+    ['<img src=x onerror=alert(1)>', 'Centro'], ['Ana\u202eadmin', 'Centro'], ['Ana\nOtra', 'Centro'], ['Ana', 'Calle <b>5</b>'],
+  ]) expect((await patch(nombre, direccion)).status).toBe(422);
+  expect((await read()).versionPerfil).toBe(versionPerfil);
+  const ok = await patch("José Ñúñez O'Brien", 'Barrio La Merced, calles 5 & 6');
+  expect(ok.status).toBe(200);
+  expect((await ok.json()).nombresCompletos).toBe("José Ñúñez O'Brien");
+});

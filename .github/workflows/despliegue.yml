@@ -90,12 +90,16 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      # Cambia una vez al día: la capa `apk upgrade` de los Dockerfile recoge los parches de ese día.
+      - id: parches
+        run: echo "fecha=$(date -u +%F)" >> "$GITHUB_OUTPUT"
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: backend
           target: runtime
           push: true
           tags: ghcr.io/exinoss/astudillo-backend:${{ github.sha }}
+          build-args: PARCHES=${{ steps.parches.outputs.fecha }}
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -104,6 +108,7 @@ jobs:
           file: server-produccion/Dockerfile.publicador
           push: true
           tags: ghcr.io/exinoss/astudillo-publicador:${{ github.sha }}
+          build-args: PARCHES=${{ steps.parches.outputs.fecha }}
           cache-from: type=gha,scope=publicador
           cache-to: type=gha,mode=max,scope=publicador
 

@@ -6,6 +6,7 @@ import type { UserRow } from '../../db/types';
 import { ApiError, publicAccount } from '../../http';
 import type { ProfileUpdateInput } from '../types';
 import { hasAcceptance } from '../../auth/services/consent';
+import { plainText } from '../../content/services/validation';
 
 export function createProfile(sql: SQL, authorization: Authorization) {
   return {
@@ -24,10 +25,10 @@ export function createProfile(sql: SQL, authorization: Authorization) {
     async update(access: string | undefined, input: ProfileUpdateInput) {
       const user = await authorization.require(access, PERMISSIONS.profileEdit);
       if (input.versionPerfil === undefined) throw new ApiError(409, 'Recarga la página antes de guardar tus datos');
-      const name = input.nombresCompletos.trim();
-      if (!name) throw new ApiError(422, 'Nombre requerido');
+      const name = plainText(input.nombresCompletos, 'Nombre completo', 200);
+      const address = input.direccion?.trim() ? plainText(input.direccion, 'Dirección', 500) : null;
       const [updated] = await callPg<{ resultado: string; usuario: UserRow; version_perfil: number }>(sql, 'profileUpdate', [
-        user.id_usuario, name, input.direccion?.trim() || null, input.versionPerfil,
+        user.id_usuario, name, address, input.versionPerfil,
       ]);
       if (!updated) throw new ApiError(403, 'Permiso insuficiente');
       if (updated.resultado === 'conflicto') throw new ApiError(409, 'Tus datos cambiaron. Recarga la página y revísalos antes de guardar');

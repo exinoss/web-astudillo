@@ -1,4 +1,8 @@
 FROM oven/bun:1.3.14-alpine AS base
+# Parches de seguridad de Alpine (OpenSSL…) que la imagen de Bun aún no trae. El workflow pasa la fecha
+# en PARCHES: si no cambia, la caché de Docker reutilizaría esta capa sin recoger parches nuevos.
+ARG PARCHES
+RUN apk upgrade --no-cache
 WORKDIR /app
 COPY package.json bun.lock ./
 

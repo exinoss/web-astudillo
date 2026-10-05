@@ -4,7 +4,7 @@ import type { Authorization } from '../../auth/types';
 import { callPg } from '../../db/call';
 import type { UserRow } from '../../db/types';
 import { ApiError } from '../../http';
-import { accountRule, ASSIGNABLE_ROLES, type AccountState, type AssignableRole } from './hierarchy';
+import { accountRule, assignableRoles, FORBIDDEN_ROLE, type AccountState, type AssignableRole } from './hierarchy';
 
 export const PAGE_SIZE = 20;
 
@@ -45,7 +45,7 @@ export function createAdminUsers(sql: SQL, authorization: Authorization) {
           return {
             id: row.id_usuario, correo: row.correo, nombresCompletos: row.nombres_completos,
             rol: row.rol, estado: row.estado,
-            rolesAsignables: rule.allowed ? ASSIGNABLE_ROLES : [],
+            rolesAsignables: rule.allowed ? assignableRoles(actor) : [],
             puedeCambiarEstado: rule.allowed,
             motivoBloqueo: rule.allowed ? null : rule.reason,
           };
@@ -57,6 +57,7 @@ export function createAdminUsers(sql: SQL, authorization: Authorization) {
     async changeRole(access: string | undefined, targetId: number, role: AssignableRole, expected: string) {
       const actor = await authorization.require(access, PERMISSIONS.usersRoleChange);
       await target(actor, targetId);
+      if (!assignableRoles(actor).includes(role)) throw new ApiError(403, FORBIDDEN_ROLE);
       const [updated] = await callPg<UserRow>(sql, 'roleChange', [actor.id_usuario, targetId, role, expected]);
       // Otro admin cambió la cuenta desde que se cargó la lista (`expected` ya no es su rol).
       if (!updated) throw new ApiError(409, 'La cuenta cambió mientras tanto; recarga la lista');

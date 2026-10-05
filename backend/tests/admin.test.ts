@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, expect, test } from "bun:test";
 import { callPg } from "../src/db/call";
-import { FORBIDDEN_ACCOUNT } from "../src/admin/services/hierarchy";
+import { FORBIDDEN_ACCOUNT, FORBIDDEN_ROLE } from "../src/admin/services/hierarchy";
 import { migrate } from "../src/db/migrate";
 import { testApp } from "./helpers";
 
@@ -52,7 +52,8 @@ test("solo los admin ven la lista, sin delatar qué cuenta es la maestra", async
   const motivos = list.usuarios.map((u: { motivoBloqueo: string | null }) => u.motivoBloqueo ?? "").join(" ");
   expect(motivos).not.toMatch(/maestro|comando|servidor/i);
   expect(fila("admin1").motivoBloqueo).toBe("No puedes modificar tu propia cuenta");
-  expect(fila("votante1")).toMatchObject({ rolesAsignables: ["votante", "coadmin", "admin"], puedeCambiarEstado: true });
+  // Un admin que no es el maestro no puede nombrar admins.
+  expect(fila("votante1")).toMatchObject({ rolesAsignables: ["votante", "coadmin"], puedeCambiarEstado: true });
   const delMaestro = await (await call("/api/admin/usuarios", "GET", undefined, cookies.maestro)).json();
   expect(delMaestro.usuarios.some((u: object) => "esMaestro" in u)).toBe(false);
   expect(delMaestro.usuarios.find((u: { correo: string }) => u.correo === "admin2@example.com"))
@@ -71,11 +72,17 @@ test("la lista se filtra por texto, rol y estado, y pagina", async () => {
   expect(pagina2.usuarios).toEqual([]);
 });
 
-test("un admin sube votantes y baja coadmins, pero no toca a otro admin ni al maestro", async () => {
+test("un admin sube votantes y baja coadmins, pero no nombra admins ni toca a otro admin ni al maestro", async () => {
   expect((await changeRole("admin1", "votante1", "coadmin")).status).toBe(200);
   expect(await roleOf("votante1")).toBe("coadmin");
   expect((await changeRole("admin1", "votante1", "votante")).status).toBe(200);
-  expect((await changeRole("admin1", "votante2", "admin")).status).toBe(200);
+  const nombrarAdmin = await changeRole("admin1", "votante2", "admin");
+  expect(nombrarAdmin.status).toBe(403);
+  expect((await nombrarAdmin.json()).error).toBe(FORBIDDEN_ROLE);
+  // La base también lo impide aunque alguien se salte la API.
+  expect(await callPg(sql, "roleChange", [ids.admin1, ids.votante2, "admin", "votante"])).toEqual([]);
+  expect(await roleOf("votante2")).toBe("votante");
+  expect((await changeRole("maestro", "votante2", "admin")).status).toBe(200);
   expect(await roleOf("votante2")).toBe("admin");
   // Recién subido a admin: ahora solo el maestro puede bajarlo.
   const bajarAdmin = await changeRole("admin1", "votante2", "coadmin");
@@ -149,8 +156,8 @@ test("cambiar rol o estado con una lista vieja no pisa lo que hizo otro admin; r
   await account("votante3", "votante");
   // admin1 y admin2 ven a votante3 como votante. admin1 lo sube a coadmin.
   expect((await changeRole("admin1", "votante3", "coadmin", "votante")).status).toBe(200);
-  // admin2 no recargó: intenta subirlo a admin creyendo que sigue siendo votante.
-  expect((await changeRole("admin2", "votante3", "admin", "votante")).status).toBe(409);
+  // El maestro (coadmin1, desde la prueba anterior) no recargó: intenta subirlo a admin creyendo que sigue siendo votante.
+  expect((await changeRole("coadmin1", "votante3", "admin", "votante")).status).toBe(409);
   expect(await roleOf("votante3")).toBe("coadmin");
   // Repetir exactamente el mismo cambio (doble clic) no falla ni duplica la auditoría.
   const antes = (await sql`SELECT count(*)::int AS n FROM tb_auditoria WHERE accion = 'rol_cambiado'`)[0].n;

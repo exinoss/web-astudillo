@@ -1,6 +1,9 @@
 # Publicador: compila el frontend estático con cada publicación del panel.
 # Se construye desde la raíz del repositorio (ver compose.yml): necesita frontend/ y backend/.
 FROM oven/bun:1.3.14-alpine
+# Parches de seguridad de Alpine; PARCHES (fecha) evita reutilizar la capa de la caché. Ver backend/Dockerfile.
+ARG PARCHES
+RUN apk upgrade --no-cache
 WORKDIR /app
 
 COPY frontend/package.json frontend/bun.lock ./frontend/
