@@ -5,7 +5,7 @@ interface Props { title: string; lead: string }
 const { title, lead } = Astro.props;
 ---
 
-<Layout title={`${title} · Carlos Astudillo`} description={lead} referrerPolicy="no-referrer">
+<Layout title={`${title} · Carlos Astudillo`} description={lead} referrerPolicy="strict-origin-when-cross-origin">
   <div class="bg-base-100">
     <div class="site-container flex items-center gap-2.5 py-[18px] text-[0.72rem] max-tablet:py-3 max-tablet:text-[0.65rem]">
       <a href="/" class="underline">Inicio</a><span>/</span><span id="account-crumb">{title}</span>
