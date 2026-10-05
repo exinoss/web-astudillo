@@ -21,7 +21,7 @@ Ahora usamos la pancarta de la portada (proporción 2,6:1). Como es más alargad
 ## Cómo componerla
 
 1. **Zona segura.** Deja libres al menos **60 px por cada lado**. Cada aplicación recorta un poco distinto, y algunas redondean las esquinas.
-2. **Lo esencial, en el centro.** WhatsApp, en algunos teléfonos, muestra una miniatura **cuadrada** recortada del centro. La cara de Carlos y el logo deberían entrar, en lo posible, dentro de un cuadrado central de **630 × 630 px**.
+2. **Lo esencial, en el centro (lo más importante).** WhatsApp muestra muchas veces solo una miniatura **cuadrada** recortada del centro: lo hemos comprobado con el sitio, tanto en el móvil como en WhatsApp de escritorio. Con la pancarta actual se ve «SC la nueva HISTORIA» y Carlos queda fuera. La cara de Carlos, el logo y «Lista 6» deben caber dentro del **cuadrado central de 630 × 630 px** (de x = 285 a x = 915), y esa zona tiene que funcionar por sí sola como imagen.
 3. **Textos grandes y pocos.** La tarjeta se ve a unos 300–500 px de ancho en el móvil, menos de la mitad del tamaño real. Ningún texto debería medir menos de **40 px de alto** en el diseño. Una cita larga no se va a leer: mejor el lema, «Lista 6» y el nombre.
 4. **Nada de información que no deba circular sin contexto.** La imagen se ve fuera del sitio, en chats, sin el resto de la página.
 5. **Contraste alto.** Muchas personas la verán con el brillo bajo o en pantallas pequeñas.
