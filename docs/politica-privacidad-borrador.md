@@ -54,7 +54,9 @@ Cuando está configurado, el botón de acceso con Google utiliza servicios de Go
 
 Ante una obligación legal o una actuación legítima de una autoridad competente, podrá comunicarse la información pertinente y necesaria para el caso. No se entregarán indiscriminadamente los datos de los usuarios.
 
-**Pendiente:** identificar los proveedores definitivos, el país de tratamiento y, cuando corresponda, las transferencias internacionales y sus garantías. No se presume que todos los datos permanezcan en Ecuador ni que no intervengan terceros.
+**Publicado el 5 de octubre de 2026:** la página nombra a Hostinger (servidor en Estados Unidos), Cloudflare (red en varios países, sede en Estados Unidos) y Google (acceso y envío de correos), informa de que los datos se tratan fuera del Ecuador e indica el envío de audio al servicio de voz del navegador al dictar en el chat. GitHub, la red privada de administración y los avisos internos no reciben datos de usuarios y no se mencionan.
+
+**Pendiente legal (revisión por abogado):** la Norma General de Transferencias de la SPDP (Resolución SPDP-SPD-2026-0004-R, enero de 2026) considera transferencia internacional el uso de estos proveedores y exige garantías adecuadas (cláusulas contractuales tipo u otras), su registro y la información a los titulares. La página cubre la información; las garantías, el registro, si la casilla de consentimiento debe mencionarlo y si la afinidad política revelada por el registro constituye dato sensible requieren revisión jurídica.
 
 ### 5. Conservación
 
