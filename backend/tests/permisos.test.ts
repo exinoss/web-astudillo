@@ -8,7 +8,6 @@ const sql = new SQL(url);
 
 class Deshacer extends Error {}
 
-/** Ejecuta la consulta con los privilegios de `role` (SET ROLE) y deshace cualquier cambio. */
 async function como(role: string, query: string) {
   try {
     await sql.begin(async tx => {

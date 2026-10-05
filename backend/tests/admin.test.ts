@@ -52,7 +52,6 @@ test("solo los admin ven la lista, sin delatar qué cuenta es la maestra", async
   const motivos = list.usuarios.map((u: { motivoBloqueo: string | null }) => u.motivoBloqueo ?? "").join(" ");
   expect(motivos).not.toMatch(/maestro|comando|servidor/i);
   expect(fila("admin1").motivoBloqueo).toBe("No puedes modificar tu propia cuenta");
-  // Un admin que no es el maestro no puede nombrar admins.
   expect(fila("votante1")).toMatchObject({ rolesAsignables: ["votante", "coadmin"], puedeCambiarEstado: true });
   const delMaestro = await (await call("/api/admin/usuarios", "GET", undefined, cookies.maestro)).json();
   expect(delMaestro.usuarios.some((u: object) => "esMaestro" in u)).toBe(false);

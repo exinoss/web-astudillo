@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# Instala o actualiza la versión <sha> del repositorio clonado en /opt/astudillo/repo.
 # Es el único comando que puede ejecutar la clave de GitHub Actions (command= en authorized_keys),
 # que entrega el SHA en SSH_ORIGINAL_COMMAND. A mano: bash desplegar.sh <sha>.
 # Repetirlo con el mismo SHA no cambia nada: la migración, la semilla y la reconstrucción son idempotentes.

@@ -1,4 +1,4 @@
-# Monitoreo del VPS con Beszel: panel (hub) y agente. Va aparte de la app: desplegar.sh no lo toca.
+# Va aparte de la app: desplegar.sh no lo toca.
 # El panel solo escucha en 127.0.0.1; se abre desde la red privada con `tailscale serve`.
 # BESZEL_KEY y BESZEL_TOKEN van en monitoreo/.env: los da el panel al añadir el sistema.
 name: monitoreo
