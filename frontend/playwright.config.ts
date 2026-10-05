@@ -4,6 +4,8 @@ import { defineConfig } from '@playwright/test';
 const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:4329';
 export default defineConfig({
   testDir: './tests',
+  // En CI Playwright usa por defecto la mitad de los núcleos; el runner de GitHub tiene 4.
+  workers: process.env.CI ? 4 : undefined,
   // GitHub Actions (CI=true) no trae Edge: usa el Chromium de Playwright.
   use: { baseURL, channel: process.env.CI ? undefined : 'msedge', headless: true },
   webServer: process.env.PLAYWRIGHT_EXTERNAL_SERVER === '1' ? undefined : {
