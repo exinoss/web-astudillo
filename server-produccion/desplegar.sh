@@ -74,7 +74,10 @@ main() {
   esperar 180 "backend sano" backend_sano
   echo "Compilando el sitio…"
   esperar "$COMPILACION_MAX_S" "sitio compilado con $VERSION" sitio_actualizado
-  curl -fsSk -o /dev/null https://127.0.0.1/api/health || falla "nginx no responde"
+  # Con el nombre del dominio: nginx rechaza las conexiones que no lo traen.
+  local dominio
+  dominio=$(sed -n 's/^DOMINIO=//p' .env)
+  curl -fsSk -o /dev/null --resolve "$dominio:443:127.0.0.1" "https://$dominio/api/health" || falla "nginx no responde"
 
   echo "$(date -Is) $VERSION" >> "$BASE/versiones"
   docker image prune -af --filter "until=168h" > /dev/null
