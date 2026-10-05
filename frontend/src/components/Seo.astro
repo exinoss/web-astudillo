@@ -1,6 +1,6 @@
 ---
 import { getImage } from 'astro:assets';
-import portada from '../assets/portada.jpg';
+import imagenRedes from '../assets/imagen-redes.jpg';
 import { contentRepository } from '../lib/data';
 import { absoluteUrl, jsonLd, plainDescription, SITE } from '../lib/seo';
 interface Props { title: string; description: string; path: string }
@@ -8,7 +8,7 @@ const { title, description:raw, path } = Astro.props;
 const description=plainDescription(raw);
 const noindex=path.startsWith('/cuenta/')||path==='/404/'||path==='/404.html';
 const canonical=absoluteUrl(path.replace(/\/index\.html$/, '/'));
-const photo=await getImage({src:portada,width:1200,format:'jpg'});
+const photo=await getImage({src:imagenRedes,width:1200,format:'jpg'});
 const texts=await contentRepository.getTexts();
 const sameAs=['enlace.facebook','enlace.tiktok'].map(k=>texts[k]).filter(url=>/^https:\/\/(?:www\.)?(?:facebook\.com|tiktok\.com)\//.test(url??''));
 const structured={ '@context':'https://schema.org','@graph':[
