@@ -90,22 +90,22 @@ const [facebookUrl, tiktokUrl, whatsappUrl] = await Promise.all([enlaceRed("face
           role="group"
           aria-label="Controles del carrusel"
         >
-          <button class="slide-prev left-5 pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-primary/65 text-primary-content hover:bg-primary max-tablet:relative max-tablet:top-auto max-tablet:size-8 max-tablet:translate-y-0 max-tablet:bg-transparent max-tablet:text-primary max-tablet:before:absolute max-tablet:before:-inset-1.5 max-tablet:before:content-[''] max-tablet:hover:bg-transparent" type="button" aria-label="Diapositiva anterior">
+          <button class="slide-prev left-5 pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-primary/65 text-primary-content hover:bg-primary max-tablet:relative max-tablet:inset-x-auto max-tablet:top-auto max-tablet:size-8 max-tablet:translate-y-0 max-tablet:bg-transparent max-tablet:text-primary max-tablet:before:absolute max-tablet:before:-inset-1.5 max-tablet:before:content-[''] max-tablet:hover:bg-transparent" type="button" aria-label="Diapositiva anterior">
             <Icon name="chevronLeft" size={22} />
           </button>
           <button
-            class="slide-dot grid h-[11px] min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5 is-active"
+            class="slide-dot relative grid h-[11px] before:absolute before:-inset-x-[5px] before:-inset-y-[17px] before:content-[''] max-tablet:before:-inset-x-1.5 min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5 is-active"
             type="button"
             aria-label="Ver diapositiva 1"
             aria-current="true"
           ></button>
           <button
-            class="slide-dot grid h-[11px] min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5"
+            class="slide-dot relative grid h-[11px] before:absolute before:-inset-x-[5px] before:-inset-y-[17px] before:content-[''] max-tablet:before:-inset-x-1.5 min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5"
             type="button"
             aria-label="Ver diapositiva 2"
             aria-current="false"
           ></button>
-          <button class="slide-next right-5 pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-primary/65 text-primary-content hover:bg-primary max-tablet:relative max-tablet:top-auto max-tablet:size-8 max-tablet:translate-y-0 max-tablet:bg-transparent max-tablet:text-primary max-tablet:before:absolute max-tablet:before:-inset-1.5 max-tablet:before:content-[''] max-tablet:hover:bg-transparent" type="button" aria-label="Diapositiva siguiente">
+          <button class="slide-next right-5 pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-primary/65 text-primary-content hover:bg-primary max-tablet:relative max-tablet:inset-x-auto max-tablet:top-auto max-tablet:size-8 max-tablet:translate-y-0 max-tablet:bg-transparent max-tablet:text-primary max-tablet:before:absolute max-tablet:before:-inset-1.5 max-tablet:before:content-[''] max-tablet:hover:bg-transparent" type="button" aria-label="Diapositiva siguiente">
             <Icon name="chevronRight" size={22} />
           </button>
         </div>

@@ -103,6 +103,7 @@
 }
 
 .profile-dot {
+  position: relative;
   width: 7px;
   height: 7px;
   padding: 0;
@@ -113,6 +114,12 @@
   transition:
     width 0.2s,
     background 0.2s;
+}
+
+.profile-dot::before {
+  content: "";
+  position: absolute;
+  inset: -26px -3.5px -11px;
 }
 
 .profile-dot.is-active {

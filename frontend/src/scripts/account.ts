@@ -67,6 +67,7 @@ async function showLogin() {
   profilePanel.hidden = true;
   blockedPanel.hidden = true;
   loginPanel.hidden = false;
+  loginPanel.classList.remove('invisible');
   try {
     await showGoogleButton(loginGoogle, async credential => {
       if (signingWithGoogle) return;

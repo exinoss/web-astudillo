@@ -215,7 +215,7 @@ const accessButton =
           <br />
           <Editable clave="pie.linea-2" />
         </p>
-        <a href="/#contacto" class="flex items-center gap-5 text-[0.8rem]">
+        <a href="/#contacto" class="relative flex items-center gap-5 text-[0.8rem] before:absolute before:inset-x-0 before:-inset-y-3.5 before:content-['']">
           Contáctanos <Icon name="arrow" size={18} />
         </a>
       </div>
@@ -235,7 +235,7 @@ const accessButton =
             El `::after` amplía el área táctil a 44px sin cambiar el tamaño
             visible. */}
         <button
-          class="back-to-top invisible fixed right-3 bottom-[84px] z-[80] grid h-8 w-8 place-items-center rounded-[4px] border-2 border-base-100 bg-neutral text-neutral-content opacity-0 [box-shadow:0_3px_15px_#06317630] [transition:opacity_0.2s,visibility_0.2s] max-desktop-sm:absolute max-desktop-sm:right-0 max-desktop-sm:bottom-full max-desktop-sm:translate-y-1/2 max-desktop-sm:after:absolute max-desktop-sm:after:inset-[-6px] max-desktop-sm:after:content-[''] [&.is-visible]:visible [&.is-visible]:opacity-100"
+          class="back-to-top invisible fixed right-3 bottom-[84px] z-[80] grid h-8 w-8 place-items-center rounded-[4px] border-2 border-base-100 bg-neutral text-neutral-content opacity-0 [box-shadow:0_3px_15px_#06317630] [transition:opacity_0.2s,visibility_0.2s] max-desktop-sm:absolute max-desktop-sm:right-0 max-desktop-sm:bottom-full max-desktop-sm:translate-y-1/2 after:absolute after:inset-[-8px] after:content-[''] [&.is-visible]:visible [&.is-visible]:opacity-100"
           aria-label="Volver al inicio de la página"
         >
           <Icon name="chevronUp" size={17} />
