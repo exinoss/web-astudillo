@@ -97,6 +97,9 @@ test('valida enlaces, textos, fotos, cantidades, permisos y páginas', async () 
   const put = (body: object, who = 'coadmin', path = ALCALDE) => call(path, 'PUT', { ...base, ...body }, cookies[who]);
   const video = (enlace: string) => ({ video: { titulo: 'Video', descripcion: null, enlace, vertical: false, idPortada: null } });
   expect((await put(video('https://example.com/video'))).status).toBe(422);
+  for (const enlace of ['https://localhost/video.mp4', 'https://192.168.1.1/video.mp4', 'https://[::1]/video.mp4']) {
+    expect((await put(video(enlace))).status).toBe(422);
+  }
   expect((await put(video('<iframe src="https://www.facebook.com/plugins/video.php"></iframe>'))).status).toBe(422);
   expect((await put({ tarjetas: [card(foto.idMedio, '<b>Hola</b>')] })).status).toBe(422);
   expect((await put({ tarjetas: [card(999999)] })).status).toBe(422);

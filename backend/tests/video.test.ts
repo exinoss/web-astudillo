@@ -36,3 +36,11 @@ test('los enlaces cortos de compartir explican cómo obtener el enlace completo'
   expect(videoLinkProblem('https://vm.tiktok.com/ZMabc123/')).toContain('tiktok.com/@usuario/video/');
   expect(videoLinkProblem('https://example.com/video')).toBe('Pega el enlace de un video de Facebook, TikTok, YouTube o Vimeo.');
 });
+
+test('un MP4 no puede apuntar al equipo ni a la red local del visitante', () => {
+  for (const host of [
+    'localhost', 'localhost.', 'video.localhost', 'router', 'video.local', 'video.home.arpa',
+    '127.0.0.1', '127.1', '2130706433', '0x7f000001', '10.0.0.1', '172.16.0.1', '192.168.1.1',
+    '169.254.1.1', '[::1]', '[::ffff:127.0.0.1]', '[fe80::1]', '[fd00::1]',
+  ]) expect(videoSource(`https://${host}/video.mp4`), host).toBeNull();
+});

@@ -94,7 +94,7 @@ const posterClases =
   const html = document.documentElement;
   const sinMovimiento = () => html.classList.contains("reduce-motion");
 
-  async function montar(bloque: HTMLElement) {
+  async function montar(bloque: HTMLElement, intentoModelo = 0) {
     try {
       await cargarLibreria();
     } catch (error) {
@@ -102,13 +102,16 @@ const posterClases =
       // Limpia la promesa fallida para que el botón permita reintentar.
       libreria = undefined;
       intentos++;
-      ofrecerBoton(bloque);
+      ofrecerBoton(bloque, intentoModelo);
       return;
     }
     const contenedor = bloque.querySelector<HTMLElement>(".model-3d-visor")!;
     const visor = document.createElement("model-viewer");
     visor.className = "absolute inset-0 h-full w-full";
-    visor.setAttribute("src", bloque.dataset.src!);
+    const modeloUrl = new URL(bloque.dataset.src!, location.href);
+    // model-viewer memoriza también los modelos fallidos: otro intento necesita una URL nueva.
+    if (intentoModelo) modeloUrl.searchParams.set("reintento", String(intentoModelo));
+    visor.setAttribute("src", modeloUrl.href);
     visor.setAttribute("alt", bloque.dataset.alt!);
     visor.setAttribute("camera-orbit", bloque.dataset.orbita!);
     visor.setAttribute("shadow-intensity", "1");
@@ -119,9 +122,15 @@ const posterClases =
     visor.style.setProperty("--poster-color", "transparent");
     visor.style.setProperty("--progress-bar-color", "var(--color-secondary)");
     if (!sinMovimiento()) visor.setAttribute("auto-rotate", "");
+    const cargaFallida = () => {
+      visor.remove();
+      ofrecerBoton(bloque, intentoModelo + 1);
+    };
+    visor.addEventListener("error", cargaFallida, { once: true });
     visor.addEventListener(
       "load",
       () => {
+        visor.removeEventListener("error", cargaFallida);
         contenedor.querySelector(".model-3d-poster")?.remove();
         prepararPantallaCompleta(contenedor, visor);
       },
@@ -171,14 +180,14 @@ const posterClases =
     }
   }).observe(html, { attributes: true, attributeFilter: ["class"] });
 
-  function ofrecerBoton(bloque: HTMLElement) {
+  function ofrecerBoton(bloque: HTMLElement, intentoModelo = 0) {
     const boton = bloque.querySelector<HTMLButtonElement>(".model-3d-cargar")!;
     boton.hidden = false;
     boton.addEventListener(
       "click",
       () => {
         boton.hidden = true;
-        montar(bloque);
+        montar(bloque, intentoModelo);
       },
       { once: true },
     );
@@ -187,7 +196,7 @@ const posterClases =
   const ahorroDatos = (navigator as any).connection?.saveData === true;
 
   if (ahorroDatos) {
-    bloques.forEach(ofrecerBoton);
+    bloques.forEach(bloque => ofrecerBoton(bloque));
   } else {
     const observador = new IntersectionObserver(
       (entradas) => {
