@@ -154,6 +154,38 @@ test('chat: se añade una pregunta desde «sin respuesta» y se guarda', async (
   await expect(section).toContainText('Por ahora el chat respondió todo');
 });
 
+test('chat: el enlace se elige por el nombre de la página y se ve como quedará', async ({ page }) => {
+  const data = panelData('admin');
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#chat');
+  const pagina = page.locator('#faq-enlace-ruta-0');
+  await expect(pagina).toHaveValue('/#propuestas');
+  expect(await pagina.locator('optgroup').evaluateAll((g) => g.map((x) => x.getAttribute('label'))))
+    .toEqual(['Portada', 'Propuestas', 'Ciudadanía', 'Acerca de nosotros', 'Información legal']);
+  await pagina.selectOption({ label: 'Agua potable' });
+  await expect(page.locator('#seccion-chat [data-probar]').first()).toHaveAttribute('href', '/propuestas/agua-potable/');
+  await page.locator('#faq-enlace-texto-0').fill('Ver la propuesta de agua');
+  await expect(page.locator('#seccion-chat [data-vista-chat]').first().getByRole('link')).toHaveText('Ver la propuesta de agua');
+  await page.locator('#seccion-chat').getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.locator('#panel-estado')).toContainText('Preguntas del chat guardadas');
+  expect(data.draft.chat[0]).toMatchObject({ enlaceRuta: '/propuestas/agua-potable/', enlaceTexto: 'Ver la propuesta de agua' });
+
+  await pagina.selectOption('');
+  await expect(page.locator('#seccion-chat [data-probar]').first()).toBeHidden();
+});
+
+test('redes: Instagram se añade desde el panel y vacío no da error', async ({ page }) => {
+  const data = panelData('admin');
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#textos');
+  const instagram = page.getByLabel('Instagram (opcional)');
+  await expect(instagram).toHaveValue('');
+  await instagram.fill('https://www.instagram.com/carlosastudillo/');
+  await page.locator('#redes-form').getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.locator('#panel-estado')).toContainText('Enlaces guardados');
+  expect(data.draft.textos['enlace.instagram']).toBe('https://www.instagram.com/carlosastudillo/');
+});
+
 test('obras: la foto subida se ve al momento y se guarda con su pie', async ({ page }) => {
   const data = panelData('coadmin');
   await mockPanelApi(page, data);

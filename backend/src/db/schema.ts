@@ -1,4 +1,4 @@
-import { pgTable, unique, integer, varchar, text, uniqueIndex, foreignKey, check, timestamp, index, jsonb, primaryKey, boolean, uuid } from "drizzle-orm/pg-core"
+import { pgTable, unique, integer, varchar, text, uniqueIndex, foreignKey, check, timestamp, index, jsonb, primaryKey, boolean, uuid, date } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
 
 
@@ -435,4 +435,12 @@ export const tbVistaPrevia = pgTable("tb_vista_previa", {
 	check("ck_vista_previa_unica", sql`id = 1`),
 	check("ck_vista_previa_estado", sql`estado IN ('en_cola', 'compilando', 'lista', 'fallida')`),
 	check("ck_vista_previa_contenido", sql`jsonb_typeof(contenido) = 'object'`),
+]);
+
+// Un total por día, sin datos de quien visita: es la cifra de visitas de la portada.
+export const tbVisitasDia = pgTable("tb_visitas_dia", {
+	dia: date().primaryKey(),
+	total: integer().default(0).notNull(),
+}, () => [
+	check("ck_visitas_dia_total", sql`total >= 0`),
 ]);

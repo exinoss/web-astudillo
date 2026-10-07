@@ -63,7 +63,7 @@ const etiqueta = "text-[0.64rem] font-bold tracking-[0.12em] text-neutral upperc
       >
         <div class="h-full rounded-full bg-neutral" style={`width: ${percent}%`} />
       </div>
-      <p class:list={["mt-4 text-[0.85rem] leading-[1.6]", ancho ? "mb-0" : "mb-5"]}>{work.note}</p>
+      <p class:list={["mt-4 text-[0.85rem] leading-[1.6] whitespace-pre-line", ancho ? "mb-0" : "mb-5"]}>{work.note}</p>
     </div>
     <ol class:list={["m-0 flex list-none flex-col gap-2.5 p-0", !ancho && !enPropuesta && "mb-6"]} aria-label="Hitos de la obra">
       {work.milestones.map((hito, i) => {

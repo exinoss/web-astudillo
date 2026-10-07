@@ -3,7 +3,7 @@
 import { TEXTOS, type TextKey } from "../../lib/comun/contenido/textos";
 import type { Profile } from "../../lib/data/auth-repository";
 import { adminApi } from "../../lib/data/http/admin-api";
-import { esc } from "../../lib/comun/html";
+import { escLines } from "../../lib/comun/html";
 import { iconSvg } from "../../lib/comun/iconos";
 
 const STORAGE = "modo-edicion";
@@ -29,7 +29,7 @@ const current = (key: string) => texts[key] ?? "";
 
 /** Pinta un valor como lo hace Editable.astro: cada salto de línea es un <br>. */
 function paint(el: HTMLElement, value: string) {
-  el.innerHTML = value.split("\n").map(esc).join("<br>");
+  el.innerHTML = escLines(value);
 }
 
 

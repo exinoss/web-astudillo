@@ -27,45 +27,72 @@ function cardStrip(root: HTMLElement) {
   update();
 }
 
+// La plantilla de cada foto trae las clases de la vista del móvil; el visor pone las suyas.
+const VIEWER_IMAGE = "max-h-[calc(100dvh-230px)] max-w-full rounded-[4px] object-contain transition-opacity duration-200 max-tablet:max-h-[calc(100dvh-250px)] max-tablet:rounded-none";
+const VIEWER_CAPTION = "mt-3 max-w-[720px] px-4 text-center text-[1rem] leading-normal text-white/90";
+
 function gallery(root: HTMLElement) {
   const templates = [...root.querySelectorAll<HTMLTemplateElement>("[data-gallery-photo]")];
   const dialog = root.querySelector<HTMLDialogElement>("[data-gallery-dialog]")!;
   const mobile = root.querySelector<HTMLElement>("[data-mobile-stage]")!;
   const stage = root.querySelector<HTMLElement>("[data-dialog-stage]")!;
+  const thumbs = [...root.querySelectorAll<HTMLButtonElement>("[data-gallery-thumb]")];
   let selected = 0;
   let opener: HTMLElement | null = null;
-  const photo = () => {
+  const still = () => document.documentElement.classList.contains("reduce-motion");
+  const photo = () => templates[selected].content.cloneNode(true) as DocumentFragment;
+  const viewerPhoto = () => {
     const figure = document.createElement("figure");
-    figure.className = "m-0";
-    figure.append(templates[selected].content.cloneNode(true));
+    figure.className = "m-0 flex flex-col items-center";
+    figure.append(photo());
+    const image = figure.querySelector("img")!;
+    image.className = VIEWER_IMAGE;
+    figure.querySelector("figcaption")!.className = VIEWER_CAPTION;
+    if (!still()) {
+      image.style.opacity = "0";
+      requestAnimationFrame(() => requestAnimationFrame(() => { image.style.opacity = "1"; }));
+    }
     return figure;
   };
   const render = () => {
     mobile.replaceChildren(...photo().childNodes);
     mobile.querySelector("img")?.classList.replace("object-contain", "object-cover");
-    if (dialog.open) stage.replaceChildren(photo());
+    if (dialog.open) stage.replaceChildren(viewerPhoto());
     root.querySelectorAll("[data-counter]").forEach((counter) => { counter.textContent = `${selected + 1} / ${templates.length}`; });
     root.querySelectorAll<HTMLButtonElement>("[data-previous]").forEach((button) => { button.disabled = selected === 0; });
     root.querySelectorAll<HTMLButtonElement>("[data-next]").forEach((button) => { button.disabled = selected === templates.length - 1; });
+    thumbs.forEach((thumb, i) => thumb.setAttribute("aria-current", String(i === selected)));
+    if (dialog.open) thumbs[selected]?.scrollIntoView({ block: "nearest", inline: "center" });
   };
   const go = (index: number) => { selected = Math.max(0, Math.min(templates.length - 1, index)); render(); };
-  const open = (index: number, button: HTMLElement) => { selected = index; opener = button; dialog.showModal(); render(); };
+  const open = (index: number, button: HTMLElement) => {
+    selected = index;
+    opener = button;
+    // El fondo no se desplaza mientras se miran las fotos.
+    document.documentElement.style.overflow = "hidden";
+    dialog.showModal();
+    render();
+  };
   root.querySelector<HTMLElement>("[data-gallery-open]")!.addEventListener("click", (e) => open(selected, e.currentTarget as HTMLElement));
   root.querySelectorAll<HTMLElement>("[data-photo-open]").forEach((button) => button.addEventListener("click", () => open(Number(button.dataset.photoOpen), button)));
   root.querySelectorAll("[data-previous]").forEach((button) => button.addEventListener("click", () => go(selected - 1)));
   root.querySelectorAll("[data-next]").forEach((button) => button.addEventListener("click", () => go(selected + 1)));
+  thumbs.forEach((thumb, i) => thumb.addEventListener("click", () => go(i)));
   root.querySelector("[data-gallery-close]")!.addEventListener("click", () => dialog.close());
-  dialog.addEventListener("close", () => opener?.focus());
+  dialog.addEventListener("click", (e) => { if ((e.target as HTMLElement).hasAttribute("data-gallery-backdrop")) dialog.close(); });
+  dialog.addEventListener("close", () => { document.documentElement.style.overflow = ""; opener?.focus(); });
   dialog.addEventListener("keydown", (e) => {
     if (e.key === "ArrowLeft") go(selected - 1);
     if (e.key === "ArrowRight") go(selected + 1);
   });
-  let start = 0;
-  mobile.addEventListener("touchstart", (e) => { start = e.touches[0].clientX; }, { passive: true });
-  mobile.addEventListener("touchend", (e) => {
-    const distance = e.changedTouches[0].clientX - start;
-    if (Math.abs(distance) > 45) go(selected + (distance < 0 ? 1 : -1));
-  }, { passive: true });
+  for (const area of [mobile, stage]) {
+    let start = 0;
+    area.addEventListener("touchstart", (e) => { start = e.touches[0].clientX; }, { passive: true });
+    area.addEventListener("touchend", (e) => {
+      const distance = e.changedTouches[0].clientX - start;
+      if (Math.abs(distance) > 45) go(selected + (distance < 0 ? 1 : -1));
+    }, { passive: true });
+  }
   render();
 }
 

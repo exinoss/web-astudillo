@@ -8,7 +8,7 @@ const card = (title: string, path: string, color: 'rojo' | 'azul') => ({
   title, text: `Texto de prueba de la tarjeta «${title}».`, image: image(path), alt: `Foto de prueba: ${title}`, color, focus: { x: 50, y: 50 },
 });
 const video = (title: string) => ({
-  title, description: 'Texto breve de prueba.', url: 'https://www.facebook.com/reel/28327883403549284/', vertical: true, cover: image('biografia/hito-1'),
+  title, description: 'Texto breve de prueba.\n#LaNuevaHistoria', url: 'https://www.facebook.com/reel/28327883403549284/', vertical: true, cover: image('biografia/hito-1'),
 });
 
 export const aboutCarlosPages: Record<AboutCarlosSlug, AboutCarlosPage> = {

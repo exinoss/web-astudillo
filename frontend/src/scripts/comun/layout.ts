@@ -3,6 +3,9 @@ import { authRepository } from '../../lib/data/auth';
 import { ApiError } from '../../lib/data/http/api-client';
 import type { Profile } from '../../lib/data/auth-repository';
 import { inDraftPreview } from '../../lib/comun/vista-previa';
+import { registrarVisita } from '../../lib/comun/visitas';
+
+registrarVisita();
 
 if (location.pathname !== '/cuenta/') {
   authRepository.getProfile()

@@ -12,6 +12,7 @@
   max-width: 90%;
   align-self: start;
   overflow-wrap: anywhere;
+  white-space: pre-line;
 }
 
 .chat-message a {

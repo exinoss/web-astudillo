@@ -85,6 +85,13 @@
       "when": 1791319072235,
       "tag": "0011_vista_previa",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791355115351,
+      "tag": "0012_visitas",
+      "breakpoints": true
     }
   ]
 }

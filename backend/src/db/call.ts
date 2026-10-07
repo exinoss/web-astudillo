@@ -72,6 +72,8 @@ const names = {
   previewClaim: 'fn_preview_claim',
   previewFinish: 'fn_preview_finish',
   previewRecover: 'fn_preview_recover',
+  visitAdd: 'fn_visit_add',
+  siteStats: 'fn_site_stats',
   chatList: 'fn_chat_list',
   chatSave: 'fn_chat_save',
   chatSend: 'fn_chat_send',

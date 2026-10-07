@@ -80,7 +80,9 @@ El sitio utiliza cookies de acceso para mantener tu sesión. La cookie de acceso
 
 El navegador puede recordar tus ajustes de accesibilidad, la preferencia de voz del chat y el estado de acceso hasta que los restablezcas o borres los datos correspondientes. Si dejas un formulario pendiente, puede guardar su texto y foto en tu dispositivo. El borrador tiene **24 horas de vigencia para recuperarlo**; puede permanecer almacenado hasta que lo envíes, lo descartes, vuelvas al formulario tras su vencimiento o lo elimines desde las opciones del navegador.
 
-Google es el único servicio externo integrado actualmente para iniciar sesión. Su botón se carga en la página de cuenta cuando está disponible. No utilizamos analítica, píxeles publicitarios ni seguimiento para anuncios. Puedes gestionar cookies y otros datos guardados desde las opciones de tu navegador; si bloqueas el almacenamiento, algunas funciones pueden dejar de estar disponibles.
+Para mostrar en la portada cuántas visitas recibe el sitio, cada visita suma uno a un total por día. No se usan cookies para ello ni se guarda tu dirección IP ni ningún dato que te identifique: la dirección solo se recuerda unos minutos en la memoria del servidor para no contar dos veces la misma visita, y el navegador anota durante la sesión que la visita ya se contó.
+
+Google es el único servicio externo integrado actualmente para iniciar sesión. Su botón se carga en la página de cuenta cuando está disponible. Aparte de ese contador de visitas, no utilizamos analítica, píxeles publicitarios ni seguimiento para anuncios. Puedes gestionar cookies y otros datos guardados desde las opciones de tu navegador; si bloqueas el almacenamiento, algunas funciones pueden dejar de estar disponibles.
 
 ### 8. Cambios en esta política
 
