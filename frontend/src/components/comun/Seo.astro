@@ -2,6 +2,7 @@
 import { getImage } from 'astro:assets';
 import imagenRedes from '../../assets/imagen-redes.jpg';
 import { contentRepository, isDraftPreview } from '../../lib/data';
+import { enlaceRedValido, REDES_SOCIALES, type RedSocial } from '../../lib/comun/contenido/redes';
 import { absoluteUrl, jsonLd, plainDescription, SITE } from '../../lib/comun/seo';
 interface Props { title: string; description: string; path: string }
 const { title, description:raw, path } = Astro.props;
@@ -10,7 +11,10 @@ const noindex=isDraftPreview||path.startsWith('/cuenta/')||path==='/404/'||path=
 const canonical=absoluteUrl(path.replace(/\/index\.html$/, '/'));
 const photo=await getImage({src:imagenRedes,width:1200,format:'jpg'});
 const texts=await contentRepository.getTexts();
-const sameAs=['enlace.facebook','enlace.tiktok'].map(k=>texts[k]).filter(url=>/^https:\/\/(?:www\.)?(?:facebook\.com|tiktok\.com)\//.test(url??''));
+const sameAs=(Object.keys(REDES_SOCIALES) as RedSocial[])
+  .map(red=>({ red, url:texts[REDES_SOCIALES[red].clave]??'' }))
+  .filter(({ red, url })=>enlaceRedValido(red,url))
+  .map(({ url })=>url);
 const structured={ '@context':'https://schema.org','@graph':[
   { '@type':'WebSite','@id':SITE+'/#sitio', url:SITE+'/',name:'Carlos Astudillo · San Lorenzo',inLanguage:'es',publisher:{'@id':SITE+'/#carlos'} },
   { '@type':'Person','@id':SITE+'/#carlos',name:'Carlos Astudillo',url:SITE+'/',sameAs },

@@ -979,6 +979,20 @@ RETURNS void LANGUAGE sql AS $$
   WHERE id = 1 AND estado = 'compilando';
 $$;
 
+-- El día se cuenta en la hora de Ecuador: a medianoche del servidor (UTC) aún es el día anterior.
+CREATE OR REPLACE FUNCTION fn_visit_add()
+RETURNS void LANGUAGE sql AS $$
+  INSERT INTO tb_visitas_dia AS v (dia, total) VALUES ((now() AT TIME ZONE 'America/Guayaquil')::date, 1)
+  ON CONFLICT (dia) DO UPDATE SET total = v.total + 1;
+$$;
+
+-- Cifras públicas de la portada: visitas y voces ciudadanas (alertas, sugerencias y consultas del chat).
+CREATE OR REPLACE FUNCTION fn_site_stats()
+RETURNS TABLE(visitas bigint, voces bigint) LANGUAGE sql STABLE AS $$
+  SELECT (SELECT COALESCE(sum(total), 0) FROM tb_visitas_dia),
+    (SELECT count(*) FROM tb_alertas) + (SELECT count(*) FROM tb_sugerencias) + (SELECT count(*) FROM tb_chat_envios);
+$$;
+
 -- Al arrancar el publicador (también tras desplegar código nuevo) la vista previa se vuelve a compilar.
 CREATE OR REPLACE FUNCTION fn_preview_recover()
 RETURNS void LANGUAGE sql AS $$

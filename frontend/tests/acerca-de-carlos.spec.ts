@@ -39,6 +39,7 @@ test('el video se carga solo al pulsar, dentro de la página', async ({ page }) 
   await page.goto(ALCALDE);
   const video = page.locator('[data-public-video]');
   await expect(video.getByRole('heading', { name: 'Te cuento mis razones' })).toBeVisible();
+  expect(await video.locator('h2 + p').innerHTML()).toBe('Texto breve de prueba.<br>#LaNuevaHistoria');
   await expect(video.locator('iframe')).toHaveCount(0);
   await video.getByRole('button', { name: 'Reproducir el video: Te cuento mis razones' }).click();
   await expect(video.locator('iframe')).toHaveAttribute('src', /facebook\.com\/plugins\/video\.php\?href=https%3A%2F%2Fwww\.facebook\.com%2Freel%2F28327883403549284%2F/);
@@ -62,7 +63,31 @@ test('la página personal muestra retrato, entrevista y una galería accesible',
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
   await expect(open).toBeFocused();
+
+  await open.click();
+  const thumbs = dialog.getByRole('group', { name: 'Elegir foto' }).getByRole('button');
+  await expect(thumbs).toHaveCount(4);
+  await thumbs.nth(2).click();
+  await expect(dialog.getByText('3 / 4')).toBeVisible();
+  await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true');
+  await expect(dialog.getByRole('button', { name: 'Foto siguiente' }).first()).toBeEnabled();
+  expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe('hidden');
+  await dialog.locator('[data-dialog-stage]').click({ position: { x: 5, y: 5 } });
+  await expect(dialog).toBeHidden();
+  expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe('');
   await expect(page.getByRole('link', { name: 'Conoce mi trayectoria' })).toHaveAttribute('href', '/acerca-de-nosotros/biografia/');
+});
+
+test('en móvil el visor ocupa toda la pantalla y se avanza con los botones de abajo', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(CONOCE);
+  await page.getByRole('button', { name: 'Ver todas (4)' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Momentos en imágenes' });
+  const box = (await dialog.boundingBox())!;
+  expect([Math.round(box.width), Math.round(box.height)]).toEqual([390, 844]);
+  await dialog.getByRole('button', { name: 'Foto siguiente' }).last().click();
+  await expect(dialog.getByText('2 / 4')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
 });
 
 test('en móvil la galería avanza con botones y contador', async ({ page }) => {

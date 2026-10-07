@@ -1,3 +1,5 @@
+import "./cifras";
+
 const slides = [...document.querySelectorAll<HTMLElement>("[data-slide]")];
 let index = 0;
 const slideDots = [

@@ -46,6 +46,7 @@ export const ICON_PATHS: Record<string, string> = {
     "M14 3h7v7m0-7L10 14M10 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-5",
   facebook:
     "M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073c0 6.026 4.388 11.02 10.125 11.927v-8.436H7.078v-3.49h3.047V9.414c0-3.025 1.792-4.697 4.533-4.697 1.313 0 2.686.236 2.686.236v2.97H15.83c-1.49 0-1.956.931-1.956 1.887v2.264h3.328l-.532 3.49h-2.796V24C19.612 23.093 24 18.1 24 12.073Z",
+  instagram: "M7 3h10a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4Zm5 5a4 4 0 1 0 0 8 4 4 0 0 0 0-8Zm5.5-1.5h.01",
   tiktok:
     "M16.6 3c.4 2.7 1.9 4.4 4.4 4.6v3.2c-1.7.1-3.2-.4-4.4-1.3v6.8a5.8 5.8 0 1 1-5-5.8c.4 0 .8 0 1.1.1v3.2a2.7 2.7 0 1 0 1.5 2.4V3h2.4Z",
   whatsapp:
@@ -67,7 +68,7 @@ export const ICON_PATHS: Record<string, string> = {
   volumeOff: "M4 9v6h4l5 4V5L8 9H4Zm12 1 5 5m0-5-5 5",
 };
 
-const FILLED = new Set(["facebook", "tiktok", "whatsapp"]);
+export const FILLED = new Set(["facebook", "tiktok", "whatsapp"]);
 
 /** Icono como texto SVG para HTML generado desde scripts. */
 export function iconSvg(name: string, size = 24) {

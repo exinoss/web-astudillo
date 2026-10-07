@@ -91,7 +91,8 @@ export async function assertMigrated(sql: SQL) {
       AND to_regclass('public.tb_textos_iniciales') IS NOT NULL
       AND to_regclass('public.tb_aceptaciones_legales') IS NOT NULL
       AND to_regclass('public.tb_acerca_de_carlos') IS NOT NULL
-      AND to_regclass('public.tb_vista_previa') IS NOT NULL AS schema_ready,
+      AND to_regclass('public.tb_vista_previa') IS NOT NULL
+      AND to_regclass('public.tb_visitas_dia') IS NOT NULL AS schema_ready,
     to_regprocedure('public.fn_authorized_user(integer, text)') IS NOT NULL
       AND to_regprocedure('public.fn_texts_initial()') IS NOT NULL
       AND to_regprocedure('public.fn_account_methods(integer)') IS NOT NULL
@@ -99,7 +100,8 @@ export async function assertMigrated(sql: SQL) {
       AND to_regprocedure('public.fn_password_change(integer, text)') IS NOT NULL
       AND to_regprocedure('public.fn_role_change(integer, integer, text, text)') IS NOT NULL
       AND to_regprocedure('public.fn_about_carlos_save(integer, text, jsonb, text)') IS NOT NULL
-      AND to_regprocedure('public.fn_preview_request(integer, jsonb)') IS NOT NULL AS functions_ready`;
+      AND to_regprocedure('public.fn_preview_request(integer, jsonb)') IS NOT NULL
+      AND to_regprocedure('public.fn_site_stats()') IS NOT NULL AS functions_ready`;
   if (!ready?.schema_ready || !ready?.functions_ready)
     throw new Error('Base sin preparar: ejecuta bun run db:migrate');
 }

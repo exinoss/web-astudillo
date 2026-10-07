@@ -61,7 +61,7 @@ test("los textos se guardan como texto plano y vuelven al valor por defecto con 
     call(`/api/admin/contenido/textos/${clave}`, "PUT", { valor, version: (await versiones()).textos[clave] ?? null }, cookies[who]);
   expect((await put("inicio.cita", "«Por ti, San Lorenzo»")).status).toBe(200);
   expect((await put("inicio.cita", "<img src=x onerror=alert(1)>")).status).toBe(422);
-  expect((await put("inicio.cita", "texto​escondido")).status).toBe(422);
+  expect((await put("inicio.cita", "texto\u0007oculto")).status).toBe(422);
   expect((await put("Inicio Cita", "x")).status).toBe(422);
   expect((await put("inicio.cita", "x", "votante")).status).toBe(403);
   let c = await (await call("/api/admin/contenido", "GET", undefined, cookies.coadmin)).json();
@@ -72,15 +72,18 @@ test("los textos se guardan como texto plano y vuelven al valor por defecto con 
 });
 
 test("propuestas y cifras se guardan juntas", async () => {
-  const body = { nombre: "Agua potable", categoria: "Servicios básicos", introduccion: "Agua para todos.",
+  const body = { nombre: "Agua potable", categoria: "Servicios básicos", introduccion: "Agua para todos.\nCada barrio cuenta.",
     kpis: [{ etiqueta: "Comunidades", valor: "34" }, { etiqueta: "Plazo", valor: "30 meses" }] };
   const version = (await versiones()).propuestas["agua-potable"];
+  const enDosLineas = await call("/api/admin/contenido/propuestas/agua-potable", "PUT", { ...body, nombre: "Agua\npotable", version }, cookies.coadmin);
+  expect(enDosLineas.status).toBe(422);
+  expect((await enDosLineas.json()).error).toBe("Nombre: escribe el texto en una sola línea");
   expect((await call("/api/admin/contenido/propuestas/agua-potable", "PUT", { ...body, version }, cookies.coadmin)).status).toBe(200);
   expect((await call("/api/admin/contenido/propuestas/no-existe", "PUT", { ...body, version }, cookies.coadmin)).status).toBe(404);
   const muchas = { ...body, version, kpis: Array.from({ length: 7 }, () => ({ etiqueta: "x", valor: "1" })) };
   expect((await call("/api/admin/contenido/propuestas/agua-potable", "PUT", muchas, cookies.coadmin)).status).toBe(422);
   const c = await (await call("/api/admin/contenido", "GET", undefined, cookies.coadmin)).json();
-  expect(c.propuestas[0]).toMatchObject({ introduccion: "Agua para todos.", kpis: body.kpis });
+  expect(c.propuestas[0]).toMatchObject({ introduccion: "Agua para todos.\nCada barrio cuenta.", kpis: body.kpis });
 });
 
 test('repetir la semilla conserva originales, borradores y publicaciones', async () => {

@@ -10,6 +10,7 @@ function mockApi(page: Page, opciones: { loggedIn?: boolean; accepted?: boolean 
     fallarAceptacion: false,
     rechazarSiguienteEnvio: false,
     alertas: [] as Record<string, unknown>[],
+    sugerencias: [] as Record<string, unknown>[],
     envios: [] as { path: string; campos: Record<string, string>; foto?: string }[],
     preguntas: [] as string[],
     clavesChat: [] as string[],
@@ -47,9 +48,12 @@ function mockApi(page: Page, opciones: { loggedIn?: boolean; accepted?: boolean 
       data.alertas.unshift(alerta);
       return json(200, alerta);
     }
+    if (path === '/api/participacion/sugerencias/mias') return json(200, { sugerencias: data.sugerencias });
     if (path === '/api/participacion/sugerencias') {
       data.envios.push({ path, campos: request.postDataJSON() });
-      return json(200, { id: 1, ...request.postDataJSON(), estado: 'recibida', creadoEn: '2026-10-01T15:00:00Z' });
+      const sugerencia = { id: data.sugerencias.length + 1, ...request.postDataJSON(), estado: 'recibida', creadoEn: '2026-10-01T15:00:00Z' };
+      data.sugerencias.unshift(sugerencia);
+      return json(200, sugerencia);
     }
     if (path === '/api/participacion/chat') {
       const { mensaje, idempotencia } = request.postDataJSON();
@@ -281,6 +285,30 @@ test('las sugerencias eligen el tema con fichas y llegan sin nombre', async ({ p
   await expect(page.locator('#sugerencia-estado')).toContainText('Gracias por compartir tu idea');
   expect(api.envios[0].campos).toMatchObject({ tema: 'otro', mensaje: 'Más pozos de agua en las comunidades rurales.' });
   expect(Object.keys(api.envios[0].campos).sort()).toEqual(['idempotencia', 'mensaje', 'tema']);
+});
+
+test('«Tus sugerencias» muestra lo enviado con su estado, como «Tus alertas»', async ({ page }) => {
+  const api = mockApi(page, { loggedIn: true });
+  api.sugerencias.push({ id: 1, tema: 'agua-potable', mensaje: 'Tanques comunitarios en Las Palmas.', estado: 'atendida', creadoEn: '2026-09-20T15:00:00Z' });
+  await page.goto('/ciudadania/sugerencias/');
+  const historial = page.locator('#historial');
+  await expect(historial.locator('li')).toHaveCount(1);
+  await expect(historial.locator('li').first()).toContainText('Agua potable');
+  await expect(historial.locator('li').first()).toContainText('Atendida');
+  await page.getByRole('radio', { name: 'Otra idea' }).check();
+  await page.locator('#sugerencia-mensaje').fill('Una cancha iluminada en el malecón.');
+  await page.getByRole('button', { name: 'Enviar sugerencia' }).click();
+  await expect(page.locator('#sugerencia-estado')).toContainText('«Tus sugerencias»');
+  await expect(historial.locator('li')).toHaveCount(2);
+  await expect(historial.locator('li').first()).toContainText('Otra idea');
+  await expect(historial.locator('li').first()).toContainText('Recibida');
+});
+
+test('sin sesión, «Tus sugerencias» invita a iniciar sesión', async ({ page }) => {
+  mockApi(page);
+  await page.goto('/ciudadania/sugerencias/');
+  await expect(page.locator('#historial')).toContainText('Inicia sesión para ver tus sugerencias.');
+  await expect(page.locator('#historial').getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/cuenta/');
 });
 
 test('el chat responde con enlaces, pinta todo como texto y pide sesión', async ({ page }) => {

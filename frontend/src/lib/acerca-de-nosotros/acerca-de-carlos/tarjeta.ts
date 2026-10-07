@@ -1,5 +1,5 @@
 import type { CardColor } from "../../data/types";
-import { esc } from "../../comun/html";
+import { esc, escLines } from "../../comun/html";
 
 // Cambiar estos colores obliga a revisar el contraste del título amarillo (mínimo 3:1 sobre la base).
 export const CARD_COLORS: Record<CardColor, { base: string; ink: string }> = {
@@ -43,14 +43,14 @@ export function cardMarkup(card: CardView, number: number, id: string) {
       <span data-card-number aria-hidden="true" class="block self-end font-sans text-[5rem] leading-none font-bold max-tablet:text-[3.75rem] group-data-[layout=mobile]/card:text-[3.75rem] group-open/description:text-[2.5rem]">${number}</span>
       <div class="mt-auto flex flex-col items-start gap-2">
         <h3 data-card-title class="m-0 font-sans text-[2rem] leading-[1.08] font-normal [overflow-wrap:anywhere] max-tablet:text-[1.5rem] group-data-[layout=mobile]/card:text-[1.5rem] group-open/description:text-[1.3rem] max-tablet:group-open/description:text-[1.15rem]">${esc(card.title)}</h3>
-        <p aria-hidden="true" class="m-0 hidden text-[0.9rem] leading-[1.55] text-white [overflow-wrap:anywhere] group-open/description:block max-tablet:text-[0.82rem] group-data-[layout=mobile]/card:text-[0.82rem]">${esc(card.text)}</p>
+        <p aria-hidden="true" class="m-0 hidden text-[0.9rem] leading-[1.55] text-white [overflow-wrap:anywhere] group-open/description:block max-tablet:text-[0.82rem] group-data-[layout=mobile]/card:text-[0.82rem]">${escLines(card.text)}</p>
         <span class="-ml-1 inline-flex min-h-11 items-center gap-2 px-1 text-[0.85rem] font-bold">
           <span class="underline decoration-2 underline-offset-4"><span class="group-open/description:hidden">Leer más</span><span class="hidden group-open/description:inline">Leer menos</span></span>
           <span aria-hidden="true" class="grid size-6 place-items-center rounded-full border-2 border-current text-[0.95rem] leading-none"><span class="group-open/description:hidden">+</span><span class="hidden group-open/description:inline">−</span></span>
         </span>
       </div>
     </summary>
-    <p class="sr-only">${esc(card.text)}</p>
+    <p class="sr-only">${escLines(card.text)}</p>
   </details>
 </article>`;
 }

@@ -18,6 +18,7 @@ export const httpAlertRepository: AlertRepository = {
 
 export const httpSuggestionRepository: SuggestionRepository = {
   submit: (input) => call<SentSuggestion>('/api/participacion/sugerencias', 'POST', input),
+  mine: () => call<{ sugerencias: SentSuggestion[] }>('/api/participacion/sugerencias/mias').then((r) => r.sugerencias),
 };
 
 export const httpChatRepository: ChatRepository = {

@@ -1,7 +1,10 @@
 // Se guardan como textos con clave `enlace.*`. Sin dependencias: también lo usa el panel en el navegador.
+import { REDES_SOCIALES } from "../../../../../backend/src/contracts/redes";
+
+export { enlaceRed as enlaceRedValido, REDES_SOCIALES, type RedSocial, usuarioRed } from "../../../../../backend/src/contracts/redes";
+
 export const REDES = {
-  facebook: { clave: "enlace.facebook", nombre: "Facebook" },
-  tiktok: { clave: "enlace.tiktok", nombre: "TikTok" },
+  ...REDES_SOCIALES,
   whatsapp: { clave: "enlace.whatsapp", nombre: "WhatsApp" },
 } as const;
 

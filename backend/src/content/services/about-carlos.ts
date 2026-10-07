@@ -15,8 +15,8 @@ type SaveRow = { resultado: 'guardado' | 'sin_cambios' | 'conflicto'; version: s
 export type AboutCarlosPageInput = AboutCarlosPageStored;
 
 const isSlug = (slug: string): slug is AboutCarlosSlug => (ABOUT_CARLOS_PAGES as readonly string[]).includes(slug);
-const optional = (value: string | null | undefined, field: string, max: number) =>
-  value?.trim() ? plainText(value, field, max) : null;
+const optional = (value: string | null | undefined, field: string, max: number, options?: { multiline?: boolean }) =>
+  value?.trim() ? plainText(value, field, max, options) : null;
 
 async function photos(sql: SQL, ids: number[]) {
   const unique = [...new Set(ids)];
@@ -62,7 +62,7 @@ function clean(slug: AboutCarlosSlug, input: AboutCarlosPageInput): AboutCarlosP
     if (!source) throw new ApiError(422, `Video: ${videoLinkProblem(input.video.enlace)}`);
     video = {
       titulo: plainText(input.video.titulo, 'Video · título', 80),
-      descripcion: optional(input.video.descripcion, 'Video · texto breve', 200),
+      descripcion: optional(input.video.descripcion, 'Video · texto breve', 200, { multiline: true }),
       enlace: source.url, vertical: input.video.vertical, idPortada: input.video.idPortada,
     };
   }
@@ -71,7 +71,7 @@ function clean(slug: AboutCarlosSlug, input: AboutCarlosPageInput): AboutCarlosP
       idMedio: t.idMedio,
       alt: plainText(t.alt, `Tarjeta ${i + 1} · descripción de la foto`, 200),
       titulo: plainText(t.titulo, `Tarjeta ${i + 1} · título`, 60),
-      texto: plainText(t.texto, `Tarjeta ${i + 1} · texto`, 180),
+      texto: plainText(t.texto, `Tarjeta ${i + 1} · texto`, 180, { multiline: true }),
       color: t.color, enfoque: { x: t.enfoque.x, y: t.enfoque.y },
     })),
     video,

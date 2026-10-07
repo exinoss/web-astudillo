@@ -13,6 +13,7 @@ import type { Mailer } from "./mailer";
 import { participationRoutes } from "./participation/routes";
 import { profileRoutes } from "./profile/routes";
 import type { Security } from "./security";
+import { statsRoutes } from "./stats/routes";
 
 export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; security: Security }) {
   const { sql, config, mailer, security } = deps;
@@ -37,6 +38,7 @@ export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; secu
     .use(contentRoutes(sql, authorization, config.mediaDir))
     .use(previewRoutes(sql, config, security, authorization))
     .use(participationRoutes(sql, authorization, config.privateMediaDir))
+    .use(statsRoutes(sql, config))
     // En producción nginx sirve /medios desde el mismo volumen; esto solo cubre el desarrollo.
     .use(config.production ? new Elysia() : mediaFileRoutes(config.mediaDir));
 }

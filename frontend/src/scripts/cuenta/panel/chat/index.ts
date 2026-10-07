@@ -1,6 +1,7 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type ChatAnswer } from "../../../../lib/data/http/admin-api";
-import { busy, card, DANGER, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, notify, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
+import { busy, card, DANGER, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, INPUT, isPending, LABEL, notify, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
+import { paginasDelSitio } from "./paginas";
 
 const MAX_ITEMS = 60;
 // Copia de trabajo: la lista se edita entera y se guarda de una vez (orden incluido).
@@ -17,6 +18,19 @@ function capture(form: HTMLElement) {
   }));
 }
 
+/** Opciones del selector; una ruta guardada que ya no está en la lista se conserva como «Otra página». */
+function opcionesDePagina(actual: string | null) {
+  const secciones = paginasDelSitio(state.draft!);
+  const conocida = !actual || secciones.some((s) => s.paginas.some((p) => p.ruta === actual));
+  return `<option value="">Sin enlace</option>
+    ${conocida ? "" : `<option value="${esc(actual)}" selected>Otra página: ${esc(actual)}</option>`}
+    ${secciones.map((s) => `<optgroup label="${esc(s.seccion)}">${s.paginas.map((p) =>
+      `<option value="${esc(p.ruta)}" ${p.ruta === actual ? "selected" : ""}>${esc(p.nombre)}</option>`).join("")}</optgroup>`).join("")}`;
+}
+
+const vistaChat = (c: Pick<ChatAnswer, "respuesta" | "enlaceTexto" | "enlaceRuta">) =>
+  `${esc(c.respuesta || "La respuesta aparecerá aquí.")}${c.enlaceTexto && c.enlaceRuta ? ` <a href="${esc(c.enlaceRuta)}">${esc(c.enlaceTexto)}</a>` : ""}`;
+
 const row = (c: ChatAnswer, i: number, total: number) => `
   <details class="faq border-t border-t-base-300 py-3 first:border-t-0" ${i === open ? "open" : ""}>
     <summary class="flex min-h-11 cursor-pointer items-center justify-between gap-2.5 text-[0.9rem] font-bold">
@@ -27,9 +41,18 @@ const row = (c: ChatAnswer, i: number, total: number) => `
       ${field({ id: `faq-pregunta-${i}`, label: "Pregunta", value: c.pregunta, max: 160, hint: "Si se marca como botón, es el texto del botón." })}
       ${field({ id: `faq-claves-${i}`, label: "Palabras clave", value: c.palabrasClave, max: 300, hint: "Separadas por comas." })}
       ${field({ id: `faq-respuesta-${i}`, label: "Respuesta", value: c.respuesta, max: 1000, area: true })}
-      <div class="grid grid-cols-2 gap-3 max-tablet:grid-cols-1">
-        ${field({ id: `faq-enlace-texto-${i}`, label: "Texto del enlace (opcional)", value: c.enlaceTexto ?? "", max: 60 })}
-        ${field({ id: `faq-enlace-ruta-${i}`, label: "Página del sitio (opcional)", value: c.enlaceRuta ?? "", max: 200, hint: "Por ejemplo /propuestas/agua-potable/" })}
+      <fieldset class="m-0 flex min-w-0 flex-col gap-3.5 rounded-[3px] border border-base-300 p-4">
+        <legend class="px-1 text-[0.82rem] font-bold">Enlace bajo la respuesta (opcional)</legend>
+        <div>
+          <label for="faq-enlace-ruta-${i}" class="${LABEL}">¿A qué página lleva?</label>
+          <select id="faq-enlace-ruta-${i}" class="${INPUT}">${opcionesDePagina(c.enlaceRuta)}</select>
+        </div>
+        ${field({ id: `faq-enlace-texto-${i}`, label: "Texto del enlace", value: c.enlaceTexto ?? "", max: 60, hint: "Hasta 60 caracteres. Por ejemplo «Ver propuestas» o «Reportar un problema»." })}
+        <a data-probar class="${GHOST} self-start" href="${esc(c.enlaceRuta ?? "/")}" target="_blank" rel="noopener" ${c.enlaceRuta ? "" : "hidden"}>Probar el enlace ${iconSvg("external", 17)}</a>
+      </fieldset>
+      <div class="rounded-[3px] bg-base-200 p-4">
+        <span class="mb-2 block text-[0.72rem] font-bold tracking-[0.08em] text-[#50617d] uppercase">Así se verá en el chat</span>
+        <div data-vista-chat class="chat-message">${vistaChat(c)}</div>
       </div>
       <label class="flex min-h-11 items-center gap-2.5 text-[0.85rem]">
         <input type="checkbox" id="faq-destacada-${i}" class="size-5 accent-neutral" ${c.destacada ? "checked" : ""} /> Mostrar como botón de respuesta rápida
@@ -66,6 +89,20 @@ function bind(section: HTMLElement) {
   const form = section.querySelector<HTMLFormElement>("#chat-form-panel")!;
   const edit = (change: () => void) => { capture(form); change(); void renderChat(section); };
   vigilarCambios(form, form.querySelector("button[type=submit]")!, state.draft!.chat, () => { capture(form); return items; });
+  const actualizarVista = (e: Event) => {
+    const fila = (e.target as Element).closest<HTMLElement>(".faq");
+    if (!fila) return;
+    const i = [...form.querySelectorAll(".faq")].indexOf(fila);
+    const ruta = value(fila, `#faq-enlace-ruta-${i}`);
+    const probar = fila.querySelector<HTMLAnchorElement>("[data-probar]")!;
+    probar.hidden = !ruta;
+    if (ruta) probar.href = ruta;
+    fila.querySelector<HTMLElement>("[data-vista-chat]")!.innerHTML = vistaChat({
+      respuesta: value(fila, `#faq-respuesta-${i}`), enlaceTexto: value(fila, `#faq-enlace-texto-${i}`), enlaceRuta: ruta,
+    });
+  };
+  form.addEventListener("input", actualizarVista);
+  form.addEventListener("change", actualizarVista);
   form.querySelectorAll<HTMLButtonElement>("[data-mover]").forEach((b) => b.addEventListener("click", () => edit(() => {
     const i = Number(b.dataset.indice), j = i + Number(b.dataset.mover);
     [items![i], items![j]] = [items![j], items![i]];
@@ -85,7 +122,7 @@ function bind(section: HTMLElement) {
     if (incomplete >= 0) {
       open = incomplete;
       void renderChat(section);
-      return notify("Completa pregunta, palabras clave y respuesta; el enlace necesita texto y página.", true);
+      return notify("Completa pregunta, palabras clave y respuesta; si eliges una página, escribe también el texto del enlace.", true);
     }
     void busy(form.querySelector("button[type=submit]"), async () => {
       await adminApi.saveChat(items!, state.draft!.versiones.chat);

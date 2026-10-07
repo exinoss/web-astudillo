@@ -1,4 +1,4 @@
-import { esc } from "../../comun/html";
+import { esc, escLines } from "../../comun/html";
 import { iconSvg } from "../../comun/iconos";
 import { img } from "./html";
 import { PROVIDER_NAMES, videoSource } from "./reproductor";
@@ -11,7 +11,7 @@ export function videoSection(v: AboutCarlosPageView["video"]) {
 <section data-public-video aria-labelledby="video-titulo" class="mt-9 max-tablet:mt-8${v.vertical ? " grid grid-cols-[300px_minmax(0,1fr)] items-center gap-x-10 max-tablet:grid-cols-1" : ""}">
   <div${v.vertical ? ' class="col-start-2 row-start-1 max-tablet:col-start-1"' : ""}>
     <h2 id="video-titulo" class="mb-3 text-[2rem]">${esc(v.title)}</h2>
-    ${v.description ? `<p class="mt-0 mb-4 max-w-[420px] text-[1rem] leading-[1.7]">${esc(v.description)}</p>` : ""}
+    ${v.description ? `<p class="mt-0 mb-4 max-w-[420px] text-[1rem] leading-[1.7]">${escLines(v.description)}</p>` : ""}
   </div>
   <div data-video-preview data-embed="${esc(source.embed)}" data-provider="${source.provider}" class="min-w-0 ${v.vertical ? "col-start-1 row-start-1 max-w-[300px] max-tablet:row-start-2" : "max-w-[650px]"}">
     <div data-video-stage class="relative overflow-hidden rounded-[12px] bg-primary ${v.vertical ? "aspect-[9/16]" : "aspect-video"}">

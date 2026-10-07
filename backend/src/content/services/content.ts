@@ -126,7 +126,7 @@ export function createContent(sql: SQL, authorization: Authorization) {
       }));
       return saved(await callPg<SaveRow>(sql, 'proposalSave', [
         actor.id_usuario, slug, plainText(input.nombre, 'Nombre', 120),
-        plainText(input.categoria, 'Categoría', 80), plainText(input.introduccion, 'Introducción', 400), kpis, version,
+        plainText(input.categoria, 'Categoría', 80), plainText(input.introduccion, 'Introducción', 400, { multiline: true }), kpis, version,
       ]));
     },
 

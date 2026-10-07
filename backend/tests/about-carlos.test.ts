@@ -108,6 +108,21 @@ test('valida enlaces, textos, fotos, cantidades, permisos y páginas', async () 
   expect((await put({}, 'coadmin', '/api/admin/contenido/acerca-de-carlos/biografia')).status).toBe(404);
 });
 
+test('el texto breve del video y el texto de las tarjetas conservan sus saltos de línea; los títulos no los admiten', async () => {
+  const foto = await photo('#16a085');
+  const descripcion = '¡YA BASTA! #SanLorenzo\r\n¡NO MÁS DE LO MISMO!\n¡NO AL CONTINUISMO!\n#LaNuevaHistoria #Unidos';
+  const tarjeta = { ...card(foto.idMedio), texto: 'Escuchar a cada barrio.\nTrabajar con su gente. 🙋\u200d♂️' };
+  const save = async (titulo: string) => call(ALCALDE, 'PUT', { ...empty, tarjetas: [tarjeta],
+    video: { titulo, descripcion, enlace: REEL, vertical: true, idPortada: null }, version: await version('por-que-quiero-ser-alcalde') }, cookies.coadmin);
+  const rejected = await save('Mi mensaje\npara San Lorenzo');
+  expect(rejected.status).toBe(422);
+  expect((await rejected.json()).error).toBe('Video · título: escribe el texto en una sola línea');
+  expect((await save('Mi mensaje para San Lorenzo')).status).toBe(200);
+  const page = (await draft()).acercaDeCarlos['por-que-quiero-ser-alcalde'];
+  expect(page.video.descripcion).toBe('¡YA BASTA! #SanLorenzo\n¡NO MÁS DE LO MISMO!\n¡NO AL CONTINUISMO!\n#LaNuevaHistoria #Unidos');
+  expect(page.tarjetas[0].texto).toBe('Escuchar a cada barrio.\nTrabajar con su gente. 🙋\u200d♂️');
+});
+
 test('publicar congela las páginas y un snapshot anterior sin ellas no cuenta como cambio', async () => {
   const pending = await (await call('/api/admin/publicaciones/pendientes', 'GET', undefined, cookies.admin)).json();
   expect(pending.cambios).toContainEqual({ tipo: 'Página', descripcion: 'Por qué quiero ser alcalde' });
