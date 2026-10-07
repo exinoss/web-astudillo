@@ -21,8 +21,15 @@ test('«Personas que se sumaron» invita a sumarse solo a quien no tiene sesión
   await expect(banda).toContainText('Personas que se sumaron');
   await expect(banda.getByRole('link', { name: 'Súmate' })).toHaveAttribute('href', '/cuenta/registro/');
 
+  // Sesión real: si `/api/me` falla, el sitio borra la marca de sesión y vuelve a mostrar «Súmate».
+  await page.route('**/api/me', (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({
+    id: 1, correo: 'maria@example.com', rol: 'votante', nombresCompletos: 'María', direccion: '', tieneContrasenia: true, tieneGoogle: false, permisos: [],
+  }) }));
   await page.addInitScript(() => localStorage.setItem('astudillo:sesion', '1'));
+  const perfil = page.waitForResponse('**/api/me');
   await page.goto('/');
+  await perfil;
+  await page.waitForTimeout(300);
   await expect(page.locator('[data-cifras]').getByRole('link', { name: 'Súmate' })).toBeHidden();
 });
 
