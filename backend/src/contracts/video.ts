@@ -76,6 +76,10 @@ export function videoSource(value: string): VideoSource | null {
     };
   }
   if (/\.mp4$/i.test(url.pathname)) {
+    // El navegador reproduce el MP4: se exige un dominio para evitar IP literales y nombres de red local.
+    const domain = url.hostname.toLowerCase().replace(/\.$/, '');
+    if (!/^[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(domain) || !/[a-z]/.test(domain.split('.').at(-1)!)
+      || /(?:^|\.)(?:localhost|local|internal|lan|home|corp|intranet|test|invalid|home\.arpa)$/.test(domain)) return null;
     url.hash = '';
     return { provider: 'mp4', vertical: false, url: url.href, embed: url.href };
   }

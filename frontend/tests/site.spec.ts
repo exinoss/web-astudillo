@@ -157,6 +157,26 @@ test('3D model offers a retry button when the viewer fails to load', async ({ pa
   await expect(retry).toBeHidden();
 });
 
+test('si falla el archivo 3D, conserva la portada y permite reintentar la descarga', async ({ page }) => {
+  let fallar = true;
+  let solicitudes = 0;
+  await page.route('**/models/*.glb*', route => {
+    solicitudes++;
+    return fallar ? route.abort() : route.continue();
+  });
+  await page.goto('/propuestas/tecnologias-emergentes/');
+  await page.locator('.model-3d').scrollIntoViewIfNeeded();
+  const retry = page.getByRole('button', { name: 'Ver en 3D' });
+  await expect(retry).toBeVisible();
+  await expect(page.locator('.model-3d-poster')).toBeVisible();
+  fallar = false;
+  await retry.click();
+  await expect.poll(() => page.locator('model-viewer').evaluate((v: any) => v.loaded), { timeout: 30000 }).toBe(true);
+  expect(solicitudes).toBeGreaterThan(1);
+  await expect(page.locator('.model-3d-poster')).toHaveCount(0);
+  await expect(retry).toBeHidden();
+});
+
 test('las flechas del carrusel principal avanzan y retroceden dentro del carrusel', async ({ page }) => {
   await page.goto('/');
   const slides = page.locator('.hero-slides');

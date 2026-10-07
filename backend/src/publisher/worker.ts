@@ -4,10 +4,11 @@
 // justo esta publicación; si falla, `dist` y la API siguen con la anterior. Sin publicaciones en cola,
 // compila la vista previa del borrador en `<SITE_DIR>/dist-vista-previa`.
 import { SQL } from 'bun';
-import { cp, rename, rm } from 'node:fs/promises';
+import { cp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { callPg } from '../db/call';
+import { swap } from './salida-estatica';
 
 const POLL_MS = 3000;
 const RETRY_MS = 60_000;
@@ -34,33 +35,6 @@ const site = target('dist');
 const preview = target('dist-vista-previa');
 const versionFile = join(siteDir, 'version');
 const previewContent = join(tmpdir(), 'astudillo-vista-previa.json');
-
-// En Windows el antivirus o el indexador abren un momento los archivos recién escritos: rename da EPERM o EBUSY.
-async function renameRetrying(from: string, to: string) {
-  for (let attempt = 1; ; attempt++) {
-    try {
-      return await rename(from, to);
-    } catch (error) {
-      if (attempt >= 10 || !['EPERM', 'EBUSY', 'EACCES'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error;
-      await wait(500 * attempt);
-    }
-  }
-}
-
-/** Reemplaza la salida por la compilación nueva; si no lo consigue, la deja como estaba. */
-async function swap({ dist, next, previous }: Target) {
-  await rm(previous, { recursive: true, force: true });
-  await renameRetrying(dist, previous).catch((error: NodeJS.ErrnoException) => {
-    if (error.code !== 'ENOENT') throw error;
-  });
-  try {
-    await renameRetrying(next, dist);
-  } catch (error) {
-    await renameRetrying(previous, dist).catch(() => {});
-    throw error;
-  }
-  await rm(previous, { recursive: true, force: true });
-}
 
 /**
  * Compila en `<salida>-nueva` (Astro vacía su carpeta de salida al empezar) y solo si sale bien la pasa a la salida.

@@ -73,7 +73,10 @@ test('si otra persona guardó el mismo texto antes, se avisa y no se pisa su cam
   await mockPanelApi(page, data);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  await page.getByRole('switch', { name: /Modo edición/ }).click();
+  const toggle = page.getByRole('switch', { name: /Modo edición/ });
+  await toggle.click();
+  // Activado ya cargó el borrador: lo que cambie después lo hace otra persona.
+  await expect(toggle).toHaveAttribute('aria-checked', 'true');
   // Mientras esta persona edita, otra guarda el mismo texto desde su navegador.
   data.draft.textos['inicio.participa.titulo'] = 'Texto de la otra persona.';
   data.draft.versiones.textos['inicio.participa.titulo'] = 'f'.repeat(32);

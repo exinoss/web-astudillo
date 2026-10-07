@@ -27,6 +27,7 @@ Visitante ──HTTPS──▶ Cloudflare ──HTTPS (certificado de origen)─
 
 - **Cada servicio usa su propia credencial de base de datos** con los permisos mínimos (`backend/database/permisos.sql`). La base no es accesible desde Internet.
 - **Al arrancar una versión nueva**, el publicador recompila lo último publicado con el código nuevo; los borradores no se publican.
+- **Pestañas abiertas al publicar**: los recursos públicos con hash de `/_astro/` se conservan durante siete días desde que dejan de usarse. La fecha queda en `.recursos-retenidos.json` dentro de la salida compilada, y la limpieza se hace en cada publicación; las páginas y los recursos del borrador se reemplazan sin retención.
 - **Vista previa del borrador**: el publicador la compila en `/srv/sitio/dist-vista-previa` (sus archivos en `/_astro-vista-previa/`, separados de los del sitio). Con la cookie `vista_previa`, nginx sirve las páginas desde esa carpeta (salvo `/cuenta/`, donde está el panel) y valida cada petición con el backend (`auth_request`); un pase inválido o caducado vuelve al panel. Quien no tiene la cookie no hace ninguna petición de más. Estas respuestas llevan `Cache-Control: private, no-store` y `X-Robots-Tag: noindex`.
 - **Nunca usar `docker compose down -v`**: borra la base y las fotos.
 - **IP real**: nginx solo cree la cabecera `CF-Connecting-IP` si la conexión llega desde un rango de Cloudflare (`nginx/cloudflare.conf`). Si Cloudflare publica rangos nuevos en <https://www.cloudflare.com/ips/>, hay que añadirlos ahí.
