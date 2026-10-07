@@ -1,4 +1,5 @@
 import { statsRepository } from "../../lib/data/stats";
+import type { SiteStats } from "../../lib/data/stats-repository";
 import { inDraftPreview } from "../../lib/comun/vista-previa";
 
 const formato = new Intl.NumberFormat("es-EC");
@@ -26,7 +27,7 @@ if (banda) {
     vista.disconnect();
     const actuales = await vivas;
     for (const el of cifras) {
-      const final = actuales?.[el.dataset.cifra as "visitas" | "voces"] ?? (el.dataset.valor ? Number(el.dataset.valor) : NaN);
+      const final = actuales?.[el.dataset.cifra as keyof SiteStats] ?? (el.dataset.valor ? Number(el.dataset.valor) : NaN);
       if (Number.isFinite(final)) contar(el, final);
     }
   }, { threshold: 0.5 });

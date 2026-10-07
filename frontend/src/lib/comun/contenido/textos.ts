@@ -41,6 +41,7 @@ export const TEXTOS = {
   "inicio.conoce.texto": t("Portada · Conoce a Carlos", "Texto", 240),
   "inicio.cifras.visitas": t("Portada · Conoce a Carlos", "Cifra de visitas · texto", 40),
   "inicio.cifras.voces": t("Portada · Conoce a Carlos", "Cifra de voces ciudadanas · texto", 40),
+  "inicio.cifras.personas": t("Portada · Conoce a Carlos", "Cifra de personas que se sumaron · texto", 40),
   "inicio.propuestas.antetitulo": t("Portada · Propuestas", "Antetítulo", 40),
   "inicio.propuestas.titulo": t("Portada · Propuestas", "Título", 40),
   "inicio.propuestas.destacado": t("Portada · Propuestas", "Título (parte azul)", 30),
