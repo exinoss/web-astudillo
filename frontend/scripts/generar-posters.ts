@@ -3,7 +3,7 @@
 // Playwright se cuelga al lanzar el navegador en Windows.
 import { readdirSync, readFileSync } from "node:fs";
 import { chromium } from "@playwright/test";
-import { ALTO_POSTER, ANCHO_POSTER, ORBITA } from "../src/lib/model3d.ts";
+import { ALTO_POSTER, ANCHO_POSTER, ORBITA } from "../src/lib/propuestas/model3d.ts";
 
 const archivos: Record<string, [Buffer, string]> = {
   "model-viewer.js": [

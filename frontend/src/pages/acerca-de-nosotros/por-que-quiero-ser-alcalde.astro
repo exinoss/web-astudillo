@@ -1,21 +1,16 @@
 ---
-import Layout from "../../layouts/Layout.astro";
-import Breadcrumb from "../../components/Breadcrumb.astro";
-import Editable from "../../components/Editable.astro";
+import Contenedor from "../../components/acerca-de-nosotros/acerca-de-carlos/Contenedor.astro";
+import { aboutCarlosPageMarkup } from "../../lib/acerca-de-nosotros/acerca-de-carlos/pagina";
+import { publishedPageView } from "../../lib/acerca-de-nosotros/acerca-de-carlos/vista";
+
+const html = aboutCarlosPageMarkup(await publishedPageView("por-que-quiero-ser-alcalde"));
 ---
 
-<Layout title="Por qué quiero ser alcalde · Carlos Astudillo" description="Lee el mensaje de Carlos Astudillo sobre su candidatura a la alcaldía de San Lorenzo.">
-  <Breadcrumb
-    items={[
-      { label: "Inicio", href: "/" },
-      { label: "Acerca de nosotros", href: "/acerca-de-nosotros/" },
-      { label: "Por qué quiero ser alcalde" },
-    ]}
-  />
-  <section class="site-container max-w-[850px] pt-[30px] pb-14 max-tablet:pt-5 max-tablet:pb-10">
-    <Editable clave="alcalde.antetitulo" class="eyebrow" />
-    <Editable as="h1" clave="alcalde.titulo" class="mt-3 mb-6 text-[clamp(2.5rem,4vw,3.75rem)] max-tablet:text-[2.5rem]" />
-    <Editable as="blockquote" clave="alcalde.cita" class="my-5 border-l-4 border-l-accent pl-[25px] text-[1.5rem] leading-[1.5] max-tablet:text-[1.25rem]" />
-    <Editable as="p" clave="alcalde.nota" class="content-note" />
-  </section>
-</Layout>
+<Contenedor title="Por qué quiero ser alcalde · Carlos Astudillo" description="Lee el mensaje de Carlos Astudillo sobre su candidatura a la alcaldía de San Lorenzo." crumbs={[{ label: "Acerca de nosotros", href: "/acerca-de-nosotros/" }, { label: "Por qué quiero ser alcalde" }]}>
+  <Fragment set:html={html} />
+</Contenedor>
+
+<script>
+  import { initAboutCarlosPage } from "../../lib/acerca-de-nosotros/acerca-de-carlos/interacciones";
+  initAboutCarlosPage(document);
+</script>

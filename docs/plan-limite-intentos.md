@@ -45,7 +45,7 @@ Decisiones del usuario: escalada «5 libres, luego sube»; el ataque repartido c
 - Se quita la cookie `registration` y la comprobación de navegador o contraseña en `verify`: el enlace de registro funciona en cualquier navegador.
   - `backend/src/auth/services/registration.ts` y `routes/registration.ts`.
   - La columna `verificador_navegador_hash` queda sin usar para el registro; no se toca el esquema por esto.
-  - `frontend/src/scripts/account-verify.ts` y `pages/cuenta/verificar.astro`: fuera el formulario de contraseña.
+  - `frontend/src/scripts/cuenta/verificar.ts` y `pages/cuenta/verificar.astro`: fuera el formulario de contraseña.
 - **Riesgo aceptado**: alguien podría registrar el correo de otra persona con su propia contraseña y esperar a que la víctima pulse el enlace. Lo mitiga el texto del correo, y el dueño siempre puede recuperar la cuenta con «Olvidé mi contraseña».
 - **Actualización (2026-09-30):** se simplificó el acceso con Google. Solo acepta correos de Gmail o Google Workspace; una cuenta de Google hecha con otro correo recibe «Entra con tu correo y contraseña». Desaparecen la confirmación por correo de Google, su página y su plantilla (migración `0005_google_solo_gmail`).
 
@@ -77,10 +77,10 @@ Decisiones del usuario: escalada «5 libres, luego sube»; el ataque repartido c
   - capturas a 320, 390, 768 y 1440 px.
 - **Implementación**:
   - `ApiError.retryAfter` en `frontend/src/lib/data/http/api-client.ts`;
-  - el componente `components/account/Candado.astro` (SVG en línea);
-  - `lib/auth/bloqueo.ts`, que desactiva el botón, lleva la cuenta atrás, lo reactiva al terminar y respeta la clase `reduce-motion`;
+  - el componente `components/cuenta/Candado.astro` (SVG en línea);
+  - `lib/cuenta/auth/bloqueo.ts`, que desactiva el botón, lleva la cuenta atrás, lo reactiva al terminar y respeta la clase `reduce-motion`;
   - los keyframes en `@theme` (`--animate-candado`), como `rebote` en `global.css`;
-  - se aplica en acceso, cambio de contraseña, registro y recuperación, a través de `showStatus` en `lib/auth/page.ts`.
+  - se aplica en acceso, cambio de contraseña, registro y recuperación, a través de `showStatus` en `lib/cuenta/auth/page.ts`.
 - **Página nueva** `pages/cuenta/acceso.astro` y su script, para el enlace de acceso, copiando `verificar.astro`; más `confirmLogin(token)` en los repositorios de autenticación.
 
 ## Backend: archivos

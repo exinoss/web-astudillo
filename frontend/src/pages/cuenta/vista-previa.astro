@@ -1,0 +1,18 @@
+---
+import AccountShell from '../../components/cuenta/AccountShell.astro';
+import AccountCard from '../../components/cuenta/AccountCard.astro';
+import AccountStatus from '../../components/cuenta/AccountStatus.astro';
+---
+
+<AccountShell title="Vista previa del borrador" lead="Así quedará el sitio al publicar.">
+  <div class="mx-auto max-w-[560px]">
+    <AccountCard heading="Vista previa">
+      <AccountStatus />
+      <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <button id="vista-previa-reintentar" type="button" class="button" hidden>Reintentar</button>
+        <a class="inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/panel/">Volver al panel</a>
+      </div>
+    </AccountCard>
+  </div>
+  <script src="../../scripts/cuenta/vista-previa.ts"></script>
+</AccountShell>

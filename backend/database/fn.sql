@@ -618,6 +618,40 @@ RETURNS jsonb LANGUAGE sql STABLE AS $$
   FROM tb_chat_respuestas c;
 $$;
 
+CREATE OR REPLACE FUNCTION fn_about_carlos_state(p_slug text)
+RETURNS jsonb LANGUAGE sql STABLE AS $$
+  SELECT CASE WHEN p_slug IN ('por-que-quiero-ser-alcalde', 'conoce-mas') THEN COALESCE(
+    (SELECT p.contenido FROM tb_acerca_de_carlos p WHERE p.slug = p_slug),
+    '{"tarjetas": [], "video": null, "retrato": null, "entrevista": [], "galeria": []}'::jsonb) END;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_about_carlos_list()
+RETURNS TABLE(slug text, contenido jsonb) LANGUAGE sql STABLE AS $$
+  SELECT s.slug, fn_about_carlos_state(s.slug)
+  FROM (VALUES ('por-que-quiero-ser-alcalde', 1), ('conoce-mas', 2)) AS s(slug, orden) ORDER BY s.orden;
+$$;
+
+-- Sin filas: la página no existe.
+CREATE OR REPLACE FUNCTION fn_about_carlos_save(p_actor integer, p_slug text, p_content jsonb, p_version text)
+RETURNS TABLE(resultado text, version text) LANGUAGE plpgsql AS $$
+DECLARE v_current text; v_new text := md5(p_content::text);
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'contenido.editar') THEN RETURN; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext('contenido:pagina:' || p_slug));
+  v_current := md5(fn_about_carlos_state(p_slug)::text);
+  IF v_current IS NULL THEN RETURN; END IF;
+  IF v_current = v_new THEN RETURN QUERY SELECT 'sin_cambios'::text, v_current; RETURN; END IF;
+  IF v_current IS DISTINCT FROM p_version THEN RETURN QUERY SELECT 'conflicto'::text, v_current; RETURN; END IF;
+  INSERT INTO tb_acerca_de_carlos (slug, contenido, actualizado_por, actualizado_en)
+  VALUES (p_slug, p_content, p_actor, now())
+  ON CONFLICT ON CONSTRAINT tb_acerca_de_carlos_pkey DO UPDATE SET contenido = EXCLUDED.contenido,
+    actualizado_por = EXCLUDED.actualizado_por, actualizado_en = now();
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, cambios)
+  VALUES (p_actor, 'pagina_acerca_de_carlos_guardada', 'tb_acerca_de_carlos', jsonb_build_object('slug', p_slug));
+  RETURN QUERY SELECT 'guardado'::text, v_new;
+END;
+$$;
+
 -- Versiones vigentes de todo el borrador; el panel las envía de vuelta al guardar.
 CREATE OR REPLACE FUNCTION fn_content_versions()
 RETURNS TABLE(versiones jsonb) LANGUAGE sql STABLE AS $$
@@ -626,7 +660,8 @@ RETURNS TABLE(versiones jsonb) LANGUAGE sql STABLE AS $$
     'propuestas', COALESCE((SELECT jsonb_object_agg(p.slug, md5(fn_proposal_state(p.slug)::text)) FROM tb_propuestas p), '{}'::jsonb),
     'biografia', md5(fn_biography_state()::text),
     'obras', COALESCE((SELECT jsonb_object_agg(o.slug, md5(fn_work_state(o.slug)::text)) FROM tb_obras o), '{}'::jsonb),
-    'chat', md5(fn_chat_state()::text));
+    'chat', md5(fn_chat_state()::text),
+    'acercaDeCarlos', (SELECT jsonb_object_agg(l.slug, md5(l.contenido::text)) FROM fn_about_carlos_list() l));
 $$;
 
 -- Guarda el borrador de un texto; con valor nulo lo borra y vuelve el texto por defecto.
@@ -810,6 +845,13 @@ RETURNS TABLE(id_medio integer) LANGUAGE sql STABLE AS $$
   WHERE m.id_medio = ANY(string_to_array(p_ids, ',')::integer[]);
 $$;
 
+CREATE OR REPLACE FUNCTION fn_media_details(p_ids text)
+RETURNS TABLE(id_medio integer, nombre varchar, ancho integer, alto integer, anchos jsonb)
+LANGUAGE sql STABLE AS $$
+  SELECT m.id_medio, m.nombre, m.ancho, m.alto, to_jsonb(m.anchos) FROM tb_medios m
+  WHERE m.id_medio = ANY(string_to_array(p_ids, ',')::integer[]);
+$$;
+
 -- ============ Publicaciones ============
 
 -- Encola el contenido congelado. Si ya hay una en cola, la reemplaza: se compila una sola vez.
@@ -897,6 +939,51 @@ RETURNS void LANGUAGE sql AS $$
   UPDATE tb_publicaciones SET estado = 'fallida', terminado_en = now(),
     detalle = 'Interrumpida: el publicador se reinició durante la compilación'
   WHERE estado = 'publicando';
+$$;
+
+-- Idempotente: con el mismo contenido en cola, compilándose o listo devuelve ese estado sin
+-- compilar otra vez. Con contenido distinto la deja en cola; si había una compilando, al terminar
+-- fn_preview_finish no la da por lista porque el estado ya no es 'compilando'.
+CREATE OR REPLACE FUNCTION fn_preview_request(p_actor integer, p_content jsonb)
+RETURNS TABLE(estado varchar) LANGUAGE plpgsql AS $$
+DECLARE v_state varchar;
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'contenido.editar') THEN RETURN; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext('contenido:vista-previa'));
+  SELECT v.estado INTO v_state FROM tb_vista_previa v
+  WHERE v.id = 1 AND v.contenido = p_content AND v.estado IN ('en_cola', 'compilando', 'lista');
+  IF v_state IS NOT NULL THEN RETURN QUERY SELECT v_state; RETURN; END IF;
+  INSERT INTO tb_vista_previa AS v (id, estado, contenido, solicitado_por)
+  VALUES (1, 'en_cola', p_content, p_actor)
+  ON CONFLICT (id) DO UPDATE SET estado = 'en_cola', contenido = EXCLUDED.contenido,
+    solicitado_por = EXCLUDED.solicitado_por, solicitado_en = now(), terminado_en = NULL, detalle = NULL;
+  RETURN QUERY SELECT 'en_cola'::varchar;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_preview_state()
+RETURNS TABLE(estado varchar) LANGUAGE sql STABLE AS $$
+  SELECT v.estado FROM tb_vista_previa v WHERE v.id = 1;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_preview_claim()
+RETURNS TABLE(contenido jsonb) LANGUAGE sql AS $$
+  UPDATE tb_vista_previa v SET estado = 'compilando' WHERE v.id = 1 AND v.estado = 'en_cola'
+  RETURNING v.contenido;
+$$;
+
+CREATE OR REPLACE FUNCTION fn_preview_finish(p_ok boolean, p_detail text)
+RETURNS void LANGUAGE sql AS $$
+  UPDATE tb_vista_previa SET estado = CASE WHEN p_ok THEN 'lista' ELSE 'fallida' END,
+    terminado_en = now(), detalle = p_detail
+  WHERE id = 1 AND estado = 'compilando';
+$$;
+
+-- Al arrancar el publicador (también tras desplegar código nuevo) la vista previa se vuelve a compilar.
+CREATE OR REPLACE FUNCTION fn_preview_recover()
+RETURNS void LANGUAGE sql AS $$
+  UPDATE tb_vista_previa SET estado = 'en_cola', terminado_en = NULL, detalle = NULL
+  WHERE id = 1 AND estado IN ('compilando', 'lista');
 $$;
 
 -- ---------- Límite de intentos fallidos ----------

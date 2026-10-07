@@ -1,8 +1,8 @@
 ---
-import AccountShell from '../../components/account/AccountShell.astro';
-import AccountCard from '../../components/account/AccountCard.astro';
-import AccountField from '../../components/account/AccountField.astro';
-import AccountStatus from '../../components/account/AccountStatus.astro';
+import AccountShell from '../../components/cuenta/AccountShell.astro';
+import AccountCard from '../../components/cuenta/AccountCard.astro';
+import AccountField from '../../components/cuenta/AccountField.astro';
+import AccountStatus from '../../components/cuenta/AccountStatus.astro';
 ---
 
 <AccountShell title="Nueva contraseña" lead="Elige una contraseña para volver a entrar.">
@@ -18,5 +18,5 @@ import AccountStatus from '../../components/account/AccountStatus.astro';
       <a class="mt-5 inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/recuperar/">Solicitar otro enlace</a>
     </AccountCard>
   </div>
-  <script src="../../scripts/account-reset.ts"></script>
+  <script src="../../scripts/cuenta/restablecer.ts"></script>
 </AccountShell>

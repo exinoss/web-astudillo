@@ -1,0 +1,23 @@
+---
+import { Image } from "astro:assets";
+import Layout from "../../../layouts/Layout.astro";
+import Breadcrumb from "../../comun/Breadcrumb.astro";
+import fondo from "../../../assets/backgruond-historia.png";
+
+interface Props { title: string; description: string; crumbs: { label: string; href?: string }[] }
+const { title, description, crumbs } = Astro.props;
+---
+
+<Layout title={title} description={description}>
+  <Breadcrumb items={[{ label: "Inicio", href: "/" }, ...crumbs]} />
+  <section class="relative overflow-clip bg-base-100">
+    {/* overflow-clip y no hidden en la sección: hidden crearía un contenedor de scroll y anularía el sticky. */}
+    <div data-carlos-background class="pointer-events-none absolute inset-0" aria-hidden="true">
+      <Image src={fondo} alt="" widths={[800, 1280, 2000]} sizes="(max-width: 760px) 900px, 100vw" loading="eager"
+        class="sticky top-0 h-dvh w-full object-cover object-left-top max-tablet:h-auto max-tablet:w-[900px] max-tablet:max-w-none max-tablet:-translate-x-[230px]" />
+    </div>
+    <div class="site-container relative max-w-[850px] pt-[30px] pb-14 max-tablet:pt-6 max-tablet:pb-10">
+      <slot />
+    </div>
+  </section>
+</Layout>

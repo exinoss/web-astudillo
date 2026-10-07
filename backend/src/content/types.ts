@@ -43,6 +43,27 @@ export interface ChatAnswer {
   destacada: boolean;
 }
 
+export type CardColor = 'rojo' | 'azul';
+export const ABOUT_CARLOS_PAGES = ['por-que-quiero-ser-alcalde', 'conoce-mas'] as const;
+export type AboutCarlosSlug = (typeof ABOUT_CARLOS_PAGES)[number];
+
+/** `enlace` llega ya normalizado por contracts/video.ts. */
+export interface AboutCarlosPageStored {
+  tarjetas: { idMedio: number; alt: string; titulo: string; texto: string; color: CardColor; enfoque: { x: number; y: number } }[];
+  video: { titulo: string; descripcion: string | null; enlace: string; vertical: boolean; idPortada: number | null } | null;
+  retrato: { idMedio: number; alt: string } | null;
+  entrevista: { pregunta: string; respuesta: string }[];
+  galeria: { idMedio: number; alt: string; pie: string }[];
+}
+
+export interface AboutCarlosPage {
+  tarjetas: (Omit<AboutCarlosPageStored['tarjetas'][number], 'idMedio'> & { foto: Photo })[];
+  video: (Omit<NonNullable<AboutCarlosPageStored['video']>, 'idPortada'> & { portada: Photo | null }) | null;
+  retrato: { foto: Photo; alt: string } | null;
+  entrevista: AboutCarlosPageStored['entrevista'];
+  galeria: (Omit<AboutCarlosPageStored['galeria'][number], 'idMedio'> & { foto: Photo })[];
+}
+
 /**
  * Versión (md5 del estado) de cada parte editable del borrador. El panel la devuelve al guardar;
  * si no coincide con la actual, otra persona guardó antes y el guardado responde 409.
@@ -54,6 +75,7 @@ export interface ContentVersions {
   biografia: string;
   obras: Record<string, string>;
   chat: string;
+  acercaDeCarlos: Record<string, string>;
 }
 
 /**
@@ -69,4 +91,6 @@ export interface Snapshot {
   obras: WorkContent[];
   /** Ausente en publicaciones anteriores al chat editable. */
   chat?: ChatAnswer[];
+  /** Ausente en publicaciones anteriores a las páginas de Carlos. */
+  acercaDeCarlos?: Record<string, AboutCarlosPage>;
 }

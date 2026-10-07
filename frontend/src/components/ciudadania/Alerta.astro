@@ -1,7 +1,7 @@
 ---
-import Icon from "../Icon.astro";
-import LegalAcceptance from '../LegalAcceptance.astro';
-import { MIN_DESCRIPCION, TIPOS_ALERTA } from "../../lib/participacion/tipos";
+import Icon from "../comun/Icon.astro";
+import LegalAcceptance from '../comun/LegalAcceptance.astro';
+import { MIN_DESCRIPCION, TIPOS_ALERTA } from "../../lib/ciudadania/participacion/tipos";
 import { TARJETA, CAMPO, ETIQUETA, AYUDA, ERROR, ESTADO } from "./estilos";
 ---
 
@@ -65,7 +65,7 @@ import { TARJETA, CAMPO, ETIQUETA, AYUDA, ERROR, ESTADO } from "./estilos";
       <p id="alerta-foto-error" class={ERROR} role="alert" hidden></p>
 
       <LegalAcceptance id="alerta-aceptacion" hidden prompt="Antes de enviar tu alerta, confirma:" />
-      <button class="button mt-6 w-full" type="submit"><span data-envio-texto>Enviar alerta</span> <Icon name="arrow" size={18} /></button>
+      <button class="button mt-6 w-full" type="submit" data-envia><span data-envio-texto>Enviar alerta</span> <Icon name="arrow" size={18} /></button>
       <p id="alerta-estado" class={ESTADO} role="status" hidden></p>
     </form>
 

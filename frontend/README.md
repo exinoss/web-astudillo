@@ -21,9 +21,9 @@ Todos los comandos se ejecutan desde esta carpeta (`frontend/`):
 
 - `src/pages/` — rutas del sitio (home, propuestas, ciudadanía, acerca de nosotros).
 - `src/layouts/Layout.astro` — plantilla base (header, footer, panel de accesibilidad).
-- `src/components/Icon.astro` — íconos SVG inline.
+- `src/components/comun/Icon.astro` — íconos SVG inline.
 - `src/lib/data/` — repositorios separados: contenido publicado (HTTP, o la semilla del código al compilar en modo de pruebas), autenticación, alertas, sugerencias y chat por HTTP.
-- `src/lib/participacion/` — borrador de lo que escribe un votante sin sesión (se recupera tras iniciar sesión), envío con sesión y tipos de alerta.
+- `src/lib/ciudadania/participacion/` — borrador de lo que escribe un votante sin sesión (se recupera tras iniciar sesión), envío con sesión y tipos de alerta.
 - `src/pages/cuenta/` — registro, acceso, verificación, recuperación y perfil conectados a la API.
 - `src/styles/` — estilos globales con Tailwind CSS v4.
 - `tests/` — pruebas end-to-end con Playwright.

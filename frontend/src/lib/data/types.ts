@@ -106,7 +106,7 @@ export interface WorkEvidence {
 
 /**
  * Obra asociada a una propuesta; `updatedAt` en formato ISO. El porcentaje y la etapa no se
- * guardan: los calcula `src/lib/obras.ts` a partir de los hitos completados.
+ * guardan: los calcula `src/lib/ciudadania/obras.ts` a partir de los hitos completados.
  */
 export interface WorkProgress {
   proposalSlug: string;
@@ -114,4 +114,33 @@ export interface WorkProgress {
   note: string;
   milestones: WorkMilestone[];
   evidence: WorkEvidence[];
+}
+
+export type AboutCarlosSlug = "por-que-quiero-ser-alcalde" | "conoce-mas";
+export type CardColor = "rojo" | "azul";
+
+export interface AboutCarlosCard {
+  title: string;
+  text: string;
+  image: Picture;
+  alt: string;
+  color: CardColor;
+  /** Punto de enfoque de la foto, en porcentaje. */
+  focus: { x: number; y: number };
+}
+
+export interface AboutCarlosVideo {
+  title: string;
+  description: string | null;
+  url: string;
+  vertical: boolean;
+  cover: Picture | null;
+}
+
+export interface AboutCarlosPage {
+  cards: AboutCarlosCard[];
+  video: AboutCarlosVideo | null;
+  portrait: { image: Picture; alt: string } | null;
+  interview: { question: string; answer: string }[];
+  gallery: { image: Picture; alt: string; caption: string }[];
 }

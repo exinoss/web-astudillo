@@ -1,8 +1,8 @@
-import { errorText } from "../../lib/auth/page";
+import { errorText } from "../../lib/cuenta/auth/page";
 import { chatRepository } from "../../lib/data/participation";
-import { borrar, leer } from "../../lib/participacion/borrador";
-import { enviarConSesion } from "../../lib/participacion/envio";
-import { prepararAceptacion } from '../../lib/participacion/aceptacion';
+import { borrar, leer } from "../../lib/ciudadania/participacion/borrador";
+import { enviarConSesion } from "../../lib/ciudadania/participacion/envio";
+import { prepararAceptacion } from '../../lib/ciudadania/participacion/aceptacion';
 
 const form = document.querySelector<HTMLFormElement>("#chat-form")!;
 const input = form.querySelector<HTMLInputElement>("#chat-input")!;

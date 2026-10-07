@@ -1,0 +1,22 @@
+---
+import { absoluteUrl, jsonLd } from '../../lib/comun/seo';
+interface Props {
+  items: { label: string; href?: string }[];
+}
+const { items } = Astro.props;
+const data = { '@context':'https://schema.org', '@type':'BreadcrumbList',
+  itemListElement:items.filter((item,i)=>item.href||i===items.length-1).map((item,i)=>({ '@type':'ListItem',position:i+1,name:item.label,
+    item:absoluteUrl(item.href ?? Astro.url.pathname),
+  })) };
+---
+
+<script type="application/ld+json" is:inline set:html={jsonLd(data)} />
+
+<div class="breadcrumb site-container flex flex-wrap items-center gap-2.5 py-6 text-[0.72rem] text-base-content max-tablet:gap-2 max-tablet:py-5 max-tablet:text-[0.65rem]">
+  {items.map((item, i) => (
+    <>
+      {i > 0 && <span>/</span>}
+      {item.href ? <a href={item.href} class="relative before:absolute before:-inset-x-1 before:-inset-y-3.5 before:content-['']">{item.label}</a> : item.label}
+    </>
+  ))}
+</div>

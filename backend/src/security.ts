@@ -8,6 +8,7 @@ import { ApiError } from "./http";
 
 export const randomToken = () => randomBytes(32).toString("base64url");
 export const tokenHash = (value: string) => createHash("sha256").update(value).digest("hex");
+export const PREVIEW_SECONDS = 2 * 60 * 60;
 export const normalizeEmail = (value: string) => value.trim().toLowerCase();
 export type { Account, GoogleIdentity, Security } from './security/types';
 
@@ -26,6 +27,20 @@ export function createSecurity(config: Config): SecurityContract {
       if (!value) return null;
       try {
         const { payload } = await jwtVerify(value, key, { issuer: config.origin, audience: "astudillo-api", algorithms: ["HS256"] });
+        const id = Number(payload.sub);
+        return Number.isSafeInteger(id) && id > 0 ? id : null;
+      } catch { return null; }
+    },
+    /** Pase de la vista previa: lo comprueba nginx en cada página, donde no llega la cookie de acceso. */
+    async signPreview(userId: number) {
+      return new SignJWT({}).setProtectedHeader({ alg: "HS256" })
+        .setIssuer(config.origin).setAudience("astudillo-vista-previa")
+        .setSubject(String(userId)).setIssuedAt().setExpirationTime(`${PREVIEW_SECONDS}s`).sign(key);
+    },
+    async verifyPreview(value: string | undefined): Promise<number | null> {
+      if (!value) return null;
+      try {
+        const { payload } = await jwtVerify(value, key, { issuer: config.origin, audience: "astudillo-vista-previa", algorithms: ["HS256"] });
         const id = Number(payload.sub);
         return Number.isSafeInteger(id) && id > 0 ? id : null;
       } catch { return null; }

@@ -1,7 +1,7 @@
 ---
-import AccountShell from '../../components/account/AccountShell.astro';
-import AccountCard from '../../components/account/AccountCard.astro';
-import AccountStatus from '../../components/account/AccountStatus.astro';
+import AccountShell from '../../components/cuenta/AccountShell.astro';
+import AccountCard from '../../components/cuenta/AccountCard.astro';
+import AccountStatus from '../../components/cuenta/AccountStatus.astro';
 ---
 
 <AccountShell title="Confirma tu correo" lead="Un paso más para activar tu cuenta.">
@@ -12,5 +12,5 @@ import AccountStatus from '../../components/account/AccountStatus.astro';
       <a class="mt-5 inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/registro/">Solicitar otro enlace</a>
     </AccountCard>
   </div>
-  <script src="../../scripts/account-verify.ts"></script>
+  <script src="../../scripts/cuenta/verificar.ts"></script>
 </AccountShell>

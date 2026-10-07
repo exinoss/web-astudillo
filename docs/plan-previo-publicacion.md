@@ -39,7 +39,7 @@ La decisión final sustituye la propuesta inicial de comparar la contraseña con
 
 Ejemplos que deben rechazarse por sucesión: `1234567*a`, `abcde123*`, `Abcd1*` y `7654a*`. `Ab1!xy` cumple los requisitos y demuestra que el mínimo de seis se conserva. `juan124*` no se rechaza por coincidir con el correo, pues ese criterio fue sustituido.
 
-Archivos de referencia: `backend/src/auth/password-policy.ts`, `backend/src/auth/services/registration.ts`, `backend/src/auth/services/passwords.ts`, `backend/src/cli/admin.ts`, `frontend/src/lib/auth/password.ts` y `frontend/src/lib/auth/page.ts`.
+Archivos de referencia: `backend/src/auth/password-policy.ts`, `backend/src/auth/services/registration.ts`, `backend/src/auth/services/passwords.ts`, `backend/src/cli/admin.ts`, `frontend/src/lib/cuenta/auth/password.ts` y `frontend/src/lib/cuenta/auth/page.ts`.
 
 ## 4. Contratos y verificación de perfil y chat
 

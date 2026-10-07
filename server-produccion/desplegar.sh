@@ -79,6 +79,12 @@ main() {
   curl -fsSk -o /dev/null --resolve "$dominio:443:127.0.0.1" "https://$dominio/api/health" || falla "nginx no responde"
 
   echo "$(date -Is) $VERSION" >> "$BASE/versiones"
+  # Cada versión ocupa cerca de 2 GB: se guardan la actual y las dos anteriores, y volver a una más
+  # antigua la descarga de nuevo de GHCR. Las imágenes en uso no se pueden borrar y se saltan.
+  local conservar
+  conservar=$(tail -n 3 "$BASE/versiones" | awk '{print $2}')
+  docker image ls --filter 'reference=ghcr.io/exinoss/astudillo-*' --format '{{.Repository}}:{{.Tag}}' \
+    | grep -vF "$conservar" | xargs -r docker image rm > /dev/null 2>&1 || true
   docker image prune -af --filter "until=168h" > /dev/null
   echo "Versión $VERSION desplegada"
 }

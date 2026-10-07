@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { VERSION_LEGAL } from '../src/lib/legal';
+import { VERSION_LEGAL } from '../src/lib/legal/legal';
 
 // API simulada de participación: sesión, alertas, sugerencias y chat en memoria.
 function mockApi(page: Page, opciones: { loggedIn?: boolean; accepted?: boolean } = {}) {

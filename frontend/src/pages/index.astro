@@ -1,14 +1,14 @@
 ---
 import Layout from "../layouts/Layout.astro";
-import Icon from "../components/Icon.astro";
-import Editable from "../components/Editable.astro";
+import Icon from "../components/comun/Icon.astro";
+import Editable from "../components/comun/Editable.astro";
 import { Image } from "astro:assets";
 import cover from "../assets/portada.jpg";
 import carlos from "../assets/carlos-vertical.png";
 import carlos2 from "../assets/carlos2.jpg";
 import carlos3 from "../assets/carlos3.jpg";
 import { contentRepository } from "../lib/data";
-import { enlaceRed } from "../lib/contenido";
+import { enlaceRed } from "../lib/comun/contenido";
 
 const proposals = await contentRepository.getProposals();
 const citizenLinks = await contentRepository.getCitizenLinks();
@@ -393,5 +393,5 @@ const [facebookUrl, tiktokUrl, whatsappUrl] = await Promise.all([enlaceRed("face
       </div>
     </div>
   </section>
-  <script src="../scripts/index.ts"></script>
+  <script src="../scripts/inicio/index.ts"></script>
 </Layout>

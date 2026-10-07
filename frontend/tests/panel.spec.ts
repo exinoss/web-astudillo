@@ -60,7 +60,7 @@ test('el panel no se desborda de 320 px a escritorio', async ({ page }) => {
   await mockPanelApi(page, panelData('admin'));
   await page.goto('/cuenta/panel/');
   await expect(page.locator('#panel-pestanias')).toBeVisible();
-  for (const tab of ['propuestas', 'biografia', 'obras', 'textos', 'chat', 'participacion', 'publicaciones', 'usuarios'])
+  for (const tab of ['propuestas', 'biografia', 'obras', 'acerca-de-carlos', 'textos', 'chat', 'participacion', 'publicaciones', 'usuarios'])
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(`/cuenta/panel/#${tab}`);

@@ -103,12 +103,12 @@ La fecha de actualización aparecerá al inicio de la página. Los cambios en lo
 | Elemento | Finalidad y vigencia observada | Evidencia |
 | --- | --- | --- |
 | Cookies de acceso y renovación | Sesión; 600 segundos y 7 días desde su emisión. Se renuevan y se eliminan al cerrar sesión. | `backend/src/auth/routes/common.ts`, `backend/src/auth/services/sessions.ts` |
-| Accesibilidad | Siete interruptores y escala de texto, persistentes hasta restablecer o borrar. | `frontend/src/scripts/layout.ts` |
+| Accesibilidad | Siete interruptores y escala de texto, persistentes hasta restablecer o borrar. | `frontend/src/scripts/comun/layout.ts` |
 | Preferencia de voz | Preferencia del chat guardada en el navegador. | `frontend/src/scripts/ciudadania/chat.ts` |
-| Estado de acceso | Preferencia de presentación de la navegación, sin ser una credencial de acceso. | `frontend/src/lib/auth/navigation.ts` |
-| Modo de edición | Preferencia local de la interfaz administrativa. | `frontend/src/scripts/modo-edicion.ts` |
-| Borrador de participación | Texto local y foto en IndexedDB; vigencia de recuperación de 24 horas. Se borra al enviar, descartar o detectar su vencimiento; no hay una tarea que lo borre con el navegador cerrado. | `frontend/src/lib/participacion/borrador.ts` |
-| Google Identity Services | Servicio externo para el botón de acceso; su carga no espera a que se pulse el botón. Solo se carga si está configurado. | `frontend/src/lib/auth/google.ts`, `frontend/src/scripts/account.ts` |
+| Estado de acceso | Preferencia de presentación de la navegación, sin ser una credencial de acceso. | `frontend/src/lib/cuenta/auth/navigation.ts` |
+| Modo de edición | Preferencia local de la interfaz administrativa. | `frontend/src/scripts/comun/modo-edicion.ts` |
+| Borrador de participación | Texto local y foto en IndexedDB; vigencia de recuperación de 24 horas. Se borra al enviar, descartar o detectar su vencimiento; no hay una tarea que lo borre con el navegador cerrado. | `frontend/src/lib/ciudadania/participacion/borrador.ts` |
+| Google Identity Services | Servicio externo para el botón de acceso; su carga no espera a que se pulse el botón. Solo se carga si está configurado. | `frontend/src/lib/cuenta/auth/google.ts`, `frontend/src/scripts/cuenta/index.ts` |
 | Analítica publicitaria | No se encontró una integración instalada en la revisión. La estadística anónima acordada después del cierre es otra finalidad. | Revisión de páginas, scripts y dependencias del frontend |
 
 Este inventario refleja el repositorio revisado. Cloudflare, registros del VPS, configuración efectiva de Google, proveedores y servicios de producción se comprobarán dentro del despliegue y A8.

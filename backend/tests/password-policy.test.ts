@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { requirePassword } from '../../frontend/src/lib/auth/password';
+import { requirePassword } from '../../frontend/src/lib/cuenta/auth/password';
 import { requireConfirmation, requireNewPassword } from '../src/auth/password-policy';
 import { ApiError } from '../src/http';
 

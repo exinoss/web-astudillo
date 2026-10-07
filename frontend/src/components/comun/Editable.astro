@@ -1,0 +1,14 @@
+---
+// data-editable lo usa el modo edición para encontrar el texto; cada salto de línea es un <br>.
+import { texto, type TextKey } from "../../lib/comun/contenido";
+
+interface Props {
+  clave: TextKey;
+  as?: string;
+  [atributo: string]: unknown;
+}
+const { clave, as: Tag = "span", ...atributos } = Astro.props;
+const lineas = (await texto(clave)).split("\n");
+---
+
+<Tag {...atributos} data-editable={clave}>{lineas.map((linea, i) => <Fragment>{i > 0 && <br />}{linea}</Fragment>)}</Tag>

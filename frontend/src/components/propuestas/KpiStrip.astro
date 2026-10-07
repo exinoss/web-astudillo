@@ -1,0 +1,26 @@
+---
+import type { Kpi } from "../../lib/data/types";
+
+interface Props {
+  kpis: Kpi[];
+  label: string;
+}
+const { kpis, label } = Astro.props;
+---
+
+{kpis.length > 0 && (
+  <section class="bg-primary text-primary-content" aria-label={label}>
+    <dl class="site-container my-0 grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] border-l border-l-primary-content/15 max-tablet:grid-cols-1 max-tablet:border-l-0">
+      {kpis.map((kpi) => (
+        <div class="flex flex-col items-center gap-1.5 border-r border-r-primary-content/15 px-8 py-7 text-center max-tablet:flex-row max-tablet:items-baseline max-tablet:text-left max-tablet:justify-between max-tablet:gap-4 max-tablet:border-r-0 max-tablet:border-t max-tablet:border-t-primary-content/15 max-tablet:px-0 max-tablet:py-4 max-tablet:first:border-t-0">
+          <dt class="order-2 text-[0.78rem] font-bold tracking-[0.12em] uppercase max-tablet:order-1 max-tablet:text-[0.85rem]">
+            {kpi.label}
+          </dt>
+          <dd class="order-1 m-0 font-display text-[3.6rem] leading-none font-bold text-accent max-tablet:order-2 max-tablet:text-[2.4rem]">
+            {kpi.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  </section>
+)}

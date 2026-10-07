@@ -1,6 +1,7 @@
 import type { ContentRepository } from './content-repository';
 import { citizenIcons, proposalIcons, proposalModels } from './presentation';
-import type { BiographyMilestone, Proposal, UploadedPicture, WorkProgress } from './types';
+import { type ApiAboutCarlosPage, toAboutCarlosPage } from './acerca-de-carlos';
+import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, Proposal, UploadedPicture, WorkProgress } from './types';
 
 export interface Snapshot {
   version: 1;
@@ -10,6 +11,7 @@ export interface Snapshot {
   biografia: { anios: string; titulo: string; texto: string; alt: string | null; foto: UploadedPicture | null }[];
   obras: { slug: string; nota: string; actualizadoEn: string; hitos: { nombre: string; completado: boolean }[]; fotos: (UploadedPicture & { pie: string })[] }[];
   chat?: { pregunta: string; destacada: boolean }[];
+  acercaDeCarlos?: Record<string, ApiAboutCarlosPage>;
 }
 
 export abstract class SnapshotRepository implements ContentRepository {
@@ -44,4 +46,7 @@ export abstract class SnapshotRepository implements ContentRepository {
   async getTexts() { return (await this.load()).textos; }
   async getInitialTexts() { return (await this.load()).originales ?? {}; }
   async getChatQuickReplies() { return ((await this.load()).chat ?? []).filter(c => c.destacada).map(c => c.pregunta); }
+  async getAboutCarlosPage(slug: AboutCarlosSlug): Promise<AboutCarlosPage> {
+    return toAboutCarlosPage((await this.load()).acercaDeCarlos?.[slug]);
+  }
 }

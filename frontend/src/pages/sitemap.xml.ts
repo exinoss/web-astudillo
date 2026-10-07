@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { contentRepository } from '../lib/data';
-import { absoluteUrl, publicPaths } from '../lib/seo';
+import { absoluteUrl, publicPaths } from '../lib/comun/seo';
 export const GET: APIRoute = async () => {
   const [proposals,citizens]=await Promise.all([contentRepository.getProposals(),contentRepository.getCitizenLinks()]);
   const paths=[...publicPaths,...proposals.map(p=>`/propuestas/${p.slug}/`),...citizens.map(p=>`/ciudadania/${p.slug}/`)];

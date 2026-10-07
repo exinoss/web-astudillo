@@ -1,0 +1,47 @@
+<div data-franja-vista-previa class="sticky top-0 z-[60] bg-campaign-red text-[0.8rem] text-white">
+  <div class="site-container flex flex-wrap items-center justify-between gap-x-4 py-1">
+    <strong>Estás viendo el borrador: así quedará el sitio al publicar.</strong>
+    <a href="/api/vista-previa/salir" data-salir-vista-previa class="inline-flex min-h-11 items-center font-bold underline underline-offset-4">Salir de la vista previa</a>
+  </div>
+</div>
+
+<script>
+  import { leaveDraftPreview } from "../../lib/comun/vista-previa";
+
+  const bar = document.querySelector<HTMLElement>("[data-franja-vista-previa]");
+  if (bar) {
+    // La cabecera fija (Layout.astro) y el desplazamiento a anclas (base.css) se colocan bajo la franja.
+    new ResizeObserver(() => document.documentElement.style.setProperty("--alto-franja", `${bar.offsetHeight}px`)).observe(bar);
+
+    bar.querySelector("[data-salir-vista-previa]")!.addEventListener("click", (event) => {
+      event.preventDefault();
+      void leaveDraftPreview();
+    });
+
+    // Se mira pero no se actúa: /cuenta/ no se sirve desde la vista previa (un enlace allí la abandonaría sin
+    // cerrarla) y los envíos de participación (`data-envia` en components/ciudadania/) se guardarían como reales.
+    const BLOCKED = ["cursor-not-allowed", "bg-[repeating-linear-gradient(135deg,#ffffff40_0_6px,#06317626_6px_12px)]"];
+    const leaves = (link: HTMLAnchorElement) => link.origin === location.origin && link.pathname.startsWith("/cuenta/");
+    const blocked = (target: EventTarget | null) => {
+      const el = (target as Element | null)?.closest?.<HTMLElement>("a[href], [data-envia]");
+      return el && (el.matches("[data-envia]") || leaves(el as HTMLAnchorElement)) ? el : null;
+    };
+    const mark = () => document.querySelectorAll<HTMLElement>("a[href], [data-envia]").forEach((el) => {
+      if (blocked(el) !== el || el.getAttribute("aria-disabled") === "true") return;
+      el.setAttribute("aria-disabled", "true");
+      el.title = "No disponible en la vista previa";
+      el.classList.add(...BLOCKED);
+    });
+    mark();
+    new MutationObserver(mark).observe(document.body, { childList: true, subtree: true });
+    document.addEventListener("click", (event) => {
+      if (!blocked(event.target)) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+    document.addEventListener("submit", (event) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }, true);
+  }
+</script>

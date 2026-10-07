@@ -1,5 +1,5 @@
 import type { Account, AuthRepository, PendingGoogleRegistration, Profile, RegistrationInput } from '../auth-repository';
-import type { AceptacionLegal } from '../../legal';
+import type { AceptacionLegal } from '../../legal/legal';
 import { apiRequest } from './api-client';
 
 export class HttpAuthRepository implements AuthRepository {

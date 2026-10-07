@@ -1,4 +1,4 @@
-import type { AceptacionLegal } from '../legal';
+import type { AceptacionLegal } from '../legal/legal';
 
 export interface Account {
   id: number;

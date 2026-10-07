@@ -1,0 +1,79 @@
+---
+import Foto from "../comun/Foto.astro";
+import Icon from "../comun/Icon.astro";
+import type { WorkEvidence } from "../../lib/data/types";
+
+interface Props {
+  id: string;
+  evidence: WorkEvidence[];
+  name: string;
+}
+const { id, evidence, name } = Astro.props;
+const flecha =
+  "grid size-11 place-items-center rounded-full text-primary-content hover:bg-primary-content/15";
+---
+
+{evidence.length ? (
+  <div class="evidencias-acordeon group h-full">
+  <button
+    class="evidencias-desplegar hidden min-h-12 w-full items-center justify-between gap-3 rounded-[4px] border border-base-300 bg-base-100 px-4 text-[0.85rem] font-bold text-primary max-tablet:flex"
+    type="button"
+    aria-expanded="false"
+    aria-controls={`evidencias-${id}`}
+  >
+    <span class="flex items-center gap-2.5">
+      <Icon name="image" size={20} />
+      Fotos del avance ({evidence.length})
+    </span>
+    <span class="transition-transform duration-200 group-[.is-abierto]:rotate-180"><Icon name="chevron" size={18} /></span>
+  </button>
+  <div
+    id={`evidencias-${id}`}
+    class="evidencias relative h-full min-h-[340px] overflow-hidden rounded-[4px] bg-primary max-tablet:mt-2 max-tablet:hidden max-tablet:aspect-[4/3] max-tablet:h-auto max-tablet:min-h-0 max-tablet:group-[.is-abierto]:block"
+    role="region"
+    aria-roledescription="carrusel"
+    aria-label={`Evidencias del avance de ${name}`}
+  >
+    {evidence.map((foto, i) => (
+      <figure
+        class="evidencia absolute inset-0 m-0"
+        role="group"
+        aria-roledescription="diapositiva"
+        aria-label={`${i + 1} de ${evidence.length}`}
+        hidden={i !== 0}
+      >
+        <Foto
+          class="h-full w-full object-cover"
+          picture={foto.image}
+          alt={foto.alt}
+          widths={[480, 720, 960]}
+          sizes="(max-width: 760px) 90vw, 620px"
+        />
+        <figcaption class="absolute inset-x-0 bottom-0 min-h-[54px] bg-primary/85 py-4 pr-[160px] pl-4 text-[0.8rem] leading-[1.4] text-primary-content">
+          {foto.caption}
+        </figcaption>
+      </figure>
+    ))}
+    {evidence.length > 1 && (
+      <div class="absolute right-1.5 bottom-[5px] flex items-center gap-1 text-primary-content">
+        <button class:list={["evidencia-anterior", flecha]} type="button" aria-label="Foto anterior">
+          <Icon name="chevronLeft" size={20} />
+        </button>
+        <span class="evidencia-contador min-w-10 text-center text-[0.75rem] font-bold" aria-live="polite">
+          1 / {evidence.length}
+        </span>
+        <button class:list={["evidencia-siguiente", flecha]} type="button" aria-label="Foto siguiente">
+          <Icon name="chevronRight" size={20} />
+        </button>
+      </div>
+    )}
+  </div>
+  </div>
+) : (
+  <div class="flex h-full min-h-[340px] flex-col items-center justify-center gap-3 rounded-[4px] border border-dashed border-base-300 bg-base-100/60 p-6 text-center text-[0.85rem] text-primary max-tablet:min-h-0 max-tablet:flex-row max-tablet:justify-start max-tablet:p-4 max-tablet:text-left">
+    <Icon name="obras" size={30} />
+    Aún no hay imágenes del avance de esta obra.
+  </div>
+)}
+
+<script src="../../scripts/ciudadania/evidencias.ts"></script>
