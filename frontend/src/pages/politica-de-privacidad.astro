@@ -1,10 +1,10 @@
 ---
 import LegalLayout from "../layouts/LegalLayout.astro";
-import LegalContact from "../components/LegalContact.astro";
-import { CORREO_LEGAL } from "../lib/legal";
+import LegalContact from "../components/legal/LegalContact.astro";
+import { CORREO_LEGAL } from "../lib/legal/legal";
 ---
 
-<LegalLayout title="Política de privacidad" actualizado="5 de octubre de 2026" description="Cómo se usan los datos de cuentas, alertas, sugerencias y consultas; conservación, cookies y derechos de los usuarios.">
+<LegalLayout title="Política de privacidad" actualizado="6 de octubre de 2026" description="Cómo se usan los datos de cuentas, alertas, sugerencias y consultas; conservación, cookies y derechos de los usuarios.">
   <p>Esta política explica cómo se tratan tus datos personales cuando utilizas el sitio de Carlos Astudillo. Se aplica la Ley Orgánica de Protección de Datos Personales del Ecuador y su reglamento.</p>
   <h2>1. Responsable y contacto</h2>
   <LegalContact />
@@ -34,6 +34,7 @@ import { CORREO_LEGAL } from "../lib/legal";
     <li><strong>Google:</strong> muestra el botón de acceso y, si lo utilizas, te identifica con tu cuenta de Google. También envía los correos del sitio (verificación de cuenta, acceso y recuperación de contraseña). Trata los datos en Estados Unidos y en otros países.</li>
   </ul>
   <p>Por ello, tus datos se tratan fuera del Ecuador, principalmente en Estados Unidos. Puedes pedir más información sobre estos proveedores y las garantías aplicables al correo de contacto.</p>
+  <p>Algunas páginas incluyen videos publicados en Facebook, TikTok, YouTube o Vimeo. El reproductor solo se carga si pulsas el video; en ese momento ese servicio recibe tu visita (la dirección IP y los datos técnicos de la conexión) y puede usar sus propias cookies según su política.</p>
   <p>Si usas el dictado por voz del chat, tu navegador envía el audio a su propio servicio de reconocimiento de voz (en Chrome, el de Google) según su política. Si prefieres no hacerlo, escribe la consulta.</p>
   <p>Cuando está configurado, el botón de acceso con Google utiliza servicios de Google al mostrar la opción en la página de cuenta, aunque finalmente elijas acceder con correo. Si accedes con Google, consulta también su <a href="https://policies.google.com/privacy">Política de privacidad</a>. Al abrir una red social se aplica la política del servicio correspondiente.</p>
   <p>Ante una obligación legal o una actuación legítima de una autoridad competente, podrá comunicarse la información pertinente y necesaria para el caso. No se entregarán indiscriminadamente los datos de los usuarios.</p>
@@ -48,7 +49,7 @@ import { CORREO_LEGAL } from "../lib/legal";
   <h2>7. Cookies y almacenamiento del navegador</h2>
   <p>El sitio utiliza cookies de acceso para mantener tu sesión. La cookie de acceso dura hasta 10 minutos y la de renovación hasta 7 días desde su emisión. Al cerrar sesión se eliminan las cookies de acceso del sitio.</p>
   <p>El navegador puede recordar tus ajustes de accesibilidad, la preferencia de voz del chat y el estado de acceso hasta que los restablezcas o borres los datos correspondientes. Si dejas un formulario pendiente, puede guardar su texto y foto en tu dispositivo. El borrador tiene 24 horas de vigencia para recuperarlo; puede permanecer almacenado hasta que lo envíes, lo descartes, vuelvas al formulario tras su vencimiento o lo elimines desde las opciones del navegador.</p>
-  <p>Google es el único servicio externo integrado actualmente para iniciar sesión. Su botón se carga en la página de cuenta cuando está disponible. No utilizamos analítica, píxeles publicitarios ni seguimiento para anuncios. Puedes gestionar cookies y otros datos guardados desde las opciones de tu navegador; si bloqueas el almacenamiento, algunas funciones pueden dejar de estar disponibles.</p>
+  <p>Google es el único servicio externo integrado actualmente para iniciar sesión. Su botón se carga en la página de cuenta cuando está disponible. Los reproductores de video de otros servicios solo se cargan cuando pulsas un video. No utilizamos analítica, píxeles publicitarios ni seguimiento para anuncios. Puedes gestionar cookies y otros datos guardados desde las opciones de tu navegador; si bloqueas el almacenamiento, algunas funciones pueden dejar de estar disponibles.</p>
   <h2>8. Cambios en esta política</h2>
   <p>La fecha de actualización aparece al inicio de esta página. Los cambios en los usos de tus datos se informarán antes de aplicarse y se solicitará una nueva autorización cuando corresponda.</p>
 </LegalLayout>

@@ -171,7 +171,7 @@ La interfaz `ContentRepository` **no cambia**: es un campo más en un tipo que y
 
 ### Componente
 
-Nuevo `frontend/src/components/Model3D.astro`, con props `src`, `poster`, `alt`:
+Nuevo `frontend/src/components/propuestas/Model3D.astro`, con props `src`, `poster`, `alt`:
 
 - Renderiza el póster como `<img>` normal desde el primer pintado.
 - Un `IntersectionObserver` carga el script de `model-viewer` y el `.glb` solo cuando el bloque entra en pantalla.

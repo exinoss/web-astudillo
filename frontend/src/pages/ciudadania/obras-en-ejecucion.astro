@@ -1,12 +1,12 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import Breadcrumb from "../../components/Breadcrumb.astro";
-import DetailBanner from "../../components/DetailBanner.astro";
-import EvidenceCarousel from "../../components/EvidenceCarousel.astro";
-import ObraProgreso from "../../components/ObraProgreso.astro";
-import Editable from "../../components/Editable.astro";
+import Breadcrumb from "../../components/comun/Breadcrumb.astro";
+import DetailBanner from "../../components/comun/DetailBanner.astro";
+import EvidenceCarousel from "../../components/ciudadania/EvidenceCarousel.astro";
+import ObraProgreso from "../../components/ciudadania/ObraProgreso.astro";
+import Editable from "../../components/comun/Editable.astro";
 import { contentRepository } from "../../lib/data";
-import { texto } from "../../lib/contenido";
+import { texto } from "../../lib/comun/contenido";
 
 const [works, proposals] = await Promise.all([
   contentRepository.getWorks(),

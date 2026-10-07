@@ -33,6 +33,13 @@ export function panelData(rol: 'admin' | 'coadmin') {
         { pregunta: 'Ver propuestas', palabrasClave: 'propuesta, plan', respuesta: 'Revisa las siete propuestas.',
           enlaceTexto: 'Ver propuestas', enlaceRuta: '/#propuestas', destacada: true },
       ],
+      acercaDeCarlos: {
+        'por-que-quiero-ser-alcalde': {
+          tarjetas: [{ foto: photo(3), alt: 'Vecinos en una calle', titulo: 'Escuchar a su gente', texto: 'Conocer las necesidades de los barrios.', color: 'rojo', enfoque: { x: 50, y: 50 } }],
+          video: null, retrato: null, entrevista: [], galeria: [],
+        },
+        'conoce-mas': { tarjetas: [], video: null, retrato: null, entrevista: [], galeria: [] },
+      } as Record<string, Record<string, unknown>>,
       // Como la API real: un texto sin cambiar no tiene versión. Los valores son md5 de ejemplo.
       versiones: {
         textos: { 'pie.lema': 'a'.repeat(32) } as Record<string, string>,
@@ -40,6 +47,7 @@ export function panelData(rol: 'admin' | 'coadmin') {
         biografia: 'd'.repeat(32),
         obras: { 'agua-potable': 'e'.repeat(32) } as Record<string, string>,
         chat: 'f'.repeat(32),
+        acercaDeCarlos: { 'por-que-quiero-ser-alcalde': '1'.repeat(32), 'conoce-mas': '2'.repeat(32) } as Record<string, string>,
       },
     },
     alertas: [
@@ -48,11 +56,14 @@ export function panelData(rol: 'admin' | 'coadmin') {
     ],
     sinRespuesta: [{ clave: 'cuando hay caravana', ejemplo: '¿Cuándo hay caravana?', veces: 3, ultimaVez: '2026-09-30T15:00:00Z' }],
     pending: [] as { tipo: string; descripcion: string }[],
+    savedPages: [] as Record<string, unknown>[],
     users: Array.from({ length: 23 }, (_, i) => ({
       id: i + 2, correo: `persona${i + 2}@example.com`, nombresCompletos: `Persona ${i + 2}`,
       rol: i === 0 ? 'admin' : i < 3 ? 'coadmin' : 'votante', estado: i === 5 ? 'bloqueado' : 'activo',
     })),
     publications: [] as { id: number; estado: string; creadoEn: string; iniciadoEn: null; terminadoEn: null; autor: string; detalle: null }[],
+    // Estados que va devolviendo la vista previa; el último se repite.
+    preview: { states: ['en_cola', 'compilando', 'lista'], requests: 0, entered: false },
   };
 }
 
@@ -99,6 +110,27 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
       return json({ version: data.draft.versiones.obras[work[1]] });
     }
     if (path === '/api/admin/medios') return json(photo(90));
+    if (path === '/api/admin/vista-previa') {
+      if (method === 'POST') data.preview.requests++;
+      return json({ estado: data.preview.states.length > 1 ? data.preview.states.shift() : data.preview.states[0] });
+    }
+    if (path === '/api/admin/vista-previa/entrar') {
+      data.preview.entered = true;
+      return json({});
+    }
+    const aboutCarlosPage = path.match(/^\/api\/admin\/contenido\/acerca-de-carlos\/(.+)$/);
+    if (aboutCarlosPage) {
+      const { version, ...page } = body();
+      if (version !== data.draft.versiones.acercaDeCarlos[aboutCarlosPage[1]]) return conflict();
+      data.savedPages.push({ slug: aboutCarlosPage[1], ...page });
+      const withPhoto = (items: { idMedio: number }[]) => items.map(({ idMedio, ...rest }) => ({ ...rest, foto: photo(idMedio) }));
+      data.draft.acercaDeCarlos[aboutCarlosPage[1]] = { ...page, tarjetas: withPhoto(page.tarjetas), galeria: withPhoto(page.galeria),
+        retrato: page.retrato && { alt: page.retrato.alt, foto: photo(page.retrato.idMedio) },
+        video: page.video && { ...page.video, portada: page.video.idPortada ? photo(page.video.idPortada) : null } };
+      data.draft.versiones.acercaDeCarlos[aboutCarlosPage[1]] = nextVersion();
+      data.pending = [...data.pending.filter(c => c.tipo !== 'Página'), { tipo: 'Página', descripcion: 'Por qué quiero ser alcalde' }];
+      return json({ version: data.draft.versiones.acercaDeCarlos[aboutCarlosPage[1]] });
+    }
     const proposal = path.match(/^\/api\/admin\/contenido\/propuestas\/(.+)$/);
     if (proposal) {
       const { version, ...fields } = body();

@@ -1,10 +1,10 @@
-import { mostrarCarga } from "../../lib/animaciones";
-import { errorText, showStatus } from "../../lib/auth/page";
+import { mostrarCarga } from "../../lib/comun/animaciones";
+import { errorText, showStatus } from "../../lib/cuenta/auth/page";
 import { suggestionRepository } from "../../lib/data/participation";
-import { borrar, leer } from "../../lib/participacion/borrador";
-import { enviarConSesion, marcarError } from "../../lib/participacion/envio";
-import { prepararAceptacion } from '../../lib/participacion/aceptacion';
-import { MIN_SUGERENCIA } from "../../lib/participacion/tipos";
+import { borrar, leer } from "../../lib/ciudadania/participacion/borrador";
+import { enviarConSesion, marcarError } from "../../lib/ciudadania/participacion/envio";
+import { prepararAceptacion } from '../../lib/ciudadania/participacion/aceptacion';
+import { MIN_SUGERENCIA } from "../../lib/ciudadania/participacion/tipos";
 
 const form = document.querySelector<HTMLFormElement>("#sugerencia-form")!;
 const temas = form.querySelector<HTMLFieldSetElement>("#sugerencia-tema")!;

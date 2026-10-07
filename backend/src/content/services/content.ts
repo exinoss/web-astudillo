@@ -4,6 +4,7 @@ import type { Authorization } from '../../auth/types';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import type { BiographyItem, ChatAnswer, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
+import { listAboutCarlosPages } from './about-carlos';
 import { toPhoto } from './media';
 import { linkValue, plainText, sitePath, year } from './validation';
 
@@ -38,12 +39,13 @@ export interface WorkInput {
 export function createContent(sql: SQL, authorization: Authorization) {
   /** Lee el borrador actual completo, con la misma forma que se congela al publicar. */
   async function snapshot(): Promise<Snapshot> {
-    const [texts, proposals, biography, works, chat] = await Promise.all([
+    const [texts, proposals, biography, works, chat, acercaDeCarlos] = await Promise.all([
       callPg<{ clave: string; valor: string }>(sql, 'textsList'),
       callPg<ProposalRow>(sql, 'proposalsList'),
       callPg<BiographyRow>(sql, 'biographyList'),
       callPg<WorkRow>(sql, 'worksList'),
       callPg<ChatRow>(sql, 'chatList'),
+      listAboutCarlosPages(sql),
     ]);
     return {
       version: 1,
@@ -64,6 +66,7 @@ export function createContent(sql: SQL, authorization: Authorization) {
         pregunta: c.pregunta, palabrasClave: c.palabras_clave, respuesta: c.respuesta,
         enlaceTexto: c.enlace_texto, enlaceRuta: c.enlace_ruta, destacada: c.destacada,
       })),
+      acercaDeCarlos,
     };
   }
 
@@ -88,6 +91,12 @@ export function createContent(sql: SQL, authorization: Authorization) {
 
   return {
     snapshot,
+
+    /** El borrador con la misma forma que `current()`: es lo que compila la vista previa. */
+    async draftSite(): Promise<Snapshot> {
+      const [draft, originales] = await Promise.all([snapshot(), initialTexts()]);
+      return { ...draft, textos: { ...originales, ...draft.textos }, originales };
+    },
 
     /**
      * Borrador con la versión de cada parte. Las versiones se leen antes que el contenido: si alguien
@@ -232,6 +241,11 @@ export function createContent(sql: SQL, authorization: Authorization) {
 const stable = (value: unknown): string => JSON.stringify(value, (_, v) =>
   v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b))) : v);
 
+const PAGE_NAMES: Record<string, string> = {
+  'por-que-quiero-ser-alcalde': 'Por qué quiero ser alcalde', 'conoce-mas': 'Conoce más sobre Carlos',
+};
+const EMPTY_PAGE = { tarjetas: [], video: null, retrato: null, entrevista: [], galeria: [] };
+
 /** Cambios entre dos versiones del contenido, descritos para el panel. */
 export function diff(before: Snapshot | null, after: Snapshot) {
   if (!before) return [{ tipo: 'Sitio', descripcion: 'Primera publicación con el contenido del panel' }];
@@ -251,6 +265,8 @@ export function diff(before: Snapshot | null, after: Snapshot) {
     if (!same({ ...old, actualizadoEn: 0 }, { ...o, actualizadoEn: 0 })) changes.push({ tipo: 'Obra', descripcion: name });
   }
   if (!same(before.chat ?? [], after.chat ?? [])) changes.push({ tipo: 'Chat', descripcion: 'Preguntas frecuentes' });
+  for (const [slug, page] of Object.entries(after.acercaDeCarlos ?? {}))
+    if (!same(before.acercaDeCarlos?.[slug] ?? EMPTY_PAGE, page)) changes.push({ tipo: 'Página', descripcion: PAGE_NAMES[slug] ?? slug });
   return changes;
 }
 

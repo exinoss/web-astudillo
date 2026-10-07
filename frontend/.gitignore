@@ -3,6 +3,7 @@ dist/
 dist-test/
 dist-nueva/
 dist-anterior/
+dist-vista-previa*/
 # generated types
 .astro/
 # test artifacts

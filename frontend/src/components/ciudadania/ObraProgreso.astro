@@ -1,0 +1,97 @@
+---
+import Icon from "../comun/Icon.astro";
+import type { Proposal, WorkProgress } from "../../lib/data/types";
+import { STAGE_NAMES, workProgress, type WorkStage } from "../../lib/ciudadania/obras";
+
+interface Props {
+  work: WorkProgress;
+  proposal: Proposal;
+  /**
+   * En la página de la propuesta: sin nombre ni enlace (ya se está en ella) y con la fecha arriba.
+   * `ancho` reparte el avance y los hitos en dos columnas (cuando va a todo el ancho, bajo el modelo 3D).
+   */
+  enPropuesta?: boolean;
+  ancho?: boolean;
+  class?: string;
+}
+const { work, proposal, enPropuesta = false, ancho = false, class: extra } = Astro.props;
+const { percent, stage } = workProgress(work.milestones);
+const etapas: Record<WorkStage, string> = {
+  "por-iniciar": "border border-base-300 text-primary",
+  "en-ejecucion": "bg-secondary text-primary",
+  terminada: "bg-primary text-primary-content",
+};
+const siguiente = work.milestones.findIndex((hito) => !hito.done);
+// Fecha fija sin zona horaria: `new Date("AAAA-MM-DD")` se interpreta en UTC y en Ecuador mostraría el día anterior.
+const actualizado = `Actualizado el ${new Intl.DateTimeFormat("es-EC", { dateStyle: "long", timeZone: "UTC" }).format(new Date(work.updatedAt))}`;
+const etiqueta = "text-[0.64rem] font-bold tracking-[0.12em] text-neutral uppercase";
+---
+
+<article
+  class:list={[
+    "obra flex flex-col rounded-[4px] bg-base-100 p-7 text-primary [border-right:1px_solid_#06317630] [border-bottom:1px_solid_#06317630] [border-left:1px_solid_#06317630] [border-top:4px_solid_var(--color-secondary)] [box-shadow:0_4px_14px_#06317608] max-desktop-sm:p-[23px] max-tablet:px-4 max-tablet:py-5",
+    extra,
+  ]}
+>
+  <div class:list={[ancho && "grid grid-cols-2 gap-x-12 gap-y-2.5 max-tablet:grid-cols-1"]}>
+    <div>
+      <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
+        {enPropuesta ? (
+          <span class={etiqueta}>{actualizado}</span>
+        ) : (
+          <span class="flex items-center gap-2.5">
+            <Icon name={proposal.icon} size={30} />
+            <span class={etiqueta}>{proposal.label}</span>
+          </span>
+        )}
+        <span class:list={["rounded-full px-3 py-1 text-[0.66rem] font-bold tracking-[0.08em] whitespace-nowrap uppercase", etapas[stage]]}>
+          {STAGE_NAMES[stage]}
+        </span>
+      </div>
+      {!enPropuesta && <h2 class="m-0 mb-4 text-[2rem] leading-[1.05] max-tablet:text-[1.7rem]">{proposal.name}</h2>}
+      <div class="mb-1.5 flex items-baseline justify-between text-[0.8rem] font-bold">
+        <span>Avance</span>
+        <span class:list={["font-display leading-none", enPropuesta ? "text-[2.4rem]" : "text-[1.5rem]"]}>{percent} %</span>
+      </div>
+      <div
+        class="h-2.5 overflow-hidden rounded-full bg-[#06317618]"
+        role="progressbar"
+        aria-label={`Avance de ${proposal.name}`}
+        aria-valuenow={percent}
+        aria-valuemin="0"
+        aria-valuemax="100"
+      >
+        <div class="h-full rounded-full bg-neutral" style={`width: ${percent}%`} />
+      </div>
+      <p class:list={["mt-4 text-[0.85rem] leading-[1.6]", ancho ? "mb-0" : "mb-5"]}>{work.note}</p>
+    </div>
+    <ol class:list={["m-0 flex list-none flex-col gap-2.5 p-0", !ancho && !enPropuesta && "mb-6"]} aria-label="Hitos de la obra">
+      {work.milestones.map((hito, i) => {
+        const actual = i === siguiente && stage !== "por-iniciar";
+        return (
+          <li class="flex items-center gap-3 text-[0.85rem]">
+            <span
+              class:list={[
+                "grid size-[22px] shrink-0 place-items-center rounded-full",
+                hito.done ? "bg-neutral text-neutral-content" : actual ? "border-2 border-secondary" : "border-2 border-base-300",
+              ]}
+              aria-hidden="true"
+            >
+              {hito.done && <Icon name="check" size={13} />}
+            </span>
+            <span class:list={[hito.done ? "" : actual ? "font-bold" : "text-base-content/70"]}>{hito.name}</span>
+            <span class="sr-only">{hito.done ? "(completado)" : actual ? "(en curso)" : "(pendiente)"}</span>
+          </li>
+        );
+      })}
+    </ol>
+  </div>
+  {!enPropuesta && (
+    <div class="mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-t-base-300 pt-4 text-[0.75rem]">
+      <span>{actualizado}</span>
+      <a class="inline-flex min-h-11 items-center gap-2 font-bold text-neutral hover:underline" href={`/propuestas/${proposal.slug}/`}>
+        Ver propuesta <Icon name="arrow" size={17} />
+      </a>
+    </div>
+  )}
+</article>

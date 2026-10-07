@@ -19,6 +19,8 @@ BEGIN
     GRANT SELECT, UPDATE (estado, iniciado_en, terminado_en, detalle) ON tb_publicaciones TO astudillo_pub;
     GRANT EXECUTE ON FUNCTION fn_publication_claim(), fn_publication_finish(integer, boolean, text),
       fn_publication_recover() TO astudillo_pub;
+    GRANT SELECT, UPDATE (estado, terminado_en, detalle) ON tb_vista_previa TO astudillo_pub;
+    GRANT EXECUTE ON FUNCTION fn_preview_claim(), fn_preview_finish(boolean, text), fn_preview_recover() TO astudillo_pub;
   END IF;
 
   -- Consultas y copias (pg_dump) de solo lectura; no lo crea roles.sh, se crea a mano.

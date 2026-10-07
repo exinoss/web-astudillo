@@ -1,11 +1,11 @@
 ---
-import AccountShell from '../../components/account/AccountShell.astro';
-import AccountCard from '../../components/account/AccountCard.astro';
-import AccountField from '../../components/account/AccountField.astro';
-import AccountStatus from '../../components/account/AccountStatus.astro';
-import AccountSignOut from '../../components/account/AccountSignOut.astro';
-import Icon from '../../components/Icon.astro';
-import LegalAcceptance from '../../components/LegalAcceptance.astro';
+import AccountShell from '../../components/cuenta/AccountShell.astro';
+import AccountCard from '../../components/cuenta/AccountCard.astro';
+import AccountField from '../../components/cuenta/AccountField.astro';
+import AccountStatus from '../../components/cuenta/AccountStatus.astro';
+import AccountSignOut from '../../components/cuenta/AccountSignOut.astro';
+import Icon from '../../components/comun/Icon.astro';
+import LegalAcceptance from '../../components/comun/LegalAcceptance.astro';
 ---
 
 <AccountShell title="Mi cuenta" lead="Accede para gestionar tus datos y participar.">
@@ -94,5 +94,5 @@ import LegalAcceptance from '../../components/LegalAcceptance.astro';
       <button id="blocked-logout-button" type="button" class="button w-full">Cerrar sesión</button>
     </AccountCard>
   </div>
-  <script src="../../scripts/account.ts"></script>
+  <script src="../../scripts/cuenta/index.ts"></script>
 </AccountShell>

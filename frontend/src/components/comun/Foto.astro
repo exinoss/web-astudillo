@@ -1,0 +1,31 @@
+---
+import { Image } from "astro:assets";
+import type { Picture } from "../../lib/data/types";
+import { isUploaded, uploadedSrcset, uploadedUrl } from "../../lib/comun/fotos";
+
+interface Props {
+  picture: Picture;
+  alt: string;
+  class?: string;
+  sizes: string;
+  widths: number[];
+  loading?: "lazy" | "eager";
+}
+const { picture, alt, class: className, sizes, widths, loading = "lazy" } = Astro.props;
+---
+
+{isUploaded(picture) ? (
+  <img
+    class={className}
+    src={uploadedUrl(picture, picture.anchos.at(-1)!)}
+    srcset={uploadedSrcset(picture)}
+    sizes={sizes}
+    width={picture.ancho}
+    height={picture.alto}
+    alt={alt}
+    loading={loading}
+    decoding="async"
+  />
+) : (
+  <Image class={className} src={picture} alt={alt} widths={widths} sizes={sizes} loading={loading} />
+)}

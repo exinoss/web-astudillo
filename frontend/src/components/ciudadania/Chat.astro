@@ -1,6 +1,6 @@
 ---
-import Icon from "../Icon.astro";
-import LegalAcceptance from '../LegalAcceptance.astro';
+import Icon from "../comun/Icon.astro";
+import LegalAcceptance from '../comun/LegalAcceptance.astro';
 
 interface Props {
   quickReplies: string[];
@@ -39,7 +39,7 @@ const { quickReplies } = Astro.props;
     </div>
     <div class="flex flex-wrap gap-2 p-[15px]">
       {quickReplies.map((pregunta) => (
-        <button data-chat class="min-h-11 rounded-[30px] border border-base-300 bg-base-100 px-[13px] py-2 text-[0.7rem] text-neutral hover:bg-accent">
+        <button data-chat data-envia class="min-h-11 rounded-[30px] border border-base-300 bg-base-100 px-[13px] py-2 text-[0.7rem] text-neutral hover:bg-accent">
           {pregunta}
         </button>
       ))}
@@ -54,11 +54,11 @@ const { quickReplies } = Astro.props;
       <div data-chat-controles class="flex w-full flex-wrap gap-2">
       <label class="sr-only group-data-[aceptacion-pendiente=true]:not-sr-only group-data-[aceptacion-pendiente=true]:block group-data-[aceptacion-pendiente=true]:w-full group-data-[aceptacion-pendiente=true]:text-[0.87rem]" for="chat-input">Escribe tu consulta</label>
       <input id="chat-input" class="min-w-0 flex-1 placeholder:text-field-placeholder placeholder:opacity-100" placeholder="Escribe tu consulta…" maxlength="300" autocomplete="off" aria-describedby="chat-ayuda" />
-      <button id="chat-mic" type="button" aria-label="Preguntar con tu voz" aria-pressed="false" hidden
+      <button id="chat-mic" type="button" data-envia aria-label="Preguntar con tu voz" aria-pressed="false" hidden
         class="chat-mic grid w-[50px] min-w-[50px] place-items-center rounded-[3px] border border-primary bg-base-100 text-primary aria-pressed:border-campaign-red aria-pressed:bg-campaign-red aria-pressed:text-primary-content">
         <Icon name="mic" size={22} />
       </button>
-      <button type="submit" class="button px-[15px] py-2.5 data-[aceptacion-pendiente=true]:w-full" aria-label="Enviar consulta">
+      <button type="submit" data-envia class="button px-[15px] py-2.5 data-[aceptacion-pendiente=true]:w-full" aria-label="Enviar consulta">
         <span data-envio-texto hidden>Enviar consulta</span>
         <Icon name="arrow" size={20} />
       </button>

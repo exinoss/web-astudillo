@@ -1,8 +1,8 @@
 ---
-import Icon from "../Icon.astro";
-import LegalAcceptance from '../LegalAcceptance.astro';
+import Icon from "../comun/Icon.astro";
+import LegalAcceptance from '../comun/LegalAcceptance.astro';
 import type { Proposal } from "../../lib/data/types";
-import { MIN_SUGERENCIA } from "../../lib/participacion/tipos";
+import { MIN_SUGERENCIA } from "../../lib/ciudadania/participacion/tipos";
 import { TARJETA, CAMPO, ETIQUETA, AYUDA, ERROR, ESTADO } from "./estilos";
 
 interface Props {
@@ -46,7 +46,7 @@ const temas = [...proposals.map((p) => ({ valor: p.slug, nombre: p.name, icono: 
     <p id="sugerencia-mensaje-error" class={ERROR} hidden></p>
 
     <LegalAcceptance id="sugerencia-aceptacion" hidden prompt="Antes de enviar tu sugerencia, confirma:" />
-    <button class="button mt-6 data-[aceptacion-pendiente=true]:w-full" type="submit"><span data-envio-texto>Enviar sugerencia</span> <Icon name="arrow" size={18} /></button>
+    <button class="button mt-6 data-[aceptacion-pendiente=true]:w-full" type="submit" data-envia><span data-envio-texto>Enviar sugerencia</span> <Icon name="arrow" size={18} /></button>
     <p id="sugerencia-estado" class={ESTADO} role="status" hidden></p>
   </form>
 </section>

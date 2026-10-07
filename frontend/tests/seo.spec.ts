@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import initial from '../../backend/database/contenido-inicial.json' with { type:'json' };
-import { publicPaths, SITE } from '../src/lib/seo';
+import { publicPaths, SITE } from '../src/lib/comun/seo';
 
 test('las páginas públicas tienen descripción propia, canonical, imagen y datos estructurados',async ({request})=>{
   const paths=[...publicPaths,...initial.propuestas.map(p=>`/propuestas/${p.slug}/`),...['sugerencias','alerta-ciudadana','chat'].map(p=>`/ciudadania/${p}/`)];

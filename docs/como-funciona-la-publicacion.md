@@ -70,7 +70,7 @@ Hay **dos momentos** separados:
 Cada texto editable tiene una **clave** y un **valor por defecto** (el del diseño aprobado). Viven en un registro:
 
 ```ts
-// frontend/src/lib/contenido/textos.ts (simplificado)
+// frontend/src/lib/comun/contenido/textos.ts (simplificado)
 export const TEXTOS = {
   "pie.nombre": { texto: "CARLOS ASTUDILLO", max: 60 },
   "global.lema": { texto: "Por ti, San Lorenzo.", max: 60 },
@@ -92,7 +92,7 @@ En las páginas, en lugar de escribir el texto directo, se usa el componente `Ed
 
 ```astro
 ---
-// frontend/src/components/Editable.astro (simplificado)
+// frontend/src/components/comun/Editable.astro (simplificado)
 const valor = await texto(clave);   // ① busca el valor publicado, o el de por defecto
 ---
 <span data-editable={clave}>{valor}</span>  <!-- ② lo marca para el modo edición -->
@@ -101,7 +101,7 @@ const valor = await texto(clave);   // ① busca el valor publicado, o el de por
 Y `texto()` decide qué valor mostrar:
 
 ```ts
-// frontend/src/lib/contenido.ts
+// frontend/src/lib/comun/contenido.ts
 export async function texto(clave) {
   const publicados = await contentRepository.getTexts(); // lo que llegó del backend
   return publicados[clave] ?? TEXTOS[clave].texto;       // si no lo cambiaron, el del diseño
@@ -115,7 +115,7 @@ export async function texto(clave) {
 Cuando entra alguien con permiso `contenido.editar`, el sitio descarga (solo para esa persona) el script del modo edición. Ese script busca todos los elementos con `data-editable` y los vuelve editables. Al terminar de escribir:
 
 ```ts
-// frontend/src/scripts/modo-edicion.ts (simplificado)
+// frontend/src/scripts/comun/modo-edicion.ts (simplificado)
 async function save(el, nuevoTexto) {
   const clave = el.dataset.editable;          // "pie.nombre"
   await adminApi.saveText(clave, nuevoTexto); // PUT /api/admin/contenido/textos/pie.nombre
@@ -549,10 +549,10 @@ Para ver la foto exacta que se publicó, abre en el navegador:
 
 | Qué | Dónde |
 | --- | --- |
-| Registro de textos editables | [`frontend/src/lib/contenido/textos.ts`](../frontend/src/lib/contenido/textos.ts) |
-| Componente `Editable` | [`frontend/src/components/Editable.astro`](../frontend/src/components/Editable.astro) |
-| Modo edición (navegador) | [`frontend/src/scripts/modo-edicion.ts`](../frontend/src/scripts/modo-edicion.ts) |
-| Panel de administración | [`frontend/src/scripts/panel/`](../frontend/src/scripts/panel/) |
+| Registro de textos editables | [`frontend/src/lib/comun/contenido/textos.ts`](../frontend/src/lib/comun/contenido/textos.ts) |
+| Componente `Editable` | [`frontend/src/components/comun/Editable.astro`](../frontend/src/components/comun/Editable.astro) |
+| Modo edición (navegador) | [`frontend/src/scripts/comun/modo-edicion.ts`](../frontend/src/scripts/comun/modo-edicion.ts) |
+| Panel de administración | [`frontend/src/scripts/cuenta/panel/`](../frontend/src/scripts/cuenta/panel/) |
 | Repositorio que lee lo publicado | [`frontend/src/lib/data/http/http-content-repository.ts`](../frontend/src/lib/data/http/http-content-repository.ts) |
 | Rutas del contenido | [`backend/src/content/routes/index.ts`](../backend/src/content/routes/index.ts) |
 | Lógica: guardar, publicar, diferencias | [`backend/src/content/services/content.ts`](../backend/src/content/services/content.ts) |

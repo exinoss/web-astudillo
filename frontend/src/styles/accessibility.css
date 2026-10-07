@@ -136,3 +136,18 @@
 .high-contrast .contact-intro h2 span {
   color: var(--color-primary);
 }
+
+.high-contrast [data-carlos-card] {
+  --mask-color: #00132e !important;
+  --ink-color: #000 !important;
+}
+
+.light-bg [data-carlos-background],
+.high-contrast [data-carlos-background] {
+  visibility: hidden;
+}
+
+.readable-font [data-card-number],
+.readable-font [data-card-title] {
+  font-family: Arial, Helvetica, sans-serif;
+}

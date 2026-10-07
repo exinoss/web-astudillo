@@ -1,14 +1,15 @@
 ---
 import { Image } from "astro:assets";
 import logo from "../assets/logo.avif";
-import Icon from "../components/Icon.astro";
-import Editable from "../components/Editable.astro";
-import NavLink from "../components/NavLink.astro";
-import DropdownPanel from "../components/DropdownPanel.astro";
-import DropdownLink from "../components/DropdownLink.astro";
-import Seo from '../components/Seo.astro';
-import { contentRepository } from "../lib/data";
-import { aboutLinks } from "../lib/acerca";
+import Icon from "../components/comun/Icon.astro";
+import Editable from "../components/comun/Editable.astro";
+import NavLink from "../components/comun/NavLink.astro";
+import DropdownPanel from "../components/comun/DropdownPanel.astro";
+import DropdownLink from "../components/comun/DropdownLink.astro";
+import Seo from '../components/comun/Seo.astro';
+import DraftPreviewBar from "../components/comun/DraftPreviewBar.astro";
+import { contentRepository, isDraftPreview } from "../lib/data";
+import { aboutLinks } from "../lib/acerca-de-nosotros/enlaces";
 import "@fontsource/barlow-condensed/600.css";
 import "@fontsource/barlow-condensed/700.css";
 import "@fontsource/dm-sans/400.css";
@@ -83,6 +84,7 @@ const accessButton =
     >
       Saltar al contenido
     </a>
+    {isDraftPreview && <DraftPreviewBar />}
     <div class="topbar bg-primary text-[0.67rem] text-primary-content">
       <div class="topbar-inner site-container flex min-h-[33px] items-center justify-between max-tablet:min-h-[30px] max-tablet:text-[0.55rem]">
         <span class="flex items-center gap-2 max-tablet:gap-1">
@@ -94,7 +96,7 @@ const accessButton =
         </span>
       </div>
     </div>
-    <header class="site-header sticky top-0 z-50 border-b border-b-base-300 bg-accent">
+    <header class="site-header sticky top-[var(--alto-franja,0px)] z-50 border-b border-b-base-300 bg-accent">
       <div class="site-container flex min-h-[98px] items-center justify-between gap-[22px] max-nav:min-h-[82px] max-nav:gap-4 max-tablet:min-h-[77px] max-tablet:gap-2.5 max-mobile-xs:gap-2">
         <a
           class="order-0 flex shrink-0 items-center gap-[13px] max-desktop-sm:gap-2"
@@ -294,7 +296,7 @@ const accessButton =
       <div class="transicion-lienzo aspect-[6/5] w-[240px] max-tablet:w-[190px]" aria-hidden="true"></div>
       <span class="sr-only">Cargando página…</span>
     </div>
-    <script src="../scripts/layout.ts"></script>
-    <script src="../scripts/transicion.ts"></script>
+    <script src="../scripts/comun/layout.ts"></script>
+    <script src="../scripts/comun/transicion.ts"></script>
   </body>
 </html>

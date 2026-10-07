@@ -1,12 +1,13 @@
 ---
 import Layout from "../../layouts/Layout.astro";
-import Icon from "../../components/Icon.astro";
+import Icon from "../../components/comun/Icon.astro";
 
 // Participación y Usuarios solo se muestran con permiso: el script las destapa según el perfil.
 const pestanias = [
   { id: "propuestas", nombre: "Propuestas" },
   { id: "biografia", nombre: "Biografía" },
   { id: "obras", nombre: "Obras" },
+  { id: "acerca-de-carlos", nombre: "Acerca de Carlos" },
   { id: "textos", nombre: "Textos y redes" },
   { id: "chat", nombre: "Chat" },
   { id: "participacion", nombre: "Participación" },
@@ -67,5 +68,5 @@ const pestanias = [
       ))}
     </div>
   </section>
-  <script src="../../scripts/panel/index.ts"></script>
+  <script src="../../scripts/cuenta/panel/index.ts"></script>
 </Layout>

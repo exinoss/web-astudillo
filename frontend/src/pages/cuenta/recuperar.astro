@@ -1,8 +1,8 @@
 ---
-import AccountShell from '../../components/account/AccountShell.astro';
-import AccountCard from '../../components/account/AccountCard.astro';
-import AccountField from '../../components/account/AccountField.astro';
-import AccountStatus from '../../components/account/AccountStatus.astro';
+import AccountShell from '../../components/cuenta/AccountShell.astro';
+import AccountCard from '../../components/cuenta/AccountCard.astro';
+import AccountField from '../../components/cuenta/AccountField.astro';
+import AccountStatus from '../../components/cuenta/AccountStatus.astro';
 ---
 
 <AccountShell title="Recupera el acceso" lead="Te enviaremos un enlace para elegir una nueva contraseña.">
@@ -16,5 +16,5 @@ import AccountStatus from '../../components/account/AccountStatus.astro';
       <p class="m-0 mt-5 text-center text-sm text-[#50617d]">¿La recordaste? <a class="inline-flex min-h-11 items-center font-bold text-primary underline" href="/cuenta/">Inicia sesión</a></p>
     </AccountCard>
   </div>
-  <script src="../../scripts/account-recovery.ts"></script>
+  <script src="../../scripts/cuenta/recuperar.ts"></script>
 </AccountShell>

@@ -14,6 +14,21 @@ export interface ChatAnswer {
   pregunta: string; palabrasClave: string; respuesta: string;
   enlaceTexto: string | null; enlaceRuta: string | null; destacada: boolean;
 }
+export type AboutCarlosSlug = 'por-que-quiero-ser-alcalde' | 'conoce-mas';
+export interface DraftAboutCarlosPage {
+  tarjetas: { foto: Photo; alt: string; titulo: string; texto: string; color: 'rojo' | 'azul'; enfoque: { x: number; y: number } }[];
+  video: { titulo: string; descripcion: string | null; enlace: string; vertical: boolean; portada: Photo | null } | null;
+  retrato: { foto: Photo; alt: string } | null;
+  entrevista: { pregunta: string; respuesta: string }[];
+  galeria: { foto: Photo; alt: string; pie: string }[];
+}
+export interface AboutCarlosPageBody {
+  tarjetas: (Omit<DraftAboutCarlosPage['tarjetas'][number], 'foto'> & { idMedio: number })[];
+  video: (Omit<NonNullable<DraftAboutCarlosPage['video']>, 'portada'> & { idPortada: number | null }) | null;
+  retrato: { idMedio: number; alt: string } | null;
+  entrevista: DraftAboutCarlosPage['entrevista'];
+  galeria: { idMedio: number; alt: string; pie: string }[];
+}
 /**
  * Versión de cada parte del borrador al cargarlo. Se envía al guardar: si otra persona guardó
  * antes, la API responde 409 y no se pisa su cambio. Un texto nunca cambiado no tiene versión.
@@ -24,6 +39,7 @@ export interface DraftVersions {
   biografia: string;
   obras: Record<string, string>;
   chat: string;
+  acercaDeCarlos: Record<AboutCarlosSlug, string>;
 }
 /** Borrador vivo del contenido; misma forma que se congela al publicar, más sus versiones. */
 export interface Draft {
@@ -33,9 +49,11 @@ export interface Draft {
   biografia: DraftBiographyItem[];
   obras: DraftWork[];
   chat: ChatAnswer[];
+  acercaDeCarlos: Record<AboutCarlosSlug, DraftAboutCarlosPage>;
   versiones: DraftVersions;
 }
 type Saved = { version: string | null };
+export type PreviewState = 'en_cola' | 'compilando' | 'lista' | 'fallida';
 export interface Page { total: number; pagina: number; porPagina: number }
 export interface AdminUser {
   id: number; correo: string; nombresCompletos: string | null; rol: string; estado: 'activo' | 'bloqueado';
@@ -72,6 +90,8 @@ export const adminApi = {
     form.append('foto', file);
     return call<Photo>('/api/admin/medios', 'POST', form);
   },
+  saveAboutCarlosPage: (slug: AboutCarlosSlug, body: AboutCarlosPageBody, version: string) =>
+    call<Saved>(`/api/admin/contenido/acerca-de-carlos/${slug}`, 'PUT', { ...body, version }),
   saveChat: (respuestas: ChatAnswer[], version: string) => call<Saved>('/api/admin/contenido/chat', 'PUT', { respuestas, version }),
   unanswered: () => call<{ preguntas: { clave: string; ejemplo: string; veces: number; ultimaVez: string }[] }>('/api/admin/chat/sin-respuesta'),
   discardUnanswered: (clave: string) => call(`/api/admin/chat/sin-respuesta/${encodeURIComponent(clave)}`, 'DELETE'),
@@ -80,6 +100,10 @@ export const adminApi = {
   // Se envía el estado que se veía: si otra persona lo cambió mientras tanto, la API responde 409.
   changeParticipationState: (tipo: ParticipationKind, id: number, estado: ParticipationState, estadoAnterior: ParticipationState) =>
     call<{ estado: ParticipationState }>(`/api/admin/participacion/${tipo}/${id}/estado`, 'PATCH', { estado, estadoAnterior }),
+  /** Idempotente: con el mismo borrador devuelve la vista previa ya pedida o lista. */
+  requestPreview: () => call<{ estado: PreviewState }>('/api/admin/vista-previa', 'POST'),
+  previewState: () => call<{ estado: PreviewState | null }>('/api/admin/vista-previa'),
+  enterPreview: () => call<object>('/api/admin/vista-previa/entrar', 'POST'),
   pending: () => call<{ cambios: { tipo: string; descripcion: string }[] }>('/api/admin/publicaciones/pendientes'),
   /** Idempotente: si lo mismo ya está en cola o compilándose, devuelve esa publicación. */
   publish: () => call<{ id: number; estado: Publication['estado'] }>('/api/admin/publicaciones', 'POST'),

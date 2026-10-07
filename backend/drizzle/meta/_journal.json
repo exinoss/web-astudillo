@@ -71,6 +71,20 @@
       "when": 1791078665509,
       "tag": "0009_textos_iniciales",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791288593208,
+      "tag": "0010_acerca_de_carlos",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791319072235,
+      "tag": "0011_vista_previa",
+      "breakpoints": true
     }
   ]
 }

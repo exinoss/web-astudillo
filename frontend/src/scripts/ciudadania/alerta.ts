@@ -1,13 +1,13 @@
-import { mostrarCarga } from "../../lib/animaciones";
-import { errorText, showStatus, signedIn } from "../../lib/auth/page";
+import { mostrarCarga } from "../../lib/comun/animaciones";
+import { errorText, showStatus, signedIn } from "../../lib/cuenta/auth/page";
 import { alertRepository } from "../../lib/data/participation";
 import type { AlertType, SentAlert } from "../../lib/data/types";
-import { esc } from "../../lib/html";
-import { iconSvg } from "../../lib/iconos";
-import { borrar, leer, leerFoto } from "../../lib/participacion/borrador";
-import { enviarConSesion, marcarError } from "../../lib/participacion/envio";
-import { prepararAceptacion } from '../../lib/participacion/aceptacion';
-import { ESTADOS, MAX_FOTO_BYTES, MIN_DESCRIPCION, TIPOS_ALERTA } from "../../lib/participacion/tipos";
+import { esc } from "../../lib/comun/html";
+import { iconSvg } from "../../lib/comun/iconos";
+import { borrar, leer, leerFoto } from "../../lib/ciudadania/participacion/borrador";
+import { enviarConSesion, marcarError } from "../../lib/ciudadania/participacion/envio";
+import { prepararAceptacion } from '../../lib/ciudadania/participacion/aceptacion';
+import { ESTADOS, MAX_FOTO_BYTES, MIN_DESCRIPCION, TIPOS_ALERTA } from "../../lib/ciudadania/participacion/tipos";
 
 const form = document.querySelector<HTMLFormElement>("#alerta-form")!;
 const tipos = form.querySelector<HTMLFieldSetElement>("#alerta-tipo")!;

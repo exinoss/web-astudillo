@@ -1,9 +1,11 @@
 // `bun run publicador`: toma la publicación en cola y ejecuta `bun run build` del frontend, que deja
 // `<SITE_DIR>/dist` con ese contenido (en local, `frontend/dist`; en producción, el volumen que sirve
 // nginx). La compilación lo lee de GET /api/contenido/publicado, que mientras dura el proceso devuelve
-// justo esta publicación; si falla, `dist` y la API siguen con la anterior.
+// justo esta publicación; si falla, `dist` y la API siguen con la anterior. Sin publicaciones en cola,
+// compila la vista previa del borrador en `<SITE_DIR>/dist-vista-previa`.
 import { SQL } from 'bun';
 import { cp, rename, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { callPg } from '../db/call';
 
@@ -14,7 +16,6 @@ const LOG_LINES = 30;
 const url = process.env.DATABASE_URL;
 if (!url) throw new Error('Falta DATABASE_URL');
 const frontendDir = resolve(process.env.FRONTEND_DIR ?? '../frontend');
-// dist, dist-nueva y dist-anterior viven en el mismo disco o volumen: el cambio final es un rename atómico.
 const siteDir = resolve(process.env.SITE_DIR ?? frontendDir);
 // Versión del código (SHA de la imagen). server-produccion/desplegar.sh espera a ver este valor en `version`.
 const appVersion = process.env.APP_VERSION?.trim();
@@ -22,56 +23,92 @@ const sql = new SQL(url);
 
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-const dist = join(siteDir, 'dist');
-const next = join(siteDir, 'dist-nueva');
-const previous = join(siteDir, 'dist-anterior');
-const versionFile = join(siteDir, 'version');
+interface Target { dist: string; next: string; previous: string; buildDir: string }
+// Cada salida vive en el mismo disco o volumen que su versión nueva y anterior: el cambio final es un rename atómico.
 // Astro mueve archivos desde su caché (frontend/.astro) a la salida: compila en el mismo disco que ella.
-const buildDir = join(frontendDir, 'dist-nueva');
+const target = (name: string): Target => ({
+  dist: join(siteDir, name), next: join(siteDir, `${name}-nueva`), previous: join(siteDir, `${name}-anterior`),
+  buildDir: join(frontendDir, `${name}-nueva`),
+});
+const site = target('dist');
+const preview = target('dist-vista-previa');
+const versionFile = join(siteDir, 'version');
+const previewContent = join(tmpdir(), 'astudillo-vista-previa.json');
 
-/** Reemplaza `dist` por la compilación nueva; hasta ese momento `dist` queda intacto. */
-async function swap() {
+// En Windows el antivirus o el indexador abren un momento los archivos recién escritos: rename da EPERM o EBUSY.
+async function renameRetrying(from: string, to: string) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await rename(from, to);
+    } catch (error) {
+      if (attempt >= 10 || !['EPERM', 'EBUSY', 'EACCES'].includes((error as NodeJS.ErrnoException).code ?? '')) throw error;
+      await wait(500 * attempt);
+    }
+  }
+}
+
+/** Reemplaza la salida por la compilación nueva; si no lo consigue, la deja como estaba. */
+async function swap({ dist, next, previous }: Target) {
   await rm(previous, { recursive: true, force: true });
-  await rename(dist, previous).catch((error: NodeJS.ErrnoException) => {
+  await renameRetrying(dist, previous).catch((error: NodeJS.ErrnoException) => {
     if (error.code !== 'ENOENT') throw error;
   });
-  await rename(next, dist);
+  try {
+    await renameRetrying(next, dist);
+  } catch (error) {
+    await renameRetrying(previous, dist).catch(() => {});
+    throw error;
+  }
   await rm(previous, { recursive: true, force: true });
 }
 
 /**
- * Compila en `dist-nueva` (Astro vacía su carpeta de salida al empezar) y solo si sale bien la pasa a `dist`.
+ * Compila en `<salida>-nueva` (Astro vacía su carpeta de salida al empezar) y solo si sale bien la pasa a la salida.
  * Si el sitio se sirve desde otro disco (el volumen de nginx), primero copia la compilación a ese disco.
  * Devuelve el final del registro si la compilación falla.
  */
-async function compile(): Promise<string | null> {
+async function compile(out: Target, env: Record<string, string> = {}): Promise<string | null> {
+  const { buildDir, next } = out;
   await rm(buildDir, { recursive: true, force: true });
-  const proc = Bun.spawn(['bun', 'run', 'build', '--outDir', buildDir], { cwd: frontendDir, stdout: 'pipe', stderr: 'pipe' });
-  const [out, err, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
+  const proc = Bun.spawn(['bun', 'run', 'build', '--outDir', buildDir], {
+    cwd: frontendDir, stdout: 'pipe', stderr: 'pipe', env: { ...process.env, ...env },
+  });
+  const [stdout, stderr, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
   if (code !== 0) {
     await rm(buildDir, { recursive: true, force: true });
-    return `Código ${code}\n${`${out}\n${err}`.trim().split('\n').slice(-LOG_LINES).join('\n')}`;
+    return `Código ${code}\n${`${stdout}\n${stderr}`.trim().split('\n').slice(-LOG_LINES).join('\n')}`;
   }
   if (buildDir !== next) {
     await rm(next, { recursive: true, force: true });
     await cp(buildDir, next, { recursive: true });
     await rm(buildDir, { recursive: true, force: true });
   }
-  await swap();
-  if (appVersion) await Bun.write(versionFile, appVersion);
+  await swap(out);
   return null;
 }
 
 async function build(id: number) {
   const started = Date.now();
-  const log = await compile();
+  const log = await compile(site);
   if (log) {
     await callPg(sql, 'publicationFinish', [id, false, log]);
     console.error(`Publicación ${id} falló:\n${log}`);
     return;
   }
+  if (appVersion) await Bun.write(versionFile, appVersion);
   await callPg(sql, 'publicationFinish', [id, true, `Compilada en ${Math.round((Date.now() - started) / 1000)} s`]);
-  console.log(`Publicación ${id} compilada en ${dist}`);
+  console.log(`Publicación ${id} compilada en ${site.dist}`);
+}
+
+/** El borrador llega por un archivo temporal: así nunca sale de la base por la API. */
+async function buildPreview(content: unknown) {
+  await Bun.write(previewContent, JSON.stringify(content));
+  const log = await compile(preview, { CONTENIDO_ARCHIVO: previewContent })
+    .catch((error: unknown) => error instanceof Error ? error.message : String(error))
+    .finally(() => rm(previewContent, { force: true }));
+  await callPg(sql, 'previewFinish', [!log, log]);
+  if (log) console.error(`Vista previa falló:\n${log}`);
+  else console.log(`Vista previa compilada en ${preview.dist}`);
 }
 
 let retryAt = 0;
@@ -83,19 +120,28 @@ let retryAt = 0;
 async function rebuildIfOutdated() {
   if (!appVersion || Date.now() < retryAt) return;
   if (await Bun.file(versionFile).text().catch(() => '') === appVersion) return;
-  const log = await compile().catch((error: unknown) => error instanceof Error ? error.message : String(error));
+  const log = await compile(site).catch((error: unknown) => error instanceof Error ? error.message : String(error));
   if (log) {
     retryAt = Date.now() + RETRY_MS;
     console.error(`Reconstrucción de la versión ${appVersion} falló:\n${log}`);
-  } else console.log(`Sitio reconstruido con la versión ${appVersion}`);
+  } else {
+    await Bun.write(versionFile, appVersion);
+    console.log(`Sitio reconstruido con la versión ${appVersion}`);
+  }
 }
 
 await callPg(sql, 'publicationRecover');
+await callPg(sql, 'previewRecover');
 console.log(`Publicador listo: compila ${frontendDir}`);
 for (;;) {
   try {
     const [job] = await callPg<{ id_publicacion: number }>(sql, 'publicationClaim');
     if (!job) {
+      const [draft] = await callPg<{ contenido: unknown }>(sql, 'previewClaim');
+      if (draft) {
+        await buildPreview(draft.contenido);
+        continue;
+      }
       await rebuildIfOutdated();
       await wait(POLL_MS);
       continue;

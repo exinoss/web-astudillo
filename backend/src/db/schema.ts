@@ -409,3 +409,30 @@ export const tbChatEnvios = pgTable("tb_chat_envios", {
 	check("ck_chat_envios_hash", sql`mensaje_hash ~ '^[0-9a-f]{64}$'`),
 	check("ck_chat_envios_respuesta", sql`jsonb_typeof(respuesta) = 'object'`),
 ]);
+
+export const tbAcercaDeCarlos = pgTable("tb_acerca_de_carlos", {
+	slug: varchar({ length: 40 }).primaryKey(),
+	contenido: jsonb().notNull(),
+	actualizadoPor: integer("actualizado_por"),
+	actualizadoEn: timestamp("actualizado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => [
+	foreignKey({ columns: [table.actualizadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_acerca_de_carlos_actualizado_por_fkey" }).onDelete("set null"),
+	check("ck_acerca_de_carlos_slug", sql`slug IN ('por-que-quiero-ser-alcalde', 'conoce-mas')`),
+	check("ck_acerca_de_carlos_contenido", sql`jsonb_typeof(contenido) = 'object'`),
+]);
+
+// Una sola fila: hay un único borrador compartido y, por tanto, una única vista previa.
+export const tbVistaPrevia = pgTable("tb_vista_previa", {
+	id: integer().primaryKey().default(1),
+	estado: varchar({ length: 20 }).notNull(),
+	contenido: jsonb().notNull(),
+	solicitadoPor: integer("solicitado_por"),
+	solicitadoEn: timestamp("solicitado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+	terminadoEn: timestamp("terminado_en", { withTimezone: true, mode: 'string' }),
+	detalle: text(),
+}, (table) => [
+	foreignKey({ columns: [table.solicitadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_vista_previa_solicitado_por_fkey" }).onDelete("set null"),
+	check("ck_vista_previa_unica", sql`id = 1`),
+	check("ck_vista_previa_estado", sql`estado IN ('en_cola', 'compilando', 'lista', 'fallida')`),
+	check("ck_vista_previa_contenido", sql`jsonb_typeof(contenido) = 'object'`),
+]);

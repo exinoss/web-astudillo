@@ -13,5 +13,7 @@ export interface GoogleIdentity {
 export interface Security {
   sign(user: Account): Promise<string>;
   verifyAccess(value: string | undefined): Promise<number | null>;
+  signPreview(userId: number): Promise<string>;
+  verifyPreview(value: string | undefined): Promise<number | null>;
   verifyGoogle(credential: string, recent?: boolean): Promise<GoogleIdentity>;
 }
