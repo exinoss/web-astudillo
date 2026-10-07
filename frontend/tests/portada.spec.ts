@@ -13,6 +13,19 @@ test('las cifras de la portada se ven grandes, con su texto, y cuentan hasta el 
   expect(tamano).toBeGreaterThanOrEqual(54);
 });
 
+test('«Personas que se sumaron» invita a sumarse solo a quien no tiene sesión', async ({ page }) => {
+  await page.goto('/');
+  const banda = page.locator('[data-cifras]');
+  await banda.scrollIntoViewIfNeeded();
+  await expect(banda.locator('[data-cifra="personas"]')).toHaveText('1.248');
+  await expect(banda).toContainText('Personas que se sumaron');
+  await expect(banda.getByRole('link', { name: 'Súmate' })).toHaveAttribute('href', '/cuenta/registro/');
+
+  await page.addInitScript(() => localStorage.setItem('astudillo:sesion', '1'));
+  await page.goto('/');
+  await expect(page.locator('[data-cifras]').getByRole('link', { name: 'Súmate' })).toBeHidden();
+});
+
 test('con «Reducir movimiento» las cifras aparecen sin contar', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => document.documentElement.classList.add('reduce-motion'));

@@ -1,4 +1,4 @@
-export interface SiteStats { visitas: number; voces: number }
+export interface SiteStats { visitas: number; voces: number; personas: number }
 
 export interface StatsRepository {
   /** Null si no se pudieron leer: la portada se queda con las de la última compilación. */

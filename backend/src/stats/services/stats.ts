@@ -5,7 +5,7 @@ const SAME_VISIT_MS = 30 * 60_000;
 const CACHE_MS = 60_000;
 const MAX_TRACKED = 100_000;
 
-export interface SiteStats { visitas: number; voces: number }
+export interface SiteStats { visitas: number; voces: number; personas: number }
 
 export function createStats(sql: SQL) {
   // La IP solo se recuerda en memoria, para no contar dos veces la misma visita; nunca se guarda.
@@ -27,8 +27,8 @@ export function createStats(sql: SQL) {
     /** Se recalcula como mucho una vez por minuto: la portada la pide en cada visita. */
     current(): Promise<SiteStats> {
       if (cache && cache.until > Date.now()) return cache.value;
-      const value = callPg<{ visitas: string; voces: string }>(sql, 'siteStats')
-        .then(([row]) => ({ visitas: Number(row?.visitas ?? 0), voces: Number(row?.voces ?? 0) }));
+      const value = callPg<{ visitas: string; voces: string; personas: string }>(sql, 'siteStats')
+        .then(([row]) => ({ visitas: Number(row?.visitas ?? 0), voces: Number(row?.voces ?? 0), personas: Number(row?.personas ?? 0) }));
       cache = { until: Date.now() + CACHE_MS, value };
       value.catch(() => { cache = null; });
       return value;

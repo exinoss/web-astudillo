@@ -2,13 +2,17 @@ import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { migrate } from '../src/db/migrate';
 import { testApp } from './helpers';
 
-const { sql, call } = testApp('medios-pruebas-cifras', true);
+const { sql, call, account, resetAccounts } = testApp('medios-pruebas-cifras', true);
 const visit = (ip: string) => call('/api/visitas', 'POST', undefined, undefined, ip);
 const total = async () => Number((await sql`SELECT COALESCE(sum(total), 0) AS n FROM tb_visitas_dia`)[0].n);
 
 beforeAll(async () => {
   await migrate(sql);
+  await resetAccounts();
   await sql`TRUNCATE tb_visitas_dia`;
+  for (const [nombre, rol] of [['ana', 'votante'], ['luis', 'votante'], ['bloqueada', 'votante'], ['equipo', 'coadmin'], ['jefa', 'admin']])
+    await account(nombre, rol);
+  await sql`UPDATE tb_usuarios SET estado = 'bloqueado' WHERE correo = 'bloqueada@example.com'`;
 });
 afterAll(() => sql.close());
 
@@ -22,12 +26,12 @@ test('una visita cuenta una vez aunque se repita desde la misma conexión, y no 
   expect(columns.map((c: { column_name: string }) => c.column_name).sort()).toEqual(['dia', 'total']);
 });
 
-test('las cifras públicas suman las visitas y las voces ciudadanas', async () => {
+test('las cifras públicas suman visitas, voces ciudadanas y personas que se sumaron, sin el equipo', async () => {
   const [{ voces }] = await sql`SELECT (SELECT count(*) FROM tb_alertas) + (SELECT count(*) FROM tb_sugerencias)
     + (SELECT count(*) FROM tb_chat_envios) AS voces`;
   const res = await call('/api/estadisticas');
   expect(res.status).toBe(200);
-  expect(await res.json()).toEqual({ visitas: 2, voces: Number(voces) });
+  expect(await res.json()).toEqual({ visitas: 2, voces: Number(voces), personas: 2 });
 });
 
 test('el día se cuenta en la hora de Ecuador', async () => {
