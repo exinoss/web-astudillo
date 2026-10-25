@@ -5,7 +5,7 @@ import type { Authorization, Limiter } from '../../auth/types';
 import type { Content } from '../../content/services/content';
 import type { ChatAnswer } from '../../content/types';
 import { callPg } from '../../db/call';
-import { plainText } from '../../content/services/validation';
+import { plainText } from '../../validation/texto';
 import { ApiError } from '../../http';
 import { requireParticipationAcceptance } from '../../auth/services/consent';
 import { VERSION_LEGAL } from '../../contracts/legal';

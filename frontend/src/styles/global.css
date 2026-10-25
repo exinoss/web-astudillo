@@ -7,30 +7,28 @@
 @import "./about.css";
 @import "./proposals.css";
 @import "./detail.css";
-@import "./forms.css";
 @import "./bloqueo.css";
 @import "./chat.css";
 @import "./contact.css";
 @import "./accessibility.css";
 
-/* Variantes propias, no `--breakpoint-*`: `max-[760px]:` es exclusivo
-   (`width < 760`), pero el diseño usa `max-width: 760px`, inclusivo — a
-   760px justos saldría distinto.
-   Van de MAYOR a MENOR a propósito: Tailwind las emite en el orden en que se
-   declaran, no por tamaño, y gana la última — al revés, a 360px ganarían
-   las reglas de 1199px. */
+/* De mayor a menor: Tailwind las emite en el orden declarado y gana la última. */
 @custom-variant max-nav (@media (width <= 1199px));
 @custom-variant max-desktop-sm (@media (width <= 1190px));
 @custom-variant max-laptop (@media (width <= 1100px));
 @custom-variant max-tablet (@media (width <= 760px));
 @custom-variant max-mobile (@media (width <= 480px));
+@custom-variant celular {
+  @media (width <= 480px) {
+    @slot;
+  }
+  @media (orientation: landscape) and (height <= 500px) and (pointer: coarse) {
+    @slot;
+  }
+}
 @custom-variant max-mobile-xs (@media (width <= 360px));
 @custom-variant min-wide (@media (width >= 1700px));
 
-/* Espaciado vertical repetido en 6 sitios; vive aquí una sola vez.
-   Los `<` son deliberados: reproducen un desfase que ya tenía el prototipo
-   aprobado (a 1190px justos no aplica el valor reducido). Cambiar a `<=`
-   lo corrige en todo el sitio — pendiente de decidir, no es un error. */
 @utility py-section {
   padding-block: 96px;
 
@@ -63,8 +61,6 @@
   --color-campaign-red: #e0121f;
   --color-field-border: #6b7c93;
   --color-field-placeholder: #52647c;
-
-  /* Texto secundario sobre el fondo azul del pie de página. */
   --color-footer-muted: #d5e0f2;
 
   --animate-rebote: rebote 2s ease-in-out infinite;

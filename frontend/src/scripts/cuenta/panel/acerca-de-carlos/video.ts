@@ -1,6 +1,7 @@
 import { mountPlayer, videoLinkProblem, videoSource } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
-import { DANGER, esc, field, GHOST, HINT, iconSvg, LABEL, notify, value } from "../ui";
+import { adminApi } from "../../../../lib/data/http/admin-api";
+import { busy, DANGER, esc, field, GHOST, HINT, iconSvg, LABEL, notify, value } from "../ui";
 import { onFiles, radios, thumb, upload, type Editor, type SectionEditor } from "./comun";
 
 const VALID = "#1e7a3c";
@@ -10,9 +11,10 @@ const EMPTY_VIDEO = { titulo: "", descripcion: null, enlace: "", vertical: false
 export const video: SectionEditor = {
   html(editor: Editor) {
     const v = editor.page.video ?? EMPTY_VIDEO;
+    const fromVideo = `<button type="button" data-video-cover-auto class="${GHOST}" hidden>${iconSvg("image", 17)} Usar la imagen del video</button>`;
     const cover = v.portada
-      ? `<div class="flex flex-wrap items-center gap-3"><img src="${esc(thumb(v.portada))}" alt="" class="h-20 w-14 rounded-[3px] object-cover" />${upload("video-portada", "Cambiar portada")}<button type="button" data-video-cover-remove class="${GHOST}">Quitar portada</button></div>`
-      : upload("video-portada", "Subir portada");
+      ? `<div class="flex flex-wrap items-center gap-3"><img src="${esc(thumb(v.portada))}" alt="" class="h-20 w-14 rounded-[3px] object-cover" />${upload("video-portada", "Cambiar portada")}${fromVideo}<button type="button" data-video-cover-remove class="${GHOST}">Quitar portada</button></div>`
+      : `<div class="flex flex-wrap items-center gap-3">${upload("video-portada", "Subir portada")}${fromVideo}</div>`;
     return `<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] gap-8 max-tablet:grid-cols-1">
       <div class="flex min-w-0 flex-col gap-[18px]">
         ${field({ id: "video-titulo", label: "Título de la sección", value: v.titulo, max: 80 })}
@@ -29,7 +31,7 @@ export const video: SectionEditor = {
           ], v.vertical ? "vertical" : "horizontal")}</div>
           <p class="${HINT}">Los reels y los videos de TikTok son verticales.</p>
         </fieldset>
-        <div><span class="${LABEL}">Portada</span>${cover}<p class="${HINT}">Es la imagen que se ve antes de reproducir. Medida recomendada: 1080 × 1920 px si el video es vertical y 1280 × 720 px si es horizontal. Sin portada se muestra una imagen de la campaña.</p></div>
+        <div><span class="${LABEL}">Portada</span>${cover}<p class="${HINT}">Es la imagen que se ve antes de reproducir. Al pegar el enlace se usa la del video si su plataforma la ofrece; puedes cambiarla por otra. Medida recomendada: 1080 × 1920 px si el video es vertical y 1280 × 720 px si es horizontal. Sin portada se muestra una imagen de la campaña.</p></div>
         ${editor.page.video ? `<div class="border-t border-base-300 pt-3"><button type="button" data-video-remove class="${DANGER}">${iconSvg("trash", 17)} Quitar video de la página</button></div>` : ""}
       </div>
       <aside class="min-w-0" aria-label="Vista previa del video">
@@ -62,6 +64,7 @@ export const video: SectionEditor = {
     const status = form.querySelector<HTMLElement>("#video-detectado")!;
     const stage = form.querySelector<HTMLElement>("#video-escenario")!;
     const play = form.querySelector<HTMLButtonElement>("[data-video-test]")!;
+    const auto = form.querySelector<HTMLButtonElement>("[data-video-cover-auto]")!;
     let last = input.value;
     const layout = () => {
       const vertical = form.querySelector<HTMLInputElement>('[name="video-formato"]:checked')?.value === "vertical";
@@ -81,10 +84,27 @@ export const video: SectionEditor = {
       if (source && input.value !== last) form.querySelectorAll<HTMLInputElement>('[name="video-formato"]').forEach((r) => { r.checked = (r.value === "vertical") === source.vertical; });
       if (input.value !== last) { stage.querySelector("iframe, video")?.remove(); play.hidden = false; }
       last = input.value;
+      auto.hidden = !source || source.provider === "mp4";
       layout();
       return source;
     };
+    const coverFromVideo = (button: HTMLButtonElement | null) => {
+      const source = detect();
+      if (!source || source.provider === "mp4") return;
+      capture();
+      const page = editor.page, enlace = input.value.trim();
+      void busy(button, async () => {
+        const foto = await adminApi.videoCover(enlace);
+        // Si mientras tanto cambió el enlace o la página, esta imagen ya no corresponde.
+        if (editor.page !== page || page.video?.enlace !== enlace) return;
+        page.video = { ...page.video, portada: foto };
+        editor.rerender();
+        notify("Se usa la imagen del video como portada. Puedes cambiarla por otra.");
+      });
+    };
     input.addEventListener("input", detect);
+    input.addEventListener("change", () => { if (!editor.page.video?.portada) coverFromVideo(null); });
+    auto.addEventListener("click", () => coverFromVideo(auto));
     form.querySelectorAll('[name="video-formato"]').forEach((r) => r.addEventListener("change", layout));
     play.addEventListener("click", () => {
       const source = detect();

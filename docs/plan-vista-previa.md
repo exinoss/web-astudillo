@@ -2,6 +2,8 @@
 
 Estado: **implementado** (6 oct 2026). Pendiente: medir el tiempo en el VPS tras desplegar.
 
+> Las secciones 1 a 5 son la propuesta original y se conservan como registro de la decisión. Donde no coinciden con lo implementado, vale la sección 6: la carpeta es `dist-vista-previa/` (no `vista-previa/`), los archivos van en `/_astro-vista-previa/`, el acceso lo comprueba `GET /api/vista-previa/acceso` con un pase propio (no `/api/admin/vista-previa/acceso` con la sesión), se entra con `POST /api/admin/vista-previa/entrar` y la tabla no tiene columna de versión. El funcionamiento actual, resumido, está en [cómo funciona la publicación](como-funciona-la-publicacion.md), §5.4.
+
 ## 1. Objetivo
 
 Que el equipo vea el sitio entero tal como quedará antes de publicar, desde cualquier pestaña del panel. Hoy solo «Acerca de Carlos» tiene vista previa, y lo consigue con una página y un script propios.

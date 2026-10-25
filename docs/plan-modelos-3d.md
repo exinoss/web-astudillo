@@ -1,6 +1,6 @@
 # Plan — Modelos 3D interactivos en las páginas de propuesta
 
-> Estado: **en curso — 1 de 7 modelos integrado** (Tecnologías emergentes). Diseño del bloque aprobado; el modelo carga al abrir la página. Pendiente: los otros 6 modelos.
+> Estado: **en curso — 1 de 7 modelos integrado** (Tecnologías emergentes). Diseño del bloque aprobado; el modelo carga al abrir la página. Pendiente: los otros 6 modelos. Los modelos no se suben desde el panel: van en el código, cruzados por el slug de la propuesta.
 
 ## Cómo añadir un modelo nuevo
 
@@ -23,6 +23,8 @@ El primer `.glb` real (`tecnologias-emergentes`) contradijo varias suposiciones 
 - **`frontend/modelos-fuente/` guarda los originales** (2,7 MB este) en el repositorio normal, sin Git LFS: con 7 modelos de ~3 MB el repositorio lo aguanta sin problema.
 
 ## Contexto
+
+> Las cifras y la carga diferida de esta sección y de «Decisiones técnicas» son del planteamiento inicial, anterior al primer modelo. No describen la compilación actual: el sitio ya usa más JavaScript (por ejemplo, Lottie y el panel) y el modelo se carga al abrir la página (ver «Lo que enseñó el primer modelo»). Medición de la compilación del 22 de octubre de 2026 ([auditoría de arquitectura](auditoria-arquitectura.md), §3.3): el chunk de `model-viewer` ocupa 1.068.903 bytes, unos 292 KB con gzip, y solo se descarga en las páginas con modelo. Cada modelo nuevo se vuelve a medir.
 
 El equipo de diseño ya tiene **un modelo 3D animado por cada una de las 7 propuestas**. Se quieren mostrar en la página de detalle de cada propuesta, y el visitante debe poder **girarlos y hacer zoom** (no solo verlos reproducirse).
 

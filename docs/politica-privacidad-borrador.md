@@ -1,6 +1,6 @@
 # Política de privacidad — borrador
 
-Documento de trabajo del **3 de octubre de 2026** para los puntos **22/49 y 23**. La página 49 ya está incorporada al frontend con la presentación aprobada y los plazos confirmados. El sitio todavía no está desplegado. La página no acredita la recogida del consentimiento ni el cierre de los pendientes legales de 22, 23, A6 y A8. Las comprobaciones internas están al final y no forman parte del texto público.
+Documento de trabajo del **3 de octubre de 2026** para los puntos **22/49 y 23**. La página 49 está incorporada al frontend (`frontend/src/pages/politica-de-privacidad.astro`) con la presentación aprobada y los plazos confirmados, y el sitio está desplegado desde el 4 de octubre de 2026; el texto público vigente es el de esa página. La página no acredita la recogida del consentimiento ni el cierre de los pendientes legales de 22, 23, A6 y A8. Las comprobaciones internas están al final y no forman parte del texto público.
 
 ## Texto propuesto
 

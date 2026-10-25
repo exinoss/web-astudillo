@@ -5,6 +5,9 @@ import { createHash, randomBytes } from 'node:crypto';
 import sharp from 'sharp';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
+import { CARD_SIZE, cardVariantFile } from '../../contracts/media';
+import { videoLinkProblem, videoSource } from '../../contracts/video';
+import { fetchVideoCover } from './video-cover';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import type { Photo } from '../types';
@@ -58,10 +61,6 @@ export async function savePhoto(input: Buffer, dir: string, name: string, sizes:
   return { width, height, widths };
 }
 
-/** Cambiarlo obliga a cambiar el nombre del archivo: /medios se guarda en caché un año. */
-const CARD_SIZE = 760;
-export const cardVariantFile = (name: string) => `${name}-tarjeta-${CARD_SIZE}.webp`;
-
 const CARD_CURVE = Uint8Array.from({ length: 256 }, (_, v) =>
   Math.round(255 * Math.min(1, Math.max(0, 0.5 + ((v / 255) ** (1 / 1.3) - 0.5) * 1.8))));
 
@@ -86,29 +85,41 @@ export async function ensureCardVariant(dir: string, photo: { nombre: string; an
   }
 }
 
-export function createMedia(sql: SQL, authorization: Authorization, mediaDir: string) {
+export function createMedia(sql: SQL, authorization: Authorization, mediaDir: string, fetchCover = fetchVideoCover) {
+  async function store(actor: number, input: Buffer): Promise<Photo> {
+    // Idempotente: la misma foto otra vez (reintento, doble envío) devuelve la ya guardada.
+    const hash = sha256(input);
+    const [existing] = await callPg<MediaRow>(sql, 'mediaByHash', [hash]);
+    if (existing) {
+      await ensureCardVariant(mediaDir, existing);
+      return toPhoto(existing);
+    }
+    const name = `${Date.now().toString(36)}-${randomBytes(6).toString('hex')}`;
+    const { width, height, widths } = await savePhoto(input, mediaDir, name, WIDTHS);
+    await ensureCardVariant(mediaDir, { nombre: name, anchos: widths });
+    const [row] = await callPg<MediaRow>(sql, 'mediaCreate', [actor, name, width, height, widths.join(','), hash]);
+    if (row) return toPhoto(row);
+    // Otra subida simultánea del mismo archivo ganó: se usa la suya y se borran estos archivos.
+    await Promise.all([...widths.map(w => `${name}-${w}.webp`), cardVariantFile(name)].map(file => rm(join(mediaDir, file), { force: true })));
+    const [winner] = await callPg<MediaRow>(sql, 'mediaByHash', [hash]);
+    if (!winner) throw new ApiError(403, 'Permiso insuficiente');
+    return toPhoto(winner);
+  }
+
   return {
     async upload(access: string | undefined, file: File): Promise<Photo> {
       const actor = await authorization.require(access, PERMISSIONS.mediaUpload);
       if (file.size > MAX_UPLOAD_BYTES) throw new ApiError(413, 'La foto supera los 8 MB');
-      const input = Buffer.from(await file.arrayBuffer());
-      // Idempotente: la misma foto otra vez (reintento, doble envío) devuelve la ya guardada.
-      const hash = sha256(input);
-      const [existing] = await callPg<MediaRow>(sql, 'mediaByHash', [hash]);
-      if (existing) {
-        await ensureCardVariant(mediaDir, existing);
-        return toPhoto(existing);
-      }
-      const name = `${Date.now().toString(36)}-${randomBytes(6).toString('hex')}`;
-      const { width, height, widths } = await savePhoto(input, mediaDir, name, WIDTHS);
-      await ensureCardVariant(mediaDir, { nombre: name, anchos: widths });
-      const [row] = await callPg<MediaRow>(sql, 'mediaCreate', [actor.id_usuario, name, width, height, widths.join(','), hash]);
-      if (row) return toPhoto(row);
-      // Otra subida simultánea del mismo archivo ganó: se usa la suya y se borran estos archivos.
-      await Promise.all([...widths.map(w => `${name}-${w}.webp`), cardVariantFile(name)].map(file => rm(join(mediaDir, file), { force: true })));
-      const [winner] = await callPg<MediaRow>(sql, 'mediaByHash', [hash]);
-      if (!winner) throw new ApiError(403, 'Permiso insuficiente');
-      return toPhoto(winner);
+      return store(actor.id_usuario, Buffer.from(await file.arrayBuffer()));
+    },
+
+    async videoCover(access: string | undefined, link: string): Promise<Photo> {
+      const actor = await authorization.require(access, PERMISSIONS.mediaUpload);
+      const source = videoSource(link);
+      if (!source) throw new ApiError(422, `Video: ${videoLinkProblem(link)}`);
+      const image = await fetchCover(source, MAX_UPLOAD_BYTES).catch(() => null);
+      if (!image) throw new ApiError(422, 'No se pudo obtener la imagen de este video. Sube una portada.');
+      return store(actor.id_usuario, image);
     },
   };
 }

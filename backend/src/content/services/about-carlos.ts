@@ -5,9 +5,9 @@ import { videoLinkProblem, videoSource } from '../../contracts/video';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { ABOUT_CARLOS_PAGES, type AboutCarlosPage, type AboutCarlosSlug, type AboutCarlosPageStored, type Photo } from '../types';
-import { CONTENT_CONFLICT } from './content';
+import { CONTENT_CONFLICT } from '../conflictos';
 import { ensureCardVariant, toPhoto } from './media';
-import { plainText } from './validation';
+import { plainText } from '../../validation/texto';
 
 type MediaRow = { id_medio: number; nombre: string; ancho: number; alto: number; anchos: number[] };
 type SaveRow = { resultado: 'guardado' | 'sin_cambios' | 'conflicto'; version: string | null };

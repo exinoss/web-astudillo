@@ -6,7 +6,7 @@ import type { UserRow } from '../../db/types';
 import { ApiError, publicAccount } from '../../http';
 import type { ProfileUpdateInput } from '../types';
 import { hasAcceptance } from '../../auth/services/consent';
-import { plainText } from '../../content/services/validation';
+import { plainText } from '../../validation/texto';
 
 export function createProfile(sql: SQL, authorization: Authorization) {
   return {

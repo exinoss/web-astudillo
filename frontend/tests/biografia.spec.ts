@@ -63,6 +63,18 @@ test('la portada de «Acerca de nosotros» enlaza sus tres páginas en un índic
   }
 });
 
+test('en celular la biografía no muestra ni descarga el fondo de cintas; en tablet sí', async ({ page }) => {
+  let descargado = false;
+  page.on('request', r => { if (r.url().includes('backgruond-historia')) descargado = true; });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/acerca-de-nosotros/biografia/');
+  await expect(page.locator('section img[alt=""]')).toBeHidden();
+  await page.waitForLoadState('networkidle');
+  expect(descargado).toBe(false);
+  await page.setViewportSize({ width: 768, height: 1024 });
+  await expect(page.locator('section img[alt=""]')).toBeVisible();
+});
+
 test('el fondo de la biografía sigue visible al bajar por la línea de tiempo', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/acerca-de-nosotros/biografia/');

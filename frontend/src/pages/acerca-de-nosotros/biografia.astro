@@ -24,14 +24,15 @@ const biography = await contentRepository.getBiography();
   <section class="relative overflow-clip bg-base-100 pb-14 max-tablet:pb-10">
     {/* Sticky dentro de una capa del alto de la sección: la cinta acompaña todo el recorrido.
         overflow-clip y no hidden, que crearía un contenedor de scroll y anularía el sticky. */}
-    <div class="pointer-events-none absolute inset-0">
+    {/* En celular la cinta tapa textos y la línea de tiempo. Con loading lazy, oculta no se descarga. */}
+    <div class="pointer-events-none absolute inset-0 celular:hidden">
       <Image
         class="sticky top-0 h-dvh w-full object-cover object-left-top max-tablet:h-auto"
         src={fondo}
         alt=""
         widths={[800, 1280, 2000]}
         sizes="100vw"
-        loading="eager"
+        loading="lazy"
       />
     </div>
     <div class="site-container relative">

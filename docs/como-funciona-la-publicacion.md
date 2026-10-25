@@ -160,7 +160,7 @@ async saveText(access, key, value) {
 ```
 
 ```sql
--- 3) BASE DE DATOS: guarda (y vuelve a comprobar el permiso) — backend/database/fn.sql
+-- 3) BASE DE DATOS: guarda (y vuelve a comprobar el permiso) — backend/database/funciones/contenido.sql
 CREATE FUNCTION fn_text_save(p_actor integer, p_key text, p_value text) ... AS $$
 BEGIN
   IF NOT fn_has_permission(p_actor, 'contenido.editar') THEN RETURN; END IF;
@@ -278,7 +278,8 @@ Porque Astro **vacía** la carpeta de salida al empezar. Si compilara directo en
 ```mermaid
 flowchart TD
     A[Compilar en dist-nueva] --> B{¿Salió bien?}
-    B -- Sí --> C[dist → dist-anterior]
+    B -- Sí --> R[Copiar a dist-nueva los _astro de dist<br/>que aún usan pestañas abiertas]
+    R --> C[dist → dist-anterior]
     C --> D[dist-nueva → dist]
     D --> E[borrar dist-anterior]
     E --> F[✅ publicada]
@@ -286,12 +287,14 @@ flowchart TD
     G --> H[❌ fallida<br/>dist sigue igual que antes]
 ```
 
+El cambio de carpetas lo hace `swap` en [`backend/src/publisher/salida-estatica.ts`](../backend/src/publisher/salida-estatica.ts). Conserva durante un tiempo los archivos con hash de `_astro` que la versión nueva ya no usa: una pestaña abierta con el HTML anterior todavía puede pedirlos (por ejemplo, el visor 3D, que se carga después).
+
 ### 5.3 ¿Y si hubiera dos publicadores a la vez?
 
 La función SQL que toma el trabajo usa `FOR UPDATE SKIP LOCKED`:
 
 ```sql
--- backend/database/fn.sql (fn_publication_claim)
+-- backend/database/funciones/publicacion.sql (fn_publication_claim)
 UPDATE tb_publicaciones SET estado = 'publicando'
 WHERE id_publicacion = (
   SELECT id_publicacion FROM tb_publicaciones
@@ -301,6 +304,21 @@ WHERE id_publicacion = (
 ```
 
 Es como una fila en el banco: si un cajero ya está atendiendo a alguien, el otro cajero no lo llama también.
+
+**Pero eso no permite tener dos publicadores.** `SKIP LOCKED` solo evita que dos procesos tomen el mismo trabajo. Todos los publicadores escriben en las mismas carpetas (`dist-nueva`, `dist-anterior`, `dist-vista-previa-nueva`…) y en el mismo archivo temporal de la vista previa, así que dos procesos a la vez se pisarían los archivos. La configuración (`server-produccion/compose.yml`) arranca **un solo publicador**, y así debe seguir.
+
+Tampoco hay una transacción única entre la base y los archivos. Mientras el publicador compila, la publicación está en `publicando` y la API ya entrega esa versión (§6), pero los HTML servidos siguen siendo los de la anterior hasta el cambio de carpetas.
+
+### 5.4 La vista previa del borrador
+
+El mismo publicador compila también una copia del sitio con el **borrador**, para verlo antes de publicar. Las publicaciones reales van primero.
+
+1. En el panel, «Vista previa del borrador» abre `/cuenta/vista-previa/?ruta=…`, que pide la vista previa (`POST /api/admin/vista-previa`) y consulta su estado hasta que está lista. Con el mismo borrador no se vuelve a compilar.
+2. El publicador lee el borrador de la base, lo escribe en un archivo temporal y compila con `CONTENIDO_ARCHIVO` (§6.1) en `dist-vista-previa/`, con el mismo cambio de carpetas que `dist`. Sus archivos van en `/_astro-vista-previa/`.
+3. Al entrar (`POST /api/admin/vista-previa/entrar`), el backend da la cookie `vista_previa`, un pase firmado de 2 horas. nginx (en local, `frontend/vista-previa-local.mjs`) sirve las páginas desde `dist-vista-previa/` solo si `GET /api/vista-previa/acceso` confirma que la cuenta sigue activa y puede editar.
+4. En la vista previa no se crean datos reales ni se edita; «Salir de la vista previa» (`GET /api/vista-previa/salir`) borra el pase.
+
+El diseño completo y sus decisiones están en [plan-vista-previa.md](plan-vista-previa.md).
 
 ---
 
@@ -313,7 +331,7 @@ GET /api/contenido/publicado
 ```
 
 ```sql
--- backend/database/fn.sql
+-- backend/database/funciones/publicacion.sql
 CREATE FUNCTION fn_publication_current() ... AS $$
   SELECT contenido FROM tb_publicaciones
   WHERE estado IN ('publicando', 'publicada')   -- nunca borradores, ni en cola, ni fallidas
@@ -325,12 +343,13 @@ $$;
 
 ### 6.1 El repositorio HTTP
 
-Las páginas nunca hacen `fetch` directo: piden los datos a un **repositorio** (regla del proyecto). Hay dos implementaciones con la misma interfaz:
+Las páginas nunca hacen `fetch` directo: piden los datos a un **repositorio** (regla del proyecto). Hay tres implementaciones con la misma interfaz. Las tres heredan de `SnapshotRepository`, que convierte el snapshot en los datos de cada página; solo cambia de dónde lo cargan:
 
 ```mermaid
 classDiagram
-    class ContentRepository {
-        <<interface>>
+    class SnapshotRepository {
+        <<abstract>>
+        load()
         getProposals()
         getBiography()
         getWorks()
@@ -339,29 +358,37 @@ classDiagram
     class HttpContentRepository {
         lee GET /api/contenido/publicado
     }
-    class MockContentRepository {
-        lee la semilla del código
+    class FileContentRepository {
+        lee el archivo de CONTENIDO_ARCHIVO
     }
-    ContentRepository <|.. HttpContentRepository : desarrollo y build
-    ContentRepository <|.. MockContentRepository : pruebas (--mode test)
+    class MockContentRepository {
+        lee la semilla contenido-inicial.json
+    }
+    SnapshotRepository <|-- HttpContentRepository : desarrollo y build normal
+    SnapshotRepository <|-- FileContentRepository : vista previa del borrador
+    SnapshotRepository <|-- MockContentRepository : pruebas (--mode test)
 ```
 
 ```ts
-// frontend/src/lib/data/index.ts
+// frontend/src/lib/data/index.ts (simplificado)
 export const contentRepository = import.meta.env.MODE === "test"
-  ? new MockContentRepository()  // pruebas: siempre los mismos datos
-  : new HttpContentRepository(); // lo normal: lo publicado
+  ? new MockContentRepository()                // pruebas: siempre la misma semilla
+  : draftFile
+    ? new FileContentRepository(draftFile)     // vista previa: el borrador que deja el publicador
+    : new HttpContentRepository();             // lo normal: lo publicado
 ```
+
+Para la vista previa, el publicador escribe el borrador en un archivo temporal y compila con `CONTENIDO_ARCHIVO` apuntando a él. Así el borrador nunca sale de la base por la API pública. Quién puede ver esa vista previa lo sigue decidiendo la API y el proxy.
 
 Y el repositorio HTTP, en esencia:
 
 ```ts
 // frontend/src/lib/data/http/http-content-repository.ts (simplificado)
-async getTexts() {
-  const respuesta = await fetch("http://127.0.0.1:3000/api/contenido/publicado");
-  if (respuesta.status === 404) return {};   // nunca se publicó nada → textos del diseño
-  const foto = await respuesta.json();
-  return foto.textos;                         // { "pie.nombre": "CARLOS A." }
+protected load() {
+  return fetch(API + "/api/contenido/publicado").then(async (respuesta) => {
+    if (!respuesta.ok) throw new Error("No se pudo leer el contenido publicado (" + respuesta.status + ")");
+    return respuesta.json();                  // { version: 1, textos: { "pie.nombre": "CARLOS A." }, … }
+  });
 }
 ```
 
@@ -369,10 +396,11 @@ Detalles que conviene saber:
 
 | Situación | Qué hace |
 | --- | --- |
-| `bun run build` | Pide el contenido **una sola vez** y lo reutiliza en las 24 páginas |
+| `bun run build` | Pide el contenido **una sola vez** y lo reutiliza en todas las páginas |
 | `bun run dev` | Lo vuelve a pedir en cada recarga (caché de 1 s) → ves lo recién publicado |
-| Nunca se publicó nada (404) | Usa la semilla del código |
-| El backend está apagado | Error claro: *«el backend no responde en …»* (no muestra datos falsos sin avisar) |
+| Base recién instalada | La semilla (`backend/src/db/seed.ts`) carga `contenido-inicial.json` y crea la **primera publicación** ya `publicada`. No hay que publicar para tener sitio. |
+| No hay ninguna publicación (404) | La compilación **falla** con «No se pudo leer el contenido publicado (404)». No hay vuelta atrás a la semilla. |
+| El backend está apagado o responde con error | La compilación **falla**. El publicador marca la publicación como `fallida` y `dist` queda como estaba: nunca se publica un sitio con datos de prueba. |
 
 ---
 
@@ -450,7 +478,7 @@ Dos problemas clásicos de cualquier sistema con varios usuarios:
 Para «Publicar», la base de datos revisa, antes de crear nada, si **esa misma foto** ya está en cola o compilándose:
 
 ```sql
--- backend/database/fn.sql (fn_publication_create, simplificado)
+-- backend/database/funciones/publicacion.sql (fn_publication_create, simplificado)
 PERFORM pg_advisory_xact_lock(hashtext('contenido:publicacion')); -- una a la vez
 SELECT id_publicacion INTO v_id FROM tb_publicaciones
 WHERE estado IN ('en_cola', 'publicando') AND contenido = p_content;
@@ -488,7 +516,7 @@ await adminApi.saveText("pie.nombre", "CARLOS A.", versiones.textos["pie.nombre"
 La base de datos compara, con el candado puesto:
 
 ```sql
--- backend/database/fn.sql (fn_text_save, simplificado)
+-- backend/database/funciones/contenido.sql (fn_text_save, simplificado)
 v_actual := md5(valor actual);
 IF v_actual = md5(p_value)   THEN RETURN 'sin_cambios'; END IF; -- repetir es seguro
 IF v_actual <> p_version     THEN RETURN 'conflicto';   END IF; -- alguien guardó antes
@@ -553,11 +581,14 @@ Para ver la foto exacta que se publicó, abre en el navegador:
 | Componente `Editable` | [`frontend/src/components/comun/Editable.astro`](../frontend/src/components/comun/Editable.astro) |
 | Modo edición (navegador) | [`frontend/src/scripts/comun/modo-edicion.ts`](../frontend/src/scripts/comun/modo-edicion.ts) |
 | Panel de administración | [`frontend/src/scripts/cuenta/panel/`](../frontend/src/scripts/cuenta/panel/) |
+| Selección del repositorio | [`frontend/src/lib/data/index.ts`](../frontend/src/lib/data/index.ts) |
 | Repositorio que lee lo publicado | [`frontend/src/lib/data/http/http-content-repository.ts`](../frontend/src/lib/data/http/http-content-repository.ts) |
+| Repositorio de la vista previa | [`frontend/src/lib/data/file/file-content-repository.ts`](../frontend/src/lib/data/file/file-content-repository.ts) |
+| Cambio de carpetas y archivos conservados | [`backend/src/publisher/salida-estatica.ts`](../backend/src/publisher/salida-estatica.ts) |
 | Rutas del contenido | [`backend/src/content/routes/index.ts`](../backend/src/content/routes/index.ts) |
 | Lógica: guardar, publicar, diferencias | [`backend/src/content/services/content.ts`](../backend/src/content/services/content.ts) |
 | Forma del snapshot | [`backend/src/content/types.ts`](../backend/src/content/types.ts) |
-| Funciones SQL | [`backend/database/fn.sql`](../backend/database/fn.sql) |
+| Funciones SQL | [`backend/database/funciones/`](../backend/database/funciones/) |
 | Publicador | [`backend/src/publisher/worker.ts`](../backend/src/publisher/worker.ts) |
 
 ---
@@ -568,5 +599,5 @@ Para ver la foto exacta que se publicó, abre en el navegador:
 - **Snapshot (foto)**: copia congelada de todo el borrador en el momento de publicar.
 - **Publicador**: proceso que toma la foto en cola y reconstruye el sitio.
 - **Sitio estático**: páginas HTML generadas de antemano (`dist`), sin consultar la base en cada visita.
-- **Repositorio**: capa que entrega datos a las páginas y oculta de dónde vienen (API o semilla).
-- **Semilla**: datos de ejemplo escritos en el código; se usan en las pruebas y antes de la primera publicación.
+- **Repositorio**: capa que entrega datos a las páginas y oculta de dónde vienen (API, archivo de vista previa o semilla).
+- **Semilla**: `backend/database/contenido-inicial.json`. Carga el contenido inicial de la base (con la primera publicación) y la usan las pruebas.

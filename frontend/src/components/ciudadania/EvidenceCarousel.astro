@@ -2,6 +2,7 @@
 import Foto from "../comun/Foto.astro";
 import Icon from "../comun/Icon.astro";
 import type { WorkEvidence } from "../../lib/data/types";
+import { medidasFoto } from "../../lib/comun/fotos";
 
 interface Props {
   id: string;
@@ -29,21 +30,22 @@ const flecha =
   </button>
   <div
     id={`evidencias-${id}`}
-    class="evidencias relative h-full min-h-[340px] overflow-hidden rounded-[4px] bg-primary max-tablet:mt-2 max-tablet:hidden max-tablet:aspect-[4/3] max-tablet:h-auto max-tablet:min-h-0 max-tablet:group-[.is-abierto]:block"
+    class="evidencias relative h-full min-h-[340px] overflow-hidden rounded-[4px] bg-primary max-tablet:mt-2 max-tablet:hidden max-tablet:aspect-[4/3] max-mobile:aspect-square max-tablet:h-auto max-tablet:min-h-0 max-tablet:group-[.is-abierto]:block"
     role="region"
     aria-roledescription="carrusel"
     aria-label={`Evidencias del avance de ${name}`}
   >
     {evidence.map((foto, i) => (
       <figure
-        class="evidencia absolute inset-0 m-0"
+        class="evidencia @container-[size] absolute inset-0 m-0 flex items-center justify-center pb-[54px]"
+        style={medidasFoto(foto.image)}
         role="group"
         aria-roledescription="diapositiva"
         aria-label={`${i + 1} de ${evidence.length}`}
         hidden={i !== 0}
       >
         <Foto
-          class="h-full w-full object-cover"
+          class="block aspect-(--proporcion) h-auto w-[min(100cqw,var(--ancho-foto),100cqh*var(--proporcion))]"
           picture={foto.image}
           alt={foto.alt}
           widths={[480, 720, 960]}

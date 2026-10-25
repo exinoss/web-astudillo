@@ -70,7 +70,7 @@ export function renderBiography(section: HTMLElement) {
           <div class="flex flex-col gap-2">
             <label class="${GHOST} cursor-pointer self-start border-field-border focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral max-tablet:self-stretch">${iconSvg("upload", 18)} ${item.foto ? "Cambiar foto" : "Subir foto"}
               <input id="hito-foto" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" /></label>
-            <p class="m-0 text-[0.74rem] text-[#50617d]">JPG, PNG o WebP de hasta 8 MB. Medida recomendada: 429 × 273 px (horizontal) o 429 × 637 px (vertical).</p>
+            <p class="m-0 text-[0.74rem] text-[#50617d]">JPG, PNG o WebP de hasta 8 MB. Medida recomendada: 880 px o más en su lado más largo, vertical u horizontal. Se muestra completa, sin recortes.</p>
             ${item.foto ? `<button type="button" id="hito-quitar-foto" class="${GHOST} self-start">Quitar foto</button>` : ""}
           </div>
         </div>

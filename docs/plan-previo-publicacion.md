@@ -73,7 +73,7 @@ Los desarrolladores junto con Carlos Astudillo atenderán las solicitudes de der
 
 ### Decisiones legales recibidas el 3 de octubre de 2026
 
-Los datos de identificación facilitados constan en el [borrador de aviso legal](aviso-legal-borrador.md), que será la referencia para evitar versiones distintas en los documentos.
+Los datos de identificación facilitados constan en `frontend/src/components/legal/LegalContact.astro`, que comparten el aviso legal y la política de privacidad; es la referencia para evitar versiones distintas en los documentos. Los textos aprobados de aviso y términos están en `frontend/src/pages/aviso-legal.astro` y `frontend/src/pages/terminos-y-condiciones.astro`.
 
 | Aspecto | Decisión recibida | Información o trabajo que falta |
 | --- | --- | --- |
@@ -87,6 +87,16 @@ Los datos de identificación facilitados constan en el [borrador de aviso legal]
 | Fotos en charlas | El permiso incluido en los términos comprende únicamente **fotos de daños sin personas identificables** y será **gratuito**, durante la campaña y hasta **tres años después del cierre del sitio**. La campaña podrá usar también estadísticas anónimas; se excluyen nombres, correos, direcciones y mensajes identificables. | Ya se registra la aceptación de la versión que contiene la cláusula. Revisar autoría, atribución o anonimato, adolescentes y conservación de la prueba compatible con A6. Las fotos siguen privadas. No autorizar retroactivamente fotos anteriores sin aceptación acreditada ni ampliar a otros medios sin una decisión nueva. |
 | Autoridades | Ante material relacionado con posibles delitos, se quiere tratar el caso con las autoridades competentes. | Procedimiento manual con base jurídica, comunicación segura y datos pertinentes; no entregar toda la cuenta automáticamente ni identificar al remitente como responsable del hecho. |
 | Cierre y analítica | El sitio se cerrará después de la campaña. Los datos identificables se eliminarán o anonimizarán como máximo **60 días después del cierre**. Las estadísticas anónimas de alertas y sugerencias se conservarán **tres años desde el cierre** y después se eliminarán. | Ejecución manual asignada a los desarrolladores junto con Carlos Astudillo, incluidos fotos, mensajes, respaldos y comprobantes de A4. Elaborar estadísticas dentro del periodo de 60 días. La conservación de estadísticas y el permiso de fotos no autorizan guardar toda la base personal durante tres años. |
+
+### Fundamentos de aviso legal y términos (3 de octubre de 2026)
+
+Trasladados de los borradores de aviso legal (punto 21) y términos (punto 51), que se retiraron el 22 de octubre de 2026 al quedar sus textos en las páginas Astro.
+
+- **Teléfono de contacto.** El artículo 12, numeral 8, de la LOPDP incluye el teléfono entre los datos de contacto del responsable. Se usa el número público de atención de la campaña, rotulado «Teléfono / WhatsApp», siempre que permita contactar con el responsable o su equipo autorizado. Que el formato sea válido o que exista el enlace no acredita que sea real y esté atendido; eso se comprueba en A8. `LegalContact.astro` omite el número de prueba de la semilla y solo muestra Facebook y TikTok si hay enlaces publicados con HTTPS y dominio permitido. El correo sigue siendo el canal de solicitudes sobre datos personales. [LOPDP, art. 12](https://www.finanzaspopulares.gob.ec/wp-content/uploads/2021/07/ley_organica_de_proteccion_de_datos_personales.pdf).
+- **Edad.** El mínimo de 16 años lo eligió el usuario. La edad para votar no determina la base jurídica; el artículo 21 de la LOPDP contempla consentimiento explícito desde los 15 años, por lo que no se exige autorización parental general para cuentas de 16 y 17 años. Los datos de adolescentes requieren las garantías correspondientes. [Criterio de la SPDP](https://spdp.gob.ec/consultas2025/).
+- **Permiso de fotos.** La aceptación genérica de documentos no sustituye el consentimiento que corresponda al tratamiento de datos. Las autorizaciones de uso de obras deben constar por escrito y delimitar las formas de explotación; no se presume una licencia ilimitada ni una autorización retroactiva. [Código Ingenios, arts. 166 y 167](https://www.derechosintelectuales.gob.ec/wp-content/uploads/downloads/2021/agosto/a_2_16_codigo_ingenios_agosto_2021.pdf).
+- **Autoridades.** Un envío no se interpreta como prueba de que su autor cometió un delito. No se reenvía material ilegal por canales ordinarios ni se crean copias para exposición pública.
+- **Conservación.** Si alguna obligación exigiera conservar datos más tiempo que los plazos acordados, se delimita e informa antes de recoger datos.
 
 ### Avance documental y aprobación visual
 
@@ -127,7 +137,7 @@ Los resultados siguientes corresponden al **1 de octubre de 2026** y son anteced
 - Desarrollo: páginas examinadas a 320, 390, 768 y 1440 px sin desbordamiento ni errores JavaScript registrados; capturas de móvil y escritorio revisadas. El contraste solo se comprobó de forma limitada en portada.
 - Infraestructura: revisión de `server-produccion/compose.yml`, `nginx/default.conf` y `README.md`; no se accedió a un VPS, dominio, Cloudflare ni cuentas de Google.
 
-Referencias del código para continuar: autenticación y respuestas en `backend/src/auth/`, `backend/src/http.ts` y `backend/src/security.ts`; perfil en `backend/src/profile/`; chat en `backend/src/participation/`; garantías SQL en `backend/database/fn.sql`; metadatos en `frontend/src/layouts/Layout.astro`, `frontend/src/pages/` y `frontend/astro.config.mjs`; semilla en `backend/database/contenido-inicial.json`, migración `0009_textos_iniciales.sql` y contenido publicado por la API.
+Referencias del código para continuar: autenticación y respuestas en `backend/src/auth/`, `backend/src/http.ts` y `backend/src/security.ts`; perfil en `backend/src/profile/`; chat en `backend/src/participation/`; garantías SQL en `backend/database/funciones/`; metadatos en `frontend/src/layouts/Layout.astro`, `frontend/src/pages/` y `frontend/astro.config.mjs`; semilla en `backend/database/contenido-inicial.json`, migración `0009_textos_iniciales.sql` y contenido publicado por la API.
 
 Fuentes oficiales consultadas durante la revisión inicial:
 

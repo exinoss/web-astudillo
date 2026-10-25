@@ -3,6 +3,7 @@ import type { Profile } from "../../../lib/data/auth-repository";
 import { adminApi, type Draft } from "../../../lib/data/http/admin-api";
 import { esc } from "../../../lib/comun/html";
 import { iconSvg } from "../../../lib/comun/iconos";
+import { bloquearMientras } from "../../../lib/cuenta/panel/cambios";
 
 export { esc, iconSvg };
 
@@ -87,12 +88,12 @@ export const isPending = (tipo: string, descripcion: string) =>
 
 /** Ejecuta una acción con el botón bloqueado y el error convertido en aviso. */
 export async function busy(button: HTMLButtonElement | null, action: () => Promise<void>) {
-  if (button) button.disabled = true;
-  try {
-    await action();
-  } catch (error) {
-    notify(error instanceof Error ? error.message : "No se pudo completar la acción.", true);
-  } finally {
-    if (button) button.disabled = false;
-  }
+  const run = async () => {
+    try {
+      await action();
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "No se pudo completar la acción.", true);
+    }
+  };
+  await (button ? bloquearMientras(button, run) : run());
 }

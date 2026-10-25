@@ -138,3 +138,44 @@ test('publicar congela las páginas y un snapshot anterior sin ellas no cuenta c
   expect(diff(older, emptyPages).filter(c => c.tipo === 'Página')).toEqual([]);
 });
 
+
+test('la portada del video se obtiene de su plataforma, solo de sus dominios, y repetirla no la duplica', async () => {
+  const jpg = await sharp({ create: { width: 1280, height: 720, channels: 3, background: '#284e9c' } }).jpeg().toBuffer();
+  const pedidas: string[] = [];
+  const original = globalThis.fetch;
+  let og = 'https://scontent.xx.fbcdn.net/v/portada.jpg?oe=1';
+  let redirige = '';
+  globalThis.fetch = (async (input: string | URL | Request) => {
+    const url = String(input instanceof Request ? input.url : input);
+    pedidas.push(url);
+    const respuesta = (body: BodyInit | null, status = 200) => Object.defineProperty(new Response(body, { status }), 'url', { value: redirige || url });
+    if (url.includes('maxresdefault')) return respuesta(null, 404);
+    if (url.startsWith('https://www.facebook.com/')) return respuesta(`<meta property="og:image" content="${og.replaceAll('&', '&amp;')}" />`);
+    return respuesta(new Uint8Array(jpg));
+  }) as typeof fetch;
+  const portada = (enlace: string, cookie = cookies.coadmin) => call('/api/admin/medios/portada-video', 'POST', { enlace }, cookie);
+  try {
+    expect((await portada('https://youtu.be/abc12345678', '')).status).toBe(401);
+    expect((await portada('https://youtu.be/abc12345678', cookies.votante)).status).toBe(403);
+    const [a, b] = await Promise.all([portada('https://youtu.be/abc12345678'), portada('https://youtu.be/abc12345678')]);
+    expect([a.status, b.status]).toEqual([200, 200]);
+    const foto = await a.json();
+    expect((await b.json()).idMedio).toBe(foto.idMedio);
+    expect(foto).toMatchObject({ ancho: 1280, alto: 720 });
+    expect(pedidas.some(u => u.endsWith('/hqdefault.jpg'))).toBe(true);
+    expect((await (await portada(REEL)).json()).idMedio).toBe(foto.idMedio);
+
+    pedidas.length = 0;
+    og = 'https://atacante.example/portada.jpg';
+    expect((await portada(REEL)).status).toBe(422);
+    expect(pedidas.some(u => u.includes('atacante.example'))).toBe(false);
+    og = 'https://scontent.xx.fbcdn.net/v/portada.jpg';
+    redirige = 'https://atacante.example/portada.jpg';
+    expect((await portada(REEL)).status).toBe(422);
+    redirige = '';
+    expect((await portada('https://example.com/video.mp4')).status).toBe(422);
+    expect((await portada('https://example.com/no-es-video')).status).toBe(422);
+  } finally {
+    globalThis.fetch = original;
+  }
+});

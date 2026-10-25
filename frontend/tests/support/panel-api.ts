@@ -57,6 +57,7 @@ export function panelData(rol: 'admin' | 'coadmin') {
     sinRespuesta: [{ clave: 'cuando hay caravana', ejemplo: '¿Cuándo hay caravana?', veces: 3, ultimaVez: '2026-09-30T15:00:00Z' }],
     pending: [] as { tipo: string; descripcion: string }[],
     savedPages: [] as Record<string, unknown>[],
+    videoCovers: [] as string[],
     users: Array.from({ length: 23 }, (_, i) => ({
       id: i + 2, correo: `persona${i + 2}@example.com`, nombresCompletos: `Persona ${i + 2}`,
       rol: i === 0 ? 'admin' : i < 3 ? 'coadmin' : 'votante', estado: i === 5 ? 'bloqueado' : 'activo',
@@ -110,6 +111,11 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
       return json({ version: data.draft.versiones.obras[work[1]] });
     }
     if (path === '/api/admin/medios') return json(photo(90));
+    if (path === '/api/admin/medios/portada-video') {
+      data.videoCovers.push(body().enlace);
+      return body().enlace.includes('facebook.com') ? json(photo(91))
+        : json({ error: 'No se pudo obtener la imagen de este video. Sube una portada.' }, 422);
+    }
     if (path === '/api/admin/vista-previa') {
       if (method === 'POST') data.preview.requests++;
       return json({ estado: data.preview.states.length > 1 ? data.preview.states.shift() : data.preview.states[0] });

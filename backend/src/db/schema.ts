@@ -310,7 +310,7 @@ export const tbPublicaciones = pgTable("tb_publicaciones", {
 	check("ck_publicaciones_contenido", sql`jsonb_typeof(contenido) = 'object'`),
 ]);
 
-// Fallos de acceso por clave (correo+IP, IP, correo). La escalada vive en fn_limit_fail (database/fn.sql).
+// Fallos de acceso por clave (correo+IP, IP, correo). La escalada vive en fn_limit_fail (database/funciones/auth.sql).
 export const tbLimitesIntentos = pgTable("tb_limites_intentos", {
 	clave: varchar({ length: 400 }).primaryKey().notNull(),
 	fallos: integer().notNull(),
