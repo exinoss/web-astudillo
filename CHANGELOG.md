@@ -2,12 +2,18 @@
 
 Todos los cambios notables de este proyecto se documentan en este archivo.
 
-El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
+El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/) y el proyecto sigue [Versionado Semántico](https://semver.org/lang/es/). Cómo se publica una versión: [docs/gestion-de-configuracion.md](docs/gestion-de-configuracion.md).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-25
+
+Primera versión numerada: recoge todo lo hecho desde el inicio del proyecto.
+
 ### Added
 
+- Gestión de configuración: versiones semánticas, plantilla de PR, registro de decisiones (`docs/decisiones.md`) y guía de publicación (`docs/gestion-de-configuracion.md`).
+- Reglas para agentes (`AGENTS.md` y `CLAUDE.md`) en el repositorio, con memoria local por equipo (`PROJECT_MEMORY.md`) y un mapa del código generado con Graphify.
 - La portada del video de las páginas de Carlos se toma automáticamente de YouTube, Vimeo, Facebook o TikTok al pegar el enlace en el panel, en lugar de mostrar la imagen genérica de la campaña. Se puede cambiar por otra o pedirla de nuevo con «Usar la imagen del video».
 - Participación ciudadana real, guardada en la base y solo con sesión iniciada:
   - **Alertas**: el tipo se elige con botones (agua, basura, alumbrado, baches, seguridad, otro). Para la foto hay una zona grande que en el celular ofrece cámara o galería; admite hasta 5 MB y se guarda sin datos de ubicación, en una carpeta privada que solo ven su autor y el equipo. Junto al formulario está el historial «Tus alertas» con el estado de cada una.
@@ -80,3 +86,6 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - El campo «Nombre» de alertas y sugerencias, que ahora se toma de la cuenta.
 - Las respuestas simuladas de alertas, sugerencias y chat.
 - Dependencia `daisyui`: no se usaba ninguna de sus clases ni su mecanismo de temas; sus tokens de color pasaron a `@theme`.
+
+[Unreleased]: https://github.com/exinoss/web-astudillo/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/exinoss/web-astudillo/releases/tag/v1.0.0
