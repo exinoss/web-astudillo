@@ -8,6 +8,7 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ### Added
 
+- La portada del video de las páginas de Carlos se toma automáticamente de YouTube, Vimeo, Facebook o TikTok al pegar el enlace en el panel, en lugar de mostrar la imagen genérica de la campaña. Se puede cambiar por otra o pedirla de nuevo con «Usar la imagen del video».
 - Participación ciudadana real, guardada en la base y solo con sesión iniciada:
   - **Alertas**: el tipo se elige con botones (agua, basura, alumbrado, baches, seguridad, otro). Para la foto hay una zona grande que en el celular ofrece cámara o galería; admite hasta 5 MB y se guarda sin datos de ubicación, en una carpeta privada que solo ven su autor y el equipo. Junto al formulario está el historial «Tus alertas» con el estado de cada una.
   - **Sugerencias**: el tema se elige con fichas.
@@ -66,8 +67,15 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - Los estilos se reparten en 14 archivos por componente (`base`, `header`, `hero`, `about`, `contact`…) en vez de un único `global.css` de 2439 líneas; `global.css` queda como punto de entrada con los `@import` y el `@theme`.
 - Las cadenas de utilidades que se repetían en el markup se consolidan en las clases `.eyebrow`, `.button` y `.button-light`.
 
+### Fixed
+
+- Reintentar el envío de una sugerencia (por ejemplo, con mala conexión) ya no gasta el cupo de 5 envíos cada 10 minutos, tampoco si los reintentos llegan a la vez.
+- En el panel, «Guardar borrador» sigue desactivado mientras se guarda aunque se siga escribiendo, se pulse Enter o se reordene el formulario, así que un doble clic ya no envía dos guardados.
+- Publicar mientras otra persona guarda cambios ya no puede dejar en el sitio solo una parte de lo que esa persona guardó: el borrador se lee de una vez.
+
 ### Removed
 
+- Documentos ya integrados en las páginas, los README y el plan previo a la publicación: borradores de aviso legal y términos, integraciones pendientes y plan de límite de intentos. También el plan de la franja de cifras en la portada, que se descartó en favor de las cifras de cada propuesta.
 - Vercel (`frontend/vercel.json`) y Jenkins (`backend/Jenkinsfile`), junto con `backend/docker-compose.yml` y `backend/nginx.conf`: el despliegue vive ahora en `server-produccion/`.
 - El campo «Nombre» de alertas y sugerencias, que ahora se toma de la cuenta.
 - Las respuestas simuladas de alertas, sugerencias y chat.

@@ -3,7 +3,7 @@ import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization, Limiter } from '../../auth/types';
 import { callPg } from '../../db/call';
 import { savePhoto, sha256 } from '../../content/services/media';
-import { plainText } from '../../content/services/validation';
+import { plainText } from '../../validation/texto';
 import { ApiError } from '../../http';
 import { requireParticipationAcceptance } from '../../auth/services/consent';
 import { VERSION_LEGAL } from '../../contracts/legal';
@@ -60,6 +60,7 @@ export function createParticipation(sql: SQL, authorization: Authorization, limi
     if (row.resultado === 'conflicto') throw new ApiError(409, STATE_CONFLICT);
     return { estado: row.estado };
   };
+  const suggestionsInFlight = new Map<string, Promise<SuggestionRow>>();
 
   return {
     /**
@@ -100,11 +101,21 @@ export function createParticipation(sql: SQL, authorization: Authorization, limi
       await requireParticipationAcceptance(sql, user.id_usuario);
       const message = plainText(input.mensaje, '¿Qué te gustaría proponer?', 1500, { multiline: true });
       if (Array.from(message).length < 15) throw new ApiError(422, '¿Qué te gustaría proponer?: escribe al menos 15 caracteres');
-      limit(`sugerencia:${user.id_usuario}`, SENDS_PER_WINDOW, WINDOW_MS);
-      // Un reintento con la misma `idempotencia` devuelve la sugerencia ya creada (`nueva = false`).
-      const [row] = await callPg<SuggestionRow>(sql, 'suggestionCreate', [user.id_usuario, input.idempotencia, input.tema, message, VERSION_LEGAL]);
-      if (!row) throw new ApiError(403, 'Permiso insuficiente');
-      return toSuggestion(row);
+      // Los reintentos simultáneos de una clave comparten el envío: el límite se consume una sola vez.
+      const key = `${user.id_usuario}:${input.idempotencia}`;
+      let sending = suggestionsInFlight.get(key);
+      if (!sending) {
+        sending = (async () => {
+          const [existing] = await callPg<SuggestionRow>(sql, 'suggestionByKey', [user.id_usuario, input.idempotencia]);
+          if (existing) return existing;
+          limit(`sugerencia:${user.id_usuario}`, SENDS_PER_WINDOW, WINDOW_MS);
+          const [row] = await callPg<SuggestionRow>(sql, 'suggestionCreate', [user.id_usuario, input.idempotencia, input.tema, message, VERSION_LEGAL]);
+          if (!row) throw new ApiError(403, 'Permiso insuficiente');
+          return row;
+        })().finally(() => suggestionsInFlight.delete(key));
+        suggestionsInFlight.set(key, sending);
+      }
+      return toSuggestion(await sending);
     },
 
     async mySuggestions(access: string | undefined) {

@@ -6,7 +6,7 @@ import type { Sessions } from "../types";
 import type { GoogleIdentity } from '../../security/types';
 import { TEXTO_ACEPTACION, VERSION_LEGAL, type AceptacionLegal } from '../../contracts/legal';
 import { requireAcceptance } from './consent';
-import { plainText } from '../../content/services/validation';
+import { plainText } from '../../validation/texto';
 
 /** El nombre lo escribe la persona en Google: si no es texto plano válido, la cuenta se crea sin nombre. */
 function safeName(name: string | null) {

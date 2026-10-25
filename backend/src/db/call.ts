@@ -86,6 +86,7 @@ const names = {
   alertStateChange: 'fn_alert_state_change',
   alertPhotoAllowed: 'fn_alert_photo_allowed',
   suggestionCreate: 'fn_suggestion_create',
+  suggestionByKey: 'fn_suggestion_by_key',
   suggestionsMine: 'fn_suggestions_mine',
   suggestionsList: 'fn_suggestions_list',
   suggestionStateChange: 'fn_suggestion_state_change',
@@ -96,14 +97,27 @@ const names = {
 
 export type PgFunction = keyof typeof names;
 
+// El compilador no ve las firmas SQL: aquí van las de parámetros posicionales fáciles de desordenar.
+interface Params {
+  alertByKey: [user: number, key: string];
+  alertCreate: [user: number, key: string, type: string, sector: string, reference: string | null,
+    description: string, photo: string | null, legalVersion: string];
+  suggestionByKey: [user: number, key: string];
+  suggestionCreate: [user: number, key: string, topic: string, message: string, legalVersion: string];
+}
+type Row = Record<string, unknown>;
+
 /**
  * Ejecuta una función PostgreSQL permitida con parámetros enlazados.
  * Los objetos y arreglos de objetos van tal cual a parámetros jsonb. Las listas de números
  * van como texto «1,2,3»: el driver de Bun 1.3 se cae al enlazar arreglos numéricos.
  */
-export function callPg<T extends object = Record<string, unknown>>(
-  db: SQL, functionName: PgFunction, values: unknown[] = [],
-): Promise<T[]> {
+export function callPg<T extends object = Row>(db: SQL, functionName: 'alertByKey', values: Params['alertByKey']): Promise<T[]>;
+export function callPg<T extends object = Row>(db: SQL, functionName: 'alertCreate', values: Params['alertCreate']): Promise<T[]>;
+export function callPg<T extends object = Row>(db: SQL, functionName: 'suggestionByKey', values: Params['suggestionByKey']): Promise<T[]>;
+export function callPg<T extends object = Row>(db: SQL, functionName: 'suggestionCreate', values: Params['suggestionCreate']): Promise<T[]>;
+export function callPg<T extends object = Row>(db: SQL, functionName: Exclude<PgFunction, keyof Params>, values?: unknown[]): Promise<T[]>;
+export function callPg<T extends object = Row>(db: SQL, functionName: PgFunction, values: unknown[] = []): Promise<T[]> {
   if (!Object.hasOwn(names, functionName)) throw new Error('Función PostgreSQL no permitida');
   const placeholders = values.map((_, index) => `$${index + 1}`).join(', ');
   return db.unsafe<T[]>(`SELECT * FROM ${names[functionName]}(${placeholders})`, values);

@@ -7,7 +7,7 @@ import { callPg } from '../src/db/call';
 import { VERSION_LEGAL } from '../src/contracts/legal';
 
 const MEDIA = "medios-pruebas-participacion";
-const { sql, cookies, call, account, resetAccounts } = testApp(MEDIA);
+const { sql, cookies, ids, call, account, resetAccounts } = testApp(MEDIA);
 
 /** JPG con orientación y GPS en EXIF: la copia guardada no debe conservar ninguno de los dos. */
 const photo = (w = 900, h = 600) => sharp({ create: { width: w, height: h, channels: 3, background: "#f47f0e" } })
@@ -99,6 +99,50 @@ test("sugerencias: idempotentes, con tema válido y mínimo de 15 caracteres", a
   expect((await call("/api/participacion/sugerencias", "POST", { ...body, idempotencia: crypto.randomUUID(), tema: "Agua Potable" }, cookies.votante)).status).toBe(422);
   const mine = await (await call("/api/participacion/sugerencias/mias", "GET", undefined, cookies.votante)).json();
   expect(mine.sugerencias).toHaveLength(1);
+});
+
+test("los reintentos de una sugerencia no gastan el límite de envíos, tampoco a la vez", async () => {
+  await account("reintentos", "votante");
+  await account("vecino", "votante");
+  const send = (idempotencia: string, cookie = cookies.reintentos) => call("/api/participacion/sugerencias", "POST",
+    { idempotencia, tema: "agua-potable", mensaje: "Más pozos en las comunidades rurales" }, cookie);
+  const rows = (key: string) => sql`SELECT count(*)::int AS total FROM tb_sugerencias WHERE clave_idempotencia = ${key}`;
+  const repeated = crypto.randomUUID(), concurrent = crypto.randomUUID();
+
+  const first = await (await send(repeated)).json();
+  for (let i = 0; i < 6; i++) {
+    const res = await send(repeated);
+    expect(res.status).toBe(200);
+    expect((await res.json()).id).toBe(first.id);
+  }
+  const together = await Promise.all([1, 2, 3, 4].map(() => send(concurrent)));
+  expect(together.map(r => r.status)).toEqual([200, 200, 200, 200]);
+  expect(new Set(await Promise.all(together.map(async r => (await r.json()).id))).size).toBe(1);
+  expect((await rows(repeated))[0].total).toBe(1);
+  expect((await rows(concurrent))[0].total).toBe(1);
+
+  // Dos envíos gastados: quedan tres claves nuevas antes del 429.
+  for (let i = 0; i < 3; i++) expect((await send(crypto.randomUUID())).status).toBe(200);
+  expect((await send(crypto.randomUUID())).status).toBe(429);
+  const again = await send(repeated);
+  expect(again.status).toBe(200);
+  expect((await again.json()).id).toBe(first.id);
+  expect((await Promise.all([send(concurrent), send(concurrent)])).map(r => r.status)).toEqual([200, 200]);
+  expect((await send(crypto.randomUUID(), cookies.vecino)).status).toBe(200);
+  expect((await sql`SELECT count(*)::int AS total FROM tb_sugerencias WHERE id_usuario = ${ids.reintentos}`)[0].total).toBe(5);
+
+  const [proof] = await sql`DELETE FROM tb_aceptaciones_legales WHERE id_usuario = ${ids.reintentos} RETURNING *`;
+  expect((await send(repeated)).status).toBe(428);
+  await sql`INSERT INTO tb_aceptaciones_legales ${sql(proof)}`;
+  await sql`DELETE FROM tb_rol_permisos rp USING tb_roles r, tb_permisos p
+    WHERE rp.id_rol = r.id_rol AND rp.id_permiso = p.id_permiso AND r.rol = 'votante' AND p.codigo = 'participacion.enviar'`;
+  try {
+    expect((await send(repeated)).status).toBe(403);
+  } finally {
+    await sql`INSERT INTO tb_rol_permisos (id_rol, id_permiso) SELECT r.id_rol, p.id_permiso
+      FROM tb_roles r CROSS JOIN tb_permisos p WHERE r.rol = 'votante' AND p.codigo = 'participacion.enviar'`;
+  }
+  expect((await send(repeated)).status).toBe(200);
 });
 
 test("el panel lista y cambia estados con control de concurrencia", async () => {

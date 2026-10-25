@@ -3,6 +3,7 @@ import Icon from "../comun/Icon.astro";
 import Foto from "../comun/Foto.astro";
 import Editable from "../comun/Editable.astro";
 import type { BiographyMilestone } from "../../lib/data/types";
+import { medidasFoto } from "../../lib/comun/fotos";
 
 interface Props {
   milestones: BiographyMilestone[];
@@ -59,20 +60,25 @@ const oculto =
         )}
         <div
           class:list={[
-            "min-h-[220px] min-w-0 flex-1 overflow-hidden rounded-[12px] border border-dashed border-neutral/35 bg-neutral/8 max-tablet:order-2 max-tablet:w-full",
-            fotoIzquierda ? "order-1" : "order-2",
+            "flex min-w-0 flex-1 max-tablet:order-2 max-tablet:w-full max-tablet:justify-start",
+            fotoIzquierda ? "order-1 justify-end" : "order-2 justify-start",
           ]}
         >
           {hito.image ? (
-            <Foto
-              class="block h-full min-h-[220px] w-full object-cover"
-              picture={hito.image}
-              alt={hito.alt}
-              widths={[400, 640, 960]}
-              sizes="(max-width: 760px) 90vw, 500px"
-            />
+            <div
+              class="w-full max-w-[calc(min(440px,var(--ancho-foto),440px*var(--proporcion))+2px)] overflow-hidden rounded-[12px] border border-dashed border-neutral/35 bg-neutral/8"
+              style={medidasFoto(hito.image)}
+            >
+              <Foto
+                class="block h-auto w-full"
+                picture={hito.image}
+                alt={hito.alt}
+                widths={[440, 880]}
+                sizes="(max-width: 760px) 90vw, 440px"
+              />
+            </div>
           ) : (
-            <span class="grid h-full min-h-[220px] place-items-center text-[0.8rem] text-neutral">Foto pendiente</span>
+            <span class="grid min-h-[220px] w-full max-w-[442px] place-items-center rounded-[12px] border border-dashed border-neutral/35 bg-neutral/8 text-[0.8rem] text-neutral">Foto pendiente</span>
           )}
         </div>
         <div

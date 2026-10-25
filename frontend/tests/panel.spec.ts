@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
 import { mockPanelApi, panelData } from './support/panel-api';
 
 test('un visitante sin permiso no ve el panel ni el enlace en su cuenta', async ({ page }) => {
@@ -94,6 +94,94 @@ test('Publicar y Guardar borrador solo se encienden cuando hay cambios', async (
   await expect(publicar).toHaveCSS('background-color', AZUL);
   await expect(page.locator('#seccion-propuestas').getByRole('button', { name: 'Guardar borrador' })).toBeDisabled();
 });
+
+test('Guardar borrador sigue bloqueado mientras se guarda, aunque se siga escribiendo', async ({ page }) => {
+  const data = panelData('coadmin');
+  await mockPanelApi(page, data);
+  let puts = 0, fail = false, release = () => {}, gate = Promise.resolve();
+  const hold = () => { gate = new Promise<void>((r) => { release = r; }); };
+  await page.route('**/api/admin/contenido/propuestas/**', async (route) => {
+    if (route.request().method() !== 'PUT') return route.fallback();
+    puts++;
+    await gate;
+    if (fail) return route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ error: 'Fallo de prueba' }) });
+    return route.fallback();
+  });
+  await page.goto('/cuenta/panel/#propuestas');
+  const section = page.locator('#seccion-propuestas');
+  const guardar = section.getByRole('button', { name: 'Guardar borrador' });
+  const nombre = page.locator('#propuesta-nombre');
+
+  hold();
+  fail = true;
+  await nombre.fill('Agua potable para todos');
+  await guardar.click();
+  await expect.poll(() => puts).toBe(1);
+  await page.locator('#propuesta-intro').fill('Agua segura y continua para cada hogar.');
+  await expect(guardar).toBeDisabled();
+  await nombre.press('Enter');
+  await guardar.dblclick({ force: true });
+  // Volver a dibujar el formulario (reordenar una cifra) no habilita el botón nuevo.
+  await section.getByRole('button', { name: 'Bajar cifra 1' }).click();
+  await expect(guardar).toBeDisabled();
+  await page.waitForTimeout(300);
+  expect(puts).toBe(1);
+
+  release();
+  await expect(page.locator('#panel-estado')).toContainText('Fallo de prueba');
+  await expect(guardar).toBeEnabled();
+  await expect(nombre).toHaveValue('Agua potable para todos');
+
+  fail = false;
+  data.draft.versiones.propuestas['agua-potable'] = '9'.repeat(32);
+  await guardar.click();
+  await expect(page.locator('#panel-estado')).toContainText('Otra persona guardó cambios');
+  await expect(nombre).toHaveValue('Agua potable para todos');
+  await expect(guardar).toBeEnabled();
+  expect(puts).toBe(2);
+
+  await page.reload();
+  await nombre.fill('Agua potable para todos');
+  await guardar.click();
+  await expect(page.locator('#panel-estado')).toContainText('guardado');
+  await expect(guardar).toBeDisabled();
+  expect(puts).toBe(3);
+});
+
+for (const { seccion, api, campo } of [
+  { seccion: 'biografia', api: '**/api/admin/contenido/biografia', campo: (s: Locator) => s.locator('#hito-titulo') },
+  { seccion: 'obras', api: '**/api/admin/contenido/obras/**', campo: (s: Locator) => s.locator('#obra-nota') },
+  { seccion: 'acerca-de-carlos', api: '**/api/admin/contenido/acerca-de-carlos/**', campo: (s: Locator) => s.getByLabel('Título') },
+]) {
+  test(`${seccion}: un solo guardado aunque se escriba mientras responde`, async ({ page }) => {
+    const data = panelData('admin');
+    await mockPanelApi(page, data);
+    let puts = 0, release = () => {};
+    const gate = new Promise<void>((r) => { release = r; });
+    await page.route(api, async (route) => {
+      if (route.request().method() !== 'PUT') return route.fallback();
+      puts++;
+      await gate;
+      // El doble del panel no simula el guardado de la biografía.
+      return seccion === 'biografia'
+        ? route.fulfill({ contentType: 'application/json', body: JSON.stringify({ version: '3'.repeat(32) }) })
+        : route.fallback();
+    });
+    await page.goto(`/cuenta/panel/#${seccion}`);
+    const section = page.locator(`#seccion-${seccion}`);
+    const guardar = section.getByRole('button', { name: 'Guardar borrador' });
+    await campo(section).fill('Primer cambio de prueba');
+    await guardar.click();
+    await expect.poll(() => puts).toBe(1);
+    await campo(section).fill('Segundo cambio de prueba');
+    await expect(guardar).toBeDisabled();
+    await guardar.click({ force: true });
+    release();
+    await expect(page.locator('#panel-estado')).toContainText('guardad');
+    await expect(guardar).toBeDisabled();
+    expect(puts).toBe(1);
+  });
+}
 
 test('participación: el estado se cambia y un cambio ajeno no se pisa', async ({ page }) => {
   const data = panelData('admin');

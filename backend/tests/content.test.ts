@@ -9,9 +9,12 @@ import initial from '../database/contenido-inicial.json';
 import { seedContent } from '../src/db/seed';
 import { savePhoto } from '../src/content/services/media';
 import { readdir } from 'node:fs/promises';
+import { createAuthorization } from '../src/auth/services/authorization';
+import { createContent } from '../src/content/services/content';
+import { createSecurity } from '../src/security';
 
 const MEDIA = "medios-pruebas-contenido";
-const { sql, cookies, call, account, resetAccounts } = testApp(MEDIA);
+const { sql, config, cookies, call, account, resetAccounts } = testApp(MEDIA);
 
 const png = (w = 1200, h = 800) =>
   sharp({ create: { width: w, height: h, channels: 3, background: "#063176" } }).png().toBuffer();
@@ -242,4 +245,49 @@ test("dos personas editando lo mismo: gana la primera y la segunda recibe 409; r
   const ids = new Set(await Promise.all(respuestas.map(async r => (await r.json()).id)));
   expect(ids.size).toBe(1);
   expect((await sql`SELECT count(*)::int AS n FROM tb_publicaciones`)[0].n).toBe(antes + 1);
+});
+
+test('lo que se publica no mezcla dos guardados hechos mientras se lee el borrador', async () => {
+  const draft = async () => (await call("/api/admin/contenido", "GET", undefined, cookies.coadmin)).json();
+  const saveText = async (clave: string, valor: string) => expect((await call(`/api/admin/contenido/textos/${clave}`, "PUT",
+    { valor, version: (await draft()).versiones.textos[clave] ?? null }, cookies.coadmin)).status).toBe(200);
+  await saveText("global.lema", `Cambio previo ${crypto.randomUUID()}`);
+  const { versiones: v, propuestas } = await draft();
+  const { slug, ...proposal } = propuestas.find((p: { slug: string }) => p.slug === "agua-potable");
+  const marca = `Lectura ${crypto.randomUUID().slice(0, 8)}`;
+
+  // Se intercalan dos guardados en orden (texto y después propuesta) justo después de leer los textos;
+  // el resto de lecturas espera a que terminen.
+  let armed = true, release!: () => void;
+  const saved = new Promise<void>(r => { release = r; });
+  const intercept = <T extends object>(db: T): T => new Proxy(db, {
+    get(target, prop) {
+      const value = Reflect.get(target, prop) as Function;
+      if (prop === "begin") return (...args: unknown[]) => {
+        const fn = args.pop() as (tx: T) => unknown;
+        return value.call(target, ...args, (tx: T) => fn(intercept(tx)));
+      };
+      if (prop !== "unsafe") return typeof value === "function" ? value.bind(target) : value;
+      return async (query: string, params?: unknown[]) => {
+        if (!armed || !query.includes(" FROM fn_")) return value.call(target, query, params);
+        if (!query.includes("fn_texts_list(")) { await saved; return value.call(target, query, params); }
+        const rows = await value.call(target, query, params);
+        armed = false;
+        await saveText("pie.nombre", marca);
+        expect((await call(`/api/admin/contenido/propuestas/${slug}`, "PUT",
+          { ...proposal, nombre: marca, version: v.propuestas[slug] }, cookies.coadmin)).status).toBe(200);
+        release();
+        return rows;
+      };
+    },
+  });
+  const authorization = createAuthorization(sql, createSecurity(config));
+  const { id } = await createContent(intercept(sql), authorization).publish(cookies.coadmin.split("=")[1]);
+  expect(armed).toBe(false);
+  const after = await draft();
+  expect([after.textos["pie.nombre"], after.propuestas.find((p: { slug: string }) => p.slug === slug).nombre]).toEqual([marca, marca]);
+  const [{ contenido }] = await sql`SELECT contenido FROM tb_publicaciones WHERE id_publicacion = ${id}`;
+  const conTexto = contenido.textos["pie.nombre"] === marca;
+  const conPropuesta = contenido.propuestas.find((p: { slug: string }) => p.slug === slug).nombre === marca;
+  expect({ conTexto, conPropuesta }).toEqual({ conTexto, conPropuesta: conTexto });
 });

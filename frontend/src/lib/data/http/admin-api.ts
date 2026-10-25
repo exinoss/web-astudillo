@@ -1,7 +1,9 @@
-import type { AlertType, ParticipationState, SentAlert, SentSuggestion } from '../types';
+import type { ApiAboutCarlosPage } from '../acerca-de-carlos';
+import type { AboutCarlosSlug, AlertType, ParticipationState, SentAlert, SentSuggestion, UploadedPicture } from '../types';
 import { apiRequest } from './api-client';
 
-export interface Photo { idMedio: number; nombre: string; ancho: number; alto: number; anchos: number[] }
+export type { AboutCarlosSlug };
+export interface Photo extends UploadedPicture { idMedio: number }
 export interface DraftProposal { slug: string; nombre: string; categoria: string; introduccion: string; kpis: { etiqueta: string; valor: string }[] }
 export interface DraftBiographyItem { anios: string; titulo: string; texto: string; foto: Photo | null; alt: string | null }
 export interface DraftWork {
@@ -14,14 +16,7 @@ export interface ChatAnswer {
   pregunta: string; palabrasClave: string; respuesta: string;
   enlaceTexto: string | null; enlaceRuta: string | null; destacada: boolean;
 }
-export type AboutCarlosSlug = 'por-que-quiero-ser-alcalde' | 'conoce-mas';
-export interface DraftAboutCarlosPage {
-  tarjetas: { foto: Photo; alt: string; titulo: string; texto: string; color: 'rojo' | 'azul'; enfoque: { x: number; y: number } }[];
-  video: { titulo: string; descripcion: string | null; enlace: string; vertical: boolean; portada: Photo | null } | null;
-  retrato: { foto: Photo; alt: string } | null;
-  entrevista: { pregunta: string; respuesta: string }[];
-  galeria: { foto: Photo; alt: string; pie: string }[];
-}
+export type DraftAboutCarlosPage = ApiAboutCarlosPage<Photo>;
 export interface AboutCarlosPageBody {
   tarjetas: (Omit<DraftAboutCarlosPage['tarjetas'][number], 'foto'> & { idMedio: number })[];
   video: (Omit<NonNullable<DraftAboutCarlosPage['video']>, 'portada'> & { idPortada: number | null }) | null;
@@ -90,6 +85,7 @@ export const adminApi = {
     form.append('foto', file);
     return call<Photo>('/api/admin/medios', 'POST', form);
   },
+  videoCover: (enlace: string) => call<Photo>('/api/admin/medios/portada-video', 'POST', { enlace }),
   saveAboutCarlosPage: (slug: AboutCarlosSlug, body: AboutCarlosPageBody, version: string) =>
     call<Saved>(`/api/admin/contenido/acerca-de-carlos/${slug}`, 'PUT', { ...body, version }),
   saveChat: (respuestas: ChatAnswer[], version: string) => call<Saved>('/api/admin/contenido/chat', 'PUT', { respuestas, version }),

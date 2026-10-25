@@ -4,6 +4,8 @@
 **Estado:** plan aprobado e **implementado el 6 de octubre de 2026**, pendiente de desplegar. Las páginas empiezan vacías: el equipo de Carlos carga todo el contenido desde el panel (sección 11). Falta la prueba con enlaces reales en producción.
 **Páginas:** «Por qué quiero ser alcalde» y «Conoce más sobre Carlos».
 
+Las secciones 1 a 11 son el plan aprobado, que se conserva como registro de decisiones; lo implementado está en la sección 12 y en el código. Las casillas de las secciones 10 y 11 no se marcaron al implementar: la sección 12 recoge la verificación y lo pendiente. La sección 11 sigue vigente como lista de material del equipo de Carlos.
+
 Este documento sustituye a la versión anterior del plan. Crearlo no supone aprobar los diseños ni autorizar la publicación de los textos y fotos de ejemplo.
 
 ## 1. Objetivo y reglas
@@ -176,7 +178,7 @@ Permisos: los actuales de edición, subida de medios y publicación. La variante
 ### 8.3 Garantías
 
 - Repetir un guardado con el mismo contenido no duplica efectos; con otro contenido y versión antigua, 409 sin sobrescribir.
-- Las referencias a fotos se comprueban dentro de la transacción. Una foto usada por una página no se puede borrar.
+- Las referencias a fotos las comprueba el servicio (`content/services/about-carlos.ts`, con `fn_media_details`) antes de guardar, en una consulta aparte y no dentro de la transacción de `fn_about_carlos_save`; una foto inexistente responde 422. Es suficiente porque ninguna operación de la API borra fotos de `tb_medios`. Si algún día se añade un borrado de medios, habrá que comprobar las referencias dentro de la misma transacción.
 - Se rechazan propiedades desconocidas, slugs ajenos, colores fuera de `rojo`/`azul`, coordenadas fuera de 0–100, más de seis elementos, enlaces no admitidos y HTML.
 - Pruebas de repetición y conflicto en cada operación nueva.
 

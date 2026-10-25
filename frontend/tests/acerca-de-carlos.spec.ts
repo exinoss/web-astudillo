@@ -167,6 +167,36 @@ test('el panel de la página personal añade entrevista y exige completar los ca
   expect(data.savedPages.at(-1)).toMatchObject({ slug: 'conoce-mas', entrevista: [{ pregunta: '¿Qué significa San Lorenzo para ti?', respuesta: 'Mi casa.' }] });
 });
 
+test('la portada del video se toma del video al pegar el enlace y se puede cambiar', async ({ page }) => {
+  const data = panelData('coadmin');
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#acerca-de-carlos');
+  const section = page.locator('#seccion-acerca-de-carlos');
+  await section.getByRole('button', { name: 'Video', exact: true }).click();
+  await section.getByLabel('Título de la sección').fill('Te cuento mis razones');
+  const enlace = section.getByLabel('Enlace del video');
+  await enlace.fill('https://www.facebook.com/reel/28327883403549284/');
+  await enlace.press('Tab');
+  await expect(page.locator('#panel-estado')).toContainText('Se usa la imagen del video como portada');
+  await expect(section.locator('#video-escenario img')).toHaveAttribute('src', /foto-91/);
+  expect(data.videoCovers).toEqual(['https://www.facebook.com/reel/28327883403549284/']);
+
+  // Con portada, cambiar de enlace no la reemplaza; el botón la pide a propósito.
+  await section.getByRole('button', { name: 'Quitar portada' }).click();
+  await section.getByLabel('Enlace del video').fill('https://vimeo.com/76979871');
+  await section.getByRole('button', { name: 'Usar la imagen del video' }).click();
+  await expect(page.locator('#panel-estado')).toContainText('No se pudo obtener la imagen de este video');
+  await section.getByLabel('Enlace del video').fill('https://example.com/video.mp4');
+  await expect(section.getByRole('button', { name: 'Usar la imagen del video' })).toBeHidden();
+
+  await section.getByLabel('Enlace del video').fill('https://www.facebook.com/reel/28327883403549284/');
+  await section.getByRole('button', { name: 'Usar la imagen del video' }).click();
+  await expect(section.locator('#video-escenario img')).toHaveAttribute('src', /foto-91/);
+  await section.getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.locator('#panel-estado')).toContainText('guardado');
+  expect(data.savedPages.at(-1)).toMatchObject({ video: { enlace: 'https://www.facebook.com/reel/28327883403549284/', idPortada: 91 } });
+});
+
 test('el editor abre la vista previa del borrador en la página que se edita', async ({ page }) => {
   const data = panelData('coadmin');
   data.pending = [{ tipo: 'Texto', descripcion: 'pie.lema' }];

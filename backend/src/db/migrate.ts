@@ -12,8 +12,11 @@ import {
 
 const migrationsFolder = fileURLToPath(new URL('../../drizzle', import.meta.url));
 const journalPath = new URL('../../drizzle/meta/_journal.json', import.meta.url);
+// El orden importa: PostgreSQL valida al crearlas las funciones LANGUAGE sql, que van después de las que llaman.
+const functions = ['auth', 'perfil', 'admin', 'contenido', 'publicacion', 'estadisticas', 'participacion']
+  .map(name => new URL(`../../database/funciones/${name}.sql`, import.meta.url));
 const scripts = [
-  new URL('../../database/fn.sql', import.meta.url),
+  ...functions,
   new URL('../../database/datains.sql', import.meta.url),
   new URL('../../database/permisos.sql', import.meta.url),
 ];

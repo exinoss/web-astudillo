@@ -9,7 +9,7 @@ import { MENSAJES } from "../../mail/plantilla";
 import { normalizeEmail, randomToken, tokenHash } from "../../security";
 import { requireConfirmation, requireNewPassword } from '../password-policy';
 import { passwordHash } from './limits';
-import { plainText } from '../../content/services/validation';
+import { plainText } from '../../validation/texto';
 import { requireAcceptance } from './consent';
 import { TEXTO_ACEPTACION, VERSION_LEGAL } from '../../contracts/legal';
 

@@ -1,5 +1,5 @@
 import { expect, test } from 'bun:test';
-import { plainText } from '../src/content/services/validation';
+import { plainText } from '../src/validation/texto';
 
 const reason = (value: string, multiline = false) => {
   try { plainText(value, 'Campo', 400, { multiline }); return null; } catch (error) { return (error as Error).message; }

@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia';
 import type { SQL } from 'bun';
 import type { Authorization } from '../../auth/types';
+import { VIDEO_URL_MAX } from '../../contracts/video';
 import { createAboutCarlosPages } from '../services/about-carlos';
 import { createContent } from '../services/content';
 import { createMedia } from '../services/media';
@@ -87,6 +88,9 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
     })
     .post('/medios', ({ cookie, body }) => media.upload(access(cookie), body.foto), {
       body: t.Object({ foto: t.File() }, strict),
+    })
+    .post('/medios/portada-video', ({ cookie, body }) => media.videoCover(access(cookie), body.enlace), {
+      body: t.Object({ enlace: t.String({ minLength: 1, maxLength: VIDEO_URL_MAX }) }, strict),
     })
     .get('/publicaciones/pendientes', ({ cookie }) => content.pending(access(cookie)))
     .get('/publicaciones', ({ cookie, query }) => content.publications(access(cookie), query.pagina ?? 1), {

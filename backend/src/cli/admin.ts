@@ -4,7 +4,7 @@ import { SQL } from 'bun';
 import { requireConfirmation, requireNewPassword } from '../auth/password-policy';
 import { callPg } from '../db/call';
 import { assertMigrated } from '../db/migrate';
-import { plainText } from '../content/services/validation';
+import { plainText } from '../validation/texto';
 
 type Resultado = { resultado: string; id_usuario: number | null };
 

@@ -3,14 +3,14 @@ import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
+import { plainText } from '../../validation/texto';
+import { CONTENT_CONFLICT } from '../conflictos';
 import type { BiographyItem, ChatAnswer, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
 import { listAboutCarlosPages } from './about-carlos';
 import { toPhoto } from './media';
-import { linkValue, plainText, sitePath, year } from './validation';
+import { linkValue, sitePath, year } from './validation';
 
 export const PUBLICATIONS_PAGE_SIZE = 10;
-/** Otra persona guardó antes: no se sobrescribe su trabajo. */
-export const CONTENT_CONFLICT = 'Otra persona guardó cambios en este contenido mientras editabas. Recarga para ver su versión; lo tuyo no se guardó.';
 const KEY = /^[a-z0-9]+([.-][a-z0-9]+)*$/;
 
 type ProposalRow = { slug: string; nombre: string; categoria: string; introduccion: string; kpis: Kpi[] };
@@ -39,14 +39,16 @@ export interface WorkInput {
 export function createContent(sql: SQL, authorization: Authorization) {
   /** Lee el borrador actual completo, con la misma forma que se congela al publicar. */
   async function snapshot(): Promise<Snapshot> {
-    const [texts, proposals, biography, works, chat, acercaDeCarlos] = await Promise.all([
-      callPg<{ clave: string; valor: string }>(sql, 'textsList'),
-      callPg<ProposalRow>(sql, 'proposalsList'),
-      callPg<BiographyRow>(sql, 'biographyList'),
-      callPg<WorkRow>(sql, 'worksList'),
-      callPg<ChatRow>(sql, 'chatList'),
-      listAboutCarlosPages(sql),
-    ]);
+    // En una transacción REPEATABLE READ las seis lecturas ven el mismo instante; sueltas, dos guardados
+    // hechos entre ellas podrían quedar publicados a medias.
+    const [texts, proposals, biography, works, chat, acercaDeCarlos] = await sql.begin('isolation level repeatable read read only', tx => Promise.all([
+      callPg<{ clave: string; valor: string }>(tx, 'textsList'),
+      callPg<ProposalRow>(tx, 'proposalsList'),
+      callPg<BiographyRow>(tx, 'biographyList'),
+      callPg<WorkRow>(tx, 'worksList'),
+      callPg<ChatRow>(tx, 'chatList'),
+      listAboutCarlosPages(tx),
+    ]));
     return {
       version: 1,
       textos: Object.fromEntries(texts.map(t => [t.clave, t.valor])),
