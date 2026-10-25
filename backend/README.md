@@ -131,7 +131,7 @@ Configurar `TEST_DATABASE_URL` apuntando exclusivamente a una base PostgreSQL **
 
 Antes de publicar una versión, ejecutar `bun audit` tanto desde `backend/` como desde `frontend/` y revisar cada aviso antes de actualizar las bibliotecas afectadas. El backend fija Nodemailer en `10.0.9`, con tipos incluidos, y usa `overrides` para unificar esbuild en `0.28.2`: elimina la copia antigua del cargador de Drizzle Kit y conserva la versión que ya usaba tsx. Al cambiar esa regla, comprobar tipos, pruebas y generación de migraciones en una copia temporal de los snapshots; revisar cualquier SQL generado antes de conservarlo.
 
-Las reglas locales para Codex y Claude están en `AGENTS.md` y `CLAUDE.md` en la raíz y están ignoradas por Git.
+Las reglas para Codex y Claude están en `AGENTS.md` y `CLAUDE.md`, en la raíz; los dos tienen el mismo contenido.
 
 ## Despliegue
 
