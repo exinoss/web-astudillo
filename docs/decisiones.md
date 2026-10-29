@@ -52,3 +52,9 @@ Por qué: los agentes de una misma máquina comparten el contexto sin releer el 
 
 **D-014 · 2026-10-25 · Gestión de configuración ligera: versiones semánticas con tag y Release por versión, `CHANGELOG.md` por versión, plantilla de PR y este registro. Sin issues, tablero ni protección de `main` por ahora.**
 Por qué: hay un solo desarrollador y los cambios se planifican con los clientes en otra herramienta. La protección de `main` se reconsiderará si entra más gente. Detalle: `docs/gestion-de-configuracion.md`.
+
+**D-015 · 2026-10-28 · (Sustituida por D-016) En Claude Code, la lectura de la memoria y el uso del mapa de Graphify se imponen con hooks versionados en `.claude/`: al iniciar la sesión se cargan `PROJECT_MEMORY.md`, este registro y el resumen del mapa (con aviso si está desactualizado), y las búsquedas en el código (`Grep`, `Glob`, `grep`, `find`, `Select-String`…) se bloquean hasta que la sesión consulta `graphify`. Leer un archivo no se bloquea, y `Grep`/`Glob` quedan libres fuera del proyecto o dentro de un solo archivo.**
+Por qué: como texto en `CLAUDE.md`, la regla se saltaba en preguntas que parecían simples y se leía el repositorio a ciegas. Las excepciones no dependen del criterio del agente: cubren solo lo que el mapa no conoce o no aporta. Solo cubre Claude Code; Codex sigue dependiendo de `AGENTS.md`. Detalle: `.claude/settings.json` y `.claude/hooks/`.
+
+**D-016 · 2026-10-29 · Los hooks de Claude Code no se versionan: `.claude/` está en `.gitignore`, y el agente de cada equipo los crea a partir de la descripción de `AGENTS.md`/`CLAUDE.md` («Hooks de Claude Code»). Hacen lo mismo que en D-015.**
+Por qué: son configuración de cada máquina, como `PROJECT_MEMORY.md` y el mapa de Graphify, y quien programa decide si los usa. La regla los describe con el detalle suficiente para que cualquier agente los cree igual.

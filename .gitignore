@@ -44,3 +44,6 @@ graphify-out/*
 
 # Memoria de cada equipo: la crean y actualizan sus agentes según AGENTS.md/CLAUDE.md
 PROJECT_MEMORY.md
+
+# Configuración de Claude Code (hooks) de cada equipo: la crea su agente según AGENTS.md/CLAUDE.md
+.claude/

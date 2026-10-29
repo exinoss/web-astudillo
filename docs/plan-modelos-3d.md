@@ -1,12 +1,14 @@
 # Plan — Modelos 3D interactivos en las páginas de propuesta
 
-> Estado: **en curso — 1 de 7 modelos integrado** (Tecnologías emergentes). Diseño del bloque aprobado; el modelo carga al abrir la página. Pendiente: los otros 6 modelos. Los modelos no se suben desde el panel: van en el código, cruzados por el slug de la propuesta.
+> Estado: **en curso — 3 de 7 modelos integrados** (Tecnologías emergentes, el coliseo de Educación y el Centro de alto rendimiento). Diseño del bloque aprobado; los modelos livianos cargan al abrir la página y los de 5 MB o más esperan al botón «Ver el modelo 3D · X MB». Pendiente: los otros 5 modelos. Los modelos no se suben desde el panel: van en el código, cruzados por el slug de la propuesta.
 
 ## Cómo añadir un modelo nuevo
 
-1. Copiar el `.glb` del proveedor a `frontend/modelos-fuente/<slug>.glb` (el original, sin tocar).
-2. `bun run modelos` (desde `frontend/`) → genera `public/models/<slug>.glb` optimizado y su póster en `src/assets/models/<slug>.png`, con el mismo encuadre que el visor.
+1. Copiar el `.glb` del proveedor a `frontend/modelos-fuente/<nombre>.glb` (el original, sin tocar). El nombre dice qué es el modelo: `educacion-coliseo.glb`.
+2. `bun run modelos` (desde `frontend/`) → genera `public/models/<nombre>.glb` optimizado y su póster en `src/assets/models/<nombre>.png`, con el mismo encuadre que el visor.
 3. Añadir `{ src, poster, alt }` al catálogo `proposalModels` de `frontend/src/lib/data/presentation.ts`, bajo el slug de la propuesta.
+
+Un modelo de millones de triángulos no pasa por `modelos-fuente/` ni por `bun run modelos`: se prepara con `node --max-old-space-size=14000 scripts/preparar-modelo-pesado.ts entrada.glb public/models/<nombre>.glb` y después `node scripts/generar-posters.ts` (ver «Lo que enseñó el estadio»).
 
 ## Lo que enseñó el primer modelo
 
@@ -20,7 +22,21 @@ El primer `.glb` real (`tecnologias-emergentes`) contradijo varias suposiciones 
 - **La rueda acerca mientras el cursor está dentro del recuadro del modelo**, y fuera de él hace scroll. Se descartó exigir Ctrl + rueda (como Google Maps) porque un atajo de teclado no es accesible. En móvil se pellizca.
 - **El proveedor no entregó póster, y es mejor generarlo aquí**: renderizado desde el propio modelo con la misma cámara y proporción, el paso de póster a 3D no da salto.
 - **La carga diferida no ahorra nada en esta ubicación**: el bloque queda visible al abrir la página en todos los tamaños medidos (de 360 a 1440 px). Medido en móvil con gzip: una propuesta sin modelo pesa ~132 KB y esta ~450 KB, de los que 366 KB son el 3D. Se decidió mantener la carga al abrir; con ahorro de datos activo sigue apareciendo el botón «Ver en 3D».
+- **El coliseo (`educacion.glb`) llegó sin colores**: 10,2 MB y 177.000 triángulos, exportado con Blender, sin texturas ni colores por vértice. El 74 % de la geometría usa un único material blanco (`FrontColor`, el de SketchUp por defecto), y materiales como `Roofing_Metal_Standing_Seam_Red` llegaron sin su color. La captura de SolidWorks que lo acompañaba sí mostraba colores, pero no estaban en el `.glb`. Antes de integrar un modelo, hay que abrir el `.glb` en https://gltf-viewer.donmccurdy.com/: lo que se ve ahí es lo que verá el sitio. Optimizado, queda en 1,24 MB (587 KB con gzip), dentro del objetivo pero siete veces más que el primero. Se resolvió sin reexportar: los colores se asignaron en Blender a partir de la captura de SolidWorks del cliente (proceso en `design/propuestas/modelo-coliseo-colores/`, fuera de Git), y ese `.glb` es ahora la fuente (`educacion-coliseo.glb`).
 - **`frontend/modelos-fuente/` guarda los originales** (2,7 MB este) en el repositorio normal, sin Git LFS: con 7 modelos de ~3 MB el repositorio lo aguanta sin problema.
+
+## Lo que enseñó el estadio (Centro de alto rendimiento)
+
+- **Llegó en un `.blend` de 35,8 M de triángulos (2 GB exportado), con 326 texturas que faltaban.** Se simplificó en Blender sin quitar ninguna pieza hasta 15,2 M. Hubo dos versiones descartadas: una que quitaba piezas pequeñas (se perdieron el letrero, los adoquines y la pista) y otra que se veía blanca en los visores web. Proceso y scripts de Blender: `design/propuestas/modelo-centro-alto-rendimiento/` (fuera de Git).
+- **Los colores se hornean como los ve el cliente en Blender** (vista Sólido, luz Studio y AgX): con el `diffuse_color` tal cual, el blanco deslumbra en `model-viewer` y en gltf-viewer.
+- **No pasa por `bun run modelos`**, que perdería el perforado de los paneles y lo rompería en Firefox. `scripts/preparar-modelo-pesado.ts` hace cuatro cosas, y cada una resolvió un problema medido:
+  - **Quita las normales.** El sombreado plano exportado con normales deja un vértice por triángulo; sin ellas los vértices se comparten. De 64 a 35 MB, y de 4,5-5 s a unos 3 s en aparecer con el modelo ya guardado. Se ve igual.
+  - **Texturas a 4096 px** (`optimize` las baja a 2048): el atlas de los paneles perforados perdería el dibujo.
+  - **Piezas de 5 M de triángulos como máximo.** Firefox no dibuja más de 30 M índices por llamada (`webgl.max-vert-ids-per-draw`) y corta el resto sin error visible: el estadio, de 45,7 M, salía roto.
+  - **16 bits de posición** en vez de 14: en un predio de 378 m, las líneas pintadas parpadeaban.
+- **nginx no comprimía los modelos.** No conoce la extensión `.glb` (la servía como `application/octet-stream`) y Cloudflare no comprime ese tipo: el estadio bajaba entero, 35 MB. `server-produccion/nginx/default.conf` declara `model/gltf-binary` y activa gzip en `/models/`: 15 MB en la red. Con gzip no hay `Content-Length`, así que la barra de progreso usa el tamaño del archivo que `Model3D.astro` lee al compilar.
+- **Pesa demasiado para cargarse solo.** `Model3D.astro` muestra el botón «Ver el modelo 3D · 35 MB» en los modelos de 5 MB o más, enseña el progreso de la descarga y guarda el modelo en Cache Storage, porque nginx sirve los modelos con `no-cache` y un celular puede descartar decenas de MB de su caché. El archivo lleva una huella de su contenido (`?v=`), y una versión nueva reemplaza a la guardada.
+- **La animación de carga se congelaba.** Preparar 15 M de triángulos bloquea la página unos 3-4 s, y el Lottie normal se dibuja en ese mismo hilo. Se usa `reproducirEnHilo()` (`lib/comun/animaciones.ts`), que dibuja el mismo `.json` en un worker con OffscreenCanvas. Medido con trazas de Edge y vídeo de Firefox con la página bloqueada: el Lottie normal, un vídeo y una imagen animada se congelan en algún navegador; el Lottie en worker sigue en los dos. Una versión anterior con los fotogramas en imágenes se descartó porque se veía pixelada y temblaba.
 
 ## Contexto
 

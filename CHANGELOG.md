@@ -6,6 +6,16 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+### Added
+
+- Modelo 3D del coliseo en la página de la propuesta «Educación», con sus colores: techo y muros grises, franjas de ladrillo y el letrero «COLISEO» (1,06 MB).
+- Modelo 3D del Centro Deportivo de Alto Rendimiento en la página de su propuesta: estadio, coliseo con piscinas, canchas, viviendas y la entrada con su letrero (35 MB).
+- Los modelos 3D pesados se ven con el botón «Ver el modelo 3D · 35 MB»: la animación de carga muestra cuánto falta, y en las visitas siguientes el modelo aparece sin volver a descargarse.
+
+### Fixed
+
+- Los modelos 3D se descargan comprimidos: el estadio ocupa 15 MB de datos en vez de 35, y el de paneles solares 80 KB en vez de 289.
+
 ## [1.0.0] - 2026-10-25
 
 Primera versión numerada: recoge todo lo hecho desde el inicio del proyecto.
