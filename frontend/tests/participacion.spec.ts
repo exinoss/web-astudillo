@@ -172,7 +172,8 @@ test('si la aceptación falta entre comprobar y enviar, el chat vuelve a pedirla
   await page.locator('#chat-aceptacion').check();
   await page.getByRole('button', { name: 'Aceptar y enviar consulta' }).click();
   await expect(page.locator('#chat-aceptacion-block')).toBeHidden();
-  expect(api.preguntas).toEqual(['¿Qué propuestas hay para el barrio?']);
+  // El bloque se oculta antes de que el envío llegue a la API simulada.
+  await expect.poll(() => api.preguntas).toEqual(['¿Qué propuestas hay para el barrio?']);
 });
 
 test('el doble envío durante la aceptación no duplica confirmación ni participación', async ({ page }) => {

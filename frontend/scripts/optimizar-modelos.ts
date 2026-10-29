@@ -1,4 +1,6 @@
 // Optimiza cada .glb de modelos-fuente/ hacia public/models/, con el mismo nombre.
+// centro-de-alto-rendimiento.glb no tiene fuente aquí: lo prepara preparar-modelo-pesado.ts,
+// y pasarlo por este script perdería el perforado de sus paneles y lo rompería en Firefox.
 // `--simplify false`: los modelos vienen de CAD y simplificar deforma las piezas.
 // `--instance false`: model-viewer calcula mal la caja envolvente de las
 // instancias de GPU; el modelo se encuadra más pequeño y las sombras flotan.

@@ -1,4 +1,7 @@
 ---
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { Image } from "astro:assets";
 import Icon from "../comun/Icon.astro";
 import type { ProposalModel } from "../../lib/data/types";
@@ -7,15 +10,31 @@ import { ORBITA } from "../../lib/propuestas/model3d.ts";
 type Props = ProposalModel;
 const { src, poster, alt } = Astro.props;
 
+// Desde este peso el modelo no se descarga solo: lo pide la persona con el botón.
+const PESADO = 5_000_000;
+let bytes = 0;
+let huella = "";
+try {
+  // La compilación, también la del publicador, corre con cwd en frontend/.
+  const archivo = readFileSync(join(process.cwd(), "public", src));
+  bytes = archivo.length;
+  huella = createHash("sha1").update(archivo).digest("hex").slice(0, 12);
+} catch {}
+const pesado = bytes >= PESADO;
+const megas = Math.round(bytes / 1_000_000);
+
 const posterClases =
   "model-3d-poster absolute inset-0 h-full w-full object-contain";
 ---
 
 <figure
   class="model-3d mt-[30px] mb-0 rounded-[4px] bg-base-100 p-5 [border-right:1px_solid_#06317630] [border-bottom:1px_solid_#06317630] [border-left:1px_solid_#06317630] [border-top:4px_solid_var(--color-secondary)] [box-shadow:0_4px_14px_#06317608] max-tablet:p-3"
-  data-src={src}
+  data-src={pesado ? `${src}?v=${huella}` : src}
   data-alt={alt}
   data-orbita={ORBITA}
+  data-pesado={pesado ? "" : undefined}
+  data-megas={megas}
+  data-bytes={bytes}
 >
   <div class="model-3d-visor relative aspect-[16/10] [&:fullscreen]:bg-base-100 [&.is-expandido]:fixed [&.is-expandido]:inset-0 [&.is-expandido]:z-[950] [&.is-expandido]:aspect-auto [&.is-expandido]:bg-base-100">
     {typeof poster === "string" ? (
@@ -30,12 +49,31 @@ const posterClases =
       />
     )}
     <button
-      class="model-3d-cargar button absolute bottom-3 left-1/2 -translate-x-1/2"
+      class="model-3d-cargar button absolute bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap max-tablet:bottom-2 max-tablet:min-h-[44px] max-tablet:px-4 max-tablet:py-2"
       type="button"
       hidden
     >
-      Ver en 3D
+      {pesado ? `Ver el modelo 3D · ${megas} MB` : "Ver en 3D"}
     </button>
+    <div
+      class="model-3d-progreso absolute inset-0 z-[5] flex flex-col items-center justify-center gap-3 bg-base-100/95 px-4 text-center font-bold text-primary max-tablet:gap-2"
+      hidden
+    >
+      <div class="model-3d-progreso-loader aspect-square h-[62%] max-h-[300px]" aria-hidden="true"></div>
+      <p class="model-3d-progreso-texto m-0 text-xl max-tablet:text-base celular:text-[0.95rem]" aria-hidden="true"></p>
+      <p class="model-3d-progreso-aviso sr-only" aria-live="polite"></p>
+      <div
+        class="model-3d-progreso-pista h-3 w-[min(420px,78%)] overflow-hidden rounded-full bg-base-300 max-tablet:h-2.5"
+        role="progressbar"
+        aria-label="Descarga del modelo 3D"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="0"
+        hidden
+      >
+        <div class="model-3d-progreso-barra h-full w-0 bg-secondary"></div>
+      </div>
+    </div>
     <button
       class="model-3d-completa absolute top-3 right-3 z-10 grid size-11 place-items-center rounded-[4px] border border-base-300 bg-base-100/90 text-primary hover:bg-base-200 [&[aria-pressed=true]_.icono-expandir]:hidden [&[aria-pressed=false]_.icono-reducir]:hidden"
       type="button"
@@ -62,6 +100,7 @@ const posterClases =
   // La carga por URL permite reintentar; el navegador memoriza imports fallidos.
   import visorUrl from "@google/model-viewer/dist/model-viewer.min.js?url";
   import decodificadorUrl from "meshoptimizer/decoder?url";
+  import { reproducirEnHilo } from "../../lib/comun/animaciones";
 
   const bloques = [...document.querySelectorAll<HTMLElement>(".model-3d")];
 
@@ -72,9 +111,11 @@ const posterClases =
       const respuesta = await fetch(decodificadorUrl);
       if (!respuesta.ok) throw new Error(`decodificador: ${respuesta.status}`);
       // model-viewer espera un script clásico; se quita `export` y se sirve como Blob.
+      // Con workers, la geometría se descomprime en paralelo y no bloquea la página.
+      const hilos = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1));
       const codigo = (await respuesta.text()).replace(
         "export { MeshoptDecoder };",
-        "",
+        `MeshoptDecoder.useWorkers(${hilos});`,
       );
       const url = URL.createObjectURL(
         new Blob([codigo], { type: "text/javascript" }),
@@ -94,7 +135,50 @@ const posterClases =
   const html = document.documentElement;
   const sinMovimiento = () => html.classList.contains("reduce-motion");
 
-  async function montar(bloque: HTMLElement, intentoModelo = 0) {
+  /** Capa de carga sobre el póster; sin `porcentaje` no se muestra la barra. */
+  const loaders = new WeakMap<HTMLElement, Promise<(() => void) | undefined>>();
+  function avisar(bloque: HTMLElement, texto: string, aviso: string, porcentaje?: number) {
+    const panel = bloque.querySelector<HTMLElement>(".model-3d-progreso")!;
+    const pista = panel.querySelector<HTMLElement>(".model-3d-progreso-pista")!;
+    const vivo = panel.querySelector(".model-3d-progreso-aviso")!;
+    panel.querySelector(".model-3d-progreso-texto")!.textContent = texto;
+    if (vivo.textContent !== aviso) vivo.textContent = aviso;
+    pista.hidden = porcentaje === undefined;
+    if (porcentaje !== undefined) {
+      panel.querySelector<HTMLElement>(".model-3d-progreso-barra")!.style.width = `${porcentaje}%`;
+      pista.setAttribute("aria-valuenow", String(porcentaje));
+      pista.setAttribute("aria-valuetext", texto);
+    }
+    if (panel.hidden) {
+      panel.hidden = false;
+      // El Lottie normal se congelaría mientras el visor prepara el modelo y bloquea la página.
+      loaders.set(bloque, reproducirEnHilo(panel.querySelector<HTMLElement>(".model-3d-progreso-loader")!, "loader"));
+    }
+  }
+
+  function ocultarAviso(bloque: HTMLElement) {
+    bloque.querySelector<HTMLElement>(".model-3d-progreso")!.hidden = true;
+    loaders.get(bloque)?.then((fin) => fin?.());
+    loaders.delete(bloque);
+  }
+
+  /** Espera a que el loader esté en marcha: después, el visor puede bloquear la página. */
+  async function loaderEnPantalla(bloque: HTMLElement) {
+    await Promise.race([loaders.get(bloque), new Promise((r) => setTimeout(r, 2000))]);
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  }
+
+  async function montar(bloque: HTMLElement, intentoModelo = 0, origen?: string) {
+    // Como mostrarCarga: el loader solo aparece si la carga tarda más de 200 ms.
+    const espera = setTimeout(() => avisar(bloque, "Cargando el modelo 3D…", "Cargando el modelo 3D"), 200);
+    if ("pesado" in bloque.dataset) {
+      avisar(bloque, "Cargando el modelo 3D…", "Cargando el modelo 3D");
+      await loaderEnPantalla(bloque);
+    }
+    const terminar = () => {
+      clearTimeout(espera);
+      ocultarAviso(bloque);
+    };
     try {
       await cargarLibreria();
     } catch (error) {
@@ -102,6 +186,7 @@ const posterClases =
       // Limpia la promesa fallida para que el botón permita reintentar.
       libreria = undefined;
       intentos++;
+      terminar();
       ofrecerBoton(bloque, intentoModelo);
       return;
     }
@@ -111,7 +196,7 @@ const posterClases =
     const modeloUrl = new URL(bloque.dataset.src!, location.href);
     // model-viewer memoriza también los modelos fallidos: otro intento necesita una URL nueva.
     if (intentoModelo) modeloUrl.searchParams.set("reintento", String(intentoModelo));
-    visor.setAttribute("src", modeloUrl.href);
+    visor.setAttribute("src", origen ?? modeloUrl.href);
     visor.setAttribute("alt", bloque.dataset.alt!);
     visor.setAttribute("camera-orbit", bloque.dataset.orbita!);
     visor.setAttribute("shadow-intensity", "1");
@@ -120,9 +205,13 @@ const posterClases =
     visor.setAttribute("touch-action", "pan-y");
     visor.setAttribute("interaction-prompt", "none");
     visor.style.setProperty("--poster-color", "transparent");
-    visor.style.setProperty("--progress-bar-color", "var(--color-secondary)");
+    // El avance lo muestra la capa con el loader, no la barra propia de model-viewer.
+    const sinBarra = document.createElement("div");
+    sinBarra.slot = "progress-bar";
+    visor.append(sinBarra);
     if (!sinMovimiento()) visor.setAttribute("auto-rotate", "");
     const cargaFallida = () => {
+      terminar();
       visor.remove();
       ofrecerBoton(bloque, intentoModelo + 1);
     };
@@ -131,8 +220,14 @@ const posterClases =
       "load",
       () => {
         visor.removeEventListener("error", cargaFallida);
+        terminar();
         contenedor.querySelector(".model-3d-poster")?.remove();
         prepararPantallaCompleta(contenedor, visor);
+        // Quien pulsó el botón sigue con el teclado en el visor. Lo enfocable es su lienzo, dentro del
+        // shadow DOM, y al disparar `load` aún está oculto: el foco va en el fotograma siguiente.
+        if ("pulsado" in bloque.dataset) {
+          requestAnimationFrame(() => (visor.shadowRoot?.querySelector<HTMLElement>("[tabindex]") ?? visor).focus());
+        }
       },
       { once: true },
     );
@@ -187,16 +282,82 @@ const posterClases =
       "click",
       () => {
         boton.hidden = true;
-        montar(bloque, intentoModelo);
+        bloque.dataset.pulsado = "";
+        if ("pesado" in bloque.dataset) descargar(bloque, intentoModelo);
+        else montar(bloque, intentoModelo);
       },
       { once: true },
     );
   }
 
+  // Los modelos pesados se guardan en Cache Storage: la caché HTTP de un celular puede
+  // descartar decenas de MB en cualquier momento, y en nginx los modelos van con `no-cache`.
+  const ALMACEN = "modelos-3d";
+  const almacen = () => ("caches" in window ? caches.open(ALMACEN) : Promise.resolve(undefined));
+
+  async function guardado(bloque: HTMLElement) {
+    try {
+      const respuesta = await (await almacen())?.match(new URL(bloque.dataset.src!, location.href).href);
+      return respuesta ? URL.createObjectURL(await respuesta.blob()) : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async function descargar(bloque: HTMLElement, intentoModelo = 0) {
+    const megas = Number(bloque.dataset.megas);
+    const url = new URL(bloque.dataset.src!, location.href).href;
+    avisar(bloque, `Descargando 0 de ${megas} MB`, "Descargando el modelo 3D", 0);
+    cargarLibreria().catch(() => {});
+    try {
+      const respuesta = await fetch(url);
+      if (!respuesta.ok || !respuesta.body) throw new Error(`modelo: ${respuesta.status}`);
+      // Comprimido, Content-Length es el tamaño en red y el lector cuenta los bytes ya descomprimidos.
+      const total = (!respuesta.headers.has("content-encoding") && Number(respuesta.headers.get("content-length"))) || Number(bloque.dataset.bytes);
+      const lector = respuesta.body.getReader();
+      const partes: BlobPart[] = [];
+      let recibido = 0;
+      for (;;) {
+        const { done, value } = await lector.read();
+        if (done) break;
+        partes.push(value as Uint8Array<ArrayBuffer>);
+        recibido += value.length;
+        const porcentaje = Math.min(100, Math.round((recibido / total) * 100));
+        avisar(bloque, `Descargando ${Math.round(recibido / 1_000_000)} de ${megas} MB`, "Descargando el modelo 3D", porcentaje);
+      }
+      const blob = new Blob(partes, { type: "model/gltf-binary" });
+      try {
+        const cache = await almacen();
+        if (cache) {
+          const ruta = new URL(url).pathname;
+          for (const vieja of await cache.keys()) {
+            if (new URL(vieja.url).pathname === ruta) await cache.delete(vieja);
+          }
+          await cache.put(url, new Response(blob, { headers: { "Content-Type": "model/gltf-binary" } }));
+        }
+      } catch (error) {
+        // Sin espacio para guardarlo se muestra igual; la próxima visita lo volverá a pedir.
+        console.warn("No se pudo guardar el modelo 3D:", error);
+      }
+      avisar(bloque, "Cargando el modelo 3D…", "Cargando el modelo 3D");
+      montar(bloque, intentoModelo, URL.createObjectURL(blob));
+    } catch (error) {
+      console.error("No se pudo descargar el modelo 3D:", error);
+      ocultarAviso(bloque);
+      ofrecerBoton(bloque, intentoModelo + 1);
+    }
+  }
+
   const ahorroDatos = (navigator as any).connection?.saveData === true;
+  const livianos = bloques.filter((bloque) => !("pesado" in bloque.dataset));
+
+  for (const bloque of bloques) {
+    if (!("pesado" in bloque.dataset)) continue;
+    guardado(bloque).then((origen) => (origen ? montar(bloque, 0, origen) : ofrecerBoton(bloque)));
+  }
 
   if (ahorroDatos) {
-    bloques.forEach(bloque => ofrecerBoton(bloque));
+    livianos.forEach(bloque => ofrecerBoton(bloque));
   } else {
     const observador = new IntersectionObserver(
       (entradas) => {
@@ -208,6 +369,6 @@ const posterClases =
       },
       { rootMargin: "200px" },
     );
-    for (const bloque of bloques) observador.observe(bloque);
+    for (const bloque of livianos) observador.observe(bloque);
   }
 </script>

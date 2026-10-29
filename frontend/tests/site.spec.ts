@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
 test('desktop navigation, carousel and accessibility', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -108,6 +108,93 @@ test('proposal 3D model loads only when scrolled into view and replaces its post
   expect(size.x).toBeCloseTo(3.29, 2);
   expect(size.y).toBeCloseTo(1.419, 2);
   expect(errors).toEqual([]);
+});
+
+test('the education proposal loads its 3D model', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await page.goto('/propuestas/educacion/');
+  await page.locator('.model-3d').scrollIntoViewIfNeeded();
+  await expect.poll(() => page.locator('model-viewer').evaluate((v: any) => v.loaded), { timeout: 30000 }).toBe(true);
+  await expect(page.locator('.model-3d-poster')).toHaveCount(0, { timeout: 15000 });
+  expect(errors).toEqual([]);
+});
+
+// El estadio dibujado sin GPU (CI) tardaría minutos: se sirve un modelo ligero en su lugar.
+async function servirModeloLigero(page: Page, antes?: () => Promise<void>) {
+  let fallar = false;
+  await page.route('**/models/centro-de-alto-rendimiento.glb*', async route => {
+    if (fallar) return route.abort();
+    await antes?.();
+    await route.fulfill({ path: 'public/models/tecnologias-emergentes.glb', contentType: 'model/gltf-binary' });
+  });
+  return (valor: boolean) => { fallar = valor; };
+}
+const MODELO_PESADO = '/propuestas/centro-de-alto-rendimiento/';
+const visorCargado = (page: Page) => expect.poll(() => page.locator('model-viewer').evaluate((v: any) => v.loaded), { timeout: 30000 }).toBe(true);
+
+test('a heavy 3D model waits for the button, shows its progress and is reused on the next visit', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  const modelos: string[] = [];
+  page.on('request', r => /\.glb/.test(r.url()) && r.url().startsWith('http') && modelos.push(r.url()));
+  await servirModeloLigero(page);
+  await page.goto(MODELO_PESADO);
+  await page.locator('.model-3d').scrollIntoViewIfNeeded();
+  const boton = page.getByRole('button', { name: /^Ver el modelo 3D · \d+ MB$/ });
+  await expect(boton).toBeVisible();
+  await page.waitForTimeout(500);
+  expect(modelos).toEqual([]);
+  await boton.click();
+  await visorCargado(page);
+  await expect(page.locator('.model-3d-progreso')).toBeHidden();
+  await expect(page.getByRole('progressbar', { name: 'Descarga del modelo 3D', includeHidden: true })).toHaveAttribute('aria-valuenow', '100');
+  // El foco queda en el lienzo interno de model-viewer; desde fuera, activeElement es el propio visor.
+  await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).toBe('MODEL-VIEWER');
+  modelos.length = 0;
+  await page.reload();
+  await page.locator('.model-3d').scrollIntoViewIfNeeded();
+  await visorCargado(page);
+  await expect(boton).toBeHidden();
+  expect(modelos).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test('a heavy 3D model offers the button again when its download fails', async ({ page }) => {
+  const fallar = await servirModeloLigero(page);
+  fallar(true);
+  await page.goto(MODELO_PESADO);
+  await page.locator('.model-3d').scrollIntoViewIfNeeded();
+  const boton = page.getByRole('button', { name: /^Ver el modelo 3D · \d+ MB$/ });
+  await boton.click();
+  await expect(boton).toBeVisible();
+  await expect(page.locator('.model-3d-progreso')).toBeHidden();
+  await expect(page.locator('.model-3d-poster')).toBeVisible();
+  fallar(false);
+  await boton.click();
+  await visorCargado(page);
+});
+
+test('the 3D loading animation plays, and stays still with reduced motion', async ({ page }) => {
+  let soltar = () => {};
+  const espera = new Promise<void>(r => { soltar = r; });
+  await servirModeloLigero(page, () => espera);
+  await page.goto(MODELO_PESADO);
+  await page.locator('.model-3d').scrollIntoViewIfNeeded();
+  await page.getByRole('button', { name: /^Ver el modelo 3D · \d+ MB$/ }).click();
+  const loader = page.locator('.model-3d-progreso-loader');
+  await expect(loader.locator('canvas')).toBeVisible();
+  await expect(page.locator('.model-3d-progreso')).toContainText('Descargando');
+  const primera = await loader.screenshot();
+  await expect.poll(async () => (await loader.screenshot()).equals(primera), { timeout: 8000 }).toBe(false);
+  await page.getByRole('button', { name: 'Herramientas de accesibilidad' }).click();
+  await page.getByRole('button', { name: 'Reducir movimiento' }).click();
+  await page.waitForTimeout(500);
+  const quieta = await loader.screenshot();
+  await page.waitForTimeout(800);
+  expect((await loader.screenshot()).equals(quieta)).toBe(true);
+  soltar();
+  await visorCargado(page);
 });
 
 test('proposals without a model do not load the 3D viewer', async ({ page }) => {

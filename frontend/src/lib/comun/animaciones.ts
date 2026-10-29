@@ -1,6 +1,7 @@
 import type { AnimationItem, LottiePlayer } from "lottie-web";
 // Como URLs y no con `import()`: un `import()` fallido queda memorizado y no se puede reintentar.
 import reproductorUrl from "lottie-web/build/player/lottie_light.min.js?url";
+import reproductorEnHiloUrl from "lottie-web/build/player/lottie_canvas_worker.min.js?url";
 import loaderUrl from "../../assets/animated/loader-vota6.min.json?url";
 import marcaUrl from "../../assets/animated/marca-vota6.min.json?url";
 
@@ -88,6 +89,80 @@ export async function reproducir(
     return () => {
       activas.delete(activa);
       item.destroy();
+    };
+  } catch (error) {
+    console.error("No se pudo cargar la animación:", error);
+  }
+}
+
+let reproductorEnHilo: Promise<LottiePlayer> | undefined;
+let intentosEnHilo = 0;
+
+/** La versión que dibuja en un worker con OffscreenCanvas; sin él, dibuja en la página. */
+function cargarReproductorEnHilo() {
+  return (reproductorEnHilo ??= (async () => {
+    const url = intentosEnHilo ? `${reproductorEnHiloUrl}?reintento=${intentosEnHilo}` : reproductorEnHiloUrl;
+    const respuesta = await fetch(url);
+    if (!respuesta.ok) throw new Error(`lottie en worker: ${respuesta.status}`);
+    // Es UMD: con un `module` propio no pisa la global `lottie` de lottie_light.
+    const envuelto = `(() => { const module = { exports: {} };\n${await respuesta.text()}\n;self.__lottieEnHilo = module.exports; })();`;
+    const blob = URL.createObjectURL(new Blob([envuelto], { type: "text/javascript" }));
+    await new Promise((resolver, rechazar) => {
+      const script = document.createElement("script");
+      script.src = blob;
+      script.onload = resolver;
+      script.onerror = rechazar;
+      document.head.append(script);
+    });
+    URL.revokeObjectURL(blob);
+    const lottie = (window as any).__lottieEnHilo as LottiePlayer;
+    delete (window as any).__lottieEnHilo;
+    return lottie;
+  })().catch((error) => {
+    reproductorEnHilo = undefined;
+    intentosEnHilo++;
+    throw error;
+  }));
+}
+
+/**
+ * Como reproducir(), pero dibuja en un worker: sigue moviéndose aunque la página esté bloqueada
+ * (p. ej., mientras el visor 3D prepara un modelo pesado). Resuelve cuando ya se ve.
+ */
+export async function reproducirEnHilo(contenedor: HTMLElement, animacion: Animacion) {
+  if (ahorroDatos) return;
+  try {
+    const [lottie, animationData] = await Promise.all([
+      cargarReproductorEnHilo(),
+      cargarDatos(animacion),
+    ]);
+    // Lienzo propio con su tamaño: el que crea lottie lo mide con el ancho por defecto de un
+    // <canvas> (300 px) y la animación sale estirada en contenedores de otro tamaño.
+    const { width, height } = contenedor.getBoundingClientRect();
+    const densidad = window.devicePixelRatio || 1;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(width * densidad);
+    canvas.height = Math.round(height * densidad);
+    canvas.className = "block h-full w-full";
+    contenedor.append(canvas);
+    // El worker descarta play() y goToAndStop() si llegan antes de que la animación exista:
+    // arranca con autoplay y el reposo se aplica al avisar que está lista.
+    const item = lottie.loadAnimation<"canvas">({
+      container: contenedor,
+      renderer: "canvas",
+      rendererSettings: { canvas } as any,
+      loop: true,
+      autoplay: !sinMovimiento(),
+      animationData: structuredClone(animationData),
+    });
+    await new Promise<void>((lista) => item.addEventListener("DOMLoaded", () => lista()));
+    const activa = { item, quieto: ANIMACIONES[animacion].fotogramaQuieto };
+    activas.add(activa);
+    aplicarMovimiento(activa);
+    return () => {
+      activas.delete(activa);
+      item.destroy();
+      canvas.remove();
     };
   } catch (error) {
     console.error("No se pudo cargar la animación:", error);
