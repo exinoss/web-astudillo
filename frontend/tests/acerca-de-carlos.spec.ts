@@ -74,7 +74,8 @@ test('la página personal muestra retrato, entrevista y una galería accesible',
   expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe('hidden');
   await dialog.locator('[data-dialog-stage]').click({ position: { x: 5, y: 5 } });
   await expect(dialog).toBeHidden();
-  expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe('');
+  // El desbloqueo va en el evento `close`, que el navegador dispara después de ocultar el diálogo.
+  await expect.poll(() => page.evaluate(() => document.documentElement.style.overflow)).toBe('');
   await expect(page.getByRole('link', { name: 'Conoce mi trayectoria' })).toHaveAttribute('href', '/acerca-de-nosotros/biografia/');
 });
 
