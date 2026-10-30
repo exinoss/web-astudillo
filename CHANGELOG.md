@@ -12,6 +12,10 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - Modelo 3D del Centro Deportivo de Alto Rendimiento en la página de su propuesta: estadio, coliseo con piscinas, canchas, viviendas y la entrada con su letrero (35 MB).
 - Los modelos 3D pesados se ven con el botón «Ver el modelo 3D · 35 MB»: la animación de carga muestra cuánto falta, y en las visitas siguientes el modelo aparece sin volver a descargarse.
 
+### Changed
+
+- En la biografía, un momento sin foto muestra «Aún no hay foto de este momento.» en lugar de «Foto pendiente».
+
 ### Fixed
 
 - Los modelos 3D se descargan comprimidos: el estadio ocupa 15 MB de datos en vez de 35, y el de paneles solares 80 KB en vez de 289.

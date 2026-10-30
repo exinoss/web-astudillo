@@ -22,7 +22,7 @@ test('la línea de tiempo alterna seis hitos y cada punto baja al siguiente', as
   await page.goto('/acerca-de-nosotros/biografia/');
   const hitos = page.locator('.hito');
   await expect(hitos).toHaveCount(6);
-  const lado = (i: number) => hitos.nth(i).locator('img').evaluate(img => img.getBoundingClientRect().x);
+  const lado = (i: number) => hitos.nth(i).getByText('Aún no hay foto de este momento.').evaluate(el => el.getBoundingClientRect().x);
   expect(await lado(0)).toBeLessThan(await lado(1));
   await expect(hitos.locator('button.punto')).toHaveCount(5);
   await hitos.nth(0).scrollIntoViewIfNeeded();

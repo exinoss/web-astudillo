@@ -1,8 +1,8 @@
 import type { Page } from '@playwright/test';
 import initial from '../../../backend/database/contenido-inicial.json' with { type:'json' };
+import { servirFotos } from './fotos';
 
 // API simulada del panel: guarda el borrador en memoria para que los tests vean el efecto de cada acción.
-const PIXEL = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=', 'base64');
 const photo = (id: number) => ({ idMedio: id, nombre: `foto-${id}`, ancho: 1600, alto: 1200, anchos: [480, 960, 1600] });
 
 export function panelData(rol: 'admin' | 'coadmin') {
@@ -69,7 +69,7 @@ export function panelData(rol: 'admin' | 'coadmin') {
 }
 
 export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData>) {
-  await page.route('**/medios/**', route => route.fulfill({ contentType: 'image/png', body: PIXEL }));
+  await servirFotos(page);
   await page.route('**/api/**', async route => {
     const url = new URL(route.request().url());
     const method = route.request().method();

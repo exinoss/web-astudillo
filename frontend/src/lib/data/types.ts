@@ -15,9 +15,6 @@ export interface UploadedPicture {
   anchos: number[];
 }
 
-/** Recurso del código (lo optimiza astro:assets) o foto subida desde el panel. */
-export type Picture = ImageMetadata | UploadedPicture;
-
 export interface Kpi {
   label: string;
   value: string;
@@ -89,7 +86,7 @@ export interface BiographyMilestone {
   years: string;
   title: string;
   text: string[];
-  image: Picture | null;
+  image: UploadedPicture | null;
   alt: string;
 }
 
@@ -99,7 +96,7 @@ export interface WorkMilestone {
 }
 
 export interface WorkEvidence {
-  image: Picture;
+  image: UploadedPicture;
   alt: string;
   caption: string;
 }
@@ -122,7 +119,7 @@ export type CardColor = "rojo" | "azul";
 export interface AboutCarlosCard {
   title: string;
   text: string;
-  image: Picture;
+  image: UploadedPicture;
   alt: string;
   color: CardColor;
   /** Punto de enfoque de la foto, en porcentaje. */
@@ -134,13 +131,13 @@ export interface AboutCarlosVideo {
   description: string | null;
   url: string;
   vertical: boolean;
-  cover: Picture | null;
+  cover: UploadedPicture | null;
 }
 
 export interface AboutCarlosPage {
   cards: AboutCarlosCard[];
   video: AboutCarlosVideo | null;
-  portrait: { image: Picture; alt: string } | null;
+  portrait: { image: UploadedPicture; alt: string } | null;
   interview: { question: string; answer: string }[];
-  gallery: { image: Picture; alt: string; caption: string }[];
+  gallery: { image: UploadedPicture; alt: string; caption: string }[];
 }
