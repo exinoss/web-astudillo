@@ -1,4 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
+import { servirFotos } from './support/fotos';
+
+test.beforeEach(({ page }) => servirFotos(page));
 
 test('desktop navigation, carousel and accessibility', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
@@ -343,11 +346,11 @@ test('cada obra muestra su progreso junto a un carrusel de evidencias', async ({
   await expect(carrusel.getByText('1 / 3')).toBeVisible();
   await carrusel.getByRole('button', { name: 'Foto siguiente' }).click();
   await expect(carrusel.getByText('2 / 3')).toBeVisible();
-  await expect(carrusel.getByText('Foto provisional 2', { exact: true })).toBeVisible();
+  await expect(carrusel.getByText('Foto de prueba 2', { exact: true })).toBeVisible();
   await carrusel.getByRole('button', { name: 'Foto anterior' }).click();
   await carrusel.getByRole('button', { name: 'Foto anterior' }).click();
   await expect(carrusel.getByText('3 / 3')).toBeVisible();
-  await expect(page.getByText('Aún no hay imágenes del avance de esta obra.')).toHaveCount(1);
+  await expect(page.getByText('Aún no hay imágenes del avance de esta obra.')).toHaveCount(6);
 });
 
 test('en móvil las fotos de cada obra se despliegan desde un acordeón', async ({ page }) => {

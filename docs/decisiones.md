@@ -58,3 +58,6 @@ Por qué: como texto en `CLAUDE.md`, la regla se saltaba en preguntas que parec�
 
 **D-016 · 2026-10-29 · Los hooks de Claude Code no se versionan: `.claude/` está en `.gitignore`, y el agente de cada equipo los crea a partir de la descripción de `AGENTS.md`/`CLAUDE.md` («Hooks de Claude Code»). Hacen lo mismo que en D-015.**
 Por qué: son configuración de cada máquina, como `PROJECT_MEMORY.md` y el mapa de Graphify, y quien programa decide si los usa. La regla los describe con el detalle suficiente para que cualquier agente los cree igual.
+
+**D-017 · 2026-10-29 · El proyecto no lleva fotos ni textos provisionales: las fotos de relleno (antes `frontend/src/assets/obras` y `assets/biografia`) viven solo en `design/recursos/fotos-provisionales/`, y cada sección sin foto muestra su propio aviso.**
+Por qué: en local debe verse lo mismo que en producción, y el código que solo mostraba esas fotos iba a producción sin usarse. Las pruebas de Playwright usan registros como los de una foto subida, sin archivo (`frontend/src/lib/data/mock/fotos.ts`), y la prueba sirve la imagen (`frontend/tests/support/fotos.ts`). Regla «Contenido de ejemplo» en `AGENTS.md`/`CLAUDE.md`.
