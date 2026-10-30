@@ -150,7 +150,7 @@ const accessButton =
               active={current.startsWith("/acerca-de-nosotros/")}
               ariaControls="about-menu"
             >
-              Acerca de nosotros <Icon name="chevron" size={14} />
+              Acerca de mí <Icon name="chevron" size={14} />
             </NavLink>
             <DropdownPanel id="about-menu">
               {aboutLinks.map((link) => (
@@ -161,6 +161,9 @@ const accessButton =
               ))}
             </DropdownPanel>
           </div>
+          <NavLink href="/mi-equipo/" active={current === "/mi-equipo/"} markCurrent={current === "/mi-equipo/"}>
+            Mi equipo
+          </NavLink>
           <div class="nav-dropdown relative">
             <NavLink
               active={current.startsWith("/propuestas/")}

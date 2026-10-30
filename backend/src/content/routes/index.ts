@@ -1,10 +1,12 @@
 import { Elysia, t } from 'elysia';
 import type { SQL } from 'bun';
 import type { Authorization } from '../../auth/types';
+import { MAX_EQUIPO, MAX_FOTOS_PARROQUIA } from '../../contracts/parroquias';
 import { VIDEO_URL_MAX } from '../../contracts/video';
 import { createAboutCarlosPages } from '../services/about-carlos';
 import { createContent } from '../services/content';
 import { createMedia } from '../services/media';
+import { createMyTeam } from '../services/my-team';
 
 export const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;
 const text = (max: number) => t.String({ maxLength: max * 4 });
@@ -19,6 +21,7 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
   const content = createContent(sql, authorization);
   const media = createMedia(sql, authorization, mediaDir);
   const aboutCarlosPages = createAboutCarlosPages(sql, authorization, mediaDir);
+  const myTeam = createMyTeam(sql, authorization);
   const admin = new Elysia({ prefix: '/api/admin', normalize: false })
     .get('/contenido', ({ cookie }) => content.get(access(cookie)))
     .put('/contenido/textos/:clave', ({ cookie, params, body }) =>
@@ -80,6 +83,22 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
         entrevista: t.Array(t.Object({ pregunta: text(160), respuesta: text(1000) }, strict), { maxItems: 6 }),
         galeria: t.Array(t.Object({ idMedio: mediaId, alt: text(200), pie: text(200) }, strict), { maxItems: 6 }),
         version,
+      }, strict),
+    })
+    // Una parte que nunca se guardó no tiene versión: se envía null.
+    .put('/contenido/mi-equipo/equipo', ({ cookie, body }) => myTeam.saveTeam(access(cookie), body, body.version), {
+      body: t.Object({
+        personas: t.Array(t.Object({ idMedio: t.Union([mediaId, t.Null()]), nombre: text(80), quien: text(60) }, strict), { maxItems: MAX_EQUIPO }),
+        version: t.Union([version, t.Null()]),
+      }, strict),
+    })
+    .put('/contenido/mi-equipo/parroquias/:slug', ({ cookie, params, body }) =>
+      myTeam.saveParish(access(cookie), params.slug, body, body.version), {
+      params: slug,
+      body: t.Object({
+        texto: text(3000),
+        fotos: t.Array(t.Object({ idMedio: mediaId, alt: text(200) }, strict), { maxItems: MAX_FOTOS_PARROQUIA }),
+        version: t.Union([version, t.Null()]),
       }, strict),
     })
     .get('/chat/sin-respuesta', ({ cookie }) => content.unanswered(access(cookie)))

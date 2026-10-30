@@ -6,7 +6,9 @@ import { ApiError } from '../../http';
 import { plainText } from '../../validation/texto';
 import { CONTENT_CONFLICT } from '../conflictos';
 import type { BiographyItem, ChatAnswer, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
+import { PARROQUIAS } from '../../contracts/parroquias';
 import { listAboutCarlosPages } from './about-carlos';
+import { emptyMyTeam, listMyTeam } from './my-team';
 import { toPhoto } from './media';
 import { linkValue, sitePath, year } from './validation';
 
@@ -39,15 +41,16 @@ export interface WorkInput {
 export function createContent(sql: SQL, authorization: Authorization) {
   /** Lee el borrador actual completo, con la misma forma que se congela al publicar. */
   async function snapshot(): Promise<Snapshot> {
-    // En una transacción REPEATABLE READ las seis lecturas ven el mismo instante; sueltas, dos guardados
+    // En una transacción REPEATABLE READ las siete lecturas ven el mismo instante; sueltas, dos guardados
     // hechos entre ellas podrían quedar publicados a medias.
-    const [texts, proposals, biography, works, chat, acercaDeCarlos] = await sql.begin('isolation level repeatable read read only', tx => Promise.all([
+    const [texts, proposals, biography, works, chat, acercaDeCarlos, miEquipo] = await sql.begin('isolation level repeatable read read only', tx => Promise.all([
       callPg<{ clave: string; valor: string }>(tx, 'textsList'),
       callPg<ProposalRow>(tx, 'proposalsList'),
       callPg<BiographyRow>(tx, 'biographyList'),
       callPg<WorkRow>(tx, 'worksList'),
       callPg<ChatRow>(tx, 'chatList'),
       listAboutCarlosPages(tx),
+      listMyTeam(tx),
     ]));
     return {
       version: 1,
@@ -69,6 +72,7 @@ export function createContent(sql: SQL, authorization: Authorization) {
         enlaceTexto: c.enlace_texto, enlaceRuta: c.enlace_ruta, destacada: c.destacada,
       })),
       acercaDeCarlos,
+      miEquipo,
     };
   }
 
@@ -244,7 +248,7 @@ const stable = (value: unknown): string => JSON.stringify(value, (_, v) =>
   v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b))) : v);
 
 const PAGE_NAMES: Record<string, string> = {
-  'por-que-quiero-ser-alcalde': 'Por qué quiero ser alcalde', 'conoce-mas': 'Conoce más sobre Carlos',
+  'por-que-quiero-ser-alcalde': 'Por qué quiero ser alcalde', 'conoce-mas': 'Conoce más sobre mí',
 };
 const EMPTY_PAGE = { tarjetas: [], video: null, retrato: null, entrevista: [], galeria: [] };
 
@@ -269,6 +273,13 @@ export function diff(before: Snapshot | null, after: Snapshot) {
   if (!same(before.chat ?? [], after.chat ?? [])) changes.push({ tipo: 'Chat', descripcion: 'Preguntas frecuentes' });
   for (const [slug, page] of Object.entries(after.acercaDeCarlos ?? {}))
     if (!same(before.acercaDeCarlos?.[slug] ?? EMPTY_PAGE, page)) changes.push({ tipo: 'Página', descripcion: PAGE_NAMES[slug] ?? slug });
+  const team = before.miEquipo ?? emptyMyTeam();
+  if (after.miEquipo) {
+    if (!same(team.equipo, after.miEquipo.equipo)) changes.push({ tipo: 'Mi equipo', descripcion: 'Equipo' });
+    for (const parish of after.miEquipo.parroquias)
+      if (!same(team.parroquias.find(p => p.slug === parish.slug), parish))
+        changes.push({ tipo: 'Mi equipo', descripcion: PARROQUIAS.find(p => p.slug === parish.slug)!.nombre });
+  }
   return changes;
 }
 

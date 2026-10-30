@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import initial from '../../../backend/database/contenido-inicial.json' with { type:'json' };
+import { PARROQUIAS } from '../../../backend/src/contracts/parroquias';
 import { servirFotos } from './fotos';
 
 // API simulada del panel: guarda el borrador en memoria para que los tests vean el efecto de cada acción.
@@ -40,6 +41,12 @@ export function panelData(rol: 'admin' | 'coadmin') {
         },
         'conoce-mas': { tarjetas: [], video: null, retrato: null, entrevista: [], galeria: [] },
       } as Record<string, Record<string, unknown>>,
+      miEquipo: {
+        equipo: [{ nombre: 'Rosa Valencia', quien: 'Concejala rural', foto: photo(4) }, { nombre: 'Luis Cortez', quien: null, foto: null }] as Record<string, unknown>[],
+        parroquias: PARROQUIAS.map(p => p.slug === 'alto-tambo'
+          ? { slug: p.slug, texto: 'Agua para los recintos.', fotos: [{ foto: photo(5), alt: 'Casa comunal' }] }
+          : { slug: p.slug, texto: '', fotos: [] }) as Record<string, unknown>[],
+      },
       // Como la API real: un texto sin cambiar no tiene versión. Los valores son md5 de ejemplo.
       versiones: {
         textos: { 'pie.lema': 'a'.repeat(32) } as Record<string, string>,
@@ -48,6 +55,8 @@ export function panelData(rol: 'admin' | 'coadmin') {
         obras: { 'agua-potable': 'e'.repeat(32) } as Record<string, string>,
         chat: 'f'.repeat(32),
         acercaDeCarlos: { 'por-que-quiero-ser-alcalde': '1'.repeat(32), 'conoce-mas': '2'.repeat(32) } as Record<string, string>,
+        // Como la API real: una parte de «Mi equipo» que nunca se guardó no tiene versión.
+        miEquipo: { equipo: '3'.repeat(32), 'alto-tambo': '4'.repeat(32) } as Record<string, string>,
       },
     },
     alertas: [
@@ -57,6 +66,7 @@ export function panelData(rol: 'admin' | 'coadmin') {
     sinRespuesta: [{ clave: 'cuando hay caravana', ejemplo: '¿Cuándo hay caravana?', veces: 3, ultimaVez: '2026-09-30T15:00:00Z' }],
     pending: [] as { tipo: string; descripcion: string }[],
     savedPages: [] as Record<string, unknown>[],
+    savedTeam: [] as Record<string, unknown>[],
     videoCovers: [] as string[],
     users: Array.from({ length: 23 }, (_, i) => ({
       id: i + 2, correo: `persona${i + 2}@example.com`, nombresCompletos: `Persona ${i + 2}`,
@@ -136,6 +146,19 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
       data.draft.versiones.acercaDeCarlos[aboutCarlosPage[1]] = nextVersion();
       data.pending = [...data.pending.filter(c => c.tipo !== 'Página'), { tipo: 'Página', descripcion: 'Por qué quiero ser alcalde' }];
       return json({ version: data.draft.versiones.acercaDeCarlos[aboutCarlosPage[1]] });
+    }
+    const team = path.match(/^\/api\/admin\/contenido\/mi-equipo\/(equipo|parroquias\/(.+))$/);
+    if (team) {
+      const key = team[2] ?? 'equipo';
+      const { version, ...fields } = body();
+      if (version !== (data.draft.versiones.miEquipo[key] ?? null)) return conflict();
+      data.savedTeam.push({ clave: key, ...fields });
+      if (key === 'equipo') data.draft.miEquipo.equipo = fields.personas.map(({ idMedio, ...p }: { idMedio: number | null }) => ({ ...p, foto: idMedio ? photo(idMedio) : null }));
+      else data.draft.miEquipo.parroquias = data.draft.miEquipo.parroquias.map(p => p.slug !== key ? p
+        : { slug: key, texto: fields.texto, fotos: fields.fotos.map((f: { idMedio: number; alt: string }) => ({ foto: photo(f.idMedio), alt: f.alt })) });
+      data.draft.versiones.miEquipo[key] = nextVersion();
+      data.pending.push({ tipo: 'Mi equipo', descripcion: key === 'equipo' ? 'Equipo' : PARROQUIAS.find(p => p.slug === key)!.nombre });
+      return json({ version: data.draft.versiones.miEquipo[key] });
     }
     const proposal = path.match(/^\/api\/admin\/contenido\/propuestas\/(.+)$/);
     if (proposal) {

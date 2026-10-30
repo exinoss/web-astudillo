@@ -4,12 +4,11 @@ import type { Authorization } from '../../auth/types';
 import { videoLinkProblem, videoSource } from '../../contracts/video';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
-import { ABOUT_CARLOS_PAGES, type AboutCarlosPage, type AboutCarlosSlug, type AboutCarlosPageStored, type Photo } from '../types';
+import { ABOUT_CARLOS_PAGES, type AboutCarlosPage, type AboutCarlosSlug, type AboutCarlosPageStored } from '../types';
 import { CONTENT_CONFLICT } from '../conflictos';
-import { ensureCardVariant, toPhoto } from './media';
+import { ensureCardVariant, photosById } from './media';
 import { plainText } from '../../validation/texto';
 
-type MediaRow = { id_medio: number; nombre: string; ancho: number; alto: number; anchos: number[] };
 type SaveRow = { resultado: 'guardado' | 'sin_cambios' | 'conflicto'; version: string | null };
 
 export type AboutCarlosPageInput = AboutCarlosPageStored;
@@ -18,17 +17,10 @@ const isSlug = (slug: string): slug is AboutCarlosSlug => (ABOUT_CARLOS_PAGES as
 const optional = (value: string | null | undefined, field: string, max: number, options?: { multiline?: boolean }) =>
   value?.trim() ? plainText(value, field, max, options) : null;
 
-async function photos(sql: SQL, ids: number[]) {
-  const unique = [...new Set(ids)];
-  if (!unique.length) return new Map<number, Photo>();
-  const rows = await callPg<MediaRow>(sql, 'mediaDetails', [unique.join(',')]);
-  return new Map(rows.map(row => [row.id_medio, toPhoto(row)]));
-}
-
 /** Un elemento cuya foto ya no existe se omite. */
 export async function listAboutCarlosPages(sql: SQL): Promise<Record<string, AboutCarlosPage>> {
   const rows = await callPg<{ slug: string; contenido: AboutCarlosPageStored }>(sql, 'aboutCarlosList');
-  const media = await photos(sql, rows.flatMap(({ contenido: c }) => [
+  const media = await photosById(sql, rows.flatMap(({ contenido: c }) => [
     ...c.tarjetas.map(t => t.idMedio), ...c.galeria.map(g => g.idMedio),
     ...(c.retrato ? [c.retrato.idMedio] : []), ...(c.video?.idPortada ? [c.video.idPortada] : []),
   ]));
@@ -96,7 +88,7 @@ export function createAboutCarlosPages(sql: SQL, authorization: Authorization, m
       const page = clean(slug, input);
       const ids = [...page.tarjetas.map(t => t.idMedio), ...page.galeria.map(g => g.idMedio),
         ...(page.retrato ? [page.retrato.idMedio] : []), ...(page.video?.idPortada ? [page.video.idPortada] : [])];
-      const media = await photos(sql, ids);
+      const media = await photosById(sql, ids);
       if (ids.some(id => !media.has(id))) throw new ApiError(422, 'Alguna foto ya no existe; vuelve a subirla');
       // Antes de guardar: una tarjeta publicada nunca apunta a una variante que falta.
       await Promise.all(page.tarjetas.map(t => ensureCardVariant(mediaDir, media.get(t.idMedio)!)));

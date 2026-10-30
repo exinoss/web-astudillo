@@ -1,4 +1,5 @@
-import { editable, img } from "./html";
+import { img } from "../../comun/html";
+import { editable } from "./html";
 import type { AboutCarlosPageView } from "./vista";
 
 export function alcaldeHeader(t: Record<string, string>) {

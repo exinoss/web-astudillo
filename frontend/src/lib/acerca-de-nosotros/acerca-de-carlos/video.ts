@@ -1,6 +1,5 @@
-import { esc, escLines } from "../../comun/html";
+import { esc, escLines, img } from "../../comun/html";
 import { iconSvg } from "../../comun/iconos";
-import { img } from "./html";
 import { PROVIDER_NAMES, videoSource } from "./reproductor";
 import type { AboutCarlosPageView } from "./vista";
 

@@ -4,6 +4,7 @@ import { authRepository } from "../../../lib/data/auth";
 import { ApiError } from "../../../lib/data/http/api-client";
 import { renderBiography } from "./biografia";
 import { renderAboutCarlos } from "./acerca-de-carlos";
+import { renderMyTeam } from "./mi-equipo";
 import { renderChat } from "./chat";
 import { renderWorks } from "./obras";
 import { renderParticipation } from "./participacion";
@@ -18,6 +19,7 @@ const TABS: Record<string, { title: string; render: (section: HTMLElement) => un
   biografia: { title: "Biografía", render: renderBiography },
   obras: { title: "Obras en ejecución", render: renderWorks },
   "acerca-de-carlos": { title: "Acerca de Carlos", render: renderAboutCarlos },
+  "mi-equipo": { title: "Mi equipo", render: renderMyTeam },
   textos: { title: "Textos y redes sociales", render: renderTexts },
   chat: { title: "Chat", render: renderChat },
   participacion: { title: "Participación ciudadana", render: renderParticipation },

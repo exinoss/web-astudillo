@@ -1,4 +1,4 @@
-import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, CitizenLink, Proposal, WorkProgress } from "./types";
+import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, CitizenLink, MyTeam, Proposal, WorkProgress } from "./types";
 
 export interface ContentRepository {
   getProposals(): Promise<Proposal[]>;
@@ -11,4 +11,6 @@ export interface ContentRepository {
   /** Preguntas del chat marcadas como respuesta rápida, en orden. */
   getChatQuickReplies(): Promise<string[]>;
   getAboutCarlosPage(slug: AboutCarlosSlug): Promise<AboutCarlosPage>;
+  /** Siempre trae las doce parroquias, en orden. */
+  getMyTeam(): Promise<MyTeam>;
 }

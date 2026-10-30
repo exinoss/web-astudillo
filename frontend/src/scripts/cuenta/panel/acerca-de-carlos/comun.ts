@@ -1,6 +1,5 @@
 import { adminApi, type AboutCarlosSlug, type DraftAboutCarlosPage, type Photo } from "../../../../lib/data/http/admin-api";
-import { uploadedUrl } from "../../../../lib/comun/fotos";
-import { busy, esc, GHOST, ICON_BUTTON, iconSvg, notify } from "../ui";
+import { busy, notify } from "../ui";
 
 export type Section = "tarjetas" | "video" | "retrato" | "entrevista" | "galeria";
 
@@ -13,17 +12,8 @@ export interface SectionEditor {
 }
 
 export const MAX_ITEMS = 6;
-const ACCEPT = "image/jpeg,image/png,image/webp";
-const UPLOAD = `${GHOST} cursor-pointer focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral`;
 const RADIO = "flex min-h-11 cursor-pointer items-center gap-2 rounded-[3px] border border-base-300 px-3 text-[0.82rem] font-bold has-checked:border-primary has-checked:bg-[#eef4fb] focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral";
 
-export const thumb = (foto: Photo) => uploadedUrl(foto, foto.anchos[0]);
-export const upload = (id: string, label: string, multiple = false) =>
-  `<label class="${UPLOAD}">${iconSvg("upload", 17)} ${esc(label)}<input id="${id}" type="file" accept="${ACCEPT}" ${multiple ? "multiple" : ""} class="sr-only" /></label>`;
-export const moveButtons = (kind: string, i: number, total: number, name: string) => `
-  <button type="button" class="${ICON_BUTTON}" data-move="${kind}" data-index="${i}" data-step="-1" aria-label="Subir ${name}" ${i === 0 ? "disabled" : ""}>${iconSvg("up", 18)}</button>
-  <button type="button" class="${ICON_BUTTON}" data-move="${kind}" data-index="${i}" data-step="1" aria-label="Bajar ${name}" ${i === total - 1 ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>
-  <button type="button" class="${ICON_BUTTON} text-error" data-remove="${kind}" data-index="${i}" aria-label="Quitar ${name}">${iconSvg("trash", 18)}</button>`;
 export const radios = (name: string, options: [string, string, string][], checked: string) => options.map(([val, label, mark]) => `
   <label class="${RADIO}"><input type="radio" name="${name}" value="${val}" ${val === checked ? "checked" : ""} class="sr-only" />${mark}${label}</label>`).join("");
 

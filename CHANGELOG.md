@@ -11,14 +11,20 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - Modelo 3D del coliseo en la página de la propuesta «Educación», con sus colores: techo y muros grises, franjas de ladrillo y el letrero «COLISEO» (1,06 MB).
 - Modelo 3D del Centro Deportivo de Alto Rendimiento en la página de su propuesta: estadio, coliseo con piscinas, canchas, viviendas y la entrada con su letrero (35 MB).
 - Los modelos 3D pesados se ven con el botón «Ver el modelo 3D · 35 MB»: la animación de carga muestra cuánto falta, y en las visitas siguientes el modelo aparece sin volver a descargarse.
+- Página «Mi equipo», en el menú y con el botón «Conoce a mi equipo» de la portada: el equipo con su foto, su nombre y quién es (sin foto se ve una silueta), y las 12 parroquias, cada una con su texto y sus fotos. Las fotos pasan solas en un carrusel y se ven en grande al pulsarlas.
+- Panel: pestaña «Mi equipo» para editar el equipo (hasta 9 personas, con foto opcional) y el texto y las fotos (hasta 6) de cada parroquia.
+- Se pueden subir fotos AVIF en el panel y en las alertas. Una foto HEIC del iPhone que no se puede subir avisa cómo hacerlo.
 
 ### Changed
 
 - En la biografía, un momento sin foto muestra «Aún no hay foto de este momento.» en lugar de «Foto pendiente».
+- «Acerca de nosotros» pasa a llamarse «Acerca de mí», y «Conoce más sobre Carlos», «Conoce más sobre mí». Las direcciones de las páginas no cambian.
+- La galería de «Conoce más sobre mí» con una sola foto la muestra en grande sin flechas ni miniaturas.
 
 ### Fixed
 
 - Los modelos 3D se descargan comprimidos: el estadio ocupa 15 MB de datos en vez de 35, y el de paneles solares 80 KB en vez de 289.
+- Una foto de más de 40 megapíxeles ya no se rechaza con «Sube una foto JPG, PNG o WebP»: el aviso dice cuánto mide y el máximo (por ejemplo, 8000 × 5000 px).
 
 ## [1.0.0] - 2026-10-25
 

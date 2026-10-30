@@ -1,8 +1,8 @@
 import { mountPlayer, videoLinkProblem, videoSource } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
 import { adminApi } from "../../../../lib/data/http/admin-api";
-import { busy, DANGER, esc, field, GHOST, HINT, iconSvg, LABEL, notify, value } from "../ui";
-import { onFiles, radios, thumb, upload, type Editor, type SectionEditor } from "./comun";
+import { busy, DANGER, esc, field, GHOST, HINT, iconSvg, LABEL, notify, thumb, upload, value } from "../ui";
+import { onFiles, radios, type Editor, type SectionEditor } from "./comun";
 
 const VALID = "#1e7a3c";
 const PROVIDERS = { youtube: "YouTube", facebook: "Facebook", tiktok: "TikTok", vimeo: "Vimeo", mp4: "Archivo MP4" };

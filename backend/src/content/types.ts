@@ -1,3 +1,5 @@
+import type { ParroquiaSlug } from '../contracts/parroquias';
+
 /** Foto subida desde el panel; el sitio arma las URL `/medios/<nombre>-<ancho>.webp`. */
 export interface Photo {
   idMedio: number;
@@ -64,6 +66,16 @@ export interface AboutCarlosPage {
   galeria: (Omit<AboutCarlosPageStored['galeria'][number], 'idMedio'> & { foto: Photo })[];
 }
 
+/** Contenido guardado de cada parte de «Mi equipo»: el equipo (clave `equipo`) y cada parroquia (su slug). */
+export interface TeamStored { personas: { idMedio: number | null; nombre: string; quien: string | null }[] }
+export interface ParishStored { texto: string; fotos: { idMedio: number; alt: string }[] }
+
+/** Siempre trae las doce parroquias, en el orden de contracts/parroquias.ts. */
+export interface MyTeam {
+  equipo: { nombre: string; quien: string | null; foto: Photo | null }[];
+  parroquias: { slug: ParroquiaSlug; texto: string; fotos: { foto: Photo; alt: string }[] }[];
+}
+
 /**
  * Versión (md5 del estado) de cada parte editable del borrador. El panel la devuelve al guardar;
  * si no coincide con la actual, otra persona guardó antes y el guardado responde 409.
@@ -76,6 +88,8 @@ export interface ContentVersions {
   obras: Record<string, string>;
   chat: string;
   acercaDeCarlos: Record<string, string>;
+  /** Solo las partes que se guardaron alguna vez: las demás no tienen versión. */
+  miEquipo: Record<string, string>;
 }
 
 /**
@@ -93,4 +107,6 @@ export interface Snapshot {
   chat?: ChatAnswer[];
   /** Ausente en publicaciones anteriores a las páginas de Carlos. */
   acercaDeCarlos?: Record<string, AboutCarlosPage>;
+  /** Ausente en publicaciones anteriores a «Mi equipo». */
+  miEquipo?: MyTeam;
 }

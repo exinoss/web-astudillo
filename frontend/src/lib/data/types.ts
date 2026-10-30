@@ -1,4 +1,5 @@
 import type { ImageMetadata } from "astro";
+import type { ParroquiaSlug } from "../../../../backend/src/contracts/parroquias";
 
 export interface ProposalModel {
   src: string;
@@ -140,4 +141,22 @@ export interface AboutCarlosPage {
   portrait: { image: UploadedPicture; alt: string } | null;
   interview: { question: string; answer: string }[];
   gallery: { image: UploadedPicture; alt: string; caption: string }[];
+}
+
+export interface TeamMember {
+  name: string;
+  role: string | null;
+  image: UploadedPicture | null;
+}
+
+export interface Parish {
+  slug: ParroquiaSlug;
+  name: string;
+  paragraphs: string[];
+  photos: { image: UploadedPicture; alt: string }[];
+}
+
+export interface MyTeam {
+  members: TeamMember[];
+  parishes: Parish[];
 }

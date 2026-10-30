@@ -1,7 +1,8 @@
+import { PARROQUIAS } from '../../../../backend/src/contracts/parroquias';
 import type { ContentRepository } from './content-repository';
 import { citizenIcons, proposalIcons, proposalModels } from './presentation';
 import { type ApiAboutCarlosPage, toAboutCarlosPage } from './acerca-de-carlos';
-import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, Proposal, UploadedPicture, WorkProgress } from './types';
+import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, MyTeam, Proposal, UploadedPicture, WorkProgress } from './types';
 
 export interface Snapshot {
   version: 1;
@@ -12,7 +13,13 @@ export interface Snapshot {
   obras: { slug: string; nota: string; actualizadoEn: string; hitos: { nombre: string; completado: boolean }[]; fotos: (UploadedPicture & { pie: string })[] }[];
   chat?: { pregunta: string; destacada: boolean }[];
   acercaDeCarlos?: Record<string, ApiAboutCarlosPage>;
+  miEquipo?: {
+    equipo: { nombre: string; quien: string | null; foto: UploadedPicture | null }[];
+    parroquias: { slug: string; texto: string; fotos: { foto: UploadedPicture; alt: string }[] }[];
+  };
 }
+
+const paragraphs = (text: string) => text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
 
 export abstract class SnapshotRepository implements ContentRepository {
   protected abstract load(): Promise<Snapshot>;
@@ -32,7 +39,7 @@ export abstract class SnapshotRepository implements ContentRepository {
   }
   async getBiography(): Promise<BiographyMilestone[]> {
     return (await this.load()).biografia.map(h => ({
-      years: h.anios, title: h.titulo, text: h.texto.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean),
+      years: h.anios, title: h.titulo, text: paragraphs(h.texto),
       image: h.foto, alt: h.alt ?? h.titulo,
     }));
   }
@@ -48,5 +55,15 @@ export abstract class SnapshotRepository implements ContentRepository {
   async getChatQuickReplies() { return ((await this.load()).chat ?? []).filter(c => c.destacada).map(c => c.pregunta); }
   async getAboutCarlosPage(slug: AboutCarlosSlug): Promise<AboutCarlosPage> {
     return toAboutCarlosPage((await this.load()).acercaDeCarlos?.[slug]);
+  }
+  async getMyTeam(): Promise<MyTeam> {
+    const team = (await this.load()).miEquipo;
+    return {
+      members: (team?.equipo ?? []).map(p => ({ name: p.nombre, role: p.quien, image: p.foto })),
+      parishes: PARROQUIAS.map(({ slug, nombre }) => {
+        const parish = team?.parroquias.find(p => p.slug === slug);
+        return { slug, name: nombre, paragraphs: paragraphs(parish?.texto ?? ''), photos: (parish?.fotos ?? []).map(f => ({ image: f.foto, alt: f.alt })) };
+      }),
+    };
   }
 }

@@ -24,6 +24,10 @@ export interface AboutCarlosPageBody {
   entrevista: DraftAboutCarlosPage['entrevista'];
   galeria: { idMedio: number; alt: string; pie: string }[];
 }
+export interface DraftMyTeam {
+  equipo: { nombre: string; quien: string | null; foto: Photo | null }[];
+  parroquias: { slug: string; texto: string; fotos: { foto: Photo; alt: string }[] }[];
+}
 /**
  * Versión de cada parte del borrador al cargarlo. Se envía al guardar: si otra persona guardó
  * antes, la API responde 409 y no se pisa su cambio. Un texto nunca cambiado no tiene versión.
@@ -35,6 +39,8 @@ export interface DraftVersions {
   obras: Record<string, string>;
   chat: string;
   acercaDeCarlos: Record<AboutCarlosSlug, string>;
+  /** Solo las partes de «Mi equipo» que se guardaron alguna vez: las demás se guardan con null. */
+  miEquipo: Record<string, string>;
 }
 /** Borrador vivo del contenido; misma forma que se congela al publicar, más sus versiones. */
 export interface Draft {
@@ -45,6 +51,7 @@ export interface Draft {
   obras: DraftWork[];
   chat: ChatAnswer[];
   acercaDeCarlos: Record<AboutCarlosSlug, DraftAboutCarlosPage>;
+  miEquipo: DraftMyTeam;
   versiones: DraftVersions;
 }
 type Saved = { version: string | null };
@@ -88,6 +95,10 @@ export const adminApi = {
   videoCover: (enlace: string) => call<Photo>('/api/admin/medios/portada-video', 'POST', { enlace }),
   saveAboutCarlosPage: (slug: AboutCarlosSlug, body: AboutCarlosPageBody, version: string) =>
     call<Saved>(`/api/admin/contenido/acerca-de-carlos/${slug}`, 'PUT', { ...body, version }),
+  saveTeam: (personas: { idMedio: number | null; nombre: string; quien: string }[], version: string | null) =>
+    call<Saved>('/api/admin/contenido/mi-equipo/equipo', 'PUT', { personas, version }),
+  saveParish: (slug: string, body: { texto: string; fotos: { idMedio: number; alt: string }[] }, version: string | null) =>
+    call<Saved>(`/api/admin/contenido/mi-equipo/parroquias/${slug}`, 'PUT', { ...body, version }),
   saveChat: (respuestas: ChatAnswer[], version: string) => call<Saved>('/api/admin/contenido/chat', 'PUT', { respuestas, version }),
   unanswered: () => call<{ preguntas: { clave: string; ejemplo: string; veces: number; ultimaVez: string }[] }>('/api/admin/chat/sin-respuesta'),
   discardUnanswered: (clave: string) => call(`/api/admin/chat/sin-respuesta/${encodeURIComponent(clave)}`, 'DELETE'),

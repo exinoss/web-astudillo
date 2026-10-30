@@ -92,6 +92,13 @@
       "when": 1791355115351,
       "tag": "0012_visitas",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1793336207181,
+      "tag": "0013_mi_equipo",
+      "breakpoints": true
     }
   ]
 }
