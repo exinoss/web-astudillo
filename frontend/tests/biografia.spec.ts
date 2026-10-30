@@ -3,14 +3,14 @@ import { expect, test } from '@playwright/test';
 const paginas = [
   ['Biografía', '/acerca-de-nosotros/biografia/'],
   ['Por qué quiero ser alcalde', '/acerca-de-nosotros/por-que-quiero-ser-alcalde/'],
-  ['Conoce más sobre Carlos', '/acerca-de-nosotros/conoce-mas/'],
+  ['Conoce más sobre mí', '/acerca-de-nosotros/conoce-mas/'],
 ] as const;
 
-test('el desplegable «Acerca de nosotros» lleva a sus tres páginas', async ({ page }) => {
+test('el desplegable «Acerca de mí» lleva a sus tres páginas', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   for (const [nombre, ruta] of paginas) {
     await page.goto('/');
-    await page.getByRole('button', { name: 'Acerca de nosotros' }).hover();
+    await page.getByRole('button', { name: 'Acerca de mí' }).hover();
     await page.locator('#about-menu').getByRole('link', { name: nombre }).click();
     await page.waitForURL(`**${ruta}`);
     await expect(page.locator('main h1')).toBeVisible();
@@ -42,7 +42,7 @@ test('con reducir movimiento todos los hitos se ven sin hacer scroll', async ({ 
 });
 
 for (const ancho of [320, 390, 768, 1440]) {
-  test(`las páginas de «Acerca de nosotros» no desbordan a ${ancho}px`, async ({ page }) => {
+  test(`las páginas de «Acerca de mí» no desbordan a ${ancho}px`, async ({ page }) => {
     await page.setViewportSize({ width: ancho, height: 800 });
     for (const ruta of ['/acerca-de-nosotros/', ...paginas.map(([, r]) => r), '/ciudadania/obras-en-ejecucion/']) {
       await page.goto(ruta);
@@ -52,7 +52,7 @@ for (const ancho of [320, 390, 768, 1440]) {
   });
 }
 
-test('la portada de «Acerca de nosotros» enlaza sus tres páginas en un índice', async ({ page }) => {
+test('la portada de «Acerca de mí» enlaza sus tres páginas en un índice', async ({ page }) => {
   await page.goto('/acerca-de-nosotros/');
   const indice = page.getByRole('navigation', { name: 'Conoce a Carlos' });
   await expect(indice.getByRole('link')).toHaveCount(3);

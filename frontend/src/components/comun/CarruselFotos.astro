@@ -1,0 +1,69 @@
+---
+import Foto from "./Foto.astro";
+import Icon from "./Icon.astro";
+import type { UploadedPicture } from "../../lib/data/types";
+import { medidasFoto } from "../../lib/comun/fotos";
+
+interface Props {
+  id?: string;
+  label: string;
+  photos: { image: UploadedPicture; alt: string; caption: string }[];
+  sizes: string;
+  class?: string;
+  /** Cada foto abre el visor (`lib/comun/visor-fotos.ts`), que se pasa como hijo del componente. */
+  ampliable?: boolean;
+  automatico?: boolean;
+}
+const { id, label, photos, sizes, class: className, ampliable = false, automatico = false } = Astro.props;
+const flecha = "grid size-11 place-items-center rounded-full text-primary-content hover:bg-primary-content/15";
+const imagen = "block aspect-(--proporcion) h-auto w-[min(100cqw,var(--ancho-foto),100cqh*var(--proporcion))]";
+---
+
+<div
+  id={id}
+  class:list={["relative overflow-hidden rounded-[4px] bg-primary", className]}
+  role="region"
+  aria-roledescription="carrusel"
+  aria-label={label}
+  data-carrusel
+  data-automatico={automatico ? "" : undefined}
+>
+  {photos.map((foto, i) => (
+    <figure
+      class="@container-[size] absolute inset-0 m-0 flex items-center justify-center pb-[54px]"
+      style={medidasFoto(foto.image)}
+      role="group"
+      aria-roledescription="diapositiva"
+      aria-label={`${i + 1} de ${photos.length}`}
+      data-diapositiva
+      hidden={i !== 0}
+    >
+      {ampliable ? (
+        <button type="button" class="block cursor-zoom-in" data-visor-abrir={i} aria-label={`Ampliar: ${foto.alt}`}>
+          <Foto class={imagen} picture={foto.image} alt={foto.alt} sizes={sizes} />
+        </button>
+      ) : (
+        <Foto class={imagen} picture={foto.image} alt={foto.alt} sizes={sizes} />
+      )}
+      <figcaption class="absolute inset-x-0 bottom-0 min-h-[54px] bg-primary/85 py-4 pr-[160px] pl-4 text-[0.8rem] leading-[1.4] text-primary-content">
+        {foto.caption}
+      </figcaption>
+    </figure>
+  ))}
+  {photos.length > 1 && (
+    <div class="absolute right-1.5 bottom-[5px] flex items-center gap-1 text-primary-content">
+      <button class={flecha} type="button" data-paso="-1" aria-label="Foto anterior">
+        <Icon name="chevronLeft" size={20} />
+      </button>
+      <span class="min-w-10 text-center text-[0.75rem] font-bold" aria-live="polite" data-posicion>
+        1 / {photos.length}
+      </span>
+      <button class={flecha} type="button" data-paso="1" aria-label="Foto siguiente">
+        <Icon name="chevronRight" size={20} />
+      </button>
+    </div>
+  )}
+  <slot />
+</div>
+
+<script src="../../scripts/comun/carrusel-fotos.ts"></script>

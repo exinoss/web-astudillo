@@ -7,7 +7,7 @@ export const aboutLinks = [
   },
   {
     href: "/acerca-de-nosotros/conoce-mas/",
-    name: "Conoce más sobre Carlos",
+    name: "Conoce más sobre mí",
     icon: "person",
   },
 ];

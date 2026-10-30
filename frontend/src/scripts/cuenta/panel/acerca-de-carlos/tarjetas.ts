@@ -1,7 +1,7 @@
 import { cardMarkup } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/tarjeta";
 import { cardImageUrl } from "../../../../lib/comun/fotos";
-import { esc, field, HINT, LABEL, value } from "../ui";
-import { bindListActions, MAX_ITEMS, moveButtons, onFiles, radios, upload, type Editor, type SectionEditor } from "./comun";
+import { esc, field, FORMATOS_FOTO, HINT, LABEL, moveButtons, upload, value } from "../ui";
+import { bindListActions, MAX_ITEMS, onFiles, radios, type Editor, type SectionEditor } from "./comun";
 
 let selectedCard = 0;
 
@@ -26,7 +26,7 @@ export const cards: SectionEditor = {
         <div>
           <span class="${LABEL}">Foto</span>
           ${upload("tarjeta-foto", "Cambiar foto")}
-          <p class="${HINT}">Medida recomendada: 800 × 1170 px (vertical). JPG, PNG o WebP de hasta 8 MB. Mejor una escena o un detalle que represente la idea.</p>
+          <p class="${HINT}">Medida recomendada: 800 × 1170 px (vertical). ${FORMATOS_FOTO} de hasta 8 MB. Mejor una escena o un detalle que represente la idea.</p>
         </div>
         <fieldset class="min-w-0 rounded-[3px] border border-base-300 p-4">
           <legend class="px-1 text-[0.82rem] font-bold">Encuadre</legend>

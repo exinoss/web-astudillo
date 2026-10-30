@@ -5,7 +5,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import sharp from 'sharp';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
-import { CARD_SIZE, cardVariantFile } from '../../contracts/media';
+import { AVISO_HEIC, CARD_SIZE, cardVariantFile, FORMATOS_FOTO } from '../../contracts/media';
 import { videoLinkProblem, videoSource } from '../../contracts/video';
 import { fetchVideoCover } from './video-cover';
 import { callPg } from '../../db/call';
@@ -17,7 +17,7 @@ const WIDTHS = [480, 960, 1600];
 // Tope de píxeles por debajo del de sharp: una imagen «bomba» pequeña en bytes no agota la memoria.
 const MAX_PIXELS = 40_000_000;
 const FORMATS = new Set(['jpeg', 'png', 'webp']);
-const WRONG_FORMAT = 'Sube una foto JPG, PNG o WebP';
+const WRONG_FORMAT = `Sube una foto ${FORMATOS_FOTO}`;
 
 type MediaRow = { id_medio: number; nombre: string; ancho: number; alto: number; anchos: number[] };
 
@@ -25,7 +25,21 @@ export const toPhoto = (row: MediaRow): Photo => ({
   idMedio: row.id_medio, nombre: row.nombre, ancho: row.ancho, alto: row.alto, anchos: row.anchos,
 });
 
+/** Las fotos que existen entre las pedidas; una borrada no aparece en el mapa. */
+export async function photosById(sql: SQL, ids: number[]) {
+  const unique = [...new Set(ids)];
+  if (!unique.length) return new Map<number, Photo>();
+  const rows = await callPg<MediaRow>(sql, 'mediaDetails', [unique.join(',')]);
+  return new Map(rows.map(row => [row.id_medio, toPhoto(row)]));
+}
+
 export const sha256 = (input: Buffer) => createHash('sha256').update(input).digest('hex');
+
+/** Null si la foto se puede guardar; si no, el aviso. HEIC y AVIF comparten contenedor (`heif`) y se distinguen por el códec. */
+export function formatProblem({ format, compression }: { format?: string; compression?: string }) {
+  if (format === 'heif') return compression === 'av1' ? null : compression === 'hevc' ? AVISO_HEIC : WRONG_FORMAT;
+  return format && FORMATS.has(format) ? null : WRONG_FORMAT;
+}
 
 /**
  * Valida la foto por su contenido y la guarda como `<nombre>-<ancho>.webp` en cada ancho de `sizes`.
@@ -34,18 +48,25 @@ export const sha256 = (input: Buffer) => createHash('sha256').update(input).dige
  * Un enlace atómico publica cada archivo completo; repetir una foto no reemplaza un archivo abierto.
  */
 export async function savePhoto(input: Buffer, dir: string, name: string, sizes: number[], allSizes = false) {
-  const metadata = await sharp(input, { limitInputPixels: MAX_PIXELS }).metadata()
+  // Leer las medidas no abre la imagen: el tope de píxeles se comprueba aquí para avisar con un mensaje claro.
+  const metadata = await sharp(input, { limitInputPixels: false }).metadata()
     .catch(() => { throw new ApiError(415, WRONG_FORMAT); });
-  if (!metadata.format || !FORMATS.has(metadata.format)) throw new ApiError(415, WRONG_FORMAT);
-  const base = sharp(input, { limitInputPixels: MAX_PIXELS }).rotate();
+  const problem = formatProblem(metadata);
+  if (problem) throw new ApiError(415, problem);
+  const pixels = (metadata.width ?? 0) * (metadata.height ?? 0);
+  if (pixels > MAX_PIXELS) throw new ApiError(413, `La foto mide ${(pixels / 1e6).toLocaleString('es', { maximumFractionDigits: 1 })} megapíxeles; `
+    + `el máximo es ${MAX_PIXELS / 1e6} (por ejemplo, 8000 × 5000 px). Redúcela y vuelve a subirla.`);
   // Orientaciones EXIF 5 a 8 giran la foto 90°: ancho y alto se intercambian.
   const turned = (metadata.orientation ?? 1) >= 5;
   const width = (turned ? metadata.height : metadata.width) ?? 0;
   const height = (turned ? metadata.width : metadata.height) ?? 0;
   const widths = allSizes ? sizes : sizes.filter(w => w < width).concat(Math.min(width, sizes.at(-1)!))
     .filter((w, i, all) => all.indexOf(w) === i).sort((a, b) => a - b);
+  const base = sharp(input, { limitInputPixels: MAX_PIXELS }).rotate();
   await mkdir(dir, { recursive: true });
-  await Promise.all(widths.map(async w => {
+  // Una versión detrás de otra: abierta, la foto completa ocupa ancho × alto × canales en memoria, y abrirla
+  // para todas a la vez multiplicaría ese pico. Reducir desde una versión ya reducida cambiaría el resultado.
+  for (const w of widths) {
     const target = join(dir, `${name}-${w}.webp`);
     const temporary = `${target}.${randomBytes(4).toString('hex')}.tmp`;
     try {
@@ -57,7 +78,7 @@ export async function savePhoto(input: Buffer, dir: string, name: string, sizes:
     } finally {
       await rm(temporary, { force: true });
     }
-  }));
+  }
   return { width, height, widths };
 }
 

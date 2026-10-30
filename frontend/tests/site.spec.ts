@@ -9,7 +9,7 @@ test('desktop navigation, carousel and accessibility', async ({ page }) => {
   page.on('pageerror', e => errors.push(e.message));
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
-  await expect(page.getByRole('navigation').getByRole('button', { name: 'Acerca de nosotros' })).toBeVisible();
+  await expect(page.getByRole('navigation').getByRole('button', { name: 'Acerca de mí' })).toBeVisible();
   await page.getByRole('button', { name: 'Propuestas', exact: true }).hover();
   await expect(page.locator('#proposals-menu')).toBeVisible();
   await page.locator('#proposals-menu a').first().hover();
@@ -342,7 +342,7 @@ test('cada obra muestra su progreso junto a un carrusel de evidencias', async ({
   const [t, c] = await Promise.all([tarjeta, carrusel].map(l => l.evaluate(el => el.getBoundingClientRect())));
   expect(c.left).toBeGreaterThan(t.right);
   expect(Math.round(c.top)).toBe(Math.round(t.top));
-  await expect(carrusel.locator('.evidencia:visible')).toHaveCount(1);
+  await expect(carrusel.locator('[data-diapositiva]:visible')).toHaveCount(1);
   await expect(carrusel.getByText('1 / 3')).toBeVisible();
   await carrusel.getByRole('button', { name: 'Foto siguiente' }).click();
   await expect(carrusel.getByText('2 / 3')).toBeVisible();

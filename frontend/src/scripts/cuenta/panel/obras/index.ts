@@ -2,7 +2,7 @@ import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftWork } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
 import { STAGE_NAMES, workProgress } from "../../../../lib/ciudadania/obras";
-import { busy, card, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, notify, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
+import { ACEPTA_FOTOS, busy, card, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, notify, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
 
 const MAX_MILESTONES = 20;
 const MAX_PHOTOS = 24;
@@ -75,7 +75,7 @@ export function renderWorks(section: HTMLElement) {
           <label class="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-[4px] border-2 border-dashed border-field-border p-2.5 text-center text-neutral focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral ${work.fotos.length >= MAX_PHOTOS ? "hidden" : ""}">
             ${iconSvg("upload", 26)}<strong class="text-[0.82rem] text-primary">Subir fotos</strong>
             <span class="text-[0.7rem] text-[#50617d]">Varias a la vez · hasta 8 MB cada una · medida recomendada 1260 × 990 px o más</span>
-            <input id="obra-fotos" type="file" accept="image/jpeg,image/png,image/webp" multiple class="sr-only" />
+            <input id="obra-fotos" type="file" accept="${ACEPTA_FOTOS}" multiple class="sr-only" />
           </label>
         </div>
       </div>

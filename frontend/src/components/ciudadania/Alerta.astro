@@ -2,6 +2,7 @@
 import Icon from "../comun/Icon.astro";
 import LegalAcceptance from '../comun/LegalAcceptance.astro';
 import { MIN_DESCRIPCION, TIPOS_ALERTA } from "../../lib/ciudadania/participacion/tipos";
+import { FORMATOS_FOTO } from "../../../../backend/src/contracts/media";
 import { TARJETA, CAMPO, ETIQUETA, AYUDA, ERROR, ESTADO } from "./estilos";
 ---
 
@@ -53,7 +54,7 @@ import { TARJETA, CAMPO, ETIQUETA, AYUDA, ERROR, ESTADO } from "./estilos";
         <input id="alerta-foto" class="absolute inset-0 cursor-pointer opacity-0" type="file" accept="image/*" aria-describedby="alerta-foto-error" />
         <span class="grid size-[76px] place-items-center rounded-full bg-primary text-primary-content"><Icon name="camera" size={38} /></span>
         <strong class="text-base">Toca para añadir una foto</strong>
-        <small class="text-[0.78rem] text-base-content">Cámara o galería · JPG, PNG o WebP · hasta 5 MB</small>
+        <small class="text-[0.78rem] text-base-content">Cámara o galería · {FORMATOS_FOTO} · hasta 5 MB</small>
       </label>
       <div id="alerta-foto-vista" class="grid grid-cols-[96px_1fr] items-center gap-3.5 rounded-[6px] border border-base-300 p-2.5" hidden>
         <img class="size-24 rounded-[4px] object-cover" alt="Vista previa de la foto del problema" />

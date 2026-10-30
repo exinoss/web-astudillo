@@ -4,11 +4,9 @@ import portadaVertical from "../../../assets/carlos-vertical.png";
 import { texto } from "../../comun/contenido";
 import type { TextKey } from "../../comun/contenido/textos";
 import { contentRepository } from "../../data";
-import type { AboutCarlosSlug, UploadedPicture } from "../../data/types";
-import { cardImageUrl, uploadedSrcset, uploadedUrl } from "../../comun/fotos";
+import type { AboutCarlosSlug } from "../../data/types";
+import { cardImageUrl, imageView, type ImageView } from "../../comun/fotos";
 import type { CardView } from "./tarjeta";
-
-export interface ImageView { src: string; srcset?: string; width?: number; height?: number }
 
 export interface AboutCarlosPageView {
   slug: AboutCarlosSlug;
@@ -24,10 +22,6 @@ const TEXT_KEYS: Record<AboutCarlosSlug, TextKey[]> = {
   "por-que-quiero-ser-alcalde": ["alcalde.antetitulo", "alcalde.titulo", "alcalde.cita", "alcalde.nota"],
   "conoce-mas": ["conoce-mas.antetitulo", "conoce-mas.titulo", "conoce-mas.texto"],
 };
-
-const imageView = (picture: UploadedPicture): ImageView => ({
-  src: uploadedUrl(picture, picture.anchos.at(-1)!), srcset: uploadedSrcset(picture), width: picture.ancho, height: picture.alto,
-});
 
 async function defaultCover(vertical: boolean): Promise<ImageView> {
   const picture = vertical ? portadaVertical : portadaHorizontal;

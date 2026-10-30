@@ -7,7 +7,8 @@ import { migrate } from "../src/db/migrate";
 import { testApp } from "./helpers";
 import initial from '../database/contenido-inicial.json';
 import { seedContent } from '../src/db/seed';
-import { savePhoto } from '../src/content/services/media';
+import { AVISO_HEIC } from '../src/contracts/media';
+import { formatProblem, savePhoto } from '../src/content/services/media';
 import { readdir } from 'node:fs/promises';
 import { createAuthorization } from '../src/auth/services/authorization';
 import { createContent } from '../src/content/services/content';
@@ -121,6 +122,15 @@ test('subidas simultáneas de una misma foto dejan variantes completas y sin tem
 test("las fotos se validan por su contenido, se optimizan y pierden los metadatos", async () => {
   expect((await upload(new TextEncoder().encode("no soy una imagen"), "foto.jpg")).status).toBe(415);
   expect((await upload(await png(), "foto.png", "votante")).status).toBe(403);
+  // Pocos bytes y muchos píxeles: se rechaza por sus medidas, con un aviso que lo dice.
+  const grande = await upload(await sharp({ create: { width: 9000, height: 5000, channels: 3, background: "#ffffff" } }).jpeg().toBuffer(), "grande.jpeg");
+  expect(grande.status).toBe(413);
+  expect((await grande.json()).error).toBe("La foto mide 45 megapíxeles; el máximo es 40 (por ejemplo, 8000 × 5000 px). Redúcela y vuelve a subirla.");
+  expect((await upload(await sharp(await png()).avif().toBuffer(), "foto.avif")).status).toBe(200);
+  // HEIC y AVIF comparten contenedor: el códec decide. Un HEIC real no se puede generar aquí sin su códec.
+  expect(formatProblem({ format: "heif", compression: "hevc" })).toBe(AVISO_HEIC);
+  expect(formatProblem({ format: "heif", compression: "av1" })).toBeNull();
+  expect(formatProblem({ format: "gif" })).toBe("Sube una foto JPG, PNG, WebP o AVIF");
   // JPEG con EXIF (autor y GPS ficticios): la versión guardada no debe conservarlo.
   const conExif = await sharp(await png(2000, 1000)).jpeg()
     .withExif({ IFD0: { Artist: "Prueba" }, IFD3: { GPSLatitudeRef: "N" } }).toBuffer();

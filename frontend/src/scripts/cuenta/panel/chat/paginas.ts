@@ -16,11 +16,12 @@ export function paginasDelSitio(draft: Draft): { seccion: string; paginas: Pagin
       ...["alerta-ciudadana", "sugerencias", "chat"].map((slug) => ({ nombre: texto(`ciudadania.${slug}.nombre`), ruta: `/ciudadania/${slug}/` })),
       { nombre: texto("obras.titulo"), ruta: "/ciudadania/obras-en-ejecucion/" },
     ] },
-    { seccion: "Acerca de nosotros", paginas: [
-      { nombre: "Acerca de nosotros", ruta: "/acerca-de-nosotros/" },
+    { seccion: "Acerca de mí", paginas: [
+      { nombre: "Acerca de mí", ruta: "/acerca-de-nosotros/" },
       { nombre: "Biografía", ruta: "/acerca-de-nosotros/biografia/" },
       { nombre: "Por qué quiero ser alcalde", ruta: "/acerca-de-nosotros/por-que-quiero-ser-alcalde/" },
-      { nombre: "Conoce más sobre Carlos", ruta: "/acerca-de-nosotros/conoce-mas/" },
+      { nombre: "Conoce más sobre mí", ruta: "/acerca-de-nosotros/conoce-mas/" },
+      { nombre: "Mi equipo", ruta: "/mi-equipo/" },
     ] },
     { seccion: "Información legal", paginas: [
       { nombre: "Política de privacidad", ruta: "/politica-de-privacidad/" },

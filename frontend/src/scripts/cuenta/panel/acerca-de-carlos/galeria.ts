@@ -1,5 +1,5 @@
-import { esc, field, HINT, value } from "../ui";
-import { bindListActions, MAX_ITEMS, moveButtons, onFiles, thumb, upload, type Editor, type SectionEditor } from "./comun";
+import { esc, field, HINT, moveButtons, thumb, upload, value } from "../ui";
+import { bindListActions, MAX_ITEMS, onFiles, type Editor, type SectionEditor } from "./comun";
 
 export const gallery: SectionEditor = {
   html(editor: Editor) {

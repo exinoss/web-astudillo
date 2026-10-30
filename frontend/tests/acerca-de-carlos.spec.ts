@@ -74,7 +74,7 @@ test('la página personal muestra retrato, entrevista y una galería accesible',
   await expect(thumbs.nth(2)).toHaveAttribute('aria-current', 'true');
   await expect(dialog.getByRole('button', { name: 'Foto siguiente' }).first()).toBeEnabled();
   expect(await page.evaluate(() => document.documentElement.style.overflow)).toBe('hidden');
-  await dialog.locator('[data-dialog-stage]').click({ position: { x: 5, y: 5 } });
+  await dialog.locator('[data-visor-escena]').click({ position: { x: 5, y: 5 } });
   await expect(dialog).toBeHidden();
   // El desbloqueo va en el evento `close`, que el navegador dispara después de ocultar el diálogo.
   await expect.poll(() => page.evaluate(() => document.documentElement.style.overflow)).toBe('');
@@ -166,7 +166,7 @@ test('el panel de la página personal añade entrevista y exige completar los ca
   await expect(page.locator('#panel-estado')).toContainText('Completa la pregunta y la respuesta');
   await section.getByLabel('Respuesta').fill('Mi casa.');
   await section.getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(page.locator('#panel-estado')).toContainText('Borrador de «Conoce más sobre Carlos» guardado');
+  await expect(page.locator('#panel-estado')).toContainText('Borrador de «Conoce más sobre mí» guardado');
   expect(data.savedPages.at(-1)).toMatchObject({ slug: 'conoce-mas', entrevista: [{ pregunta: '¿Qué significa San Lorenzo para ti?', respuesta: 'Mi casa.' }] });
 });
 

@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import { expect, test, type Page } from '@playwright/test';
 import { VERSION_LEGAL } from '../src/lib/legal/legal';
 
@@ -255,7 +256,16 @@ test('la foto de la alerta: zona grande, formatos válidos y hasta 5 MB', async 
   // Sin «capture»: el celular ofrece cámara o galería.
   await expect(page.locator('#alerta-foto')).not.toHaveAttribute('capture');
   await page.locator('#alerta-foto').setInputFiles({ name: 'archivo.txt', mimeType: 'text/plain', buffer: Buffer.from('x') });
-  await expect(page.locator('#alerta-foto-error')).toContainText('JPG, PNG o WebP');
+  await expect(page.locator('#alerta-foto-error')).toContainText('JPG, PNG, WebP o AVIF');
+  // Un .heic llevado al computador puede llegar sin tipo: se reconoce también por su extensión.
+  for (const heic of [{ name: 'IMG_0001.HEIC', mimeType: '' }, { name: 'foto', mimeType: 'image/heic' }]) {
+    await page.locator('#alerta-foto').setInputFiles({ ...heic, buffer: Buffer.from('x') });
+    await expect(page.locator('#alerta-foto-error')).toContainText('Las fotos HEIC no se pueden subir');
+  }
+  const avif = await sharp({ create: { width: 64, height: 48, channels: 3, background: '#c0392b' } }).avif().toBuffer();
+  await page.locator('#alerta-foto').setInputFiles({ name: 'foto.avif', mimeType: 'image/avif', buffer: avif });
+  await expect(page.locator('#alerta-foto-error')).toBeHidden();
+  await page.getByRole('button', { name: 'Quitar foto' }).click();
   await page.locator('#alerta-foto').setInputFiles({ name: 'grande.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(5 * 1024 * 1024 + 1) });
   await expect(page.locator('#alerta-foto-error')).toContainText('5 MB');
   await page.locator('#alerta-foto').setInputFiles('src/assets/carlos.jpg');

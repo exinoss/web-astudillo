@@ -19,7 +19,7 @@ const SECTIONS: Record<Section, SectionEditor & { name: string }> = {
 
 const PAGES: Record<AboutCarlosSlug, { name: string; sections: Section[] }> = {
   "por-que-quiero-ser-alcalde": { name: "Por qué quiero ser alcalde", sections: ["tarjetas", "video"] },
-  "conoce-mas": { name: "Conoce más sobre Carlos", sections: ["tarjetas", "video", "retrato", "entrevista", "galeria"] },
+  "conoce-mas": { name: "Conoce más sobre mí", sections: ["tarjetas", "video", "retrato", "entrevista", "galeria"] },
 };
 let slug: AboutCarlosSlug = "por-que-quiero-ser-alcalde";
 let section: Section = "tarjetas";

@@ -1,0 +1,22 @@
+---
+import Foto from "../comun/Foto.astro";
+import type { TeamMember } from "../../lib/data/types";
+import { silueta } from "../../lib/mi-equipo/silueta";
+
+interface Props { member: TeamMember }
+const { member } = Astro.props;
+---
+
+<li class="overflow-hidden rounded-[4px] bg-primary [box-shadow:0_10px_30px_#06317622] max-mobile:last:odd:col-span-2 max-mobile:last:odd:w-[calc(50%-6px)] max-mobile:last:odd:justify-self-center">
+  <figure class="m-0">
+    {member.image ? (
+      <Foto class="aspect-[3/4] w-full object-cover" picture={member.image} alt={`Foto de ${member.name}`} sizes="(max-width: 480px) 45vw, (max-width: 1100px) 30vw, 340px" />
+    ) : (
+      <Fragment set:html={silueta("block aspect-[3/4] w-full")} />
+    )}
+    <figcaption class="border-t-4 border-accent px-4 py-3 text-primary-content max-laptop:px-3 max-tablet:px-2.5 max-tablet:py-2.5">
+      <strong class="block font-display text-[1.3rem] leading-[1.1] font-semibold max-laptop:text-[1.15rem] max-tablet:text-[1rem] max-mobile:text-[1.05rem] max-mobile-xs:text-[1rem]">{member.name}</strong>
+      {member.role && <span class="mt-0.5 block text-[0.75rem] text-accent max-tablet:text-[0.72rem]">{member.role}</span>}
+    </figcaption>
+  </figure>
+</li>

@@ -1,0 +1,39 @@
+---
+import CarruselFotos from "../comun/CarruselFotos.astro";
+import Icon from "../comun/Icon.astro";
+import { imageView } from "../../lib/comun/fotos";
+import { visorFotos } from "../../lib/comun/visor-fotos";
+import type { Parish } from "../../lib/data/types";
+
+interface Props { parish: Parish; number: number }
+const { parish, number } = Astro.props;
+const conTexto = parish.paragraphs.length > 0;
+const fotos = parish.photos.map((p) => ({ image: p.image, alt: p.alt, caption: p.alt }));
+---
+
+<details class="group">
+  <summary class="flex min-h-14 cursor-pointer list-none items-center gap-4 px-6 py-3 text-[1rem] font-bold hover:bg-accent/15 max-tablet:gap-3 max-tablet:px-4 [&::-webkit-details-marker]:hidden">
+    <span aria-hidden="true" class="grid size-9 shrink-0 place-items-center rounded-full bg-accent font-display text-[1.05rem]">{number}</span>
+    <span class="flex-1">{parish.name}</span>
+    <span aria-hidden="true" class="group-open:rotate-180"><Icon name="chevron" size={16} /></span>
+  </summary>
+  <div class:list={["px-6 pt-1 pb-6 pl-[76px] max-laptop:pl-6 max-tablet:px-4 max-tablet:pl-4", conTexto && "grid grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] items-start gap-8 max-laptop:grid-cols-1 max-laptop:gap-4"]}>
+    {conTexto && <div class="text-[0.95rem] leading-[1.7]">{parish.paragraphs.map((p) => <p class="m-0 mb-3 last:mb-0">{p}</p>)}</div>}
+    {fotos.length ? (
+      <CarruselFotos
+        label={`Fotos de ${parish.name}`}
+        photos={fotos}
+        sizes={conTexto ? "(max-width: 1100px) 90vw, 520px" : "(max-width: 1100px) 90vw, 1000px"}
+        class={conTexto ? "aspect-[4/3] max-mobile:aspect-square" : "aspect-[16/9] max-mobile:aspect-square"}
+        ampliable
+        automatico
+      >
+        <Fragment set:html={visorFotos(`visor-${parish.slug}`, `Fotos de ${parish.name}`, fotos.map((f) => ({ ...f, image: imageView(f.image) })))} />
+      </CarruselFotos>
+    ) : (
+      <p class:list={["m-0 grid w-full place-items-center rounded-[4px] border border-dashed border-neutral/35 bg-neutral/8 p-4 text-center text-[0.8rem] text-neutral", conTexto ? "aspect-[4/3] max-laptop:aspect-auto max-laptop:min-h-[160px]" : "min-h-[160px]"]}>
+        Aún no hay fotos de esta parroquia.
+      </p>
+    )}
+  </div>
+</details>

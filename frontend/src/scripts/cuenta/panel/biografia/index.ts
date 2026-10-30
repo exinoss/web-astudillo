@@ -1,7 +1,7 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftBiographyItem } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
-import { busy, card, DANGER, DRAFT_PILL, esc, field, GHOST, iconSvg, INPUT, isPending, notify, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
+import { ACEPTA_FOTOS, busy, card, DANGER, DRAFT_PILL, esc, field, FORMATOS_FOTO, GHOST, iconSvg, INPUT, isPending, notify, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
 
 const MAX_ITEMS = 30;
 const YEAR = /^\d{4}$/;
@@ -69,8 +69,8 @@ export function renderBiography(section: HTMLElement) {
           ${photoPreview(item, true)}
           <div class="flex flex-col gap-2">
             <label class="${GHOST} cursor-pointer self-start border-field-border focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral max-tablet:self-stretch">${iconSvg("upload", 18)} ${item.foto ? "Cambiar foto" : "Subir foto"}
-              <input id="hito-foto" type="file" accept="image/jpeg,image/png,image/webp" class="sr-only" /></label>
-            <p class="m-0 text-[0.74rem] text-[#50617d]">JPG, PNG o WebP de hasta 8 MB. Medida recomendada: 880 px o más en su lado más largo, vertical u horizontal. Se muestra completa, sin recortes.</p>
+              <input id="hito-foto" type="file" accept="${ACEPTA_FOTOS}" class="sr-only" /></label>
+            <p class="m-0 text-[0.74rem] text-[#50617d]">${FORMATOS_FOTO} de hasta 8 MB. Medida recomendada: 880 px o más en su lado más largo, vertical u horizontal. Se muestra completa, sin recortes.</p>
             ${item.foto ? `<button type="button" id="hito-quitar-foto" class="${GHOST} self-start">Quitar foto</button>` : ""}
           </div>
         </div>

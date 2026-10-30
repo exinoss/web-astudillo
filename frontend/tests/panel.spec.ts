@@ -249,7 +249,7 @@ test('chat: el enlace se elige por el nombre de la página y se ve como quedará
   const pagina = page.locator('#faq-enlace-ruta-0');
   await expect(pagina).toHaveValue('/#propuestas');
   expect(await pagina.locator('optgroup').evaluateAll((g) => g.map((x) => x.getAttribute('label'))))
-    .toEqual(['Portada', 'Propuestas', 'Ciudadanía', 'Acerca de nosotros', 'Información legal']);
+    .toEqual(['Portada', 'Propuestas', 'Ciudadanía', 'Acerca de mí', 'Información legal']);
   await pagina.selectOption({ label: 'Agua potable' });
   await expect(page.locator('#seccion-chat [data-probar]').first()).toHaveAttribute('href', '/propuestas/agua-potable/');
   await page.locator('#faq-enlace-texto-0').fill('Ver la propuesta de agua');

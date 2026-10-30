@@ -10,9 +10,10 @@ export interface TextDefinition {
 
 const RUTAS: Record<string, string> = {
   "Barra superior": "/", "Todo el sitio": "/", "Pie de página": "/",
-  "Detalle de propuesta (las 7)": "/propuestas/agua-potable/", "Acerca de nosotros": "/acerca-de-nosotros/",
+  "Detalle de propuesta (las 7)": "/propuestas/agua-potable/", "Acerca de mí": "/acerca-de-nosotros/",
   "Biografía": "/acerca-de-nosotros/biografia/", "Por qué quiero ser alcalde": "/acerca-de-nosotros/por-que-quiero-ser-alcalde/",
-  "Conoce más sobre Carlos": "/acerca-de-nosotros/conoce-mas/", "Obras en ejecución": "/ciudadania/obras-en-ejecucion/",
+  "Conoce más sobre mí": "/acerca-de-nosotros/conoce-mas/", "Obras en ejecución": "/ciudadania/obras-en-ejecucion/",
+  "Mi equipo": "/mi-equipo/",
 };
 const t = (lugar: string, campo: string, max = 120): TextDefinition =>
   ({ lugar, campo, max, ruta: RUTAS[lugar] ?? "/" });
@@ -65,10 +66,10 @@ export const TEXTOS = {
   "propuesta.perspectiva.titulo": t("Detalle de propuesta (las 7)", "Sugerencias · título", 80),
   "propuesta.perspectiva.texto": t("Detalle de propuesta (las 7)", "Sugerencias · texto (va seguido del nombre de la propuesta)", 120),
 
-  "acerca.antetitulo": t("Acerca de nosotros", "Antetítulo", 40),
-  "acerca.nombre": t("Acerca de nosotros", "Nombre", 40),
-  "acerca.apellido": t("Acerca de nosotros", "Apellido (parte azul)", 40),
-  "acerca.subtitulo": t("Acerca de nosotros", "Subtítulo", 160),
+  "acerca.antetitulo": t("Acerca de mí", "Antetítulo", 40),
+  "acerca.nombre": t("Acerca de mí", "Nombre", 40),
+  "acerca.apellido": t("Acerca de mí", "Apellido (parte azul)", 40),
+  "acerca.subtitulo": t("Acerca de mí", "Subtítulo", 160),
   "biografia.antetitulo": t("Biografía", "Antetítulo", 40),
   "biografia.titulo": t("Biografía", "Título", 40),
   "biografia.nota": t("Biografía", "Nota", 200),
@@ -77,9 +78,12 @@ export const TEXTOS = {
   "alcalde.titulo": t("Por qué quiero ser alcalde", "Título", 80),
   "alcalde.cita": t("Por qué quiero ser alcalde", "Cita", 400),
   "alcalde.nota": t("Por qué quiero ser alcalde", "Nota", 400),
-  "conoce-mas.antetitulo": t("Conoce más sobre Carlos", "Antetítulo", 40),
-  "conoce-mas.titulo": t("Conoce más sobre Carlos", "Título", 80),
-  "conoce-mas.texto": t("Conoce más sobre Carlos", "Texto", 400),
+  "conoce-mas.antetitulo": t("Conoce más sobre mí", "Antetítulo", 40),
+  "conoce-mas.titulo": t("Conoce más sobre mí", "Título", 80),
+  "conoce-mas.texto": t("Conoce más sobre mí", "Texto", 400),
+  "equipo.antetitulo": t("Mi equipo", "Antetítulo", 60),
+  "equipo.titulo": t("Mi equipo", "Título", 60),
+  "equipo.texto": t("Mi equipo", "Texto", 300),
   "obras.antetitulo": t("Obras en ejecución", "Antetítulo", 40),
   "obras.titulo": t("Obras en ejecución", "Título", 60),
   "obras.intro": t("Obras en ejecución", "Introducción", 160),

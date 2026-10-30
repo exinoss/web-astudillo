@@ -9,6 +9,7 @@ import { enviarConSesion, marcarError } from "../../lib/ciudadania/participacion
 import { prepararAceptacion } from '../../lib/ciudadania/participacion/aceptacion';
 import { cuadroIcono, filaHistorial, historial } from "../../lib/ciudadania/participacion/historial";
 import { MAX_FOTO_BYTES, MIN_DESCRIPCION, TIPOS_ALERTA } from "../../lib/ciudadania/participacion/tipos";
+import { AVISO_HEIC, FORMATOS_FOTO } from "../../../../backend/src/contracts/media";
 
 const form = document.querySelector<HTMLFormElement>("#alerta-form")!;
 const tipos = form.querySelector<HTMLFieldSetElement>("#alerta-tipo")!;
@@ -46,7 +47,9 @@ fotoInput.addEventListener("change", () => {
   const archivo = fotoInput.files?.[0] ?? null;
   marcarError(fotoInput, null);
   if (!archivo) return;
-  if (!/^image\/(jpeg|png|webp)$/.test(archivo.type)) return marcarError(fotoInput, "Elige una foto JPG, PNG o WebP.");
+  // En Windows el navegador puede no dar tipo a un .heic: también se mira la extensión.
+  if (/^image\/hei[cf]$/.test(archivo.type) || /\.hei[cf]$/i.test(archivo.name)) return marcarError(fotoInput, AVISO_HEIC);
+  if (!/^image\/(jpeg|png|webp|avif)$/.test(archivo.type)) return marcarError(fotoInput, `Elige una foto ${FORMATOS_FOTO}.`);
   if (archivo.size > MAX_FOTO_BYTES) return marcarError(fotoInput, "La foto supera los 5 MB. Elige otra o tómala con menos resolución.");
   ponerFoto(archivo);
 });

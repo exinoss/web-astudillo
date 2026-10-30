@@ -4,8 +4,11 @@ import { adminApi, type Draft } from "../../../lib/data/http/admin-api";
 import { esc } from "../../../lib/comun/html";
 import { iconSvg } from "../../../lib/comun/iconos";
 import { bloquearMientras } from "../../../lib/cuenta/panel/cambios";
+import { uploadedUrl } from "../../../lib/comun/fotos";
+import { ACEPTA_FOTOS, FORMATOS_FOTO } from "../../../../../backend/src/contracts/media";
+import type { Photo } from "../../../lib/data/http/admin-api";
 
-export { esc, iconSvg };
+export { ACEPTA_FOTOS, esc, FORMATOS_FOTO, iconSvg };
 
 export const INPUT =
   "min-h-12 w-full rounded-[3px] border border-field-border bg-base-100 px-3.5 py-3 text-sm text-primary placeholder:text-field-placeholder placeholder:opacity-100 focus-visible:outline-neutral aria-invalid:border-2 aria-invalid:border-error";
@@ -26,6 +29,16 @@ const nothingToPreview = () => can("contenido.publicar") && !state.pending.lengt
 /** El panel (index.ts) abre `ruta` en la pestaña de vista previa al pulsarlo. */
 export const previewButton = (ruta: string) =>
   `<button type="button" class="${GHOST} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent" data-vista-previa="${esc(ruta)}" ${nothingToPreview() ? "disabled" : ""}>${iconSvg("eye", 18)} Vista previa del borrador</button>`;
+
+const UPLOAD = `${GHOST} cursor-pointer focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral`;
+
+export const thumb = (foto: Photo) => uploadedUrl(foto, foto.anchos[0]);
+export const upload = (id: string, label: string, multiple = false) =>
+  `<label class="${UPLOAD}">${iconSvg("upload", 17)} ${esc(label)}<input id="${id}" type="file" accept="${ACEPTA_FOTOS}" ${multiple ? "multiple" : ""} class="sr-only" /></label>`;
+export const moveButtons = (kind: string, i: number, total: number, name: string) => `
+  <button type="button" class="${ICON_BUTTON}" data-move="${kind}" data-index="${i}" data-step="-1" aria-label="Subir ${name}" ${i === 0 ? "disabled" : ""}>${iconSvg("up", 18)}</button>
+  <button type="button" class="${ICON_BUTTON}" data-move="${kind}" data-index="${i}" data-step="1" aria-label="Bajar ${name}" ${i === total - 1 ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>
+  <button type="button" class="${ICON_BUTTON} text-error" data-remove="${kind}" data-index="${i}" aria-label="Quitar ${name}">${iconSvg("trash", 18)}</button>`;
 
 /** Tarjeta blanca con borde superior amarillo, como las de cuenta. */
 export const card = (title: string, inner: string, extra = "") => `

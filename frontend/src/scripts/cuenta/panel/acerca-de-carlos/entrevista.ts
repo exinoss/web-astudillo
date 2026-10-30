@@ -1,5 +1,5 @@
-import { field, GHOST, HINT, iconSvg, value } from "../ui";
-import { bindListActions, MAX_ITEMS, moveButtons, type Editor, type SectionEditor } from "./comun";
+import { field, GHOST, HINT, iconSvg, moveButtons, value } from "../ui";
+import { bindListActions, MAX_ITEMS, type Editor, type SectionEditor } from "./comun";
 
 export const interview: SectionEditor = {
   html(editor: Editor) {
