@@ -1,25 +1,26 @@
 ---
+import type { HTMLAttributes } from "astro/types";
 import type { UploadedPicture } from "../../lib/data/types";
 import { uploadedSrcset, uploadedUrl } from "../../lib/comun/fotos";
 
-interface Props {
+interface Props extends Omit<HTMLAttributes<"img">, "src" | "srcset" | "width" | "height"> {
   picture: UploadedPicture;
   alt: string;
-  class?: string;
   sizes: string;
   loading?: "lazy" | "eager";
+  /** Otra foto para celular (≤ 760 px, el corte de `max-tablet:`). */
+  mobile?: UploadedPicture | null;
 }
-const { picture, alt, class: className, sizes, loading = "lazy" } = Astro.props;
+const { picture, alt, sizes, loading = "lazy", mobile, ...rest } = Astro.props;
 ---
 
-<img
-  class={className}
-  src={uploadedUrl(picture, picture.anchos.at(-1)!)}
-  srcset={uploadedSrcset(picture)}
-  sizes={sizes}
-  width={picture.ancho}
-  height={picture.alto}
-  alt={alt}
-  loading={loading}
-  decoding="async"
-/>
+{mobile ? (
+  <picture class="contents">
+    <source media="(width <= 760px)" srcset={uploadedSrcset(mobile)} sizes="100vw" width={mobile.ancho} height={mobile.alto} />
+    <img {...rest} src={uploadedUrl(picture, picture.anchos.at(-1)!)} srcset={uploadedSrcset(picture)} sizes={sizes}
+      width={picture.ancho} height={picture.alto} alt={alt} loading={loading} decoding="async" />
+  </picture>
+) : (
+  <img {...rest} src={uploadedUrl(picture, picture.anchos.at(-1)!)} srcset={uploadedSrcset(picture)} sizes={sizes}
+    width={picture.ancho} height={picture.alto} alt={alt} loading={loading} decoding="async" />
+)}

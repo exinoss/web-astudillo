@@ -43,7 +43,7 @@ export async function publish(button: HTMLButtonElement | null, section: HTMLEle
     notify("Publicación en cola. El sitio se actualizará en cerca de un minuto.");
     page = 1;
     await renderPublications(section);
-  });
+  }, "Publicando…");
   // `busy` reactiva el botón al terminar; se vuelve a ajustar a lo que queda pendiente.
   syncPublishButton();
 }

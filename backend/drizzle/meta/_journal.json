@@ -99,6 +99,13 @@
       "when": 1793336207181,
       "tag": "0013_mi_equipo",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1793352854587,
+      "tag": "0014_inicio_carruseles",
+      "breakpoints": true
     }
   ]
 }

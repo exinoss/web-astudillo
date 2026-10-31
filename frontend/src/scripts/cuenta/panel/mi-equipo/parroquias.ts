@@ -67,7 +67,7 @@ export function renderParishes(body: HTMLElement, rerender: () => void) {
         if (destino === elegida) rerender();
       }
       notify("Fotos subidas. Describe cada una y guarda el borrador.");
-    });
+    }, "Subiendo…");
   });
   vigilarCambios(form, form.querySelector("button[type=submit]")!, paraGuardar(delBorrador(elegida)), () => {
     capturar(form);

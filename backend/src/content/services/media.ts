@@ -5,7 +5,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import sharp from 'sharp';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
-import { AVISO_HEIC, CARD_SIZE, cardVariantFile, FORMATOS_FOTO } from '../../contracts/media';
+import { AVISO_HEIC, avisoMegapixeles, CARD_SIZE, cardVariantFile, FORMATOS_FOTO, MAX_PIXELES } from '../../contracts/media';
 import { videoLinkProblem, videoSource } from '../../contracts/video';
 import { fetchVideoCover } from './video-cover';
 import { callPg } from '../../db/call';
@@ -13,9 +13,8 @@ import { ApiError } from '../../http';
 import type { Photo } from '../types';
 
 export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
-const WIDTHS = [480, 960, 1600];
-// Tope de píxeles por debajo del de sharp: una imagen «bomba» pequeña en bytes no agota la memoria.
-const MAX_PIXELS = 40_000_000;
+// 2000: los banners de la portada ocupan todo el ancho, hasta 1947 px.
+const WIDTHS = [480, 960, 1600, 2000];
 const FORMATS = new Set(['jpeg', 'png', 'webp']);
 const WRONG_FORMAT = `Sube una foto ${FORMATOS_FOTO}`;
 
@@ -54,15 +53,14 @@ export async function savePhoto(input: Buffer, dir: string, name: string, sizes:
   const problem = formatProblem(metadata);
   if (problem) throw new ApiError(415, problem);
   const pixels = (metadata.width ?? 0) * (metadata.height ?? 0);
-  if (pixels > MAX_PIXELS) throw new ApiError(413, `La foto mide ${(pixels / 1e6).toLocaleString('es', { maximumFractionDigits: 1 })} megapíxeles; `
-    + `el máximo es ${MAX_PIXELS / 1e6} (por ejemplo, 8000 × 5000 px). Redúcela y vuelve a subirla.`);
+  if (pixels > MAX_PIXELES) throw new ApiError(413, avisoMegapixeles(pixels));
   // Orientaciones EXIF 5 a 8 giran la foto 90°: ancho y alto se intercambian.
   const turned = (metadata.orientation ?? 1) >= 5;
   const width = (turned ? metadata.height : metadata.width) ?? 0;
   const height = (turned ? metadata.width : metadata.height) ?? 0;
   const widths = allSizes ? sizes : sizes.filter(w => w < width).concat(Math.min(width, sizes.at(-1)!))
     .filter((w, i, all) => all.indexOf(w) === i).sort((a, b) => a - b);
-  const base = sharp(input, { limitInputPixels: MAX_PIXELS }).rotate();
+  const base = sharp(input, { limitInputPixels: MAX_PIXELES }).rotate();
   await mkdir(dir, { recursive: true });
   // Una versión detrás de otra: abierta, la foto completa ocupa ancho × alto × canales en memoria, y abrirla
   // para todas a la vez multiplicaría ese pico. Reducir desde una versión ya reducida cambiaría el resultado.

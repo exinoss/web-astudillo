@@ -1,15 +1,15 @@
 import "./cifras";
 
-const slides = [...document.querySelectorAll<HTMLElement>("[data-slide]")];
+// Las listas se vuelven a leer y los clics se delegan: el modo edición cambia diapositivas y puntos (carruseles:cambiados).
+const slides = () => [...document.querySelectorAll<HTMLElement>("[data-slide]")];
+const slideDots = () => [...document.querySelectorAll<HTMLButtonElement>(".slide-dot")];
 let index = 0;
-const slideDots = [
-  ...document.querySelectorAll<HTMLButtonElement>(".slide-dot"),
-];
 /** Selecciona una diapositiva del carrusel principal y actualiza sus indicadores. */
 const showSlide = (next: number) => {
-  index = (next + slides.length) % slides.length;
-  slides.forEach((slide, i) => (slide.hidden = i !== index));
-  slideDots.forEach((dot, i) => {
+  const all = slides();
+  index = (next + all.length) % all.length;
+  all.forEach((slide, i) => (slide.hidden = i !== index));
+  slideDots().forEach((dot, i) => {
     dot.classList.toggle("is-active", i === index);
     dot.setAttribute("aria-current", String(i === index));
   });
@@ -29,18 +29,15 @@ new MutationObserver(syncAutoplay).observe(document.documentElement, {
   attributeFilter: ["class"],
 });
 syncAutoplay();
-slideDots.forEach((dot, i) =>
-  dot.addEventListener("click", () => {
-    showSlide(i);
-    syncAutoplay();
-  }),
-);
-for (const [clase, paso] of [[".slide-prev", -1], [".slide-next", 1]] as const)
-  document.querySelector(clase)!.addEventListener("click", () => {
-    showSlide(index + paso);
-    syncAutoplay();
-  });
 const carousel = document.querySelector<HTMLElement>(".hero-slides")!;
+carousel.addEventListener("click", (e) => {
+  const target = e.target as Element;
+  const dot = target.closest<HTMLButtonElement>(".slide-dot");
+  const step = target.closest(".slide-prev") ? -1 : target.closest(".slide-next") ? 1 : 0;
+  if (!dot && !step) return;
+  showSlide(dot ? slideDots().indexOf(dot) : index + step);
+  syncAutoplay();
+});
 let startX = 0;
 let startY = 0;
 carousel.addEventListener(
@@ -63,33 +60,30 @@ carousel.addEventListener(
   },
   { passive: true },
 );
-const profileImages = [
-  ...document.querySelectorAll<HTMLElement>("[data-profile-image]"),
-];
-const profileDots = [
-  ...document.querySelectorAll<HTMLButtonElement>(".profile-dot"),
-];
+const profileImages = () => [...document.querySelectorAll<HTMLElement>("[data-profile-image]")];
+const profileDots = () => [...document.querySelectorAll<HTMLButtonElement>(".profile-dot")];
 let profileIndex = 0;
 /** Selecciona una imagen del carrusel del perfil y actualiza sus indicadores. */
 const showProfileSlide = (next: number) => {
-  profileIndex = (next + profileImages.length) % profileImages.length;
-  profileImages.forEach((img, i) => {
+  const all = profileImages();
+  profileIndex = (next + all.length) % all.length;
+  all.forEach((img, i) => {
     img.hidden = i !== profileIndex;
     img.classList.toggle("is-active", i === profileIndex);
   });
-  profileDots.forEach((dot, i) => {
+  profileDots().forEach((dot, i) => {
     dot.classList.toggle("is-active", i === profileIndex);
     dot.setAttribute("aria-current", String(i === profileIndex));
   });
 };
-profileDots.forEach((dot, i) =>
-  dot.addEventListener("click", () => {
-    showProfileSlide(i);
-    syncProfileAutoplay();
-  }),
-);
 const profileCarousel =
   document.querySelector<HTMLElement>(".profile-carousel")!;
+profileCarousel.addEventListener("click", (e) => {
+  const dot = (e.target as Element).closest<HTMLButtonElement>(".profile-dot");
+  if (!dot) return;
+  showProfileSlide(profileDots().indexOf(dot));
+  syncProfileAutoplay();
+});
 let profileStartX = 0;
 let profileStartY = 0;
 profileCarousel.addEventListener(
@@ -118,7 +112,7 @@ function syncProfileAutoplay() {
   clearInterval(profileTimer);
   const motionOff =
     document.documentElement.classList.contains("reduce-motion");
-  if (!motionOff && !document.hidden)
+  if (!motionOff && !document.hidden && profileImages().length > 1)
     profileTimer = setInterval(() => showProfileSlide(profileIndex + 1), 5000);
 }
 document.addEventListener("visibilitychange", syncProfileAutoplay);
@@ -127,3 +121,9 @@ new MutationObserver(syncProfileAutoplay).observe(document.documentElement, {
   attributeFilter: ["class"],
 });
 syncProfileAutoplay();
+document.addEventListener("carruseles:cambiados", () => {
+  index = 0;
+  profileIndex = 0;
+  syncAutoplay();
+  syncProfileAutoplay();
+});

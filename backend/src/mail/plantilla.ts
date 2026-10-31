@@ -18,8 +18,8 @@ export interface Imagenes { logo: string; cabecera: string; hashtag: string }
 /** Imágenes incrustadas: `cid` es como las cita el HTML y `archivo`, de dónde las adjunta el mailer. */
 export const IMAGENES = {
   logo: { cid: 'logo@astudillo', archivo: 'logo.png' },
-  cabecera: { cid: 'cabecera@astudillo', archivo: 'cabecera.jpg' },
-  hashtag: { cid: 'nuevahistoria@astudillo', archivo: 'nuevahistoria.png' },
+  cabecera: { cid: 'cabecera@astudillo', archivo: 'candidato-con-cinta.jpg' },
+  hashtag: { cid: 'nuevahistoria@astudillo', archivo: 'hashtag-la-nueva-historia.png' },
 } as const;
 
 const CID: Imagenes = {
@@ -27,8 +27,6 @@ const CID: Imagenes = {
 };
 
 const AZUL = '#063176', NARANJA = '#F47F0E', AMARILLO = '#F9C31B', ROJO = '#E0121F';
-/** Amarillo de la foto de cabecera: la barra del logo lo usa para que no se note la unión. */
-const AMARILLO_FOTO = '#FEC110';
 const TEXTO_SUAVE = '#50617d', PIE_SUAVE = '#d5e0f2';
 const DISPLAY = "'Barlow Condensed','Arial Narrow','Roboto Condensed',Arial,sans-serif";
 const CUERPO = "'DM Sans',Arial,Helvetica,sans-serif";
@@ -62,7 +60,7 @@ export function correoHtml(m: Mensaje, img: Imagenes = CID) {
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:3px;overflow:hidden;">
 
     <!-- Cabecera: como la barra del sitio (amarilla, logo y nombre). -->
-    <tr><td class="px" style="background:${AMARILLO_FOTO};padding:18px 32px;">
+    <tr><td class="px" style="background:${AMARILLO};padding:18px 32px;">
       <table role="presentation" cellpadding="0" cellspacing="0"><tr>
         <td style="vertical-align:middle;"><img src="${img.logo}" width="72" height="36" alt="PSC, Lista 6" style="display:block;border:0;font-family:${CUERPO};font-size:12px;font-weight:700;color:${AZUL};"></td>
         <td class="marca-texto" style="vertical-align:middle;padding-left:14px;font-family:${DISPLAY};color:${AZUL};line-height:1;">
@@ -74,7 +72,7 @@ export function correoHtml(m: Mensaje, img: Imagenes = CID) {
     </td></tr>
 
     <!-- Foto de campaña. -->
-    <tr><td style="background:${AMARILLO_FOTO};">
+    <tr><td style="background:${AMARILLO};">
       <img src="${img.cabecera}" width="600" alt="Carlos Astudillo, candidato a la alcaldía de San Lorenzo" style="display:block;width:100%;max-width:600px;height:auto;border:0;font-family:${CUERPO};font-size:13px;line-height:1.4;color:${AZUL};padding:0;">
     </td></tr>
 

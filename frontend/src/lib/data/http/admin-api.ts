@@ -1,3 +1,4 @@
+import type { Carrusel, Original } from '../../../../../backend/src/contracts/inicio';
 import type { ApiAboutCarlosPage } from '../acerca-de-carlos';
 import type { AboutCarlosSlug, AlertType, ParticipationState, SentAlert, SentSuggestion, UploadedPicture } from '../types';
 import { apiRequest } from './api-client';
@@ -28,6 +29,17 @@ export interface DraftMyTeam {
   equipo: { nombre: string; quien: string | null; foto: Photo | null }[];
   parroquias: { slug: string; texto: string; fotos: { foto: Photo; alt: string }[] }[];
 }
+export type DraftHomeImage = { original: Original } | { foto: Photo };
+export type HomeImageBody = { original: Original } | { idMedio: number };
+export interface DraftHomeCarousels {
+  principal: { banners: { imagen: DraftHomeImage; celular: Photo | null; alt: string }[]; retrato: { imagen: DraftHomeImage; alt: string } };
+  piezas: { piezas: { imagen: DraftHomeImage; alt: string }[] };
+}
+export interface HomeMainBody {
+  banners: { imagen: HomeImageBody; celular: number | null; alt: string }[];
+  retrato: { imagen: HomeImageBody; alt: string };
+}
+export interface HomePiecesBody { piezas: { imagen: HomeImageBody; alt: string }[] }
 /**
  * Versión de cada parte del borrador al cargarlo. Se envía al guardar: si otra persona guardó
  * antes, la API responde 409 y no se pisa su cambio. Un texto nunca cambiado no tiene versión.
@@ -41,6 +53,7 @@ export interface DraftVersions {
   acercaDeCarlos: Record<AboutCarlosSlug, string>;
   /** Solo las partes de «Mi equipo» que se guardaron alguna vez: las demás se guardan con null. */
   miEquipo: Record<string, string>;
+  inicio: Partial<Record<Carrusel, string>>;
 }
 /** Borrador vivo del contenido; misma forma que se congela al publicar, más sus versiones. */
 export interface Draft {
@@ -52,6 +65,7 @@ export interface Draft {
   chat: ChatAnswer[];
   acercaDeCarlos: Record<AboutCarlosSlug, DraftAboutCarlosPage>;
   miEquipo: DraftMyTeam;
+  inicio: DraftHomeCarousels;
   versiones: DraftVersions;
 }
 type Saved = { version: string | null };
@@ -99,6 +113,8 @@ export const adminApi = {
     call<Saved>('/api/admin/contenido/mi-equipo/equipo', 'PUT', { personas, version }),
   saveParish: (slug: string, body: { texto: string; fotos: { idMedio: number; alt: string }[] }, version: string | null) =>
     call<Saved>(`/api/admin/contenido/mi-equipo/parroquias/${slug}`, 'PUT', { ...body, version }),
+  saveHomeMain: (body: HomeMainBody, version: string | null) => call<Saved>('/api/admin/contenido/inicio/principal', 'PUT', { ...body, version }),
+  saveHomePieces: (body: HomePiecesBody, version: string | null) => call<Saved>('/api/admin/contenido/inicio/piezas', 'PUT', { ...body, version }),
   saveChat: (respuestas: ChatAnswer[], version: string) => call<Saved>('/api/admin/contenido/chat', 'PUT', { respuestas, version }),
   unanswered: () => call<{ preguntas: { clave: string; ejemplo: string; veces: number; ultimaVez: string }[] }>('/api/admin/chat/sin-respuesta'),
   discardUnanswered: (clave: string) => call(`/api/admin/chat/sin-respuesta/${encodeURIComponent(clave)}`, 'DELETE'),

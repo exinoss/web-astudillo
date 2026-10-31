@@ -1,5 +1,6 @@
 import { pgTable, unique, integer, varchar, text, uniqueIndex, foreignKey, check, timestamp, index, jsonb, primaryKey, boolean, uuid, date } from "drizzle-orm/pg-core"
 import { sql } from "drizzle-orm"
+import { CARRUSELES } from "../contracts/inicio"
 import { PARROQUIAS } from "../contracts/parroquias"
 
 
@@ -432,6 +433,18 @@ export const tbMiEquipo = pgTable("tb_mi_equipo", {
 	foreignKey({ columns: [table.actualizadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_mi_equipo_actualizado_por_fkey" }).onDelete("set null"),
 	check("ck_mi_equipo_clave", sql.raw(`clave IN (${['equipo', ...PARROQUIAS.map(p => p.slug)].map(clave => `'${clave}'`).join(', ')})`)),
 	check("ck_mi_equipo_contenido", sql`jsonb_typeof(contenido) = 'object'`),
+]);
+
+// Una fila por carrusel de la portada; la semilla crea las dos con las imágenes que vienen con el sitio.
+export const tbInicioCarruseles = pgTable("tb_inicio_carruseles", {
+	clave: varchar({ length: 20 }).primaryKey(),
+	contenido: jsonb().notNull(),
+	actualizadoPor: integer("actualizado_por"),
+	actualizadoEn: timestamp("actualizado_en", { withTimezone: true, mode: 'string' }).default(sql`CURRENT_TIMESTAMP`).notNull(),
+}, (table) => [
+	foreignKey({ columns: [table.actualizadoPor], foreignColumns: [tbUsuarios.idUsuario], name: "tb_inicio_carruseles_actualizado_por_fkey" }).onDelete("set null"),
+	check("ck_inicio_carruseles_clave", sql.raw(`clave IN (${CARRUSELES.map(clave => `'${clave}'`).join(', ')})`)),
+	check("ck_inicio_carruseles_contenido", sql`jsonb_typeof(contenido) = 'object'`),
 ]);
 
 // Una sola fila: hay un único borrador compartido y, por tanto, una única vista previa.

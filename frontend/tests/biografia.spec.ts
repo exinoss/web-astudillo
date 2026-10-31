@@ -65,7 +65,7 @@ test('la portada de «Acerca de mí» enlaza sus tres páginas en un índice', a
 
 test('en celular la biografía no muestra ni descarga el fondo de cintas; en tablet sí', async ({ page }) => {
   let descargado = false;
-  page.on('request', r => { if (r.url().includes('backgruond-historia')) descargado = true; });
+  page.on('request', r => { if (r.url().includes('fondo-cintas-historia')) descargado = true; });
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/acerca-de-nosotros/biografia/');
   await expect(page.locator('section img[alt=""]')).toBeHidden();

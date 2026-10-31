@@ -77,12 +77,12 @@ test('la aceptación pendiente conserva la alerta y la foto, y se guarda para lo
   await page.getByRole('radio', { name: 'Baches' }).check();
   await page.locator('#alerta-sector').fill('Barrio Central');
   await page.locator('#alerta-descripcion').fill('Hay un bache grande en la esquina');
-  await page.locator('#alerta-foto').setInputFiles('src/assets/carlos.jpg');
+  await page.locator('#alerta-foto').setInputFiles('src/assets/pieza-respeto-cuadrada.jpg');
   await page.getByRole('button', { name: 'Aceptar y enviar alerta' }).click();
   await expect(page.locator('#alerta-aceptacion-error')).toHaveText('Marca la casilla para continuar.');
   await expect(page.locator('#alerta-aceptacion')).toBeFocused();
   await expect(page.locator('#alerta-sector')).toHaveValue('Barrio Central');
-  await expect(page.locator('#alerta-foto-nombre')).toContainText('carlos.jpg');
+  await expect(page.locator('#alerta-foto-nombre')).toContainText('pieza-respeto-cuadrada.jpg');
   expect(api.envios).toHaveLength(0);
   expect(api.aceptaciones).toHaveLength(0);
   await page.locator('#alerta-aceptacion').press('Space');
@@ -90,7 +90,7 @@ test('la aceptación pendiente conserva la alerta y la foto, y se guarda para lo
   await expect(page.locator('#alerta-estado')).toContainText('Recibimos tu alerta');
   await expect(page.locator('#alerta-aceptacion-block')).toBeHidden();
   expect(api.envios).toHaveLength(1);
-  expect(api.envios[0].foto).toBe('carlos.jpg');
+  expect(api.envios[0].foto).toBe('pieza-respeto-cuadrada.jpg');
   expect(api.aceptaciones).toEqual([{ aceptacion: { version: VERSION_LEGAL, aceptada: true } }]);
   for (const [path, id] of [['/ciudadania/sugerencias/', 'sugerencia'], ['/ciudadania/chat/', 'chat'], ['/ciudadania/alerta-ciudadana/', 'alerta']]) {
     await page.goto(path);
@@ -118,6 +118,25 @@ test('un fallo al guardar la aceptación conserva la sugerencia y permite reinte
   await expect(page.locator('#sugerencia-aceptacion-block')).toBeHidden();
 });
 
+test('enviar mientras se prepara la foto no la pierde', async ({ page }) => {
+  // Un celular lento: la miniatura tarda en hacerse y la persona pulsa «Enviar» enseguida.
+  await page.addInitScript(() => {
+    const original = window.createImageBitmap.bind(window);
+    window.createImageBitmap = ((...args: Parameters<typeof createImageBitmap>) =>
+      new Promise(resolve => setTimeout(() => resolve(original(...args)), 1500))) as typeof createImageBitmap;
+  });
+  const api = mockApi(page, { loggedIn: true });
+  await page.goto('/ciudadania/alerta-ciudadana/');
+  await page.getByRole('radio', { name: 'Baches' }).check();
+  await page.locator('#alerta-sector').fill('Barrio Central');
+  await page.locator('#alerta-descripcion').fill('Hay un bache grande en la esquina');
+  await page.locator('#alerta-foto').setInputFiles('src/assets/pieza-respeto-cuadrada.jpg');
+  await page.getByRole('button', { name: /enviar alerta/i }).click();
+  await expect(page.locator('#alerta-estado')).toContainText('Recibimos tu alerta');
+  expect(api.envios).toHaveLength(1);
+  expect(api.envios[0].foto).toBe('pieza-respeto-cuadrada.jpg');
+});
+
 test('un cambio de versión conserva la alerta y la foto al recargar para revisar las condiciones', async ({ page }) => {
   const api = mockApi(page, { loggedIn: true, accepted: false });
   await page.route('**/api/auth/accept-terms', route => route.fulfill({ status: 409,
@@ -127,7 +146,7 @@ test('un cambio de versión conserva la alerta y la foto al recargar para revisa
   await page.getByRole('radio', { name: 'Baches' }).check();
   await page.locator('#alerta-sector').fill('Barrio Central');
   await page.locator('#alerta-descripcion').fill('Hay un bache grande en la esquina');
-  await page.locator('#alerta-foto').setInputFiles('src/assets/carlos.jpg');
+  await page.locator('#alerta-foto').setInputFiles('src/assets/pieza-respeto-cuadrada.jpg');
   await page.locator('#alerta-aceptacion').check();
   await page.getByRole('button', { name: 'Aceptar y enviar alerta' }).click();
   await expect(page.locator('#alerta-estado')).toContainText('Recarga la página');
@@ -135,7 +154,7 @@ test('un cambio de versión conserva la alerta y la foto al recargar para revisa
   await expect(page.locator('#alerta-recuperada')).toBeVisible();
   await expect(page.locator('#alerta-sector')).toHaveValue('Barrio Central');
   await expect(page.locator('#alerta-descripcion')).toHaveValue('Hay un bache grande en la esquina');
-  await expect(page.locator('#alerta-foto-nombre')).toContainText('carlos.jpg');
+  await expect(page.locator('#alerta-foto-nombre')).toContainText('pieza-respeto-cuadrada.jpg');
   await expect(page.locator('#alerta-aceptacion')).not.toBeChecked();
   expect(api.envios).toHaveLength(0);
 });
@@ -217,7 +236,7 @@ test('una alerta sin sesión se guarda, pide entrar y vuelve rellena con su foto
   await page.getByRole('radio', { name: 'Baches' }).check();
   await page.locator('#alerta-sector').fill('Barrio Central');
   await page.locator('#alerta-descripcion').fill('Hay un bache grande en la esquina');
-  await page.locator('#alerta-foto').setInputFiles('src/assets/carlos.jpg');
+  await page.locator('#alerta-foto').setInputFiles('src/assets/pieza-respeto-cuadrada.jpg');
   await expect(page.locator('#alerta-foto-vista')).toBeVisible();
   await page.getByRole('button', { name: 'Enviar alerta' }).click();
 
@@ -233,7 +252,7 @@ test('una alerta sin sesión se guarda, pide entrar y vuelve rellena con su foto
   await expect(page.locator('input[name="tipo"][value="baches"]')).toBeChecked();
   await expect(page.locator('#alerta-sector')).toHaveValue('Barrio Central');
   await expect(page.locator('#alerta-descripcion')).toHaveValue('Hay un bache grande en la esquina');
-  await expect(page.locator('#alerta-foto-nombre')).toContainText('carlos.jpg');
+  await expect(page.locator('#alerta-foto-nombre')).toContainText('pieza-respeto-cuadrada.jpg');
   expect(api.envios).toHaveLength(0);
   await page.getByRole('button', { name: 'Enviar alerta' }).click();
   await expect(page.locator('#alerta-estado')).toContainText('Recibimos tu alerta');
@@ -241,7 +260,7 @@ test('una alerta sin sesión se guarda, pide entrar y vuelve rellena con su foto
   expect(api.envios[0].campos).toMatchObject({ tipo: 'baches', sector: 'Barrio Central', descripcion: 'Hay un bache grande en la esquina' });
   expect(api.envios[0].campos.idempotencia).toMatch(/^[0-9a-f-]{36}$/);
   expect(api.envios[0].campos.nombre).toBeUndefined();
-  expect(api.envios[0].foto).toBe('carlos.jpg');
+  expect(api.envios[0].foto).toBe('pieza-respeto-cuadrada.jpg');
   await expect(page.locator('#historial')).toContainText('Barrio Central');
   // El borrador se borra al enviarse: entrar otra vez lleva a la portada.
   expect(await page.evaluate(() => localStorage.getItem('astudillo:borrador'))).toBeNull();
@@ -268,8 +287,21 @@ test('la foto de la alerta: zona grande, formatos válidos y hasta 5 MB', async 
   await page.getByRole('button', { name: 'Quitar foto' }).click();
   await page.locator('#alerta-foto').setInputFiles({ name: 'grande.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(5 * 1024 * 1024 + 1) });
   await expect(page.locator('#alerta-foto-error')).toContainText('5 MB');
-  await page.locator('#alerta-foto').setInputFiles('src/assets/carlos.jpg');
+  // 45 MP en pocos KB: se rechaza por sus medidas, sin llegar a mostrarla.
+  const enorme = await sharp({ create: { width: 9000, height: 5000, channels: 3, background: '#2e86c1' } }).jpeg().toBuffer();
+  await page.locator('#alerta-foto').setInputFiles({ name: 'enorme.jpg', mimeType: 'image/jpeg', buffer: enorme });
+  await expect(page.locator('#alerta-foto-error')).toContainText('La foto mide 45 megapíxeles; el máximo es 40');
+  await expect(page.locator('#alerta-foto-vista')).toBeHidden();
+  // Si el navegador no puede abrirla, avisa sin recurrir al archivo original.
+  const cortada = (await sharp({ create: { width: 64, height: 48, channels: 3, background: '#c0392b' } }).jpeg().toBuffer()).subarray(0, 120);
+  await page.locator('#alerta-foto').setInputFiles({ name: 'cortada.jpg', mimeType: 'image/jpeg', buffer: cortada });
+  await expect(page.locator('#alerta-foto-error')).toContainText('No se pudo abrir esta foto');
+  await expect(page.locator('#alerta-foto-vista')).toBeHidden();
+  await page.locator('#alerta-foto').setInputFiles('src/assets/pieza-respeto-cuadrada.jpg');
   await expect(page.locator('#alerta-foto-error')).toBeHidden();
+  // La vista previa es una miniatura, nunca el archivo original.
+  const vista = page.locator('#alerta-foto-vista img');
+  await expect.poll(() => vista.evaluate((img: HTMLImageElement) => img.complete && Math.min(img.naturalWidth, img.naturalHeight))).toBe(192);
   await page.getByRole('button', { name: 'Quitar foto' }).click();
   await expect(zona).toBeVisible();
   await expect(page.locator('#historial')).toContainText('Aún no has enviado alertas');

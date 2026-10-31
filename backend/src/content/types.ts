@@ -1,3 +1,4 @@
+import type { Carrusel, Original } from '../contracts/inicio';
 import type { ParroquiaSlug } from '../contracts/parroquias';
 
 /** Foto subida desde el panel; el sitio arma las URL `/medios/<nombre>-<ancho>.webp`. */
@@ -76,6 +77,20 @@ export interface MyTeam {
   parroquias: { slug: ParroquiaSlug; texto: string; fotos: { foto: Photo; alt: string }[] }[];
 }
 
+export type HomeImageStored = { original: Original } | { idMedio: number };
+export type HomeImage = { original: Original } | { foto: Photo };
+
+/** La semilla crea los dos carruseles con las imágenes que vienen con el sitio. */
+export interface HomeCarouselsStored {
+  principal: { banners: { imagen: HomeImageStored; celular: number | null; alt: string }[]; retrato: { imagen: HomeImageStored; alt: string } };
+  piezas: { piezas: { imagen: HomeImageStored; alt: string }[] };
+}
+
+export interface HomeCarousels {
+  principal: { banners: { imagen: HomeImage; celular: Photo | null; alt: string }[]; retrato: { imagen: HomeImage; alt: string } };
+  piezas: { piezas: { imagen: HomeImage; alt: string }[] };
+}
+
 /**
  * Versión (md5 del estado) de cada parte editable del borrador. El panel la devuelve al guardar;
  * si no coincide con la actual, otra persona guardó antes y el guardado responde 409.
@@ -90,6 +105,7 @@ export interface ContentVersions {
   acercaDeCarlos: Record<string, string>;
   /** Solo las partes que se guardaron alguna vez: las demás no tienen versión. */
   miEquipo: Record<string, string>;
+  inicio: Partial<Record<Carrusel, string>>;
 }
 
 /**
@@ -109,4 +125,6 @@ export interface Snapshot {
   acercaDeCarlos?: Record<string, AboutCarlosPage>;
   /** Ausente en publicaciones anteriores a «Mi equipo». */
   miEquipo?: MyTeam;
+  /** Ausente en publicaciones anteriores a los carruseles editables: se usan los de la semilla. */
+  inicio?: HomeCarousels;
 }

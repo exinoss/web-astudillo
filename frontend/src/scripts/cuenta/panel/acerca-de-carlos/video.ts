@@ -100,7 +100,7 @@ export const video: SectionEditor = {
         page.video = { ...page.video, portada: foto };
         editor.rerender();
         notify("Se usa la imagen del video como portada. Puedes cambiarla por otra.");
-      });
+      }, "Cargando la imagen…");
     };
     input.addEventListener("input", detect);
     input.addEventListener("change", () => { if (!editor.page.video?.portada) coverFromVideo(null); });

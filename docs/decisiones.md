@@ -39,6 +39,9 @@ Por qué: las fotos verticales quedaban diminutas en el marco 4:3. El panel reco
 **D-010 · 2026-10-23 · El fondo de cintas de Biografía no se muestra en celular (variante `celular:`).**
 Por qué: tapaba textos y la línea de tiempo, y es una descarga que no aporta en pantallas pequeñas. Se mantiene en tablet y escritorio.
 
+**D-018 · 2026-10-30 · Las imágenes de los carruseles de la portada se cambian desde el modo edición. Las que vienen con el sitio entran por la semilla con su clave (`{ "original": "portada" }`) y siguen en `frontend/src/assets`. Un carrusel que se queda sin fotos vuelve a las de la semilla.**
+Por qué: la portada debía verse idéntica hasta que alguien la cambie, sin subir las imágenes del cliente a mano en producción, y la semilla es el camino del contenido inicial. Detalle: [cómo funciona la publicación](como-funciona-la-publicacion.md), §3.2, y `backend/src/contracts/inicio.ts`.
+
 ## Trabajo y configuración
 
 **D-011 · 2026-10-03 · Despliegue con Docker Compose, GitHub Actions, GHCR y `server-produccion/desplegar.sh`; descartados Dokploy, Vercel y Jenkins.**

@@ -1,4 +1,5 @@
 import type { ImageMetadata } from "astro";
+import type { Original } from "../../../../backend/src/contracts/inicio";
 import type { ParroquiaSlug } from "../../../../backend/src/contracts/parroquias";
 
 export interface ProposalModel {
@@ -159,4 +160,14 @@ export interface Parish {
 export interface MyTeam {
   members: TeamMember[];
   parishes: Parish[];
+}
+
+export type HomeImage = { original: Original } | { photo: UploadedPicture };
+export interface HomeSlideImage { image: HomeImage; alt: string }
+
+/** Siempre trae al menos un banner y una pieza. */
+export interface HomeCarousels {
+  banners: (HomeSlideImage & { mobile: UploadedPicture | null })[];
+  portrait: HomeSlideImage;
+  pieces: HomeSlideImage[];
 }

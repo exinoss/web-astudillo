@@ -138,7 +138,7 @@ test("las fotos se validan por su contenido, se optimizan y pierden los metadato
   const res = await upload(conExif, "foto.jpg");
   expect(res.status).toBe(200);
   const foto = await res.json();
-  expect(foto).toMatchObject({ ancho: 2000, alto: 1000, anchos: [480, 960, 1600] });
+  expect(foto).toMatchObject({ ancho: 2000, alto: 1000, anchos: [480, 960, 1600, 2000] });
   const guardada = await sharp(join(MEDIA, `${foto.nombre}-960.webp`)).metadata();
   expect(guardada).toMatchObject({ format: "webp", width: 960 });
   expect(guardada.exif).toBeUndefined();

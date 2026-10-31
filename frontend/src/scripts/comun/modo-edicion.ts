@@ -21,6 +21,8 @@ let pending = 0;
 let on = false;
 let editing: { el: HTMLElement; before: string } | null = null;
 let canPublish = false;
+let canUpload = false;
+let carruseles: typeof import("./editor-carruseles") | null = null;
 
 const read = () => { try { return localStorage.getItem(STORAGE) === "1"; } catch { return false; } };
 const remember = (value: boolean) => { try { localStorage.setItem(STORAGE, value ? "1" : "0"); } catch { /* sin almacenamiento */ } };
@@ -226,21 +228,34 @@ sheetSave.addEventListener("click", async () => {
 
 const edit = (el: HTMLElement) => (mobile.matches ? openSheet(el) : startInline(el));
 
+function decorar(raiz: ParentNode) {
+  for (const el of raiz.querySelectorAll<HTMLElement>("[data-editable]")) {
+    paint(el, current(el.dataset.editable!));
+    el.classList.add(...IDLE);
+    el.tabIndex = 0;
+    el.setAttribute("aria-description", "Texto editable: pulsa Enter para cambiarlo");
+  }
+}
+
+/** Si falla la descarga, el modo edición sigue funcionando con los textos. */
+const cargarCarruseles = () => import("./editor-carruseles")
+  .then((m) => { m.iniciarCarruseles({ avisar: notify, alGuardar: refreshPending, decorar }); return m; })
+  .catch(() => null);
+
 async function setMode(value: boolean) {
   if (value && !on) {
     // Se muestra el borrador, no lo publicado, para ver lo pendiente mientras se edita.
     const draft = await adminApi.draft();
     texts = draft.textos;
     versions = draft.versiones.textos;
-    for (const el of elements()) {
-      published.set(el, el.innerHTML);
-      paint(el, current(el.dataset.editable!));
-      el.classList.add(...IDLE);
-      el.tabIndex = 0;
-      el.setAttribute("aria-description", "Texto editable: pulsa Enter para cambiarlo");
-    }
+    // Se carga antes de pintar los textos: así guarda los carruseles tal como se publicaron.
+    if (canUpload && document.querySelector("[data-carrusel-editable]")) carruseles ??= await cargarCarruseles();
+    for (const el of elements()) published.set(el, el.innerHTML);
+    decorar(document);
+    carruseles?.mostrarCarruseles(draft);
   } else if (!value && on) {
     finishInline(true);
+    carruseles?.ocultarCarruseles();
     for (const el of elements()) {
       el.classList.remove(...IDLE, ...ACTIVE);
       el.removeAttribute("tabindex");
@@ -257,6 +272,7 @@ async function setMode(value: boolean) {
 /** Arranca la barra y, si estaba activo o se pidió `?editar=clave`, el modo edición. */
 export async function startEditMode(profile: Profile) {
   canPublish = profile.permisos.includes("contenido.publicar");
+  canUpload = profile.permisos.includes("medios.subir");
   document.querySelector(".site-header")!.append(bar);
   document.body.append(chip, sheet, toast);
 

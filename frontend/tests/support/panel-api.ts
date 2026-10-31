@@ -47,6 +47,8 @@ export function panelData(rol: 'admin' | 'coadmin') {
           ? { slug: p.slug, texto: 'Agua para los recintos.', fotos: [{ foto: photo(5), alt: 'Casa comunal' }] }
           : { slug: p.slug, texto: '', fotos: [] }) as Record<string, unknown>[],
       },
+      // Como la API real recién migrada: los carruseles de la semilla, con las imágenes que vienen con el sitio.
+      inicio: structuredClone(initial.inicio) as Record<string, unknown>,
       // Como la API real: un texto sin cambiar no tiene versión. Los valores son md5 de ejemplo.
       versiones: {
         textos: { 'pie.lema': 'a'.repeat(32) } as Record<string, string>,
@@ -57,6 +59,7 @@ export function panelData(rol: 'admin' | 'coadmin') {
         acercaDeCarlos: { 'por-que-quiero-ser-alcalde': '1'.repeat(32), 'conoce-mas': '2'.repeat(32) } as Record<string, string>,
         // Como la API real: una parte de «Mi equipo» que nunca se guardó no tiene versión.
         miEquipo: { equipo: '3'.repeat(32), 'alto-tambo': '4'.repeat(32) } as Record<string, string>,
+        inicio: { principal: '5'.repeat(32), piezas: '6'.repeat(32) } as Record<string, string>,
       },
     },
     alertas: [
@@ -67,6 +70,8 @@ export function panelData(rol: 'admin' | 'coadmin') {
     pending: [] as { tipo: string; descripcion: string }[],
     savedPages: [] as Record<string, unknown>[],
     savedTeam: [] as Record<string, unknown>[],
+    savedHome: [] as Record<string, unknown>[],
+    uploads: 0,
     videoCovers: [] as string[],
     users: Array.from({ length: 23 }, (_, i) => ({
       id: i + 2, correo: `persona${i + 2}@example.com`, nombresCompletos: `Persona ${i + 2}`,
@@ -120,7 +125,10 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
       data.pending.push({ tipo: 'Obra', descripcion: 'Agua potable' });
       return json({ version: data.draft.versiones.obras[work[1]] });
     }
-    if (path === '/api/admin/medios') return json(photo(90));
+    if (path === '/api/admin/medios') {
+      data.uploads++;
+      return json(photo(90 + data.uploads - 1));
+    }
     if (path === '/api/admin/medios/portada-video') {
       data.videoCovers.push(body().enlace);
       return body().enlace.includes('facebook.com') ? json(photo(91))
@@ -159,6 +167,21 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
       data.draft.versiones.miEquipo[key] = nextVersion();
       data.pending.push({ tipo: 'Mi equipo', descripcion: key === 'equipo' ? 'Equipo' : PARROQUIAS.find(p => p.slug === key)!.nombre });
       return json({ version: data.draft.versiones.miEquipo[key] });
+    }
+    const home = path.match(/^\/api\/admin\/contenido\/inicio\/(principal|piezas)$/);
+    if (home) {
+      const key = home[1];
+      const { version, ...fields } = body();
+      if (version !== (data.draft.versiones.inicio[key] ?? null)) return conflict();
+      data.savedHome.push({ clave: key, ...fields });
+      const image = (i: { idMedio?: number; original?: string }) => (i.idMedio ? { foto: photo(i.idMedio) } : { original: i.original });
+      data.draft.inicio[key] = key === 'principal'
+        ? { banners: fields.banners.map((b: { imagen: object; celular: number | null; alt: string }) => ({ imagen: image(b.imagen), celular: b.celular ? photo(b.celular) : null, alt: b.alt })),
+          retrato: { imagen: image(fields.retrato.imagen), alt: fields.retrato.alt } }
+        : { piezas: fields.piezas.map((p: { imagen: object; alt: string }) => ({ imagen: image(p.imagen), alt: p.alt })) };
+      data.draft.versiones.inicio[key] = nextVersion();
+      data.pending.push({ tipo: 'Portada', descripcion: key === 'principal' ? 'Carrusel principal' : 'Carrusel de piezas' });
+      return json({ version: data.draft.versiones.inicio[key] });
     }
     const proposal = path.match(/^\/api\/admin\/contenido\/propuestas\/(.+)$/);
     if (proposal) {

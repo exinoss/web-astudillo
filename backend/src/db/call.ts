@@ -61,6 +61,8 @@ const names = {
   aboutCarlosSave: 'fn_about_carlos_save',
   myTeamList: 'fn_my_team_list',
   myTeamSave: 'fn_my_team_save',
+  homeCarouselsList: 'fn_home_carousels_list',
+  homeCarouselsSave: 'fn_home_carousels_save',
   publicationCreate: 'fn_publication_create',
   publicationsList: 'fn_publications_list',
   publicationLatest: 'fn_publication_latest',

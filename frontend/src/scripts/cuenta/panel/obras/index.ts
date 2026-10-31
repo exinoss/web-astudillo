@@ -129,7 +129,7 @@ function bind(section: HTMLElement) {
         renderWorks(section);
       }
       notify("Fotos subidas. Escribe un pie para cada una y guarda el borrador.");
-    });
+    }, "Subiendo…");
   });
   vigilarCambios(form, form.querySelector("button[type=submit]")!, saved(state.draft!.obras.find((w) => w.slug === work!.slug)!), () => {
     capture(form);

@@ -135,7 +135,7 @@ function bind(section: HTMLElement) {
       items![destino] = { ...items![destino], foto };
       renderBiography(section);
       notify("Foto subida. Describe lo que se ve y guarda el borrador.");
-    });
+    }, "Subiendo…");
   });
   form.addEventListener("submit", (e) => {
     e.preventDefault();

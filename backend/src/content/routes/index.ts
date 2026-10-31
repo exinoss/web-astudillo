@@ -1,10 +1,12 @@
 import { Elysia, t } from 'elysia';
 import type { SQL } from 'bun';
 import type { Authorization } from '../../auth/types';
+import { MAX_BANNERS, MAX_PIEZAS, ORIGINALES } from '../../contracts/inicio';
 import { MAX_EQUIPO, MAX_FOTOS_PARROQUIA } from '../../contracts/parroquias';
 import { VIDEO_URL_MAX } from '../../contracts/video';
 import { createAboutCarlosPages } from '../services/about-carlos';
 import { createContent } from '../services/content';
+import { createHomeCarousels } from '../services/home-carousels';
 import { createMedia } from '../services/media';
 import { createMyTeam } from '../services/my-team';
 
@@ -16,12 +18,14 @@ const strict = { additionalProperties: false };
 const version = t.String({ pattern: '^[a-f0-9]{32}$' });
 const mediaId = t.Integer({ minimum: 1 });
 const percent = t.Integer({ minimum: 0, maximum: 100 });
+const homeImage = t.Union([t.Object({ original: t.Union(ORIGINALES.map(o => t.Literal(o))) }, strict), t.Object({ idMedio: mediaId }, strict)]);
 
 export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: string) {
   const content = createContent(sql, authorization);
   const media = createMedia(sql, authorization, mediaDir);
   const aboutCarlosPages = createAboutCarlosPages(sql, authorization, mediaDir);
   const myTeam = createMyTeam(sql, authorization);
+  const homeCarousels = createHomeCarousels(sql, authorization);
   const admin = new Elysia({ prefix: '/api/admin', normalize: false })
     .get('/contenido', ({ cookie }) => content.get(access(cookie)))
     .put('/contenido/textos/:clave', ({ cookie, params, body }) =>
@@ -98,6 +102,19 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
       body: t.Object({
         texto: text(3000),
         fotos: t.Array(t.Object({ idMedio: mediaId, alt: text(200) }, strict), { maxItems: MAX_FOTOS_PARROQUIA }),
+        version: t.Union([version, t.Null()]),
+      }, strict),
+    })
+    .put('/contenido/inicio/principal', ({ cookie, body }) => homeCarousels.saveMain(access(cookie), body, body.version), {
+      body: t.Object({
+        banners: t.Array(t.Object({ imagen: homeImage, celular: t.Union([mediaId, t.Null()]), alt: text(200) }, strict), { minItems: 1, maxItems: MAX_BANNERS }),
+        retrato: t.Object({ imagen: homeImage, alt: text(200) }, strict),
+        version: t.Union([version, t.Null()]),
+      }, strict),
+    })
+    .put('/contenido/inicio/piezas', ({ cookie, body }) => homeCarousels.savePieces(access(cookie), body, body.version), {
+      body: t.Object({
+        piezas: t.Array(t.Object({ imagen: homeImage, alt: text(200) }, strict), { minItems: 1, maxItems: MAX_PIEZAS }),
         version: t.Union([version, t.Null()]),
       }, strict),
     })

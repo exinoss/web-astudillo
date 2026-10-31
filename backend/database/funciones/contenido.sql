@@ -117,6 +117,32 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION fn_home_carousels_list()
+RETURNS TABLE(clave varchar, contenido jsonb) LANGUAGE sql STABLE AS $$
+  SELECT c.clave, c.contenido FROM tb_inicio_carruseles c ORDER BY c.clave;
+$$;
+
+-- Como en «Mi equipo»; la semilla crea las dos filas, pero un carrusel sin fila se guarda enviando versión nula.
+-- Una clave que no existe la rechaza la restricción ck_inicio_carruseles_clave.
+CREATE OR REPLACE FUNCTION fn_home_carousels_save(p_actor integer, p_key text, p_content jsonb, p_version text)
+RETURNS TABLE(resultado text, version text) LANGUAGE plpgsql AS $$
+DECLARE v_current text; v_new text := md5(p_content::text);
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'contenido.editar') THEN RETURN; END IF;
+  PERFORM pg_advisory_xact_lock(hashtext('contenido:inicio:' || p_key));
+  SELECT md5(c.contenido::text) INTO v_current FROM tb_inicio_carruseles c WHERE c.clave = p_key;
+  IF v_current IS NOT DISTINCT FROM v_new THEN RETURN QUERY SELECT 'sin_cambios'::text, v_current; RETURN; END IF;
+  IF v_current IS DISTINCT FROM p_version THEN RETURN QUERY SELECT 'conflicto'::text, v_current; RETURN; END IF;
+  INSERT INTO tb_inicio_carruseles (clave, contenido, actualizado_por, actualizado_en)
+  VALUES (p_key, p_content, p_actor, now())
+  ON CONFLICT ON CONSTRAINT tb_inicio_carruseles_pkey DO UPDATE SET contenido = EXCLUDED.contenido,
+    actualizado_por = EXCLUDED.actualizado_por, actualizado_en = now();
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, cambios)
+  VALUES (p_actor, 'carrusel_inicio_guardado', 'tb_inicio_carruseles', jsonb_build_object('clave', p_key));
+  RETURN QUERY SELECT 'guardado'::text, v_new;
+END;
+$$;
+
 -- Versiones vigentes de todo el borrador; el panel las envía de vuelta al guardar.
 CREATE OR REPLACE FUNCTION fn_content_versions()
 RETURNS TABLE(versiones jsonb) LANGUAGE sql STABLE AS $$
@@ -127,7 +153,8 @@ RETURNS TABLE(versiones jsonb) LANGUAGE sql STABLE AS $$
     'obras', COALESCE((SELECT jsonb_object_agg(o.slug, md5(fn_work_state(o.slug)::text)) FROM tb_obras o), '{}'::jsonb),
     'chat', md5(fn_chat_state()::text),
     'acercaDeCarlos', (SELECT jsonb_object_agg(l.slug, md5(l.contenido::text)) FROM fn_about_carlos_list() l),
-    'miEquipo', COALESCE((SELECT jsonb_object_agg(m.clave, md5(m.contenido::text)) FROM fn_my_team_list() m), '{}'::jsonb));
+    'miEquipo', COALESCE((SELECT jsonb_object_agg(m.clave, md5(m.contenido::text)) FROM fn_my_team_list() m), '{}'::jsonb),
+    'inicio', COALESCE((SELECT jsonb_object_agg(c.clave, md5(c.contenido::text)) FROM fn_home_carousels_list() c), '{}'::jsonb));
 $$;
 
 -- Guarda el borrador de un texto; con valor nulo lo borra y vuelve el texto por defecto.

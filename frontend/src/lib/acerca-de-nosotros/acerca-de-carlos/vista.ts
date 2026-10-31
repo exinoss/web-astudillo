@@ -1,6 +1,6 @@
 import { getImage } from "astro:assets";
 import portadaHorizontal from "../../../assets/portada.jpg";
-import portadaVertical from "../../../assets/carlos-vertical.png";
+import portadaVertical from "../../../assets/pieza-respeto-vertical.png";
 import { texto } from "../../comun/contenido";
 import type { TextKey } from "../../comun/contenido/textos";
 import { contentRepository } from "../../data";

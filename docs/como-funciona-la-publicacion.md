@@ -123,6 +123,12 @@ async function save(el, nuevoTexto) {
 }
 ```
 
+En la portada, quien además puede subir fotos (`medios.subir`) ve el botón «Cambiar imágenes» en cada carrusel. Abre un editor ([`editor-carruseles.ts`](../frontend/src/scripts/comun/editor-carruseles.ts)) para los banners (de 1 a 5, cada uno con una imagen opcional para celular), el retrato de la segunda diapositiva y las piezas (de 1 a 8).
+
+- Cada foto se sube como cualquier otra (`POST /api/admin/medios`) y luego se guarda el carrusel con su versión (`PUT /api/admin/contenido/inicio/principal` o `/piezas`, tabla `tb_inicio_carruseles`).
+- Antes de subir, el navegador lee las medidas de la cabecera y rechaza lo que pase de 40 megapíxeles. El editor y la portada solo muestran las versiones WebP que devuelve el backend, nunca el archivo original.
+- Las imágenes que vienen con el sitio entran por la semilla con su clave (`{ "original": "portada" }`) y se pintan con `astro:assets` ([`lib/inicio/originales.ts`](../frontend/src/lib/inicio/originales.ts)). Una publicación anterior sin carruseles usa los de la semilla, y un carrusel que se queda sin fotos (porque se borraron) vuelve a ellos.
+
 ### 3.3 El backend recibe el cambio
 
 ```mermaid
@@ -580,6 +586,7 @@ Para ver la foto exacta que se publicó, abre en el navegador:
 | Registro de textos editables | [`frontend/src/lib/comun/contenido/textos.ts`](../frontend/src/lib/comun/contenido/textos.ts) |
 | Componente `Editable` | [`frontend/src/components/comun/Editable.astro`](../frontend/src/components/comun/Editable.astro) |
 | Modo edición (navegador) | [`frontend/src/scripts/comun/modo-edicion.ts`](../frontend/src/scripts/comun/modo-edicion.ts) |
+| Editor de los carruseles de la portada | [`frontend/src/scripts/comun/editor-carruseles.ts`](../frontend/src/scripts/comun/editor-carruseles.ts) y [`backend/src/content/services/home-carousels.ts`](../backend/src/content/services/home-carousels.ts) |
 | Panel de administración | [`frontend/src/scripts/cuenta/panel/`](../frontend/src/scripts/cuenta/panel/) |
 | Selección del repositorio | [`frontend/src/lib/data/index.ts`](../frontend/src/lib/data/index.ts) |
 | Repositorio que lee lo publicado | [`frontend/src/lib/data/http/http-content-repository.ts`](../frontend/src/lib/data/http/http-content-repository.ts) |

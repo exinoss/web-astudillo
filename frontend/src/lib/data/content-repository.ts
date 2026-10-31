@@ -1,4 +1,4 @@
-import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, CitizenLink, MyTeam, Proposal, WorkProgress } from "./types";
+import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, CitizenLink, HomeCarousels, MyTeam, Proposal, WorkProgress } from "./types";
 
 export interface ContentRepository {
   getProposals(): Promise<Proposal[]>;
@@ -13,4 +13,5 @@ export interface ContentRepository {
   getAboutCarlosPage(slug: AboutCarlosSlug): Promise<AboutCarlosPage>;
   /** Siempre trae las doce parroquias, en orden. */
   getMyTeam(): Promise<MyTeam>;
+  getHomeCarousels(): Promise<HomeCarousels>;
 }
