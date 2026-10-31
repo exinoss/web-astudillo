@@ -25,8 +25,10 @@ export function testApp(mediaDir = "medios-pruebas", trustProxyIp = false, priva
     smtp: { host: "localhost", port: 1025, user: "test", pass: "test", from: "test@example.test", name: "Test" },
     mediaDir, privateMediaDir,
   };
-  const sent: { to: string; subject: string; url: string }[] = [];
-  const mailer: Mailer = { async send(to, mensaje) { sent.push({ to, subject: mensaje.asunto, url: mensaje.url }); } };
+  const sent: { to: string; subject: string; url: string; codigo: string }[] = [];
+  const mailer: Mailer = { async send(to, mensaje) {
+    sent.push({ to, subject: mensaje.asunto, url: 'url' in mensaje ? mensaje.url : '', codigo: 'codigo' in mensaje ? mensaje.codigo : '' });
+  } };
   const app = createApp({ sql, config, mailer, security: createSecurity(config) });
   const ids: Record<string, number> = {};
   const cookies: Record<string, string> = {};

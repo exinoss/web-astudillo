@@ -33,6 +33,10 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - Una foto de más de 40 megapíxeles ya no se rechaza con «Sube una foto JPG, PNG o WebP»: el aviso dice cuánto mide y el máximo (por ejemplo, 8000 × 5000 px).
 - El formulario de alertas ya no se traba al elegir una foto de muchos megapíxeles: avisa en el momento si supera los 40 y muestra una miniatura liviana.
 
+### Security
+
+- Panel, pestaña Usuarios: cambiar el rol de una cuenta, desactivarla o reactivarla pide confirmar con tu contraseña en una ventana. Si tu cuenta entra solo con Google, se confirma con un código que llega a tu correo.
+
 ## [1.0.0] - 2026-10-25
 
 Primera versión numerada: recoge todo lo hecho desde el inicio del proyecto.

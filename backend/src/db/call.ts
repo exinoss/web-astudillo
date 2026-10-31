@@ -22,6 +22,8 @@ const names = {
   authTokenGet: 'fn_auth_token_get',
   authTokenConsume: 'fn_auth_token_consume',
   authTokenDelete: 'fn_auth_token_delete',
+  confirmationMethod: 'fn_confirmation_method',
+  confirmationCode: 'fn_confirmation_code',
   passwordUser: 'fn_password_user',
   resetTarget: 'fn_reset_target',
   passwordReset: 'fn_password_reset',

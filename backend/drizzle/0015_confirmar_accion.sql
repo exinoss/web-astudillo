@@ -1,0 +1,4 @@
+ALTER TABLE "tb_token_autenticacion" DROP CONSTRAINT "tb_token_autenticacion_proposito_check";--> statement-breakpoint
+ALTER TABLE "tb_token_autenticacion" DROP CONSTRAINT "ck_token_destino";--> statement-breakpoint
+ALTER TABLE "tb_token_autenticacion" ADD CONSTRAINT "tb_token_autenticacion_proposito_check" CHECK ((proposito)::text = ANY ((ARRAY['registro_correo'::character varying, 'recuperar_contrasenia'::character varying, 'acceso_correo'::character varying, 'confirmar_accion'::character varying])::text[]));--> statement-breakpoint
+ALTER TABLE "tb_token_autenticacion" ADD CONSTRAINT "ck_token_destino" CHECK ((((proposito)::text = 'registro_correo'::text) AND (id_usuario IS NULL)) OR (((proposito)::text = ANY ((ARRAY['recuperar_contrasenia'::character varying, 'acceso_correo'::character varying, 'confirmar_accion'::character varying])::text[])) AND (id_usuario IS NOT NULL)));

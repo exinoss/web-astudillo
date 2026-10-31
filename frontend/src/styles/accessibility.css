@@ -70,7 +70,8 @@
 }
 
 .negative-contrast img,
-.negative-contrast video {
+.negative-contrast video,
+.negative-contrast dialog[data-confirmacion] {
   filter: invert(1) hue-rotate(180deg);
 }
 

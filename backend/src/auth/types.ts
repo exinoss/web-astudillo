@@ -1,6 +1,7 @@
 import type { Config } from '../config';
 import type { AceptacionLegal } from '../contracts/legal';
 import type { createAuthorization } from './services/authorization';
+import type { createConfirmation } from './services/confirmation';
 import type { createGoogleAuth } from './services/google';
 import type { createAttempts, createLimiter } from './services/limits';
 import type { createLogin } from './services/login';
@@ -16,6 +17,7 @@ export type Sessions = ReturnType<typeof createSessions>;
 export type Limiter = ReturnType<typeof createLimiter>;
 export type Attempts = ReturnType<typeof createAttempts>;
 export type Login = ReturnType<typeof createLogin>;
+export type Confirmation = ReturnType<typeof createConfirmation>;
 
 export interface RegistrationInput {
   nombresCompletos: string;

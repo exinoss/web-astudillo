@@ -7,6 +7,8 @@ import { contentRoutes } from "./content/routes";
 import { mediaFileRoutes } from "./content/routes/files";
 import { previewRoutes } from "./content/routes/preview";
 import { createAuthorization } from "./auth/services/authorization";
+import { createConfirmation } from "./auth/services/confirmation";
+import { createAttempts } from "./auth/services/limits";
 import { ApiError } from "./http";
 import { mapHttpError } from "./http-errors";
 import type { Mailer } from "./mailer";
@@ -18,6 +20,7 @@ import { statsRoutes } from "./stats/routes";
 export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; security: Security }) {
   const { sql, config, mailer, security } = deps;
   const authorization = createAuthorization(sql, security);
+  const confirmation = createConfirmation(sql, createAttempts(sql), mailer);
   return new Elysia({ normalize: false })
     // Rechaza escrituras cuyo Origin no corresponde al sitio configurado.
     .onBeforeHandle(({ request }) => {
@@ -34,7 +37,7 @@ export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; secu
     .get("/api/health", () => ({ ok: true }))
     .use(authRoutes(sql, config, mailer, security, authorization))
     .use(profileRoutes(sql, authorization))
-    .use(adminRoutes(sql, authorization))
+    .use(adminRoutes(sql, authorization, confirmation, config.trustProxyIp))
     .use(contentRoutes(sql, authorization, config.mediaDir))
     .use(previewRoutes(sql, config, security, authorization))
     .use(participationRoutes(sql, authorization, config.privateMediaDir))
