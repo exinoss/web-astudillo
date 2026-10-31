@@ -13,6 +13,7 @@ export const ICON_PATHS: Record<string, string> = {
   sport: "M6.5 8.5v7M4 10v3M17.5 8.5v7M20 10v3M6.5 12h11",
   market:
     "M4 10v10h16V10M3 10l2-6h14l2 6M3 10c0 3 4 3 4 0 0 3 5 3 5 0 0 3 5 3 5 0 0 3 4 3 4 0M9 20v-6h6v6",
+  bag: "M5 8h14l-1 13H6L5 8Zm4 0V6a3 3 0 0 1 6 0v2m-6 4a3 3 0 0 0 6 0",
   bus: "M5 17V5q0-2 7-2t7 2v12H5Zm0-9h14M8 13h1m6 0h1M7 17v3m10-3v3",
   leaf: "M12 21v-9m0 0C12 8 9 5 5 5c0 4 3 7 7 7Zm0 0c0-4 3-7 7-7 0 4-3 7-7 7Z",
   book: "M12 5v16M12 5C9 3 5 3 2 4v15c4-1 7-1 10 2 3-3 6-3 10-2V4c-3-1-7-1-10 1Z",

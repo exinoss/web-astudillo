@@ -39,7 +39,7 @@
     "inicio.contacto.whatsapp.texto": "Escríbenos directamente por WhatsApp.",
     "propuesta.antetitulo": "INFORMACIÓN DE LA PROPUESTA",
     "propuesta.titulo": "Conoce este eje.",
-    "propuesta.texto": "Este es uno de los siete temas presentados para la candidatura de Carlos Astudillo a la alcaldía de San Lorenzo.",
+    "propuesta.texto": "Este es uno de los ocho temas presentados para la candidatura de Carlos Astudillo a la alcaldía de San Lorenzo.",
     "propuesta.obra.antetitulo": "AVANCE DE LA OBRA",
     "propuesta.preparacion.titulo": "Contenido en preparación",
     "propuesta.preparacion.texto": "Los objetivos, acciones y detalles de esta propuesta se incorporarán cuando estén disponibles.",
@@ -215,6 +215,26 @@
         {
           "etiqueta": "Plazo",
           "valor": "18 meses"
+        }
+      ]
+    },
+    {
+      "slug": "mercado-local",
+      "nombre": "Mercado local",
+      "categoria": "Emprendimiento digital",
+      "introduccion": "Una tienda en línea para que los comercios, emprendimientos y oficios de San Lorenzo vendan y se den a conocer.",
+      "kpis": [
+        {
+          "etiqueta": "Comercios",
+          "valor": "350"
+        },
+        {
+          "etiqueta": "Empleos",
+          "valor": "+1,200"
+        },
+        {
+          "etiqueta": "Plazo",
+          "valor": "16 meses"
         }
       ]
     }
@@ -451,13 +471,41 @@
         }
       ],
       "fotos": []
+    },
+    {
+      "slug": "mercado-local",
+      "nota": "El sitio de muestra ya se puede recorrer en mercado.lanuevahistoria.tech.",
+      "actualizadoEn": "2026-10-31T00:00:00.000Z",
+      "hitos": [
+        {
+          "nombre": "Sitio de muestra",
+          "completado": true
+        },
+        {
+          "nombre": "Convenio con el Municipio y la Cámara de Comercio",
+          "completado": false
+        },
+        {
+          "nombre": "Desarrollo de la plataforma",
+          "completado": false
+        },
+        {
+          "nombre": "Registro de comercios",
+          "completado": false
+        },
+        {
+          "nombre": "Lanzamiento",
+          "completado": false
+        }
+      ],
+      "fotos": []
     }
   ],
   "chat": [
     {
       "pregunta": "Ver propuestas",
       "palabrasClave": "propuesta, propuestas, plan, ejes, proyectos",
-      "respuesta": "Puedes revisar las siete propuestas para San Lorenzo en la sección de propuestas.",
+      "respuesta": "Puedes revisar las ocho propuestas para San Lorenzo en la sección de propuestas.",
       "enlaceTexto": "Ver propuestas",
       "enlaceRuta": "/#propuestas",
       "destacada": true

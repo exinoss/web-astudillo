@@ -104,6 +104,35 @@ test('con reducir movimiento se navega sin transición', async ({ page }) => {
   expect(avisos).toEqual([]);
 });
 
+const logoFijo = (page: Page) => page.locator('[data-logo-animado]').locator('xpath=preceding-sibling::img');
+
+test('el logo de Mercado Local se anima y, con reducir movimiento, queda quieto', async ({ page }) => {
+  const errores: string[] = [];
+  page.on('pageerror', e => errores.push(e.message));
+  await page.goto('/propuestas/mercado-local/');
+  const animado = page.locator('[data-logo-animado] svg');
+  await animado.scrollIntoViewIfNeeded();
+  await expect(animado).toBeVisible();
+  await expect(logoFijo(page)).toHaveClass(/invisible/);
+  await page.getByRole('button', { name: 'Herramientas de accesibilidad' }).last().click();
+  await page.getByRole('button', { name: 'Reducir movimiento' }).click();
+  const antes = await animado.innerHTML();
+  await page.waitForTimeout(400);
+  expect(await animado.innerHTML()).toBe(antes);
+  expect(errores).toEqual([]);
+});
+
+test('si la animación del logo no carga, queda el logo fijo', async ({ page }) => {
+  // En desarrollo Vite sirve también el módulo `?url` que da la ruta: ese no se bloquea.
+  await page.route('**/logo-mercado-local*.json*', route =>
+    new URL(route.request().url()).searchParams.has('url') ? route.continue() : route.abort());
+  await page.goto('/propuestas/mercado-local/');
+  await logoFijo(page).scrollIntoViewIfNeeded();
+  await page.waitForTimeout(1000);
+  await expect(logoFijo(page)).toBeVisible();
+  await expect(page.locator('[data-logo-animado]')).toBeHidden();
+});
+
 test('con reducir movimiento el loader queda quieto', async ({ page }) => {
   await page.route('**/api/auth/register', () => {});
   await page.goto('/cuenta/registro/');

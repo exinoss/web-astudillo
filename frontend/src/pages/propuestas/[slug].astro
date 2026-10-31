@@ -7,6 +7,7 @@ import DetailBanner from "../../components/comun/DetailBanner.astro";
 import EvidenceCarousel from "../../components/ciudadania/EvidenceCarousel.astro";
 import KpiStrip from "../../components/propuestas/KpiStrip.astro";
 import Model3D from "../../components/propuestas/Model3D.astro";
+import TarjetaSitio from "../../components/propuestas/TarjetaSitio.astro";
 import ObraProgreso from "../../components/ciudadania/ObraProgreso.astro";
 import { contentRepository } from "../../lib/data";
 import type { Proposal, WorkProgress } from "../../lib/data/types";
@@ -51,10 +52,10 @@ const fila = "mt-3.5 grid grid-cols-2 gap-[18px] max-tablet:grid-cols-1 max-tabl
     {work ? (
       <section class="pt-8" aria-labelledby="obra-titulo">
         <Editable as="h3" clave="propuesta.obra.antetitulo" id="obra-titulo" class="eyebrow m-0" />
-        {proposal.model ? (
+        {proposal.model || proposal.site ? (
           <>
             <div class={fila}>
-              <Model3D {...proposal.model} />
+              {proposal.model ? <Model3D {...proposal.model} /> : <TarjetaSitio {...proposal.site!} />}
               <EvidenceCarousel id={proposal.slug} evidence={work.evidence} name={proposal.name} />
             </div>
             <ObraProgreso work={work} proposal={proposal} enPropuesta ancho class="mt-[18px]" />

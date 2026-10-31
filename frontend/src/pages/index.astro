@@ -352,16 +352,14 @@ const contactos = [
           </a>
         ))}
         <a
-          class="group flex flex-col rounded-[4px] bg-campaign-red p-7 text-primary-content [transition:transform_0.2s] hover:-translate-y-1 max-tablet:px-4 max-tablet:py-5"
+          class="group col-span-full flex items-center gap-6 rounded-[4px] bg-campaign-red px-8 py-6 text-primary-content [transition:transform_0.2s] hover:-translate-y-1 max-tablet:gap-4 max-tablet:px-4 max-tablet:py-5 max-mobile:flex-wrap"
           href="/ciudadania/sugerencias/"
         >
-          <Icon name="idea" size={34} />
-          <h3 class="my-[18px] font-display text-[2rem] font-semibold max-tablet:text-[1.8rem]">
-            ¿Y tú,
-            <br />
-            qué propones?
+          <span class="shrink-0"><Icon name="idea" size={34} /></span>
+          <h3 class="m-0 font-display text-[2rem] font-semibold max-tablet:text-[1.8rem] max-mobile:text-[1.6rem]">
+            ¿Y tú, qué propones?
           </h3>
-          <span class="mt-auto flex min-h-8 items-center justify-between text-[0.76rem] font-bold group-hover:underline max-tablet:gap-[5px] max-tablet:text-[0.65rem]">
+          <span class="ml-auto flex min-h-8 items-center gap-2.5 text-[0.76rem] font-bold group-hover:underline max-mobile:ml-0 max-mobile:w-full max-mobile:justify-between">
             Comparte tu idea <Icon name="arrow" size={18} />
           </span>
         </a>

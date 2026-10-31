@@ -150,7 +150,8 @@ test('a heavy 3D model waits for the button, shows its progress and is reused on
   expect(modelos).toEqual([]);
   await boton.click();
   await visorCargado(page);
-  await expect(page.locator('.model-3d-progreso')).toBeHidden();
+  // Se oculta en el mismo `load` que quita el póster: en CI puede tardar más de 5 s, como en la prueba anterior.
+  await expect(page.locator('.model-3d-progreso')).toBeHidden({ timeout: 15000 });
   await expect(page.getByRole('progressbar', { name: 'Descarga del modelo 3D', includeHidden: true })).toHaveAttribute('aria-valuenow', '100');
   // El foco queda en el lienzo interno de model-viewer; desde fuera, activeElement es el propio visor.
   await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).toBe('MODEL-VIEWER');
@@ -325,13 +326,40 @@ test('obras en ejecución muestra el avance y los hitos de cada propuesta', asyn
   await page.getByRole('button', { name: 'Ciudadanía' }).hover();
   await page.locator('#citizen-menu').getByRole('link', { name: 'Obras en ejecución' }).click();
   await page.waitForURL('**/ciudadania/obras-en-ejecucion/');
-  await expect(page.locator('.obra')).toHaveCount(7);
+  await expect(page.locator('.obra')).toHaveCount(8);
   await expect(page.getByText('Datos provisionales de ejemplo')).toBeVisible();
   const barra = page.getByRole('progressbar', { name: 'Avance de Agua potable' });
   await expect(barra).toHaveAttribute('aria-valuenow', '60');
   await expect(page.locator('.obra').first().getByRole('listitem')).toHaveCount(5);
   await page.locator('.obra').first().getByRole('link', { name: 'Ver propuesta' }).click();
   await page.waitForURL('**/propuestas/agua-potable/');
+});
+
+test('las ocho propuestas llenan la rejilla y «¿Y tú, qué propones?» ocupa todo el ancho', async ({ page }) => {
+  for (const [ancho, columnas] of [[1440, 4], [768, 2], [390, 2], [320, 1]]) {
+    await page.setViewportSize({ width: ancho, height: 900 });
+    await page.goto('/');
+    const tarjetas = page.locator('.proposal-card');
+    await expect(tarjetas).toHaveCount(8);
+    await expect(tarjetas.last()).toHaveAttribute('href', '/propuestas/mercado-local/');
+    const franja = page.locator('#propuestas a[href="/ciudadania/sugerencias/"]');
+    const [rejilla, caja, primera] = await Promise.all([franja.locator('..'), franja, tarjetas.first()].map(l => l.boundingBox()));
+    expect(caja!.width).toBeCloseTo(rejilla!.width, 0);
+    expect(Math.round(rejilla!.width / primera!.width)).toBe(columnas);
+    expect(caja!.y).toBeGreaterThan((await tarjetas.last().boundingBox())!.y);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);
+  }
+});
+
+test('la propuesta con sitio propio lo enlaza en una tarjeta que abre otra pestaña', async ({ page }) => {
+  await page.goto('/propuestas/mercado-local/');
+  const tarjeta = page.getByRole('link', { name: 'Mercado Local, mercado.lanuevahistoria.tech (abre en otra pestaña)' });
+  await expect(tarjeta).toHaveAttribute('href', 'https://mercado.lanuevahistoria.tech/');
+  await expect(tarjeta).toHaveAttribute('target', '_blank');
+  await expect(tarjeta).toHaveAttribute('rel', 'noopener noreferrer');
+  await expect(page.locator('.model-3d')).toHaveCount(0);
+  await expect(page.getByText('Aún no hay imágenes del avance de esta obra.')).toBeVisible();
+  await expect(page.getByRole('progressbar', { name: 'Avance de Mercado local' })).toHaveAttribute('aria-valuenow', '20');
 });
 
 test('cada obra muestra su progreso junto a un carrusel de evidencias', async ({ page }) => {
@@ -350,7 +378,7 @@ test('cada obra muestra su progreso junto a un carrusel de evidencias', async ({
   await carrusel.getByRole('button', { name: 'Foto anterior' }).click();
   await carrusel.getByRole('button', { name: 'Foto anterior' }).click();
   await expect(carrusel.getByText('3 / 3')).toBeVisible();
-  await expect(page.getByText('Aún no hay imágenes del avance de esta obra.')).toHaveCount(6);
+  await expect(page.getByText('Aún no hay imágenes del avance de esta obra.')).toHaveCount(7);
 });
 
 test('en móvil las fotos de cada obra se despliegan desde un acordeón', async ({ page }) => {

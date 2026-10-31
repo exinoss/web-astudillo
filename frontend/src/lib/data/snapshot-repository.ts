@@ -2,7 +2,7 @@ import initial from '../../../../backend/database/contenido-inicial.json';
 import type { Original } from '../../../../backend/src/contracts/inicio';
 import { PARROQUIAS } from '../../../../backend/src/contracts/parroquias';
 import type { ContentRepository } from './content-repository';
-import { citizenIcons, proposalIcons, proposalModels } from './presentation';
+import { citizenIcons, proposalIcons, proposalModels, proposalSites } from './presentation';
 import { type ApiAboutCarlosPage, toAboutCarlosPage } from './acerca-de-carlos';
 import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, HomeCarousels, HomeImage, MyTeam, Proposal, UploadedPicture, WorkProgress } from './types';
 
@@ -38,7 +38,7 @@ export abstract class SnapshotRepository implements ContentRepository {
   async getProposals(): Promise<Proposal[]> {
     return (await this.load()).propuestas.map(p => ({
       slug: p.slug, name: p.nombre, label: p.categoria, intro: p.introduccion,
-      icon: proposalIcons[p.slug] ?? 'idea', model: proposalModels[p.slug],
+      icon: proposalIcons[p.slug] ?? 'idea', model: proposalModels[p.slug], site: proposalSites[p.slug],
       kpis: p.kpis.map(k => ({ label: k.etiqueta, value: k.valor })),
     }));
   }
