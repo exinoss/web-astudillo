@@ -10,7 +10,7 @@ export interface TextDefinition {
 
 const RUTAS: Record<string, string> = {
   "Barra superior": "/", "Todo el sitio": "/", "Pie de página": "/",
-  "Detalle de propuesta (las 7)": "/propuestas/agua-potable/", "Acerca de mí": "/acerca-de-nosotros/",
+  "Detalle de cada propuesta": "/propuestas/agua-potable/", "Acerca de mí": "/acerca-de-nosotros/",
   "Biografía": "/acerca-de-nosotros/biografia/", "Por qué quiero ser alcalde": "/acerca-de-nosotros/por-que-quiero-ser-alcalde/",
   "Conoce más sobre mí": "/acerca-de-nosotros/conoce-mas/", "Obras en ejecución": "/ciudadania/obras-en-ejecucion/",
   "Mi equipo": "/mi-equipo/",
@@ -57,14 +57,14 @@ export const TEXTOS = {
   "inicio.contacto.tiktok.texto": t("Portada · Contacto", "TikTok · descripción", 160),
   "inicio.contacto.whatsapp.texto": t("Portada · Contacto", "WhatsApp · descripción", 120),
 
-  "propuesta.antetitulo": t("Detalle de propuesta (las 7)", "Antetítulo", 40),
-  "propuesta.titulo": t("Detalle de propuesta (las 7)", "Título", 60),
-  "propuesta.texto": t("Detalle de propuesta (las 7)", "Texto", 300),
-  "propuesta.obra.antetitulo": t("Detalle de propuesta (las 7)", "Avance de la obra · título", 40),
-  "propuesta.preparacion.titulo": t("Detalle de propuesta (las 7)", "Aviso · título", 60),
-  "propuesta.preparacion.texto": t("Detalle de propuesta (las 7)", "Aviso · texto", 300),
-  "propuesta.perspectiva.titulo": t("Detalle de propuesta (las 7)", "Sugerencias · título", 80),
-  "propuesta.perspectiva.texto": t("Detalle de propuesta (las 7)", "Sugerencias · texto (va seguido del nombre de la propuesta)", 120),
+  "propuesta.antetitulo": t("Detalle de cada propuesta", "Antetítulo", 40),
+  "propuesta.titulo": t("Detalle de cada propuesta", "Título", 60),
+  "propuesta.texto": t("Detalle de cada propuesta", "Texto", 300),
+  "propuesta.obra.antetitulo": t("Detalle de cada propuesta", "Avance de la obra · título", 40),
+  "propuesta.preparacion.titulo": t("Detalle de cada propuesta", "Aviso · título", 60),
+  "propuesta.preparacion.texto": t("Detalle de cada propuesta", "Aviso · texto", 300),
+  "propuesta.perspectiva.titulo": t("Detalle de cada propuesta", "Sugerencias · título", 80),
+  "propuesta.perspectiva.texto": t("Detalle de cada propuesta", "Sugerencias · texto (va seguido del nombre de la propuesta)", 120),
 
   "acerca.antetitulo": t("Acerca de mí", "Antetítulo", 40),
   "acerca.nombre": t("Acerca de mí", "Nombre", 40),

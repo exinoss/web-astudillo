@@ -1,4 +1,5 @@
 import type { ImageMetadata } from "astro";
+import type { Animacion } from "../comun/animaciones";
 import type { Original } from "../../../../backend/src/contracts/inicio";
 import type { ParroquiaSlug } from "../../../../backend/src/contracts/parroquias";
 
@@ -7,6 +8,14 @@ export interface ProposalModel {
   // Importado en la semilla (se optimiza con astro:assets); URL si viene de la API.
   poster: ImageMetadata | string;
   alt: string;
+}
+
+export interface ProposalSite {
+  url: string;
+  title: string;
+  description: string;
+  logo: ImageMetadata;
+  logoAnimado?: Animacion;
 }
 
 /** Foto subida desde el panel: el backend ya generó las variantes `/medios/<nombre>-<ancho>.webp`. */
@@ -30,6 +39,7 @@ export interface Proposal {
   intro: string;
   kpis: Kpi[];
   model?: ProposalModel;
+  site?: ProposalSite;
 }
 
 export interface CitizenLink {

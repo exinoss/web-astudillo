@@ -15,9 +15,11 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - Panel: pestaña «Mi equipo» para editar el equipo (hasta 9 personas, con foto opcional) y el texto y las fotos (hasta 6) de cada parroquia.
 - Se pueden subir fotos AVIF en el panel y en las alertas. Una foto HEIC del iPhone que no se puede subir avisa cómo hacerlo.
 - Las imágenes de los dos carruseles de la portada se cambian desde el modo edición, con el botón «Cambiar imágenes» de cada uno: hasta 5 banners, cada uno con una imagen opcional para celular, el retrato de la segunda diapositiva y hasta 8 piezas de campaña. Se guardan como borrador y se ven al publicar.
+- Nueva propuesta «Mercado local», una tienda en línea para los comercios, emprendimientos y oficios de San Lorenzo, con sus cifras y el avance de la obra. En lugar de un modelo 3D, su página lleva una tarjeta con el logo animado de Mercado Local que abre su sitio en otra pestaña.
 
 ### Changed
 
+- En la portada, «¿Y tú, qué propones?» pasa a ser una franja a todo el ancho debajo de las ocho propuestas.
 - En la biografía, un momento sin foto muestra «Aún no hay foto de este momento.» en lugar de «Foto pendiente».
 - «Acerca de nosotros» pasa a llamarse «Acerca de mí», y «Conoce más sobre Carlos», «Conoce más sobre mí». Las direcciones de las páginas no cambian.
 - La galería de «Conoce más sobre mí» con una sola foto la muestra en grande sin flechas ni miniaturas.

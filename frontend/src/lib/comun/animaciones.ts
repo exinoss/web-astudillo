@@ -1,15 +1,24 @@
-import type { AnimationItem, LottiePlayer } from "lottie-web";
+import type { AnimationItem, AnimationSegment, LottiePlayer } from "lottie-web";
 // Como URLs y no con `import()`: un `import()` fallido queda memorizado y no se puede reintentar.
 import reproductorUrl from "lottie-web/build/player/lottie_light.min.js?url";
 import reproductorEnHiloUrl from "lottie-web/build/player/lottie_canvas_worker.min.js?url";
 import loaderUrl from "../../assets/animated/loader-vota6.min.json?url";
 import marcaUrl from "../../assets/animated/marca-vota6.min.json?url";
+import mercadoLocalUrl from "../../assets/animated/logo-mercado-local.min.json?url";
 
+interface Ficha {
+  url: string;
+  fotogramaQuieto: number;
+  /** Tramo que se repite después de una primera vuelta completa; sin él se repite entera. */
+  bucle?: AnimationSegment;
+}
 const ANIMACIONES = {
   loader: { url: loaderUrl, fotogramaQuieto: 70 },
   marca: { url: marcaUrl, fotogramaQuieto: 40 },
-};
-type Animacion = keyof typeof ANIMACIONES;
+  mercadoLocal: { url: mercadoLocalUrl, fotogramaQuieto: 90, bucle: [90, 270] },
+} satisfies Record<string, Ficha>;
+export type Animacion = keyof typeof ANIMACIONES;
+type Activa = { item: AnimationItem; quieto: number; bucle?: AnimationSegment };
 
 const html = document.documentElement;
 export const sinMovimiento = () => html.classList.contains("reduce-motion");
@@ -18,7 +27,7 @@ export const ahorroDatos = (navigator as any).connection?.saveData === true;
 let reproductor: Promise<LottiePlayer> | undefined;
 let intentos = 0;
 const datos = new Map<Animacion, Promise<unknown>>();
-const activas = new Set<{ item: AnimationItem; quieto: number }>();
+const activas = new Set<Activa>();
 
 /** Carga lottie_light como script clásico; si falla, la próxima llamada lo reintenta. */
 function cargarReproductor() {
@@ -83,9 +92,11 @@ export async function reproducir(
       animationData: structuredClone(animationData),
     });
     if (alCompletarVuelta) item.addEventListener("loopComplete", alCompletarVuelta);
-    const activa = { item, quieto: ANIMACIONES[animacion].fotogramaQuieto };
+    const { fotogramaQuieto, bucle }: Ficha = ANIMACIONES[animacion];
+    const activa = { item, quieto: fotogramaQuieto, bucle };
     activas.add(activa);
-    aplicarMovimiento(activa);
+    if (bucle && !sinMovimiento()) item.playSegments([[0, bucle[0]], bucle], true);
+    else aplicarMovimiento(activa);
     return () => {
       activas.delete(activa);
       item.destroy();
@@ -169,8 +180,10 @@ export async function reproducirEnHilo(contenedor: HTMLElement, animacion: Anima
   }
 }
 
-function aplicarMovimiento({ item, quieto }: { item: AnimationItem; quieto: number }) {
+function aplicarMovimiento({ item, quieto, bucle }: Activa) {
   if (sinMovimiento()) item.goToAndStop(quieto, true);
+  // Cualquier cambio de clase en <html> llega aquí: sin comprobar la pausa, la entrada se cortaría.
+  else if (bucle) item.isPaused && item.playSegments(bucle, true);
   else item.play();
 }
 

@@ -42,6 +42,9 @@ Por qué: tapaba textos y la línea de tiempo, y es una descarga que no aporta e
 **D-018 · 2026-10-30 · Las imágenes de los carruseles de la portada se cambian desde el modo edición. Las que vienen con el sitio entran por la semilla con su clave (`{ "original": "portada" }`) y siguen en `frontend/src/assets`. Un carrusel que se queda sin fotos vuelve a las de la semilla.**
 Por qué: la portada debía verse idéntica hasta que alguien la cambie, sin subir las imágenes del cliente a mano en producción, y la semilla es el camino del contenido inicial. Detalle: [cómo funciona la publicación](como-funciona-la-publicacion.md), §3.2, y `backend/src/contracts/inicio.ts`.
 
+**D-019 · 2026-10-31 · Una propuesta nueva se añade al final de `propuestas` y `obras` de la semilla, completa, y el código de la semilla no cambia. En una base con datos, el despliegue crea la propuesta y su obra, pero sus cifras y etapas quedan vacías y se llenan desde el panel antes de publicar.**
+Por qué: la semilla añade lo que falta por clave (propuestas, obras, textos) y solo carga las listas (cifras, etapas, biografía, chat) en una tabla vacía; cambiar eso arriesgaría sobrescribir o resucitar lo que editan los administradores. El panel no crea propuestas, así que la semilla es su único camino. Si la propuesta enlaza un sitio propio, su tarjeta va en `proposalSites` de `frontend/src/lib/data/presentation.ts`, como los modelos 3D en `proposalModels`.
+
 ## Trabajo y configuración
 
 **D-011 · 2026-10-03 · Despliegue con Docker Compose, GitHub Actions, GHCR y `server-produccion/desplegar.sh`; descartados Dokploy, Vercel y Jenkins.**

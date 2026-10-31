@@ -50,7 +50,7 @@ test("el contenido inicial viene de la semilla y solo lo leen quienes editan", a
   const res = await call("/api/admin/contenido", "GET", undefined, cookies.coadmin);
   expect(res.status).toBe(200);
   const c = await res.json();
-  expect(c.propuestas).toHaveLength(7);
+  expect(c.propuestas).toHaveLength(8);
   expect(c.propuestas[0]).toMatchObject({ slug: "agua-potable", kpis: [
     { etiqueta: "Cobertura meta", valor: "98%" }, { etiqueta: "Comunidades", valor: "32" }, { etiqueta: "Plazo", valor: "36 meses" },
   ] });
@@ -190,7 +190,7 @@ test("publicar congela el contenido, calcula lo pendiente y agrupa la cola", asy
   expect((await (await call("/api/contenido/publicado")).json()).textos).toEqual(initial.textos);
   const [tomada] = await callPg<{ id_publicacion: number; contenido: { propuestas: unknown[] } }>(sql, "publicationClaim");
   expect(tomada.id_publicacion).toBe(primera.id);
-  expect(tomada.contenido.propuestas).toHaveLength(7);
+  expect(tomada.contenido.propuestas).toHaveLength(8);
   expect(await callPg(sql, "publicationClaim")).toEqual([]);
   // Mientras compila, pulsar «Publicar» otra vez devuelve la misma publicación en vez de crear otra.
   const repetida = await call("/api/admin/publicaciones", "POST", undefined, cookies.admin);
@@ -198,7 +198,7 @@ test("publicar congela el contenido, calcula lo pendiente y agrupa la cola", asy
   expect(await repetida.json()).toEqual({ id: primera.id, estado: "publicando" });
   const publicado = await call("/api/contenido/publicado");
   expect(publicado.status).toBe(200);
-  expect((await publicado.json()).propuestas).toHaveLength(7);
+  expect((await publicado.json()).propuestas).toHaveLength(8);
   await callPg(sql, "publicationFinish", [tomada.id_publicacion, true, null]);
   expect(await pendientes()).toEqual([]);
   expect((await call("/api/admin/publicaciones", "POST", undefined, cookies.coadmin)).status).toBe(409);
