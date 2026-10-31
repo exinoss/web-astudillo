@@ -98,12 +98,12 @@ export const tbTokenAutenticacion = pgTable("tb_token_autenticacion", {
 			name: "tb_token_autenticacion_id_usuario_fkey"
 		}).onDelete("cascade"),
 	unique("tb_token_autenticacion_token_hash_key").on(table.tokenHash),
-	check("tb_token_autenticacion_proposito_check", sql`(proposito)::text = ANY ((ARRAY['registro_correo'::character varying, 'recuperar_contrasenia'::character varying, 'acceso_correo'::character varying])::text[])`),
+	check("tb_token_autenticacion_proposito_check", sql`(proposito)::text = ANY ((ARRAY['registro_correo'::character varying, 'recuperar_contrasenia'::character varying, 'acceso_correo'::character varying, 'confirmar_accion'::character varying])::text[])`),
 	check("tb_token_autenticacion_token_hash_check", sql`token_hash <> ''::text`),
 	check("ck_token_correo_limpio", sql`((correo)::text = btrim((correo)::text)) AND ((correo)::text <> ''::text)`),
 	check("ck_token_vigencia", sql`expira_en > creado_en`),
-	// El registro aún no tiene usuario; recuperar y el acceso por enlace son de una cuenta existente.
-	check("ck_token_destino", sql`(((proposito)::text = 'registro_correo'::text) AND (id_usuario IS NULL)) OR (((proposito)::text = ANY ((ARRAY['recuperar_contrasenia'::character varying, 'acceso_correo'::character varying])::text[])) AND (id_usuario IS NOT NULL))`),
+	// El registro aún no tiene usuario; recuperar, el acceso por enlace y el código de confirmación son de una cuenta existente.
+	check("ck_token_destino", sql`(((proposito)::text = 'registro_correo'::text) AND (id_usuario IS NULL)) OR (((proposito)::text = ANY ((ARRAY['recuperar_contrasenia'::character varying, 'acceso_correo'::character varying, 'confirmar_accion'::character varying])::text[])) AND (id_usuario IS NOT NULL))`),
 ]);
 
 export const tbRegistrosPendientes = pgTable("tb_registros_pendientes", {

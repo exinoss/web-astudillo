@@ -2,14 +2,14 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import { callPg } from "../src/db/call";
 import { FORBIDDEN_ACCOUNT, FORBIDDEN_ROLE } from "../src/admin/services/hierarchy";
 import { migrate } from "../src/db/migrate";
-import { testApp } from "./helpers";
+import { PASSWORD, testApp } from "./helpers";
 
-const { sql, ids, cookies, call, account, resetAccounts } = testApp();
+const { sql, ids, cookies, sent, call, account, resetAccounts } = testApp();
 const roleOf = async (name: string) =>
   (await sql`SELECT rol FROM tb_usuarios WHERE id_usuario = ${ids[name]}`)[0].rol;
 // Como el panel: envía el rol que se ve en la lista recién cargada (o el indicado, para simular una lista vieja).
 const changeRole = async (actor: string, target: string, rol: string, rolAnterior?: string) =>
-  call(`/api/admin/usuarios/${ids[target]}/rol`, "PATCH", { rol, rolAnterior: rolAnterior ?? await roleOf(target) }, cookies[actor]);
+  call(`/api/admin/usuarios/${ids[target]}/rol`, "PATCH", { rol, rolAnterior: rolAnterior ?? await roleOf(target), confirmacion: PASSWORD }, cookies[actor]);
 
 beforeAll(async () => {
   await migrate(sql);
@@ -108,7 +108,7 @@ test("desactivar respeta la jerarquía y cierra las sesiones de la cuenta", asyn
   const estadoDe = async (name: string) =>
     (await sql`SELECT estado FROM tb_usuarios WHERE id_usuario = ${ids[name]}`)[0]?.estado ?? "activo";
   const estado = async (actor: string, objetivo: string, valor: string) =>
-    call(`/api/admin/usuarios/${ids[objetivo]}/estado`, "PATCH", { estado: valor, estadoAnterior: await estadoDe(objetivo) }, cookies[actor]);
+    call(`/api/admin/usuarios/${ids[objetivo]}/estado`, "PATCH", { estado: valor, estadoAnterior: await estadoDe(objetivo), confirmacion: PASSWORD }, cookies[actor]);
   expect((await call("/api/me", "GET", undefined, cookies.votante1)).status).toBe(200);
   expect((await estado("admin1", "votante1", "bloqueado")).status).toBe(200);
   // El acceso vigente deja de servir aunque el JWT no haya caducado: la autorización consulta el estado.
@@ -163,8 +163,69 @@ test("cambiar rol o estado con una lista vieja no pisa lo que hizo otro admin; r
   expect((await changeRole("admin1", "votante3", "coadmin", "votante")).status).toBe(200);
   expect((await sql`SELECT count(*)::int AS n FROM tb_auditoria WHERE accion = 'rol_cambiado'`)[0].n).toBe(antes);
   const estado = (actor: string, valor: string, anterior: string) =>
-    call(`/api/admin/usuarios/${ids.votante3}/estado`, "PATCH", { estado: valor, estadoAnterior: anterior }, cookies[actor]);
+    call(`/api/admin/usuarios/${ids.votante3}/estado`, "PATCH", { estado: valor, estadoAnterior: anterior, confirmacion: PASSWORD }, cookies[actor]);
   expect((await estado("admin1", "bloqueado", "activo")).status).toBe(200);
   expect((await estado("admin1", "bloqueado", "activo")).status).toBe(200); // doble clic
   expect((await estado("admin2", "activo", "activo")).status).toBe(409);    // cree que está activa: no coincide
+});
+
+test("cambiar el rol o el estado exige la contraseña de quien lo hace", async () => {
+  await account("votante4", "votante");
+  const rol = (confirmacion?: string) => call(`/api/admin/usuarios/${ids.votante4}/rol`, "PATCH",
+    { rol: "coadmin", rolAnterior: "votante", ...(confirmacion === undefined ? {} : { confirmacion }) }, cookies.admin1);
+  expect((await rol()).status).toBe(422);
+  const mal = await rol("otra-contraseña");
+  expect(mal.status).toBe(403);
+  expect((await mal.json()).error).toBe("La contraseña no es correcta");
+  const desactivar = await call(`/api/admin/usuarios/${ids.votante4}/estado`, "PATCH",
+    { estado: "bloqueado", estadoAnterior: "activo", confirmacion: "otra-contraseña" }, cookies.admin1);
+  expect(desactivar.status).toBe(403);
+  expect(await roleOf("votante4")).toBe("votante");
+  expect((await sql`SELECT estado FROM tb_usuarios WHERE id_usuario = ${ids.votante4}`)[0].estado).toBe("activo");
+  expect((await rol(PASSWORD)).status).toBe(200);
+  expect(await roleOf("votante4")).toBe("coadmin");
+});
+
+test("tras varios fallos de contraseña hay que esperar, aunque después se escriba bien", async () => {
+  const intento = (confirmacion: string) => call(`/api/admin/usuarios/${ids.votante4}/rol`, "PATCH",
+    { rol: "votante", rolAnterior: "coadmin", confirmacion }, cookies.admin1);
+  const estados: number[] = [];
+  for (let i = 0; i < 6; i++) estados.push((await intento("otra-contraseña")).status);
+  expect(estados).toEqual([403, 403, 403, 403, 403, 429]);
+  expect((await intento(PASSWORD)).status).toBe(429);
+  expect(await roleOf("votante4")).toBe("coadmin");
+  await sql`DELETE FROM tb_limites_intentos`;
+});
+
+test("sin contraseña se confirma con un código enviado al correo, que sirve hasta vencer", async () => {
+  await account("admin3", "admin");
+  await sql`DELETE FROM tb_identidades_autenticacion WHERE id_usuario = ${ids.admin3}`;
+  await account("votante5", "votante");
+  const pedir = () => call("/api/admin/confirmacion/codigo", "POST", {}, cookies.admin3);
+  const antes = sent.length;
+  expect((await pedir()).status).toBe(200);
+  expect((await pedir()).status).toBe(200); // doble clic: un solo correo
+  const correos = sent.slice(antes);
+  expect(correos).toHaveLength(1);
+  expect(correos[0]).toMatchObject({ to: "admin3@example.com", subject: "Código para confirmar un cambio" });
+  const codigo = correos[0].codigo;
+  expect(codigo).toMatch(/^\d{6}$/);
+  const rol = (nuevo: string, anterior: string, confirmacion: string) => call(`/api/admin/usuarios/${ids.votante5}/rol`, "PATCH",
+    { rol: nuevo, rolAnterior: anterior, confirmacion }, cookies.admin3);
+  const mal = await rol("coadmin", "votante", codigo === "000000" ? "000001" : "000000");
+  expect(mal.status).toBe(403);
+  expect((await mal.json()).error).toBe("El código no es correcto o ya venció");
+  expect((await rol("coadmin", "votante", PASSWORD)).status).toBe(403);
+  expect((await rol("coadmin", "votante", codigo)).status).toBe(200);
+  expect((await rol("votante", "coadmin", codigo)).status).toBe(200);
+  await sql`UPDATE tb_token_autenticacion SET creado_en = now() - interval '11 minutes', expira_en = now() - interval '1 minute'
+    WHERE id_usuario = ${ids.admin3}`;
+  expect((await rol("coadmin", "votante", codigo)).status).toBe(403);
+  expect(await roleOf("votante5")).toBe("votante");
+  await sql`DELETE FROM tb_limites_intentos`;
+});
+
+test("una cuenta con contraseña no pide código, y quien no gestiona usuarios no puede pedirlo", async () => {
+  expect((await call("/api/admin/confirmacion/codigo", "POST", {}, cookies.admin1)).status).toBe(409);
+  expect((await call("/api/admin/confirmacion/codigo", "POST", {}, cookies.votante2)).status).toBe(403);
 });

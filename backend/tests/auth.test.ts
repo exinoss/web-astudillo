@@ -21,7 +21,7 @@ const config: Config = {
   mediaDir: "medios-pruebas", privateMediaDir: "medios-pruebas-privados",
 };
 const sent: Array<{ to: string; url: string }> = [];
-const mailer: Mailer = { async send(to, mensaje) { sent.push({ to, url: mensaje.url }); } };
+const mailer: Mailer = { async send(to, mensaje) { sent.push({ to, url: 'url' in mensaje ? mensaje.url : '' }); } };
 const original = createSecurity(config);
 const security = {
   ...original,

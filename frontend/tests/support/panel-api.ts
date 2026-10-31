@@ -4,6 +4,9 @@ import { PARROQUIAS } from '../../../backend/src/contracts/parroquias';
 import { servirFotos } from './fotos';
 
 // API simulada del panel: guarda el borrador en memoria para que los tests vean el efecto de cada acción.
+/** Lo que el panel simulado acepta para confirmar un cambio de rol o de estado. */
+export const CONTRASENIA_PANEL = 'Ab1!xyz';
+export const CODIGO_PANEL = '482913';
 const photo = (id: number) => ({ idMedio: id, nombre: `foto-${id}`, ancho: 1600, alto: 1200, anchos: [480, 960, 1600] });
 
 export function panelData(rol: 'admin' | 'coadmin') {
@@ -72,6 +75,7 @@ export function panelData(rol: 'admin' | 'coadmin') {
     savedTeam: [] as Record<string, unknown>[],
     savedHome: [] as Record<string, unknown>[],
     uploads: 0,
+    codigosEnviados: 0,
     videoCovers: [] as string[],
     users: Array.from({ length: 23 }, (_, i) => ({
       id: i + 2, correo: `persona${i + 2}@example.com`, nombresCompletos: `Persona ${i + 2}`,
@@ -231,13 +235,22 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
           motivoBloqueo: allowed ? null : 'No tienes permiso para modificar esta cuenta' };
       }) });
     }
-    const state = path.match(/^\/api\/admin\/usuarios\/(\d+)\/estado$/);
-    if (state) {
-      const user = data.users.find(u => u.id === Number(state[1]))!;
-      if (user.estado !== body().estado && user.estado !== body().estadoAnterior)
+    if (path === '/api/admin/confirmacion/codigo') {
+      data.codigosEnviados++;
+      return json({ ok: true });
+    }
+    const cambio = path.match(/^\/api\/admin\/usuarios\/(\d+)\/(rol|estado)$/);
+    if (cambio) {
+      const conContrasenia = data.profile.tieneContrasenia;
+      if (body().confirmacion !== (conContrasenia ? CONTRASENIA_PANEL : CODIGO_PANEL))
+        return json({ error: conContrasenia ? 'La contraseña no es correcta' : 'El código no es correcto o ya venció' }, 403);
+      const user = data.users.find(u => u.id === Number(cambio[1]))!;
+      const campo = cambio[2] as 'rol' | 'estado';
+      const anterior = campo === 'rol' ? body().rolAnterior : body().estadoAnterior;
+      if (user[campo] !== body()[campo] && user[campo] !== anterior)
         return json({ error: 'La cuenta cambió mientras tanto; recarga la lista' }, 409);
-      user.estado = body().estado;
-      return json({});
+      (user as Record<string, unknown>)[campo] = body()[campo];
+      return json({ id: user.id, rol: user.rol, estado: user.estado });
     }
     return json({ error: 'No encontrado' }, 404);
   });

@@ -1,5 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test';
-import { mockPanelApi, panelData } from './support/panel-api';
+import { CODIGO_PANEL, CONTRASENIA_PANEL, mockPanelApi, panelData } from './support/panel-api';
 
 test('un visitante sin permiso no ve el panel ni el enlace en su cuenta', async ({ page }) => {
   const data = panelData('coadmin');
@@ -36,7 +36,7 @@ test('un coadmin edita y publica, pero no ve Usuarios', async ({ page }) => {
   await expect(page.locator('#panel-publicar')).toBeDisabled();
 });
 
-test('un admin filtra, pagina y desactiva cuentas con confirmación', async ({ page }) => {
+test('un admin filtra, pagina y desactiva cuentas confirmando con su contraseña', async ({ page }) => {
   const data = panelData('admin');
   await mockPanelApi(page, data);
   await page.goto('/cuenta/panel/#usuarios');
@@ -51,7 +51,88 @@ test('un admin filtra, pagina y desactiva cuentas con confirmación', async ({ p
   await section.locator('#usuarios-buscar').fill('persona4@');
   await expect(section.locator('#usuarios-total')).toHaveText('1 cuenta');
   await section.getByRole('button', { name: 'Desactivar' }).first().click();
-  await section.getByRole('button', { name: 'Sí, desactivar' }).first().click();
+  const dialogo = page.getByRole('dialog', { name: 'Confirma que eres tú' });
+  await expect(dialogo).toContainText('Vas a desactivar la cuenta de Persona 4. Se cerrarán sus sesiones.');
+  await page.locator('#confirmar-valor').fill(CONTRASENIA_PANEL);
+  await dialogo.getByRole('button', { name: 'Desactivar' }).click();
+  await expect(page.locator('#panel-estado')).toContainText('Cuenta desactivada');
+  expect(data.users.find(u => u.id === 4)!.estado).toBe('bloqueado');
+});
+
+test('cambiar un rol pide la contraseña; una incorrecta o cancelar no cambian nada', async ({ page }) => {
+  const data = panelData('admin');
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#usuarios');
+  const section = page.locator('#seccion-usuarios');
+  await section.locator('#usuarios-buscar').fill('persona5@');
+  await expect(section.locator('#usuarios-total')).toHaveText('1 cuenta');
+  const fila = section.locator('.max-tablet\\:hidden [data-guardar-rol]').locator('..');
+  await fila.locator('select').selectOption('coadmin');
+  await fila.getByRole('button', { name: 'Guardar' }).click();
+  const dialogo = page.getByRole('dialog', { name: 'Confirma que eres tú' });
+  await expect(dialogo).toContainText('Vas a cambiar el rol de Persona 5 a Coadmin.');
+  await expect(page.locator('#confirmar-valor')).toBeFocused();
+  await page.keyboard.press('Escape');
+  await expect(dialogo).toBeHidden();
+  expect(data.users.find(u => u.id === 5)!.rol).toBe('votante');
+  await fila.getByRole('button', { name: 'Guardar' }).click();
+  await dialogo.getByRole('button', { name: 'Cambiar rol' }).click();
+  await expect(dialogo.getByRole('alert')).toHaveText('Escribe tu contraseña.');
+  await page.locator('#confirmar-valor').fill('otra');
+  await dialogo.getByRole('button', { name: 'Cambiar rol' }).click();
+  await expect(dialogo.getByRole('alert')).toHaveText('La contraseña no es correcta');
+  expect(data.users.find(u => u.id === 5)!.rol).toBe('votante');
+  await page.locator('#confirmar-valor').fill(CONTRASENIA_PANEL);
+  await dialogo.getByRole('button', { name: 'Cambiar rol' }).click();
+  await expect(dialogo).toBeHidden();
+  await expect(page.locator('#panel-estado')).toHaveText('Rol actualizado.');
+  expect(data.users.find(u => u.id === 5)!.rol).toBe('coadmin');
+});
+
+test('confirmar dos veces seguidas envía el cambio una sola vez', async ({ page }) => {
+  const data = panelData('admin');
+  await mockPanelApi(page, data);
+  let envios = 0;
+  await page.route('**/api/admin/usuarios/*/estado', async (route) => {
+    envios++;
+    await new Promise((r) => setTimeout(r, 800));
+    await route.fallback();
+  });
+  await page.goto('/cuenta/panel/#usuarios');
+  const section = page.locator('#seccion-usuarios');
+  await section.locator('#usuarios-buscar').fill('persona4@');
+  await expect(section.locator('#usuarios-total')).toHaveText('1 cuenta');
+  await section.getByRole('button', { name: 'Desactivar' }).first().click();
+  await page.locator('#confirmar-valor').fill(CONTRASENIA_PANEL);
+  await page.locator('#confirmar-valor').press('Enter');
+  await page.locator('#confirmar-valor').press('Enter');
+  await expect(page.locator('#panel-estado')).toContainText('Cuenta desactivada');
+  expect(envios).toBe(1);
+});
+
+test('una cuenta sin contraseña confirma con el código enviado a su correo', async ({ page }) => {
+  const data = panelData('admin');
+  data.profile.tieneContrasenia = false;
+  data.profile.tieneGoogle = true;
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#usuarios');
+  const section = page.locator('#seccion-usuarios');
+  await section.locator('#usuarios-buscar').fill('persona4@');
+  await expect(section.locator('#usuarios-total')).toHaveText('1 cuenta');
+  await section.getByRole('button', { name: 'Desactivar' }).first().click();
+  const dialogo = page.getByRole('dialog', { name: 'Confirma que eres tú' });
+  await expect(dialogo).toContainText('Te enviaremos un código a ana@example.com.');
+  await expect(dialogo.getByRole('button', { name: 'Desactivar' })).toBeDisabled();
+  await dialogo.getByRole('button', { name: 'Enviar código' }).click();
+  await expect(dialogo).toContainText('Te enviamos un código a ana@example.com.');
+  await expect(dialogo.getByRole('button', { name: /^Reenviar código en \d+ s$/ })).toBeDisabled();
+  expect(data.codigosEnviados).toBe(1);
+  await expect(page.locator('#confirmar-valor')).toBeFocused();
+  await page.locator('#confirmar-valor').fill('000000');
+  await dialogo.getByRole('button', { name: 'Desactivar' }).click();
+  await expect(dialogo.getByRole('alert')).toHaveText('El código no es correcto o ya venció');
+  await page.locator('#confirmar-valor').fill(CODIGO_PANEL);
+  await dialogo.getByRole('button', { name: 'Desactivar' }).click();
   await expect(page.locator('#panel-estado')).toContainText('Cuenta desactivada');
   expect(data.users.find(u => u.id === 4)!.estado).toBe('bloqueado');
 });

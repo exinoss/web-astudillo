@@ -2,16 +2,19 @@
 // estilos en línea, que es lo que respetan Gmail, Outlook y los clientes móviles. Las imágenes viajan
 // incrustadas en el correo (adjuntos CID, ver mailer.ts); la maqueta de design/ las enlaza como archivos.
 
-export interface Mensaje {
+interface Comun {
   asunto: string;
   /** Texto oculto que los clientes muestran junto al asunto en la bandeja. */
   resumen: string;
   titulo: string;
   parrafos: string[];
-  boton: string;
-  url: string;
   vigencia: string;
 }
+
+type ConEnlace = Comun & { boton: string; url: string };
+type ConCodigo = Comun & { codigo: string };
+/** Con enlace lleva un botón; con `codigo`, el código ocupa su lugar. */
+export type Mensaje = ConEnlace | ConCodigo;
 
 export interface Imagenes { logo: string; cabecera: string; hashtag: string }
 
@@ -35,7 +38,22 @@ const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt
 
 /** HTML del correo: cabecera con la marca, foto, título, botón y pie con #lanuevahistoria. */
 export function correoHtml(m: Mensaje, img: Imagenes = CID) {
-  const url = esc(m.url);
+  const accion = "codigo" in m
+    ? `<div style="display:inline-block;background:#eef4fb;border:2px solid ${AZUL};color:${AZUL};font-family:${CUERPO};font-size:32px;font-weight:700;line-height:1;letter-spacing:8px;padding:16px 28px;border-radius:3px;">${esc(m.codigo)}</div>`
+    : `<a href="${esc(m.url)}" style="display:inline-block;background:${AZUL};color:#ffffff;font-family:${CUERPO};font-size:16px;font-weight:700;line-height:1;text-decoration:none;text-align:center;padding:18px 36px;border-radius:3px;">${esc(m.boton)}</a>`;
+  const respaldo = "codigo" in m ? "" : `
+    <!-- Respaldo si el botón no funciona y aviso de seguridad. -->
+    <tr><td class="px" style="padding:0 32px 28px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #d9e0ea;">
+        <tr><td style="padding-top:18px;font-family:${CUERPO};font-size:12px;line-height:1.5;color:${TEXTO_SUAVE};">
+          Si el botón no funciona, copia este enlace en tu navegador:<br>
+          <a href="${esc(m.url)}" style="color:${TEXTO_SUAVE};word-break:break-all;">${esc(m.url)}</a>
+        </td></tr>
+        <tr><td style="padding-top:14px;font-family:${CUERPO};font-size:13px;line-height:1.5;color:${AZUL};font-weight:700;">
+          Si usted no solicitó este correo, por favor ignórelo.
+        </td></tr>
+      </table>
+    </td></tr>`;
   return `<!doctype html>
 <html lang="es">
 <head>
@@ -89,24 +107,12 @@ export function correoHtml(m: Mensaje, img: Imagenes = CID) {
       ${m.parrafos.map(p => `<p style="margin:0 0 16px;">${esc(p)}</p>`).join('')}
     </td></tr>
     <tr><td class="px boton" style="padding:6px 32px 8px;">
-      <a href="${url}" style="display:inline-block;background:${AZUL};color:#ffffff;font-family:${CUERPO};font-size:16px;font-weight:700;line-height:1;text-decoration:none;text-align:center;padding:18px 36px;border-radius:3px;">${esc(m.boton)}</a>
+      ${accion}
     </td></tr>
     <tr><td class="px" style="padding:14px 32px 26px;font-family:${CUERPO};font-size:13px;line-height:1.5;color:${TEXTO_SUAVE};">
       ${esc(m.vigencia)}
     </td></tr>
-
-    <!-- Respaldo si el botón no funciona y aviso de seguridad. -->
-    <tr><td class="px" style="padding:0 32px 28px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #d9e0ea;">
-        <tr><td style="padding-top:18px;font-family:${CUERPO};font-size:12px;line-height:1.5;color:${TEXTO_SUAVE};">
-          Si el botón no funciona, copia este enlace en tu navegador:<br>
-          <a href="${url}" style="color:${TEXTO_SUAVE};word-break:break-all;">${url}</a>
-        </td></tr>
-        <tr><td style="padding-top:14px;font-family:${CUERPO};font-size:13px;line-height:1.5;color:${AZUL};font-weight:700;">
-          Si usted no solicitó este correo, por favor ignórelo.
-        </td></tr>
-      </table>
-    </td></tr>
+${respaldo}
 
     <!-- Pie azul con #lanuevahistoria. -->
     <tr><td align="center" style="background:${AZUL};padding:26px 24px 24px;">
@@ -129,25 +135,32 @@ export function correoHtml(m: Mensaje, img: Imagenes = CID) {
 
 /** Versión de texto plano con el mismo contenido, para clientes sin HTML. */
 export function correoTexto(m: Mensaje) {
-  return [m.titulo, '', ...m.parrafos.flatMap(p => [p, '']), `${m.boton}: ${m.url}`, '', m.vigencia, '',
-    'Si usted no solicitó este correo, por favor ignórelo.', '', '#lanuevahistoria · Carlos Astudillo · Partido Social Cristiano · Lista 6'].join('\n');
+  const accion = 'codigo' in m ? [`Código: ${m.codigo}`] : [`${m.boton}: ${m.url}`];
+  const aviso = 'codigo' in m ? [] : ['Si usted no solicitó este correo, por favor ignórelo.', ''];
+  return [m.titulo, '', ...m.parrafos.flatMap(p => [p, '']), ...accion, '', m.vigencia, '',
+    ...aviso, '#lanuevahistoria · Carlos Astudillo · Partido Social Cristiano · Lista 6'].join('\n');
 }
 
-/** Los tres correos de cuenta; `url` la pone el backend al enviarlos. */
+/** Los correos de cuenta; `url` o `codigo` los pone el backend al enviarlos. */
 export const MENSAJES = {
-  verificar: (url: string): Mensaje => ({
+  verificar: (url: string): ConEnlace => ({
     asunto: 'Confirma tu correo', resumen: 'Un paso más para activar tu cuenta.', titulo: 'Confirma tu correo',
     parrafos: ['Hola:', 'Gracias por sumarte. Pulsa el botón para confirmar tu correo y activar tu cuenta.'],
     boton: 'Confirmar mi correo', url, vigencia: 'El enlace vence en 30 minutos y solo se puede usar una vez.',
   }),
-  recuperar: (url: string): Mensaje => ({
+  recuperar: (url: string): ConEnlace => ({
     asunto: 'Restablece tu contraseña', resumen: 'Crea una contraseña nueva para tu cuenta.', titulo: 'Restablece tu contraseña',
     parrafos: ['Hola:', 'Recibimos una solicitud para cambiar la contraseña de tu cuenta. Pulsa el botón para crear una nueva.'],
     boton: 'Crear contraseña nueva', url, vigencia: 'El enlace vence en 30 minutos y solo se puede usar una vez.',
   }),
-  acceso: (url: string): Mensaje => ({
+  acceso: (url: string): ConEnlace => ({
     asunto: 'Termina de iniciar sesión', resumen: 'Por seguridad, termina de entrar desde este correo.', titulo: 'Termina de entrar',
     parrafos: ['Hola:', 'Por seguridad, para terminar de iniciar sesión en tu cuenta necesitamos que pulses el botón desde este correo.'],
     boton: 'Entrar a mi cuenta', url, vigencia: 'El enlace vence en 15 minutos y solo se puede usar una vez.',
+  }),
+  codigo: (codigo: string): ConCodigo => ({
+    asunto: 'Código para confirmar un cambio', resumen: 'Escríbelo en el panel para confirmar el cambio.', titulo: 'Confirma el cambio',
+    parrafos: ['Hola:', 'Escribe este código en el panel para confirmar el cambio que estás haciendo.', 'Si no lo pediste, avisa al equipo de la campaña.'],
+    codigo, vigencia: 'El código vence en 10 minutos.',
   }),
 };

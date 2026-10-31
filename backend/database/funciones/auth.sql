@@ -244,6 +244,22 @@ RETURNS void LANGUAGE sql AS $$
   DELETE FROM tb_token_autenticacion WHERE id_token_autenticacion = p_token;
 $$;
 
+-- Sin contraseña (cuenta solo con Google), `contrasenia_hash` llega nulo y la identidad se confirma con un código.
+CREATE OR REPLACE FUNCTION fn_confirmation_method(p_user integer)
+RETURNS TABLE(correo varchar(320), contrasenia_hash text) LANGUAGE sql STABLE AS $$
+  SELECT u.correo, i.contrasenia_hash FROM tb_usuarios u
+  LEFT JOIN tb_identidades_autenticacion i ON i.id_usuario = u.id_usuario AND i.proveedor = 'correo'
+  WHERE u.id_usuario = p_user AND u.estado = 'activo';
+$$;
+
+CREATE OR REPLACE FUNCTION fn_confirmation_code(p_user integer)
+RETURNS TABLE(token_hash text) LANGUAGE sql STABLE AS $$
+  SELECT t.token_hash FROM tb_token_autenticacion t
+  WHERE t.id_usuario = p_user AND t.proposito = 'confirmar_accion'
+    AND t.consumido_en IS NULL AND t.expira_en > now()
+  ORDER BY t.creado_en DESC LIMIT 1;
+$$;
+
 CREATE OR REPLACE FUNCTION fn_password_user(p_email text)
 RETURNS TABLE(
   id_usuario integer, correo varchar(320), nombres_completos varchar(200),

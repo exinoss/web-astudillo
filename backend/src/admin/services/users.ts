@@ -1,6 +1,6 @@
 import type { SQL } from 'bun';
 import { PERMISSIONS } from '../../auth/permissions';
-import type { Authorization } from '../../auth/types';
+import type { Authorization, Confirmation } from '../../auth/types';
 import { callPg } from '../../db/call';
 import type { UserRow } from '../../db/types';
 import { ApiError } from '../../http';
@@ -18,7 +18,7 @@ export interface UserFilters {
   pagina: number;
 }
 
-export function createAdminUsers(sql: SQL, authorization: Authorization) {
+export function createAdminUsers(sql: SQL, authorization: Authorization, confirmation: Confirmation) {
   /** Carga la cuenta objetivo y aplica la jerarquía antes de tocar la base. */
   async function target(actor: UserRow, targetId: number) {
     const [row] = await callPg<UserRow>(sql, 'userById', [targetId]);
@@ -53,24 +53,31 @@ export function createAdminUsers(sql: SQL, authorization: Authorization) {
       };
     },
 
-    /** Cambia el rol; la base repite la comprobación dentro de la transacción. */
-    async changeRole(access: string | undefined, targetId: number, role: AssignableRole, expected: string) {
+    /** Cambia el rol si quien lo hace confirma su identidad; la base repite la comprobación dentro de la transacción. */
+    async changeRole(access: string | undefined, targetId: number, role: AssignableRole, expected: string, confirmacion: string, ip: string) {
       const actor = await authorization.require(access, PERMISSIONS.usersRoleChange);
       await target(actor, targetId);
       if (!assignableRoles(actor).includes(role)) throw new ApiError(403, FORBIDDEN_ROLE);
+      await confirmation.require(actor.id_usuario, confirmacion, ip);
       const [updated] = await callPg<UserRow>(sql, 'roleChange', [actor.id_usuario, targetId, role, expected]);
       // Otro admin cambió la cuenta desde que se cargó la lista (`expected` ya no es su rol).
       if (!updated) throw new ApiError(409, 'La cuenta cambió mientras tanto; recarga la lista');
       return { id: updated.id_usuario, rol: updated.rol, estado: updated.estado };
     },
 
-    /** Activa o desactiva la cuenta; al desactivarla se cierran sus sesiones. */
-    async changeState(access: string | undefined, targetId: number, state: AccountState, expected: string) {
+    /** Activa o desactiva la cuenta si quien lo hace confirma su identidad; al desactivarla se cierran sus sesiones. */
+    async changeState(access: string | undefined, targetId: number, state: AccountState, expected: string, confirmacion: string, ip: string) {
       const actor = await authorization.require(access, PERMISSIONS.usersStateChange);
       await target(actor, targetId);
+      await confirmation.require(actor.id_usuario, confirmacion, ip);
       const [updated] = await callPg<UserRow>(sql, 'userStateChange', [actor.id_usuario, targetId, state, expected]);
       if (!updated) throw new ApiError(409, 'La cuenta cambió mientras tanto; recarga la lista');
       return { id: updated.id_usuario, rol: updated.rol, estado: updated.estado };
+    },
+
+    async sendConfirmationCode(access: string | undefined) {
+      const actor = await authorization.require(access, PERMISSIONS.usersView);
+      await confirmation.sendCode(actor.id_usuario);
     },
   };
 }

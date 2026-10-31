@@ -28,6 +28,9 @@ Por qué: evita FFmpeg, procesos aparte y almacenamiento de video en el servidor
 **D-007 · 2026-10-24 · La portada del video se toma de su plataforma al pegar el enlace y se guarda como una foto subida; nunca se enlaza. La portada manual se mantiene.**
 Por qué: enlazarla enviaría la visita a la plataforma antes de pulsar el video, y los enlaces de Facebook y TikTok caducan. Facebook y TikTok solo la entregan a su rastreador, así que puede dejar de funcionar; entonces se sube a mano.
 
+**D-020 · 2026-10-31 · Cambiar el rol de una cuenta, desactivarla o reactivarla exige confirmar la identidad en cada cambio: la contraseña de quien lo hace o, si su cuenta no tiene contraseña (solo Google), un código de 6 dígitos enviado a su correo.**
+Por qué: quien encuentre la sesión de un admin abierta en un equipo no debe poder nombrar admins ni bajar o desactivar cuentas. Lo comprueba el backend antes de tocar la base (`auth/services/confirmation.ts`). Los fallos comparten el contador del cambio de contraseña, con esperas crecientes. El código vale 10 minutos y para varios cambios dentro de ese tiempo; pedir otro anula el anterior, y pedirlo dos veces en menos de un minuto no manda otro correo. Se guarda con una sal propia en `tb_token_autenticacion` (propósito `confirmar_accion`, migración 0015).
+
 ## Diseño y fotos
 
 **D-008 · 2026-10-23 · Las fotos de Biografía se muestran completas dentro de una caja de 440 × 440 px y nunca más grandes que su archivo.**

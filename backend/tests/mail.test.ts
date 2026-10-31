@@ -5,9 +5,11 @@ import { correoHtml, correoTexto, IMAGENES, MENSAJES } from "../src/mail/plantil
 import { createMailer } from "../src/mailer";
 
 const url = "https://sitio.ec/cuenta/verificar/?token=abc&x=<1>";
+const { codigo: conCodigo, ...conEnlace } = MENSAJES;
+const todos = () => [...Object.values(conEnlace).map(crear => crear(url)), conCodigo("482913")];
 
 test("los correos llevan el botón con su enlace, las imágenes incrustadas y el aviso de ignorarlo", async () => {
-  for (const crear of Object.values(MENSAJES)) {
+  for (const crear of Object.values(conEnlace)) {
     const mensaje = crear(url);
     const html = correoHtml(mensaje);
     // El enlace va escapado: ni la URL ni los textos pueden inyectar HTML.
@@ -25,7 +27,18 @@ test("los correos llevan el botón con su enlace, las imágenes incrustadas y el
     expect(await Bun.file(new URL(`../assets/correo/${img.archivo}`, import.meta.url)).exists()).toBe(true);
 });
 
-test("el transporte SMTP entrega los tres correos completos y propaga un rechazo", async () => {
+test("el código de confirmación ocupa el lugar del botón, sin enlace de respaldo ni aviso de ignorarlo", () => {
+  const mensaje = conCodigo("<12>");
+  const html = correoHtml(mensaje);
+  expect(html).toContain(">&lt;12&gt;</div>");
+  expect(html).not.toContain("<12>");
+  expect(html).not.toContain("Si el botón no funciona");
+  expect(html).not.toContain("ignórelo");
+  expect(html).toContain("Si no lo pediste, avisa al equipo de la campaña.");
+  expect(correoTexto(mensaje)).toContain("Código: <12>");
+});
+
+test("el transporte SMTP entrega todos los correos completos y propaga un rechazo", async () => {
   const recibidos: string[] = [], comandos: string[] = [];
   const conexiones = new Set<Socket>();
   const server = createServer(socket => {
@@ -74,8 +87,7 @@ test("el transporte SMTP entrega los tres correos completos y propaga un rechazo
   };
   const mailer = createMailer(config);
   try {
-    for (const crear of Object.values(MENSAJES)) {
-      const mensaje = crear(url);
+    for (const mensaje of todos()) {
       await mailer.send("destino@example.test", mensaje);
       const raw = recibidos.at(-1)!;
       expect(raw).toContain("From: Sitio <remitente@example.test>");

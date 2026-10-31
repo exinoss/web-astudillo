@@ -1,37 +1,32 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type AdminUser } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
+import { confirmarIdentidad } from "../confirmacion";
 import { busy, DANGER, esc, GHOST, iconSvg, notify, PILL } from "../ui";
 
 const ROLE_NAMES: Record<string, string> = { admin: "Admin", coadmin: "Coadmin", analista: "Analista", votante: "Votante" };
 const ROLE_CLASSES: Record<string, string> = { admin: "bg-neutral text-neutral-content", coadmin: "bg-accent text-primary", analista: "border border-base-300", votante: "border border-base-300" };
 const filters = { q: "", rol: "", estado: "", pagina: 1 };
-let confirming: number | null = null; // cuenta con la desactivación pendiente de confirmar
 
 const rolePill = (u: AdminUser) => `<span class="${PILL} ${ROLE_CLASSES[u.rol] ?? ""}">${esc(ROLE_NAMES[u.rol] ?? u.rol)}</span>`;
 const statePill = (u: AdminUser) => u.estado === "activo"
   ? `<span class="${PILL} bg-[#e8f5ec] text-[#1d6b37]">Activa</span>`
   : `<span class="${PILL} bg-[#fff2f2] text-error">Desactivada</span>`;
+const nombre = (u: AdminUser) => u.nombresCompletos ?? u.correo;
 
 /** Acciones de una cuenta; si la jerarquía no lo permite, el motivo genérico que da la API. */
 function actions(u: AdminUser) {
   if (!u.puedeCambiarEstado) return `<span class="flex items-center gap-2 text-[0.78rem] text-[#50617d]">${iconSvg("lock", 16)} ${esc(u.motivoBloqueo)}</span>`;
-  if (confirming === u.id) return `
-    <span class="flex flex-wrap items-center gap-2.5">
-      <span class="text-[0.8rem] font-bold">Se cerrarán sus sesiones. ¿Desactivar?</span>
-      <button type="button" class="${DANGER}" data-estado="bloqueado" data-cuenta="${u.id}" data-estado-actual="${u.estado}">Sí, desactivar</button>
-      <button type="button" class="${GHOST}" data-cancelar>Cancelar</button>
-    </span>`;
-  const select = `<select data-rol-de="${u.id}" aria-label="Nuevo rol de ${esc(u.nombresCompletos ?? u.correo)}"
+  const select = `<select data-rol-de="${u.id}" aria-label="Nuevo rol de ${esc(nombre(u))}"
       class="min-h-11 min-w-[140px] rounded-[3px] border border-field-border bg-base-100 px-3 text-sm text-primary max-tablet:flex-1">
       ${u.rolesAsignables.includes(u.rol) ? "" : `<option value="" selected disabled>${esc(ROLE_NAMES[u.rol] ?? u.rol)}</option>`}
       ${u.rolesAsignables.map((r) => `<option value="${esc(r)}" ${r === u.rol ? "selected" : ""}>${esc(ROLE_NAMES[r] ?? r)}</option>`).join("")}
     </select>`;
   return `<span class="flex flex-wrap items-center gap-2.5 max-tablet:w-full">
-      <span class="flex gap-2.5 max-tablet:w-full">${select}<button type="button" class="button min-h-11 px-4 py-0" data-guardar-rol="${u.id}" data-rol-actual="${esc(u.rol)}">Guardar</button></span>
+      <span class="flex gap-2.5 max-tablet:w-full">${select}<button type="button" class="button min-h-11 px-4 py-0" data-guardar-rol="${u.id}" data-rol-actual="${esc(u.rol)}" data-nombre="${esc(nombre(u))}">Guardar</button></span>
       ${u.estado === "activo"
-        ? `<button type="button" class="${DANGER} max-tablet:w-full" data-desactivar="${u.id}">Desactivar</button>`
-        : `<button type="button" class="${GHOST} max-tablet:w-full" data-estado="activo" data-cuenta="${u.id}" data-estado-actual="${u.estado}">Reactivar</button>`}
+        ? `<button type="button" class="${DANGER} max-tablet:w-full" data-estado="bloqueado" data-cuenta="${u.id}" data-estado-actual="${u.estado}" data-nombre="${esc(nombre(u))}">Desactivar</button>`
+        : `<button type="button" class="${GHOST} max-tablet:w-full" data-estado="activo" data-cuenta="${u.id}" data-estado-actual="${u.estado}" data-nombre="${esc(nombre(u))}">Reactivar</button>`}
     </span>`;
 }
 
@@ -110,28 +105,34 @@ async function load(section: HTMLElement) {
 }
 
 function bind(section: HTMLElement, list: HTMLElement) {
-  const reload = () => { confirming = null; return load(section); };
   list.querySelectorAll<HTMLButtonElement>("[data-guardar-rol]").forEach((b) => {
     // Tabla y tarjetas repiten el selector: vale el que está junto al botón pulsado.
     const select = b.parentElement!.querySelector<HTMLSelectElement>("select")!;
     vigilarCambios(b.parentElement!, b, b.dataset.rolActual, () => select.value || b.dataset.rolActual);
     // Se envía el rol que muestra la lista: si otro admin lo cambió mientras tanto, la API responde 409.
     b.addEventListener("click", () => void busy(b, async () => {
-      await adminApi.changeRole(Number(b.dataset.guardarRol), select.value, b.dataset.rolActual!);
-      await reload();
+      const hecho = await confirmarIdentidad({
+        resumen: `Vas a cambiar el rol de <strong>${esc(b.dataset.nombre!)}</strong> a <strong>${esc(ROLE_NAMES[select.value] ?? select.value)}</strong>.`,
+        boton: "Cambiar rol",
+        enviar: (confirmacion) => adminApi.changeRole(Number(b.dataset.guardarRol), select.value, b.dataset.rolActual!, confirmacion),
+      });
+      if (!hecho) return;
+      await load(section);
       notify("Rol actualizado.");
     }));
   });
-  list.querySelectorAll<HTMLButtonElement>("[data-desactivar]").forEach((b) => b.addEventListener("click", () => {
-    confirming = Number(b.dataset.desactivar);
-    void load(section);
-  }));
-  list.querySelectorAll<HTMLButtonElement>("[data-cancelar]").forEach((b) => b.addEventListener("click", () => void reload()));
   list.querySelectorAll<HTMLButtonElement>("[data-estado]").forEach((b) => b.addEventListener("click", () =>
     void busy(b, async () => {
       const estado = b.dataset.estado as "activo" | "bloqueado";
-      await adminApi.changeState(Number(b.dataset.cuenta), estado, b.dataset.estadoActual as "activo" | "bloqueado");
-      await reload();
+      const anterior = b.dataset.estadoActual as "activo" | "bloqueado";
+      const quien = `<strong>${esc(b.dataset.nombre!)}</strong>`;
+      const hecho = await confirmarIdentidad(estado === "bloqueado"
+        ? { resumen: `Vas a desactivar la cuenta de ${quien}. Se cerrarán sus sesiones.`, boton: "Desactivar", peligro: true,
+            enviar: (c) => adminApi.changeState(Number(b.dataset.cuenta), estado, anterior, c) }
+        : { resumen: `Vas a reactivar la cuenta de ${quien}.`, boton: "Reactivar",
+            enviar: (c) => adminApi.changeState(Number(b.dataset.cuenta), estado, anterior, c) });
+      if (!hecho) return;
+      await load(section);
       notify(estado === "bloqueado" ? "Cuenta desactivada; sus sesiones se cerraron." : "Cuenta reactivada.");
     })));
 }
