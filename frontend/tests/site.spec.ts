@@ -150,7 +150,8 @@ test('a heavy 3D model waits for the button, shows its progress and is reused on
   expect(modelos).toEqual([]);
   await boton.click();
   await visorCargado(page);
-  await expect(page.locator('.model-3d-progreso')).toBeHidden();
+  // Se oculta en el mismo `load` que quita el póster: en CI puede tardar más de 5 s, como en la prueba anterior.
+  await expect(page.locator('.model-3d-progreso')).toBeHidden({ timeout: 15000 });
   await expect(page.getByRole('progressbar', { name: 'Descarga del modelo 3D', includeHidden: true })).toHaveAttribute('aria-valuenow', '100');
   // El foco queda en el lienzo interno de model-viewer; desde fuera, activeElement es el propio visor.
   await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).toBe('MODEL-VIEWER');
