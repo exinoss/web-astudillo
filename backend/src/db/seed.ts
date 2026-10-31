@@ -33,6 +33,8 @@ export async function seedContent(sql: Pick<SQL, 'unsafe'>) {
       c->>'enlaceTexto', c->>'enlaceRuta', (c->>'destacada')::boolean
     FROM jsonb_array_elements($1::jsonb->'chat') WITH ORDINALITY AS v(c,n)
     WHERE NOT EXISTS (SELECT 1 FROM tb_chat_respuestas)`, [data]);
+  await sql.unsafe(`INSERT INTO tb_inicio_carruseles (clave, contenido)
+    SELECT key, value FROM jsonb_each($1::jsonb->'inicio') ON CONFLICT DO NOTHING`, [data]);
   // La primera vista pública queda congelada; nunca se exponen los borradores como respaldo.
   await sql.unsafe(`INSERT INTO tb_publicaciones (contenido, estado, terminado_en)
     SELECT $1::jsonb, 'publicada', now() WHERE NOT EXISTS (SELECT 1 FROM tb_publicaciones)`, [data]);

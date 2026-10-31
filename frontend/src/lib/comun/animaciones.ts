@@ -196,14 +196,18 @@ export function mostrarCarga(zona: HTMLElement, texto = "Enviando…") {
   let terminada = false;
   const capa = document.createElement("div");
   capa.className =
-    "absolute inset-0 z-10 flex flex-col items-center justify-center gap-1 bg-base-100/90 text-sm font-bold text-primary";
+    "absolute inset-0 z-10 flex flex-col items-center justify-center bg-base-100/90 text-sm font-bold text-primary";
   capa.setAttribute("role", "status");
+  // En una zona más alta que la pantalla (un formulario largo del panel), el centro puede quedar fuera de la vista.
+  const caja = document.createElement("div");
+  caja.className = "sticky top-28 bottom-6 flex flex-col items-center gap-1";
   const lienzo = document.createElement("div");
   lienzo.className = "size-32";
   lienzo.setAttribute("aria-hidden", "true");
   const leyenda = document.createElement("span");
   leyenda.textContent = texto;
-  capa.append(lienzo, leyenda);
+  caja.append(lienzo, leyenda);
+  capa.append(caja);
   const temporizador = setTimeout(async () => {
     zona.classList.add("relative");
     zona.append(capa);

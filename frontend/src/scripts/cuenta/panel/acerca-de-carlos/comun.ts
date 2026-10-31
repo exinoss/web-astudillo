@@ -33,7 +33,7 @@ export function onFiles(input: HTMLInputElement | null, limit: number, use: (fot
       }
       notify("Foto subida. Completa los datos y guarda el borrador.");
       editor.rerender();
-    });
+    }, "Subiendo…");
   });
 }
 

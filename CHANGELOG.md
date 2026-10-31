@@ -14,17 +14,22 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - Página «Mi equipo», en el menú y con el botón «Conoce a mi equipo» de la portada: el equipo con su foto, su nombre y quién es (sin foto se ve una silueta), y las 12 parroquias, cada una con su texto y sus fotos. Las fotos pasan solas en un carrusel y se ven en grande al pulsarlas.
 - Panel: pestaña «Mi equipo» para editar el equipo (hasta 9 personas, con foto opcional) y el texto y las fotos (hasta 6) de cada parroquia.
 - Se pueden subir fotos AVIF en el panel y en las alertas. Una foto HEIC del iPhone que no se puede subir avisa cómo hacerlo.
+- Las imágenes de los dos carruseles de la portada se cambian desde el modo edición, con el botón «Cambiar imágenes» de cada uno: hasta 5 banners, cada uno con una imagen opcional para celular, el retrato de la segunda diapositiva y hasta 8 piezas de campaña. Se guardan como borrador y se ven al publicar.
 
 ### Changed
 
 - En la biografía, un momento sin foto muestra «Aún no hay foto de este momento.» en lugar de «Foto pendiente».
 - «Acerca de nosotros» pasa a llamarse «Acerca de mí», y «Conoce más sobre Carlos», «Conoce más sobre mí». Las direcciones de las páginas no cambian.
 - La galería de «Conoce más sobre mí» con una sola foto la muestra en grande sin flechas ni miniaturas.
+- Los correos de la cuenta usan el amarillo de la campaña, con el logo nítido y una cabecera nueva más liviana.
+- El logo de la cabecera del sitio se ve nítido en celulares y conserva su placa amarilla en los modos de fondo claro y alto contraste.
+- Panel y modo edición: al subir fotos, publicar, traer la imagen de un video o guardar los carruseles de la portada se ve la animación de carga, que queda a la vista aunque el formulario sea largo.
 
 ### Fixed
 
 - Los modelos 3D se descargan comprimidos: el estadio ocupa 15 MB de datos en vez de 35, y el de paneles solares 80 KB en vez de 289.
 - Una foto de más de 40 megapíxeles ya no se rechaza con «Sube una foto JPG, PNG o WebP»: el aviso dice cuánto mide y el máximo (por ejemplo, 8000 × 5000 px).
+- El formulario de alertas ya no se traba al elegir una foto de muchos megapíxeles: avisa en el momento si supera los 40 y muestra una miniatura liviana.
 
 ## [1.0.0] - 2026-10-25
 

@@ -2,16 +2,31 @@
 import Layout from "../layouts/Layout.astro";
 import Icon from "../components/comun/Icon.astro";
 import Editable from "../components/comun/Editable.astro";
-import { Image } from "astro:assets";
-import cover from "../assets/portada.jpg";
-import carlos from "../assets/carlos-vertical.png";
-import carlos2 from "../assets/carlos2.jpg";
-import carlos3 from "../assets/carlos3.jpg";
+import Foto from "../components/comun/Foto.astro";
+import { getImage, Image } from "astro:assets";
+import { medidasFoto } from "../lib/comun/fotos";
+import { ORIGINALES } from "../lib/inicio/originales";
 import { contentRepository } from "../lib/data";
 import { statsRepository } from "../lib/data/stats";
 import { enlaceRed, type TextKey } from "../lib/comun/contenido";
 import { enlaceRedValido, REDES, type RedSocial, usuarioRed } from "../lib/comun/contenido/redes";
 
+const { banners, portrait, pieces } = await contentRepository.getHomeCarousels();
+const slides = banners.length + 1;
+const BANNER_WIDTHS = [640, 960, 1440, 1947];
+const SLIDE = "relative aspect-[1947/741] w-full max-h-[680px] overflow-hidden min-wide:max-h-[740px] max-tablet:aspect-[4/3] max-tablet:max-h-none";
+const BANNER = "h-full w-full object-cover max-tablet:absolute max-tablet:object-[100%_center]";
+const PORTRAIT = "h-full w-[47%] object-cover object-center max-tablet:w-[49%]";
+const OVERLAY = "hidden max-tablet:absolute max-tablet:inset-y-0 max-tablet:right-auto max-tablet:left-0 max-tablet:flex max-tablet:w-[48%] max-tablet:flex-col max-tablet:justify-center max-tablet:bg-accent max-tablet:pt-6 max-tablet:pr-0 max-tablet:pb-5 max-tablet:pl-5";
+const DOT = "slide-dot relative grid h-[11px] before:absolute before:-inset-x-[5px] before:-inset-y-[17px] before:content-[''] max-tablet:before:-inset-x-1.5 min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5";
+const PIECE_WIDTHS = [400, 640, 850];
+const PIECE_SIZES = "(max-width: 760px) 90vw, 40vw";
+// El modo edición pinta el borrador con estas versiones de las imágenes que vienen con el sitio.
+const originales = JSON.stringify(Object.fromEntries(await Promise.all(Object.entries(ORIGINALES).map(async ([clave, src]) => {
+  const version = clave === "portada" ? { widths: BANNER_WIDTHS, quality: 85 } : { widths: PIECE_WIDTHS };
+  const [miniatura, imagen] = await Promise.all([getImage({ src, width: 480 }), getImage({ src, ...version })]);
+  return [clave, { src: imagen.src, srcset: imagen.srcSet.attribute, miniatura: miniatura.src }];
+}))));
 const proposals = await contentRepository.getProposals();
 const citizenLinks = await contentRepository.getCitizenLinks();
 const textos = await contentRepository.getTexts();
@@ -50,38 +65,47 @@ const contactos = [
     aria-label="Presentación de Carlos Astudillo"
     aria-roledescription="carrusel"
   >
-    <div class="hero-slides relative bg-accent">
-      <div
-        class="relative aspect-[1947/741] w-full max-h-[680px] overflow-hidden min-wide:max-h-[740px] max-tablet:aspect-[4/3] max-tablet:max-h-none"
-        data-slide="0"
-        role="group"
-        aria-roledescription="diapositiva"
-        aria-label="1 de 2"
-      >
-        <Image
-          class="h-full w-full object-cover max-tablet:absolute max-tablet:object-[100%_center]"
-          src={cover}
-          alt="Carlos Astudillo, PSC. La nueva historia. Creo en una ciudad donde el progreso no sea privilegio de pocos, sino derecho de todos."
-          widths={[640, 960, 1440, 1947]}
-          sizes="100vw"
-          width={1947}
-          height={741}
-          loading="eager"
-          fetchpriority="high"
-          quality={85}
-        />
-        <div class="hidden max-tablet:absolute max-tablet:inset-y-0 max-tablet:right-auto max-tablet:left-0 max-tablet:flex max-tablet:w-[48%] max-tablet:flex-col max-tablet:justify-center max-tablet:bg-accent max-tablet:pt-6 max-tablet:pr-0 max-tablet:pb-5 max-tablet:pl-5">
-          <Editable clave="inicio.carrusel.antetitulo" class="max-tablet:text-[0.56rem] max-tablet:font-bold max-tablet:tracking-[0.08em]" />
-          <Editable as="h2" clave="inicio.carrusel.titulo" class="max-tablet:mx-0 max-tablet:mt-[15px] max-tablet:mb-[18px] max-tablet:text-[clamp(2rem,8vw,3.6rem)]" />
-          <Editable as="p" clave="inicio.carrusel.texto" class="max-tablet:m-0 max-tablet:text-[0.67rem] max-tablet:leading-[1.6] max-tablet:text-primary" />
+    <div class="hero-slides relative bg-accent" data-carrusel-editable="principal" data-originales={originales}>
+      {banners.map((banner, i) => (
+        <div
+          class={SLIDE}
+          data-slide={i}
+          role="group"
+          aria-roledescription="diapositiva"
+          aria-label={`${i + 1} de ${slides}`}
+          hidden={i > 0}
+        >
+          {"original" in banner.image ? (
+            <Image
+              class={BANNER}
+              src={ORIGINALES[banner.image.original]}
+              alt={banner.alt}
+              widths={BANNER_WIDTHS}
+              sizes="100vw"
+              width={ORIGINALES[banner.image.original].width}
+              height={ORIGINALES[banner.image.original].height}
+              loading={i ? "lazy" : "eager"}
+              fetchpriority={i ? undefined : "high"}
+              quality={85}
+            />
+          ) : (
+            <Foto class={BANNER} picture={banner.image.photo} mobile={banner.mobile} alt={banner.alt} sizes="100vw" loading={i ? "lazy" : "eager"} fetchpriority={i ? undefined : "high"} />
+          )}
+          {!banner.mobile && (
+            <div class={OVERLAY}>
+              <Editable clave="inicio.carrusel.antetitulo" class="max-tablet:text-[0.56rem] max-tablet:font-bold max-tablet:tracking-[0.08em]" />
+              <Editable as="h2" clave="inicio.carrusel.titulo" class="max-tablet:mx-0 max-tablet:mt-[15px] max-tablet:mb-[18px] max-tablet:text-[clamp(2rem,8vw,3.6rem)]" />
+              <Editable as="p" clave="inicio.carrusel.texto" class="max-tablet:m-0 max-tablet:text-[0.67rem] max-tablet:leading-[1.6] max-tablet:text-primary" />
+            </div>
+          )}
         </div>
-      </div>
+      ))}
       <div
-        class="relative aspect-[1947/741] w-full max-h-[680px] overflow-hidden bg-primary text-primary-content min-wide:max-h-[740px] max-tablet:aspect-[4/3] max-tablet:max-h-none"
-        data-slide="1"
+        class={`${SLIDE} bg-primary text-primary-content`}
+        data-slide={banners.length}
         role="group"
         aria-roledescription="diapositiva"
-        aria-label="2 de 2"
+        aria-label={`${slides} de ${slides}`}
         hidden
       >
         <div class="alternate-inner site-container flex h-full items-center justify-between max-tablet:w-full max-tablet:pl-5">
@@ -99,16 +123,24 @@ const contactos = [
               Conoce a Carlos <Icon name="arrow" size={18} />
             </a>
           </div>
-          <Image
-            class="h-full w-[47%] object-cover object-center max-tablet:w-[49%]"
-            src={carlos}
-            alt="Retrato de Carlos Astudillo"
-            width={620}
-            height={620}
-            loading="lazy"
-          />
+          {"original" in portrait.image ? (
+            <Image class={PORTRAIT} src={ORIGINALES[portrait.image.original]} alt={portrait.alt} width={620} height={620} loading="lazy" />
+          ) : (
+            <Foto class={PORTRAIT} picture={portrait.image.photo} alt={portrait.alt} sizes="(max-width: 760px) 49vw, 47vw" />
+          )}
         </div>
       </div>
+      {/* El modo edición arma con esta plantilla los banners del borrador. */}
+      <template data-plantilla-banner>
+        <div class={SLIDE} role="group" aria-roledescription="diapositiva">
+          <img class={BANNER} alt="" decoding="async" />
+          <div class={OVERLAY}>
+            <Editable clave="inicio.carrusel.antetitulo" class="max-tablet:text-[0.56rem] max-tablet:font-bold max-tablet:tracking-[0.08em]" />
+            <Editable as="h2" clave="inicio.carrusel.titulo" class="max-tablet:mx-0 max-tablet:mt-[15px] max-tablet:mb-[18px] max-tablet:text-[clamp(2rem,8vw,3.6rem)]" />
+            <Editable as="p" clave="inicio.carrusel.texto" class="max-tablet:m-0 max-tablet:text-[0.67rem] max-tablet:leading-[1.6] max-tablet:text-primary" />
+          </div>
+        </div>
+      </template>
       {/* En escritorio las flechas quedan a los lados; en móvil se unen a los puntos para no tapar el texto. */}
       <div class="carousel-controls pointer-events-none absolute inset-0 flex items-end justify-center pb-4 max-tablet:pb-2.5">
         <div
@@ -119,18 +151,14 @@ const contactos = [
           <button class="slide-prev left-5 pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-primary/65 text-primary-content hover:bg-primary max-tablet:relative max-tablet:inset-x-auto max-tablet:top-auto max-tablet:size-8 max-tablet:translate-y-0 max-tablet:bg-transparent max-tablet:text-primary max-tablet:before:absolute max-tablet:before:-inset-1.5 max-tablet:before:content-[''] max-tablet:hover:bg-transparent" type="button" aria-label="Diapositiva anterior">
             <Icon name="chevronLeft" size={22} />
           </button>
-          <button
-            class="slide-dot relative grid h-[11px] before:absolute before:-inset-x-[5px] before:-inset-y-[17px] before:content-[''] max-tablet:before:-inset-x-1.5 min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5 is-active"
-            type="button"
-            aria-label="Ver diapositiva 1"
-            aria-current="true"
-          ></button>
-          <button
-            class="slide-dot relative grid h-[11px] before:absolute before:-inset-x-[5px] before:-inset-y-[17px] before:content-[''] max-tablet:before:-inset-x-1.5 min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5"
-            type="button"
-            aria-label="Ver diapositiva 2"
-            aria-current="false"
-          ></button>
+          {Array.from({ length: slides }, (_, i) => (
+            <button
+              class:list={[DOT, !i && "is-active"]}
+              type="button"
+              aria-label={`Ver diapositiva ${i + 1}`}
+              aria-current={i ? "false" : "true"}
+            ></button>
+          ))}
           <button class="slide-next right-5 pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-primary/65 text-primary-content hover:bg-primary max-tablet:relative max-tablet:inset-x-auto max-tablet:top-auto max-tablet:size-8 max-tablet:translate-y-0 max-tablet:bg-transparent max-tablet:text-primary max-tablet:before:absolute max-tablet:before:-inset-1.5 max-tablet:before:content-[''] max-tablet:hover:bg-transparent" type="button" aria-label="Diapositiva siguiente">
             <Icon name="chevronRight" size={22} />
           </button>
@@ -194,36 +222,33 @@ const contactos = [
     <div class="site-container grid max-w-[1120px] grid-cols-2 items-center gap-[100px] max-nav:gap-10 max-tablet:grid-cols-1 max-tablet:gap-[42px]">
       <div
         class="portrait-wrap profile-carousel"
+        data-carrusel-editable="piezas"
         aria-roledescription="carrusel"
         aria-label="Carlos Astudillo"
       >
-        <Image
-          data-profile-image="0"
-          class="is-active"
-          src={carlos}
-          alt="Carlos Astudillo. Respeto, coherencia y claridad. Por ti, San Lorenzo."
-          widths={[400, 640, 850]}
-          sizes="(max-width: 760px) 90vw, 40vw"
-          loading="lazy"
-        />
-        <Image
-          data-profile-image="1"
-          src={carlos2}
-          alt="Carlos Astudillo. Por ti, San Lorenzo."
-          widths={[400, 640, 850]}
-          sizes="(max-width: 760px) 90vw, 40vw"
-          loading="lazy"
-          hidden
-        />
-        <Image
-          data-profile-image="2"
-          src={carlos3}
-          alt="Carlos Astudillo. Respeto, coherencia, claridad."
-          widths={[400, 640, 850]}
-          sizes="(max-width: 760px) 90vw, 40vw"
-          loading="lazy"
-          hidden
-        />
+        {pieces.map((piece, i) => "original" in piece.image ? (
+          <Image
+            data-profile-image={i}
+            class={i ? undefined : "is-active"}
+            src={ORIGINALES[piece.image.original]}
+            alt={piece.alt}
+            widths={PIECE_WIDTHS}
+            sizes={PIECE_SIZES}
+            loading="lazy"
+            hidden={i > 0}
+          />
+        ) : (
+          // Completa en su marco y nunca más grande que su archivo.
+          <Foto
+            data-profile-image={i}
+            class:list={["m-auto max-h-[calc(var(--ancho-foto)/var(--proporcion))] max-w-(--ancho-foto)", !i && "is-active"]}
+            style={medidasFoto(piece.image.photo)}
+            picture={piece.image.photo}
+            alt={piece.alt}
+            sizes={PIECE_SIZES}
+            hidden={i > 0}
+          />
+        ))}
         <div class="profile-glass-curtain" aria-hidden="true">
           <div class="profile-glass-veil"></div>
         </div>
@@ -231,25 +256,16 @@ const contactos = [
           class="profile-dots"
           role="group"
           aria-label="Imágenes de Carlos Astudillo"
+          hidden={pieces.length < 2}
         >
-          <button
-            class="profile-dot is-active"
-            type="button"
-            aria-label="Ver imagen 1"
-            aria-current="true"
-          ></button>
-          <button
-            class="profile-dot"
-            type="button"
-            aria-label="Ver imagen 2"
-            aria-current="false"
-          ></button>
-          <button
-            class="profile-dot"
-            type="button"
-            aria-label="Ver imagen 3"
-            aria-current="false"
-          ></button>
+          {pieces.map((_, i) => (
+            <button
+              class:list={["profile-dot", !i && "is-active"]}
+              type="button"
+              aria-label={`Ver imagen ${i + 1}`}
+              aria-current={i ? "false" : "true"}
+            ></button>
+          ))}
         </div>
       </div>
       <div class="">

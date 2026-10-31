@@ -1,8 +1,16 @@
+import initial from '../../../../backend/database/contenido-inicial.json';
+import type { Original } from '../../../../backend/src/contracts/inicio';
 import { PARROQUIAS } from '../../../../backend/src/contracts/parroquias';
 import type { ContentRepository } from './content-repository';
 import { citizenIcons, proposalIcons, proposalModels } from './presentation';
 import { type ApiAboutCarlosPage, toAboutCarlosPage } from './acerca-de-carlos';
-import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, MyTeam, Proposal, UploadedPicture, WorkProgress } from './types';
+import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, HomeCarousels, HomeImage, MyTeam, Proposal, UploadedPicture, WorkProgress } from './types';
+
+type ApiHomeImage = { original: Original } | { foto: UploadedPicture };
+interface ApiHomeCarousels {
+  principal: { banners: { imagen: ApiHomeImage; celular: UploadedPicture | null; alt: string }[]; retrato: { imagen: ApiHomeImage; alt: string } };
+  piezas: { piezas: { imagen: ApiHomeImage; alt: string }[] };
+}
 
 export interface Snapshot {
   version: 1;
@@ -17,7 +25,11 @@ export interface Snapshot {
     equipo: { nombre: string; quien: string | null; foto: UploadedPicture | null }[];
     parroquias: { slug: string; texto: string; fotos: { foto: UploadedPicture; alt: string }[] }[];
   };
+  /** Ausente en publicaciones anteriores a los carruseles editables: valen los de la semilla. */
+  inicio?: ApiHomeCarousels;
 }
+
+const homeImage = (image: ApiHomeImage): HomeImage => ('foto' in image ? { photo: image.foto } : { original: image.original });
 
 const paragraphs = (text: string) => text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
 
@@ -64,6 +76,14 @@ export abstract class SnapshotRepository implements ContentRepository {
         const parish = team?.parroquias.find(p => p.slug === slug);
         return { slug, name: nombre, paragraphs: paragraphs(parish?.texto ?? ''), photos: (parish?.fotos ?? []).map(f => ({ image: f.foto, alt: f.alt })) };
       }),
+    };
+  }
+  async getHomeCarousels(): Promise<HomeCarousels> {
+    const { principal, piezas } = (await this.load()).inicio ?? (initial.inicio as ApiHomeCarousels);
+    return {
+      banners: principal.banners.map(b => ({ image: homeImage(b.imagen), mobile: b.celular, alt: b.alt })),
+      portrait: { image: homeImage(principal.retrato.imagen), alt: principal.retrato.alt },
+      pieces: piezas.piezas.map(p => ({ image: homeImage(p.imagen), alt: p.alt })),
     };
   }
 }

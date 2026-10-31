@@ -9,7 +9,8 @@ import { enviarConSesion, marcarError } from "../../lib/ciudadania/participacion
 import { prepararAceptacion } from '../../lib/ciudadania/participacion/aceptacion';
 import { cuadroIcono, filaHistorial, historial } from "../../lib/ciudadania/participacion/historial";
 import { MAX_FOTO_BYTES, MIN_DESCRIPCION, TIPOS_ALERTA } from "../../lib/ciudadania/participacion/tipos";
-import { AVISO_HEIC, FORMATOS_FOTO } from "../../../../backend/src/contracts/media";
+import { AVISO_HEIC, avisoMegapixeles, FORMATOS_FOTO, MAX_PIXELES } from "../../../../backend/src/contracts/media";
+import { medidasArchivo, miniaturaLocal } from "../../lib/comun/foto-local";
 
 const form = document.querySelector<HTMLFormElement>("#alerta-form")!;
 const tipos = form.querySelector<HTMLFieldSetElement>("#alerta-tipo")!;
@@ -30,11 +31,24 @@ let idempotencia = "";
 
 const tipoElegido = () => form.querySelector<HTMLInputElement>('input[name="tipo"]:checked')?.value as AlertType | undefined;
 
+const NO_ABRE = "No se pudo abrir esta foto. Elige otra.";
+let eleccion = 0;
+// La foto elegida se comprueba y se prepara sin bloquear la página: enviar antes de que termine la perdería.
+let preparandoFoto: Promise<unknown> = Promise.resolve();
+
 /** Muestra u oculta la vista previa; la foto vive en una variable para poder restaurarla del borrador. */
-function ponerFoto(archivo: File | null) {
+async function ponerFoto(archivo: File | null) {
+  const esta = ++eleccion;
+  const miniatura = archivo ? await miniaturaLocal(archivo, 192) : "";
+  // Otra foto elegida mientras se preparaba esta miniatura: gana la última.
+  if (esta !== eleccion) return miniatura && URL.revokeObjectURL(miniatura);
+  if (miniatura === null) {
+    fotoInput.value = "";
+    return marcarError(fotoInput, NO_ABRE);
+  }
   foto = archivo;
   if (vistaUrl) URL.revokeObjectURL(vistaUrl);
-  vistaUrl = archivo ? URL.createObjectURL(archivo) : "";
+  vistaUrl = miniatura;
   fotoVista.querySelector("img")!.src = vistaUrl;
   fotoVista.querySelector("#alerta-foto-nombre")!.textContent = archivo
     ? `${archivo.name} · ${(archivo.size / 1024 / 1024).toFixed(1).replace(".", ",")} MB` : "";
@@ -43,20 +57,26 @@ function ponerFoto(archivo: File | null) {
   fotoInput.value = "";
 }
 
+/** Null si la foto se puede enviar; si no, el aviso. El backend repite estas comprobaciones. */
+async function problemaFoto(archivo: File) {
+  // En Windows el navegador puede no dar tipo a un .heic: también se mira la extensión.
+  if (/^image\/hei[cf]$/.test(archivo.type) || /\.hei[cf]$/i.test(archivo.name)) return AVISO_HEIC;
+  if (!/^image\/(jpeg|png|webp|avif)$/.test(archivo.type)) return `Elige una foto ${FORMATOS_FOTO}.`;
+  if (archivo.size > MAX_FOTO_BYTES) return "La foto supera los 5 MB. Elige otra o tómala con menos resolución.";
+  const medidas = await medidasArchivo(archivo);
+  return medidas && medidas.ancho * medidas.alto > MAX_PIXELES ? avisoMegapixeles(medidas.ancho * medidas.alto) : null;
+}
+
 fotoInput.addEventListener("change", () => {
   const archivo = fotoInput.files?.[0] ?? null;
   marcarError(fotoInput, null);
   if (!archivo) return;
-  // En Windows el navegador puede no dar tipo a un .heic: también se mira la extensión.
-  if (/^image\/hei[cf]$/.test(archivo.type) || /\.hei[cf]$/i.test(archivo.name)) return marcarError(fotoInput, AVISO_HEIC);
-  if (!/^image\/(jpeg|png|webp|avif)$/.test(archivo.type)) return marcarError(fotoInput, `Elige una foto ${FORMATOS_FOTO}.`);
-  if (archivo.size > MAX_FOTO_BYTES) return marcarError(fotoInput, "La foto supera los 5 MB. Elige otra o tómala con menos resolución.");
-  ponerFoto(archivo);
+  preparandoFoto = problemaFoto(archivo).then((problema) => (problema ? marcarError(fotoInput, problema) : ponerFoto(archivo)));
 });
 fotoVista.querySelector("img")!.addEventListener("error", () => {
   if (!foto) return;
   ponerFoto(null);
-  marcarError(fotoInput, "No se pudo abrir esta foto. Elige otra.");
+  marcarError(fotoInput, NO_ABRE);
 });
 form.querySelector("#alerta-foto-quitar")!.addEventListener("click", () => {
   ponerFoto(null);
@@ -107,7 +127,7 @@ async function recuperarBorrador() {
   idempotencia = borrador.idempotencia;
   if (borrador.conFoto) {
     const guardada = await leerFoto();
-    if (guardada) ponerFoto(guardada);
+    if (guardada) await (preparandoFoto = ponerFoto(guardada));
     else marcarError(fotoInput, "No pudimos recuperar la foto. Vuelve a elegirla si quieres enviarla.");
   }
   form.querySelector<HTMLElement>("#alerta-recuperada")!.hidden = false;
@@ -116,6 +136,9 @@ async function recuperarBorrador() {
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (enviando) return;
+  enviando = true;
+  await preparandoFoto;
+  enviando = false;
   const primero = validar();
   if (primero) {
     showStatus(estado, "Revisa los campos marcados.", true);

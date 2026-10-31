@@ -486,5 +486,24 @@
       "enlaceRuta": "/#contacto",
       "destacada": true
     }
-  ]
+  ],
+  "inicio": {
+    "principal": {
+      "banners": [
+        {
+          "imagen": { "original": "portada" },
+          "celular": null,
+          "alt": "Carlos Astudillo, PSC. La nueva historia. Creo en una ciudad donde el progreso no sea privilegio de pocos, sino derecho de todos."
+        }
+      ],
+      "retrato": { "imagen": { "original": "pieza-respeto" }, "alt": "Retrato de Carlos Astudillo" }
+    },
+    "piezas": {
+      "piezas": [
+        { "imagen": { "original": "pieza-respeto" }, "alt": "Carlos Astudillo. Respeto, coherencia y claridad. Por ti, San Lorenzo." },
+        { "imagen": { "original": "pieza-ferrocarril" }, "alt": "Carlos Astudillo. Por ti, San Lorenzo." },
+        { "imagen": { "original": "pieza-tululbi" }, "alt": "Carlos Astudillo. Respeto, coherencia, claridad." }
+      ]
+    }
+  }
 }

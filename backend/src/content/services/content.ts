@@ -9,6 +9,7 @@ import type { BiographyItem, ChatAnswer, ContentVersions, Kpi, ProposalContent, 
 import { PARROQUIAS } from '../../contracts/parroquias';
 import { listAboutCarlosPages } from './about-carlos';
 import { emptyMyTeam, listMyTeam } from './my-team';
+import { HOME_CAROUSELS_SEED, listHomeCarousels } from './home-carousels';
 import { toPhoto } from './media';
 import { linkValue, sitePath, year } from './validation';
 
@@ -41,9 +42,9 @@ export interface WorkInput {
 export function createContent(sql: SQL, authorization: Authorization) {
   /** Lee el borrador actual completo, con la misma forma que se congela al publicar. */
   async function snapshot(): Promise<Snapshot> {
-    // En una transacción REPEATABLE READ las siete lecturas ven el mismo instante; sueltas, dos guardados
+    // En una transacción REPEATABLE READ las ocho lecturas ven el mismo instante; sueltas, dos guardados
     // hechos entre ellas podrían quedar publicados a medias.
-    const [texts, proposals, biography, works, chat, acercaDeCarlos, miEquipo] = await sql.begin('isolation level repeatable read read only', tx => Promise.all([
+    const [texts, proposals, biography, works, chat, acercaDeCarlos, miEquipo, inicio] = await sql.begin('isolation level repeatable read read only', tx => Promise.all([
       callPg<{ clave: string; valor: string }>(tx, 'textsList'),
       callPg<ProposalRow>(tx, 'proposalsList'),
       callPg<BiographyRow>(tx, 'biographyList'),
@@ -51,6 +52,7 @@ export function createContent(sql: SQL, authorization: Authorization) {
       callPg<ChatRow>(tx, 'chatList'),
       listAboutCarlosPages(tx),
       listMyTeam(tx),
+      listHomeCarousels(tx),
     ]));
     return {
       version: 1,
@@ -73,6 +75,7 @@ export function createContent(sql: SQL, authorization: Authorization) {
       })),
       acercaDeCarlos,
       miEquipo,
+      inicio,
     };
   }
 
@@ -279,6 +282,11 @@ export function diff(before: Snapshot | null, after: Snapshot) {
     for (const parish of after.miEquipo.parroquias)
       if (!same(team.parroquias.find(p => p.slug === parish.slug), parish))
         changes.push({ tipo: 'Mi equipo', descripcion: PARROQUIAS.find(p => p.slug === parish.slug)!.nombre });
+  }
+  const home = before.inicio ?? HOME_CAROUSELS_SEED;
+  if (after.inicio) {
+    if (!same(home.principal, after.inicio.principal)) changes.push({ tipo: 'Portada', descripcion: 'Carrusel principal' });
+    if (!same(home.piezas, after.inicio.piezas)) changes.push({ tipo: 'Portada', descripcion: 'Carrusel de piezas' });
   }
   return changes;
 }

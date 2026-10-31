@@ -12,7 +12,7 @@
     "astro": "astro",
     "check": "astro check",
     "test": "playwright test",
-    "test:unit": "node --test test-unit/api-client.test.ts",
+    "test:unit": "node --test test-unit/api-client.test.ts test-unit/foto-local.test.ts",
     "modelos": "bun scripts/optimizar-modelos.ts && node scripts/generar-posters.ts"
   },
   "dependencies": {

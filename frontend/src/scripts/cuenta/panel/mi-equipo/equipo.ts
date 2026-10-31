@@ -68,7 +68,7 @@ export function renderTeam(body: HTMLElement, rerender: () => void) {
       persona.foto = foto;
       rerender();
       notify("Foto subida. Guarda el borrador para conservarla.");
-    });
+    }, "Subiendo…");
   }));
   vigilarCambios(form, form.querySelector("button[type=submit]")!, paraGuardar(state.draft!.miEquipo.equipo), () => {
     capturar(form);

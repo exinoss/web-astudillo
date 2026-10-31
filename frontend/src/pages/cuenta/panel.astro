@@ -64,9 +64,11 @@ const pestanias = [
         <p class="mt-0">No tienes permiso para ver esta página.</p>
         <a class="button" href="/cuenta/">Ir a mi cuenta</a>
       </div>
-      {pestanias.map((p) => (
-        <div id={`seccion-${p.id}`} role="tabpanel" aria-labelledby={`pestania-${p.id}`} data-seccion={p.id} hidden></div>
-      ))}
+      <div id="panel-secciones">
+        {pestanias.map((p) => (
+          <div id={`seccion-${p.id}`} role="tabpanel" aria-labelledby={`pestania-${p.id}`} data-seccion={p.id} hidden></div>
+        ))}
+      </div>
     </div>
   </section>
   <script src="../../scripts/cuenta/panel/index.ts"></script>

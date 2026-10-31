@@ -277,11 +277,16 @@ test('redes: Instagram se añade desde el panel y vacío no da error', async ({ 
 test('obras: la foto subida se ve al momento y se guarda con su pie', async ({ page }) => {
   const data = panelData('coadmin');
   await mockPanelApi(page, data);
+  // Una red lenta: mientras sube, el loader cubre las secciones.
+  await page.route('**/api/admin/medios', async route => { await new Promise(r => setTimeout(r, 800)); await route.fallback(); });
   await page.goto('/cuenta/panel/#obras');
   const section = page.locator('#seccion-obras');
   await expect(section.locator('img')).toHaveCount(1);
-  await page.locator('#obra-fotos').setInputFiles('src/assets/carlos.jpg');
+  await page.locator('#obra-fotos').setInputFiles('src/assets/pieza-respeto-cuadrada.jpg');
+  const carga = page.locator('#panel-secciones [role="status"]');
+  await expect(carga).toContainText('Subiendo…');
   await expect(page.locator('#panel-estado')).toContainText('Fotos subidas');
+  await expect(carga).toHaveCount(0);
   await expect(section.locator('img')).toHaveCount(2);
   await expect.poll(() => section.locator('img').nth(1).evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
   await page.locator('#foto-pie-1').fill('Zanja abierta');

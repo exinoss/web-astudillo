@@ -9,7 +9,7 @@ import { miEquipo } from './mi-equipo';
 export class MockContentRepository extends SnapshotRepository {
   protected async load(): Promise<Snapshot> {
     return { ...initial, version:1, originales:initial.textos, obras:initial.obras.map(o => o.slug !== 'agua-potable' ? o
-      : { ...o, fotos:[1, 2, 3].map(n => ({ ...fotoDePrueba(n), pie:`Foto de prueba ${n}` })) }), miEquipo };
+      : { ...o, fotos:[1, 2, 3].map(n => ({ ...fotoDePrueba(n), pie:`Foto de prueba ${n}` })) }), miEquipo, inicio:initial.inicio as Snapshot["inicio"] };
   }
   async getAboutCarlosPage(slug: AboutCarlosSlug) { return aboutCarlosPages[slug]; }
 }
