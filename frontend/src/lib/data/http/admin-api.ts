@@ -1,3 +1,4 @@
+import type { Puesto } from '../../../../../backend/src/contracts/equipo';
 import type { Carrusel, Original } from '../../../../../backend/src/contracts/inicio';
 import type { ApiAboutCarlosPage } from '../acerca-de-carlos';
 import type { AboutCarlosSlug, AlertType, ParticipationState, SentAlert, SentSuggestion, UploadedPicture } from '../types';
@@ -28,7 +29,7 @@ export interface AboutCarlosPageBody {
   galeria: { idMedio: number; alt: string; pie: string }[];
 }
 export interface DraftMyTeam {
-  equipo: { nombre: string; quien: string | null; foto: Photo | null }[];
+  equipo: { puesto: Puesto; nombre: string; presentacion: string; trayectoria: string[]; foto: Photo | null }[];
   parroquias: { slug: string; texto: string; fotos: { foto: Photo; alt: string }[] }[];
 }
 export type DraftHomeImage = { original: Original } | { foto: Photo };
@@ -36,7 +37,10 @@ export type HomeImageBody = { original: Original } | { idMedio: number };
 export interface DraftHomeCarousels {
   principal: { banners: { imagen: DraftHomeImage; celular: Photo | null; alt: string }[]; retrato: { imagen: DraftHomeImage; alt: string } };
   piezas: { piezas: { imagen: DraftHomeImage; alt: string }[] };
+  equipo: { fotos: { foto: Photo; alt: string }[] };
 }
+export type TeamMemberBody = Omit<DraftMyTeam['equipo'][number], 'foto'> & { idMedio: number | null };
+export interface HomeTeamBody { fotos: { idMedio: number; alt: string }[] }
 export interface HomeMainBody {
   banners: { imagen: HomeImageBody; celular: number | null; alt: string }[];
   retrato: { imagen: HomeImageBody; alt: string };
@@ -114,12 +118,13 @@ export const adminApi = {
   videoCover: (enlace: string) => call<Photo>('/api/admin/medios/portada-video', 'POST', { enlace }),
   saveAboutCarlosPage: (slug: AboutCarlosSlug, body: AboutCarlosPageBody, version: string) =>
     call<Saved>(`/api/admin/contenido/acerca-de-carlos/${slug}`, 'PUT', { ...body, version }),
-  saveTeam: (personas: { idMedio: number | null; nombre: string; quien: string }[], version: string | null) =>
+  saveTeam: (personas: TeamMemberBody[], version: string | null) =>
     call<Saved>('/api/admin/contenido/mi-equipo/equipo', 'PUT', { personas, version }),
   saveParish: (slug: string, body: { texto: string; fotos: { idMedio: number; alt: string }[] }, version: string | null) =>
     call<Saved>(`/api/admin/contenido/mi-equipo/parroquias/${slug}`, 'PUT', { ...body, version }),
   saveHomeMain: (body: HomeMainBody, version: string | null) => call<Saved>('/api/admin/contenido/inicio/principal', 'PUT', { ...body, version }),
   saveHomePieces: (body: HomePiecesBody, version: string | null) => call<Saved>('/api/admin/contenido/inicio/piezas', 'PUT', { ...body, version }),
+  saveHomeTeam: (body: HomeTeamBody, version: string | null) => call<Saved>('/api/admin/contenido/inicio/equipo', 'PUT', { ...body, version }),
   saveChat: (respuestas: ChatAnswer[], version: string) => call<Saved>('/api/admin/contenido/chat', 'PUT', { respuestas, version }),
   unanswered: () => call<{ preguntas: { clave: string; ejemplo: string; veces: number; ultimaVez: string }[] }>('/api/admin/chat/sin-respuesta'),
   discardUnanswered: (clave: string) => call(`/api/admin/chat/sin-respuesta/${encodeURIComponent(clave)}`, 'DELETE'),

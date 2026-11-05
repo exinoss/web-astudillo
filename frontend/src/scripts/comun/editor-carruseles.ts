@@ -1,6 +1,7 @@
 // Lo carga modo-edicion.ts antes de pintar los textos del borrador: `publicado` guarda la portada tal como se publicó.
-import { MAX_BANNERS, MAX_PIEZAS, type Carrusel, type Original } from "../../../../backend/src/contracts/inicio";
+import { AVISO_HORIZONTAL, MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_PIEZAS, type Carrusel, type Original } from "../../../../backend/src/contracts/inicio";
 import { mostrarCarga } from "../../lib/comun/animaciones";
+import { medidasArchivo } from "../../lib/comun/foto-local";
 import { medidasFoto, uploadedSrcset, uploadedUrl } from "../../lib/comun/fotos";
 import { iconSvg } from "../../lib/comun/iconos";
 import { bloquearMientras, vigilarCambios } from "../../lib/cuenta/panel/cambios";
@@ -9,6 +10,7 @@ import { adminApi, type Draft, type DraftHomeCarousels, type DraftHomeImage, typ
 
 type Principal = DraftHomeCarousels["principal"];
 type Piezas = DraftHomeCarousels["piezas"];
+type Equipo = DraftHomeCarousels["equipo"];
 type Version = { src: string; srcset: string; miniatura: string };
 interface Opciones {
   avisar: (mensaje: string, error?: boolean) => void;
@@ -21,13 +23,22 @@ const BUTTON = "inline-flex min-h-11 items-center justify-center gap-2.5 rounded
 const LIMITE = "Máximo 8 MB.";
 // Mismas clases que index.astro: una pieza subida no se ve más grande que su archivo.
 const TOPE = ["m-auto", "max-h-[calc(var(--ancho-foto)/var(--proporcion))]", "max-w-(--ancho-foto)"];
-const NOMBRES: Record<Carrusel, string> = { principal: "Carrusel principal", piezas: "Carrusel de piezas" };
+const NOMBRES: Record<Carrusel, string> = { principal: "Carrusel principal", piezas: "Carrusel de piezas", equipo: "Carrusel del equipo" };
 
 const hero = document.querySelector<HTMLElement>('[data-carrusel-editable="principal"]')!;
 const perfil = document.querySelector<HTMLElement>('[data-carrusel-editable="piezas"]')!;
 const originales = JSON.parse(hero.dataset.originales!) as Record<Original, Version>;
 const plantilla = hero.querySelector<HTMLTemplateElement>("template[data-plantilla-banner]")!;
 const publicado = { hero: hero.innerHTML, perfil: perfil.innerHTML };
+const seccionEquipo = document.querySelector<HTMLElement>('[data-carrusel-editable="equipo"]')!;
+const equipo = seccionEquipo.querySelector<HTMLElement>("[data-carrusel]")!;
+const plantillaEquipo = equipo.querySelector<HTMLTemplateElement>("template[data-plantilla-equipo]")!;
+const controlesEquipo = equipo.querySelector<HTMLElement>("[data-controles]")!;
+// Las fotos publicadas se apartan sin copiarlas: así conservan el visor que ya tienen montado.
+const fotosPublicadas = [...equipo.querySelectorAll<HTMLElement>("[data-diapositiva]")];
+const sinFotos = document.createElement("div");
+sinFotos.className = "flex min-h-[180px] flex-col items-center justify-center gap-3 border-y-2 border-dashed border-neutral bg-primary-soft px-5 py-6 text-center";
+sinFotos.innerHTML = `<p class="m-0 text-[0.9rem] text-primary"><strong>Carrusel del equipo</strong> · Aún no tiene imágenes y no se muestra en el sitio.</p>`;
 
 let opciones: Opciones;
 let borrador: DraftHomeCarousels;
@@ -94,6 +105,21 @@ const htmlPiezas = (p: Piezas) => `
     </li>`).join("")}</ol>
   ${p.piezas.length < MAX_PIEZAS ? `<div class="mt-3">${upload("piezas-nuevas", "Añadir piezas", true)}</div>` : ""}`;
 
+const htmlEquipo = (e: Equipo) => `
+  <p class="${HINT} mt-0 mb-3">Hasta ${MAX_FOTOS_EQUIPO} · imágenes horizontales · 2000 × 761 px · ${LIMITE}</p>
+  <ol class="m-0 flex list-none flex-col gap-3 p-0">${e.fotos.map((x, i) => `
+    <li class="flex gap-3 rounded-[3px] border border-base-300 p-3 max-mobile:flex-col">
+      <img src="${thumb(x.foto)}" alt="" class="aspect-[1947/741] w-[200px] shrink-0 self-start rounded-[3px] bg-accent object-contain max-mobile:w-full" />
+      <div class="flex min-w-0 flex-1 flex-col gap-2">
+        <div class="flex items-center justify-between gap-2">
+          <strong class="text-[0.85rem]">Imagen ${i + 1}</strong>
+          <span class="flex">${moveButtons("imagen", i, e.fotos.length, `imagen ${i + 1}`)}</span>
+        </div>
+        ${field({ id: `equipo-alt-${i}`, label: "Descripción de la imagen", value: x.alt, max: 200 })}
+      </div>
+    </li>`).join("")}</ol>
+  ${e.fotos.length < MAX_FOTOS_EQUIPO ? `<div class="mt-3">${upload("equipo-nuevas", "Añadir imágenes", true)}</div>` : ""}`;
+
 const dialogo = document.createElement("div");
 dialogo.className = "fixed inset-0 z-[950] flex items-center justify-center bg-[#06317659] p-4 max-tablet:items-end max-tablet:p-0";
 dialogo.hidden = true;
@@ -113,7 +139,7 @@ dialogo.innerHTML = `
 const guardar = dialogo.querySelector<HTMLButtonElement>("[data-guardar]")!;
 const ventana = dialogo.querySelector<HTMLElement>("[role=dialog]")!;
 
-let abierto: { cual: Carrusel; trabajo: Principal | Piezas; origen: HTMLElement; cuerpo: HTMLElement; comprobar: () => void } | null = null;
+let abierto: { cual: Carrusel; trabajo: Principal | Piezas | Equipo; origen: HTMLElement; cuerpo: HTMLElement; comprobar: () => void } | null = null;
 let subiendo = false;
 
 /** Pasa lo escrito al trabajo; un campo que todavía no está pintado conserva su valor. */
@@ -124,11 +150,12 @@ function capturar() {
     const t = abierto.trabajo as Principal;
     t.banners.forEach((b, i) => { b.alt = valor(`banner-alt-${i}`, b.alt); });
     t.retrato.alt = valor("retrato-alt", t.retrato.alt);
-  } else (abierto.trabajo as Piezas).piezas.forEach((x, i) => { x.alt = valor(`pieza-alt-${i}`, x.alt); });
+  } else if (abierto.cual === "piezas") (abierto.trabajo as Piezas).piezas.forEach((x, i) => { x.alt = valor(`pieza-alt-${i}`, x.alt); });
+  else (abierto.trabajo as Equipo).fotos.forEach((x, i) => { x.alt = valor(`equipo-alt-${i}`, x.alt); });
 }
 
 /** Una por una; se detiene en la primera que no se puede subir. Ninguna se muestra antes de que el backend la procese. */
-async function subirFotos(archivos: File[]) {
+async function subirFotos(archivos: File[], horizontales = false) {
   const subidas = [];
   subiendo = true;
   guardar.disabled = true;
@@ -137,6 +164,8 @@ async function subirFotos(archivos: File[]) {
   try {
     for (const [i, archivo] of archivos.entries()) {
       opciones.avisar(archivos.length > 1 ? `Subiendo imagen ${i + 1} de ${archivos.length}…` : "Subiendo imagen…");
+      const medidas = horizontales ? await medidasArchivo(archivo) : null;
+      if (medidas && medidas.ancho <= medidas.alto) throw new Error(AVISO_HORIZONTAL);
       subidas.push(await adminApi.upload(archivo));
     }
   } catch (error) {
@@ -150,8 +179,8 @@ async function subirFotos(archivos: File[]) {
 
 function pintar() {
   const a = abierto!;
-  const lista: unknown[] = a.cual === "principal" ? (a.trabajo as Principal).banners : (a.trabajo as Piezas).piezas;
-  a.cuerpo.innerHTML = a.cual === "principal" ? htmlPrincipal(a.trabajo as Principal) : htmlPiezas(a.trabajo as Piezas);
+  const lista: unknown[] = a.cual === "principal" ? (a.trabajo as Principal).banners : a.cual === "piezas" ? (a.trabajo as Piezas).piezas : (a.trabajo as Equipo).fotos;
+  a.cuerpo.innerHTML = a.cual === "principal" ? htmlPrincipal(a.trabajo as Principal) : a.cual === "piezas" ? htmlPiezas(a.trabajo as Piezas) : htmlEquipo(a.trabajo as Equipo);
   a.cuerpo.querySelectorAll<HTMLButtonElement>("[data-move]").forEach((b) => b.addEventListener("click", () => {
     capturar();
     const i = Number(b.dataset.index), j = i + Number(b.dataset.step);
@@ -169,12 +198,12 @@ function pintar() {
     (a.trabajo as Principal).banners[Number(b.dataset.quitarCelular)].celular = null;
     pintar();
   }));
-  const alElegir = (id: string, maximo: number, poner: (fotos: Awaited<ReturnType<typeof subirFotos>>) => void) =>
+  const alElegir = (id: string, maximo: number, poner: (fotos: Awaited<ReturnType<typeof subirFotos>>) => void, horizontales = false) =>
     a.cuerpo.querySelector<HTMLInputElement>(`#${id}`)?.addEventListener("change", async (e) => {
       const archivos = [...((e.target as HTMLInputElement).files ?? [])].slice(0, maximo);
       if (!archivos.length || subiendo) return;
       capturar();
-      const fotos = await subirFotos(archivos);
+      const fotos = await subirFotos(archivos, horizontales);
       if (abierto !== a) return;
       // Lo escrito mientras se subía se conserva al volver a pintar.
       capturar();
@@ -188,9 +217,12 @@ function pintar() {
     alElegir("banners-nuevos", MAX_BANNERS - t.banners.length, (fotos) => t.banners.push(...fotos.map((foto) => ({ imagen: { foto }, celular: null, alt: "" }))));
     alElegir("retrato-nuevo", 1, ([foto]) => { t.retrato = { imagen: { foto }, alt: "" }; });
     t.banners.forEach((_, i) => alElegir(`banner-celular-${i}`, 1, ([foto]) => { t.banners[i].celular = foto; }));
-  } else {
+  } else if (a.cual === "piezas") {
     const t = a.trabajo as Piezas;
     alElegir("piezas-nuevas", MAX_PIEZAS - t.piezas.length, (fotos) => t.piezas.push(...fotos.map((foto) => ({ imagen: { foto }, alt: "" }))));
+  } else {
+    const t = a.trabajo as Equipo;
+    alElegir("equipo-nuevas", MAX_FOTOS_EQUIPO - t.fotos.length, (fotos) => t.fotos.push(...fotos.map((foto) => ({ foto, alt: "" }))), true);
   }
   a.comprobar();
 }
@@ -236,7 +268,8 @@ guardar.addEventListener("click", () => void bloquearMientras(guardar, async () 
   const a = abierto!;
   const faltan = a.cual === "principal"
     ? [...(a.trabajo as Principal).banners.map((b, i) => [`banner-alt-${i}`, b.alt]), ["retrato-alt", (a.trabajo as Principal).retrato.alt]]
-    : (a.trabajo as Piezas).piezas.map((x, i) => [`pieza-alt-${i}`, x.alt]);
+    : a.cual === "piezas" ? (a.trabajo as Piezas).piezas.map((x, i) => [`pieza-alt-${i}`, x.alt])
+    : (a.trabajo as Equipo).fotos.map((x, i) => [`equipo-alt-${i}`, x.alt]);
   const vacia = faltan.find(([, alt]) => !alt);
   if (vacia) {
     opciones.avisar("Describe cada imagen antes de guardar.", true);
@@ -251,8 +284,10 @@ guardar.addEventListener("click", () => void bloquearMientras(guardar, async () 
         banners: t.banners.map((b) => ({ imagen: cuerpoImagen(b.imagen), celular: b.celular?.idMedio ?? null, alt: b.alt })),
         retrato: { imagen: cuerpoImagen(t.retrato.imagen), alt: t.retrato.alt },
       }, versiones[a.cual] ?? null);
-    } else {
+    } else if (a.cual === "piezas") {
       await adminApi.saveHomePieces({ piezas: (a.trabajo as Piezas).piezas.map((x) => ({ imagen: cuerpoImagen(x.imagen), alt: x.alt })) }, versiones[a.cual] ?? null);
+    } else {
+      await adminApi.saveHomeTeam({ fotos: (a.trabajo as Equipo).fotos.map((x) => ({ idMedio: x.foto.idMedio, alt: x.alt })) }, versiones[a.cual] ?? null);
     }
     const draft = await adminApi.draft();
     borrador = draft.inicio;
@@ -347,10 +382,31 @@ function pintarBorrador() {
   const grupo = perfil.querySelector<HTMLElement>(".profile-dots")!;
   puntos(grupo, ".profile-dot", piezas.length, "imagen");
   grupo.hidden = piezas.length < 2;
+
+  const { fotos } = borrador.equipo;
+  equipo.querySelectorAll("[data-diapositiva]").forEach((x) => x.remove());
+  plantillaEquipo.before(...fotos.map(({ foto, alt }, i) => {
+    const slide = plantillaEquipo.content.firstElementChild!.cloneNode(true) as HTMLElement;
+    slide.style.cssText = medidasFoto(foto);
+    ponerImagen(slide.querySelector("img")!, { foto }, alt, "100vw");
+    slide.setAttribute("aria-label", `${i + 1} de ${fotos.length}`);
+    slide.hidden = i > 0;
+    return slide;
+  }));
+  puntos(controlesEquipo.querySelector<HTMLElement>("[role=group]")!, "[data-punto]", fotos.length, "imagen");
+  controlesEquipo.hidden = fotos.length < 2;
+  seccionEquipo.hidden = false;
+  seccionEquipo.prepend(sinFotos);
+  sinFotos.hidden = fotos.length > 0;
+  const boton = botones[2];
+  boton.classList.toggle("absolute", fotos.length > 0);
+  boton.querySelector("span")!.textContent = fotos.length ? "Cambiar imágenes" : "Agregar imágenes";
+  boton.setAttribute("aria-label", fotos.length ? "Cambiar las imágenes del carrusel del equipo" : "Agregar imágenes al carrusel del equipo");
+  (fotos.length ? equipo : sinFotos).append(boton);
   document.dispatchEvent(new Event("carruseles:cambiados"));
 }
 
-const botones = (["principal", "piezas"] as const).map((cual) => {
+const botones = (["principal", "piezas", "equipo"] as const).map((cual) => {
   const boton = document.createElement("button");
   boton.type = "button";
   boton.dataset.editarCarrusel = cual;
@@ -378,5 +434,13 @@ export function ocultarCarruseles() {
   if (abierto) cerrar();
   hero.innerHTML = publicado.hero;
   perfil.innerHTML = publicado.perfil;
+  equipo.querySelectorAll("[data-diapositiva]").forEach((x) => x.remove());
+  plantillaEquipo.before(...fotosPublicadas);
+  fotosPublicadas.forEach((x, i) => { x.hidden = i > 0; });
+  puntos(controlesEquipo.querySelector<HTMLElement>("[role=group]")!, "[data-punto]", fotosPublicadas.length, "imagen");
+  controlesEquipo.hidden = fotosPublicadas.length < 2;
+  sinFotos.remove();
+  botones[2].remove();
+  seccionEquipo.hidden = !fotosPublicadas.length;
   document.dispatchEvent(new Event("carruseles:cambiados"));
 }

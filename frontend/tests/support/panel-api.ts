@@ -44,13 +44,16 @@ export function panelData(rol: 'admin' | 'coadmin') {
         'conoce-mas': { tarjetas: [], video: null, retrato: null, entrevista: [], galeria: [] },
       } as Record<string, Record<string, unknown>>,
       miEquipo: {
-        equipo: [{ nombre: 'Rosa Valencia', quien: 'Concejala rural', foto: photo(4) }, { nombre: 'Luis Cortez', quien: null, foto: null }] as Record<string, unknown>[],
+        equipo: [
+          { puesto: 'urbano-1', nombre: 'Rosa Valencia', presentacion: '', trayectoria: [], foto: photo(4) },
+          { puesto: 'rural-1', nombre: 'Luis Cortez', presentacion: '', trayectoria: [], foto: null },
+        ] as Record<string, unknown>[],
         parroquias: PARROQUIAS.map(p => p.slug === 'alto-tambo'
           ? { slug: p.slug, texto: 'Agua para los recintos.', fotos: [{ foto: photo(5), alt: 'Casa comunal' }] }
           : { slug: p.slug, texto: '', fotos: [] }) as Record<string, unknown>[],
       },
       // Como la API real recién migrada: los carruseles de la semilla, con las imágenes que vienen con el sitio.
-      inicio: structuredClone(initial.inicio) as Record<string, unknown>,
+      inicio: { ...structuredClone(initial.inicio), equipo: { fotos: [] } } as Record<string, unknown>,
       // Como la API real: un texto sin cambiar no tiene versión. Los valores son md5 de ejemplo.
       versiones: {
         textos: { 'pie.lema': 'a'.repeat(32) } as Record<string, string>,
@@ -171,7 +174,7 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
       data.pending.push({ tipo: 'Mi equipo', descripcion: key === 'equipo' ? 'Equipo' : PARROQUIAS.find(p => p.slug === key)!.nombre });
       return json({ version: data.draft.versiones.miEquipo[key] });
     }
-    const home = path.match(/^\/api\/admin\/contenido\/inicio\/(principal|piezas)$/);
+    const home = path.match(/^\/api\/admin\/contenido\/inicio\/(principal|piezas|equipo)$/);
     if (home) {
       const key = home[1];
       const { version, ...fields } = body();
@@ -181,9 +184,10 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
       data.draft.inicio[key] = key === 'principal'
         ? { banners: fields.banners.map((b: { imagen: object; celular: number | null; alt: string }) => ({ imagen: image(b.imagen), celular: b.celular ? photo(b.celular) : null, alt: b.alt })),
           retrato: { imagen: image(fields.retrato.imagen), alt: fields.retrato.alt } }
-        : { piezas: fields.piezas.map((p: { imagen: object; alt: string }) => ({ imagen: image(p.imagen), alt: p.alt })) };
+        : key === 'piezas' ? { piezas: fields.piezas.map((p: { imagen: object; alt: string }) => ({ imagen: image(p.imagen), alt: p.alt })) }
+        : { fotos: fields.fotos.map((f: { idMedio: number; alt: string }) => ({ foto: photo(f.idMedio), alt: f.alt })) };
       data.draft.versiones.inicio[key] = nextVersion();
-      data.pending.push({ tipo: 'Portada', descripcion: key === 'principal' ? 'Carrusel principal' : 'Carrusel de piezas' });
+      data.pending.push({ tipo: 'Portada', descripcion: { principal: 'Carrusel principal', piezas: 'Carrusel de piezas', equipo: 'Carrusel del equipo' }[key]! });
       return json({ version: data.draft.versiones.inicio[key] });
     }
     const proposal = path.match(/^\/api\/admin\/contenido\/propuestas\/(.+)$/);

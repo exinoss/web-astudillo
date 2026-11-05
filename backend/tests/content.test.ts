@@ -159,6 +159,15 @@ test("las fotos se validan por su contenido, se optimizan y pierden los metadato
   expect((await call("/medios/..%2F..%2F.env")).status).toBe(404);
 });
 
+test("una foto PNG sin fondo conserva la transparencia en sus versiones (personas de «Mi equipo»)", async () => {
+  const recortada = await sharp({ create: { width: 700, height: 820, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } } })
+    .composite([{ input: await png(300, 300), top: 260, left: 200 }]).png().toBuffer();
+  const foto = await (await upload(recortada, "recortada.png")).json();
+  const { data, info } = await sharp(join(MEDIA, `${foto.nombre}-480.webp`)).raw().toBuffer({ resolveWithObject: true });
+  expect(info.channels).toBe(4);
+  expect(data[3]).toBe(0);
+});
+
 test("biografía y obras guardan fotos existentes; el porcentaje no se guarda", async () => {
   const foto = await (await upload(await png())).json();
   const hito = { anios: "1990", titulo: "Raíces", texto: "Primer párrafo.\n\nSegundo párrafo.", idMedio: foto.idMedio, alt: "Carlos de niño" };

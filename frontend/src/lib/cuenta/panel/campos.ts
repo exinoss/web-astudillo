@@ -33,3 +33,15 @@ export function field(o: { id: string; label: string; value: string; max: number
     ${o.hint ? `<p class="${HINT}">${esc(o.hint)}</p>` : ""}
   </div>`;
 }
+
+/** Lista desplegable con etiqueta; una opción `disabled` se ve pero no se elige, y `error` marca el campo. Todo se escapa. */
+export function selectField(o: { id: string; label: string; value: string; options: { value: string; label: string; disabled?: boolean }[]; placeholder?: string; error?: string }) {
+  return `<div>
+    <label for="${esc(o.id)}" class="${LABEL}">${esc(o.label)}</label>
+    <select id="${esc(o.id)}" name="${esc(o.id)}" class="${INPUT}" ${o.error ? `aria-invalid="true" aria-describedby="${esc(o.id)}-error"` : ""}>
+      ${o.placeholder ? `<option value="" disabled ${o.value ? "" : "selected"}>${esc(o.placeholder)}</option>` : ""}
+      ${o.options.map((x) => `<option value="${esc(x.value)}" ${x.value === o.value ? "selected" : ""} ${x.disabled ? "disabled" : ""}>${esc(x.label)}</option>`).join("")}
+    </select>
+    ${o.error ? `<p id="${esc(o.id)}-error" class="m-0 mt-1.5 text-[0.72rem] text-error">${esc(o.error)}</p>` : ""}
+  </div>`;
+}

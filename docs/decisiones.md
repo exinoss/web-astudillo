@@ -31,6 +31,9 @@ Por qué: enlazarla enviaría la visita a la plataforma antes de pulsar el video
 **D-020 · 2026-10-31 · Cambiar el rol de una cuenta, desactivarla o reactivarla exige confirmar la identidad en cada cambio: la contraseña de quien lo hace o, si su cuenta no tiene contraseña (solo Google), un código de 6 dígitos enviado a su correo.**
 Por qué: quien encuentre la sesión de un admin abierta en un equipo no debe poder nombrar admins ni bajar o desactivar cuentas. Lo comprueba el backend antes de tocar la base (`auth/services/confirmation.ts`). Los fallos comparten el contador del cambio de contraseña, con esperas crecientes. El código vale 10 minutos y para varios cambios dentro de ese tiempo; pedir otro anula el anterior, y pedirlo dos veces en menos de un minuto no manda otro correo. Se guarda con una sal propia en `tb_token_autenticacion` (propósito `confirmar_accion`, migración 0015).
 
+**D-022 · 2026-11-05 · En «Mi equipo», cada persona ocupa un puesto fijo de una lista cerrada: prefecto, 3 concejales urbanos y sus 3 suplentes, y 2 concejales rurales y sus 2 suplentes. El cargo visible sale del puesto, en mayúsculas y en masculino genérico, como la pancarta («1er CONCEJAL URBANO»); no se escribe a mano.**
+Por qué: el cargo en texto libre salía con faltas («Consejal»), sin orden y sin agrupar. Con el puesto, la página agrupa con franjas, coloca a cada suplente bajo su principal y el backend rechaza puestos repetidos o inexistentes. Solo el prefecto lleva presentación y trayectoria. No hay migración de datos: los registros con cargo libre se borran desde el panel antes de desplegar. Detalle: `backend/src/contracts/equipo.ts` y `design/propuestas/mi-equipo-grupos.md` (fuera de Git).
+
 ## Diseño y fotos
 
 **D-008 · 2026-10-23 · Las fotos de Biografía se muestran completas dentro de una caja de 440 × 440 px y nunca más grandes que su archivo.**
@@ -50,6 +53,9 @@ Por qué: la semilla añade lo que falta por clave (propuestas, obras, textos) y
 
 **D-021 · 2026-11-04 · El modelo del estadio se sirve con las caras superpuestas resueltas y sin triángulos sin área (30 MB, 9,6 M de triángulos), y no se simplifica más. La versión ligera mientras se gira queda registrada para cuando haga falta.**
 Por qué: quita las rayas del borde de la pista sin cambiar nada más de lo que se ve y da casi toda la fluidez que faltaba. Simplificar con meshoptimizer estropeó las gradas, no cumplió su tope de error y no redujo el parpadeo. La versión ligera exige una segunda descarga y código propio en el visor: solo se hará si en equipos reales sigue habiendo tirones. Detalle: `docs/plan-modelos-3d.md` («Lo que enseñó el estadio»).
+
+**D-023 · 2026-11-05 · El carrusel del equipo de la portada no tiene semilla: sin fotos no se muestra, y en modo edición ofrece «Agregar imágenes». Es la excepción a D-018. Solo admite imágenes horizontales (más anchas que altas), con los límites de siempre (40 MP y 8 MB), y usa el marco del carrusel principal con la foto completa.**
+Por qué: no hay imágenes del cliente que poner por defecto, y recortar una foto de grupo cortaría nombres y caras. A los lados de la foto se ve el público de una balconera, editado por el usuario (`frontend/src/assets/fondo-publico-equipo.jpg`). En celular no se descarga, porque la foto ocupa todo el ancho.
 
 ## Trabajo y configuración
 

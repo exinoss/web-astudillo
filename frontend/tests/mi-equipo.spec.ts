@@ -9,34 +9,74 @@ const abrirParroquias = async (page: Page, ...nombres: string[]) => {
   for (const nombre of nombres) await page.getByText(nombre, { exact: true }).click();
 };
 
-test('el menú y la portada llevan a «Mi equipo», con el equipo en tres columnas', async ({ page }) => {
+const cajas = (page: Page, grupo: string) => page.getByRole('region', { name: grupo }).getByRole('listitem')
+  .evaluateAll(items => items.map(li => li.getBoundingClientRect()).map(r => ({ top: Math.round(r.top), left: Math.round(r.left), centro: r.left + r.width / 2 })));
+
+test('el menú y la portada llevan a «Mi equipo», con una franja por grupo y cada principal sobre su suplente', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await expect(page.getByRole('link', { name: 'Acerca de mí' })).toHaveAttribute('href', '/acerca-de-nosotros/');
   await page.getByRole('link', { name: 'Conoce a mi equipo' }).click();
   await page.waitForURL('**/mi-equipo/');
   await expect(page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('link', { name: 'Mi equipo' })).toHaveAttribute('aria-current', 'page');
-  const personas = page.getByRole('list', { name: 'Integrantes del equipo' }).getByRole('listitem');
-  await expect(personas).toHaveCount(9);
-  const fila = await personas.evaluateAll(items => items.slice(0, 4).map(li => Math.round(li.getBoundingClientRect().top)));
-  expect(fila.slice(0, 3).every(top => top === fila[0])).toBeTruthy();
-  expect(fila[3]).toBeGreaterThan(fila[0]);
-  await expect(personas.nth(0).getByRole('img', { name: 'Foto de Persona de prueba 1' })).toBeVisible();
-  await expect(personas.nth(1).locator('svg[aria-hidden="true"]')).toBeVisible();
-  await expect(personas.nth(1)).toHaveText('Persona de prueba 2');
-  await expect(personas.nth(2)).toContainText('Concejal de prueba');
+  await expect(page.locator('main').getByRole('heading', { level: 2 })).toHaveText(['Prefecto', 'Concejales urbanos', 'Concejales rurales', 'Parroquias']);
+  const urbanos = page.getByRole('region', { name: 'Concejales urbanos' }).getByRole('listitem');
+  await expect(urbanos).toHaveText([
+    'Persona de prueba 21er CONCEJAL URBANO', 'Persona de prueba 31er CONCEJAL SUPLENTE', 'Persona de prueba 42do CONCEJAL URBANO',
+    'Persona de prueba 52do CONCEJAL SUPLENTE', 'Persona de prueba 63er CONCEJAL URBANO', 'Persona de prueba 73er CONCEJAL SUPLENTE',
+  ]);
+  // Principales en la primera fila y cada suplente debajo del suyo.
+  const [u1, s1, u2, s2, u3, s3] = await cajas(page, 'Concejales urbanos');
+  expect([u2.top, u3.top]).toEqual([u1.top, u1.top]);
+  expect([s1.top, s2.top, s3.top].every(top => top > u1.top)).toBeTruthy();
+  expect([s1.left, s2.left, s3.left]).toEqual([u1.left, u2.left, u3.left]);
+  await expect(urbanos.nth(2).getByRole('img', { name: 'Foto de Persona de prueba 4' })).toBeVisible();
+  await expect(urbanos.nth(0).locator('svg[aria-hidden="true"]')).toBeVisible();
+  // Los rurales usan dos columnas del mismo ancho, centradas.
+  const rurales = await cajas(page, 'Concejales rurales');
+  expect(rurales).toHaveLength(4);
+  expect(Math.abs((rurales[0].centro + rurales[2].centro) / 2 - 720)).toBeLessThan(10);
 });
 
-test('en celular el equipo va en dos columnas con la última centrada, y ninguna página desborda', async ({ page }) => {
+test('en celular cada principal va junto a su suplente, en dos columnas, y ninguna página desborda', async ({ page }) => {
   await page.goto('/mi-equipo/');
-  for (const ancho of [320, 390, 480, 481, 768, 1440]) {
+  for (const ancho of [320, 390, 480, 481, 760, 768, 1100, 1440]) {
     await page.setViewportSize({ width: ancho, height: 900 });
-    const cajas = await page.getByRole('list', { name: 'Integrantes del equipo' }).getByRole('listitem')
-      .evaluateAll(items => items.map(li => li.getBoundingClientRect()).map(r => ({ top: Math.round(r.top), centro: r.left + r.width / 2 })));
-    const columnas = cajas.filter(c => c.top === cajas[0].top).length;
-    expect(columnas, `${ancho}px`).toBe(ancho <= 480 ? 2 : 3);
-    if (ancho <= 480) expect(Math.abs(cajas[8].centro - ancho / 2)).toBeLessThan(2);
+    const [u1, s1, u2] = await cajas(page, 'Concejales urbanos');
+    if (ancho <= 480) {
+      expect(s1.top, `${ancho}px`).toBe(u1.top);
+      expect(u2.top, `${ancho}px`).toBeGreaterThan(u1.top);
+    } else expect(u2.top, `${ancho}px`).toBe(u1.top);
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${ancho}px`).toBeTruthy();
+  }
+});
+
+test('la tarjeta del prefecto abre su información al lado en escritorio y debajo en celular, también con el teclado', async ({ page }) => {
+  for (const ancho of [1440, 390]) {
+    await page.setViewportSize({ width: ancho, height: 900 });
+    await page.goto('/mi-equipo/');
+    const tarjeta = page.getByRole('button', { name: /Persona de prueba 1/ });
+    const info = page.getByRole('region', { name: 'Sobre Persona de prueba 1' });
+    await expect(tarjeta).toHaveAttribute('aria-expanded', 'false');
+    await expect(info).toBeHidden();
+    // Cerrada, la tarjeta queda centrada.
+    const cerrada = (await tarjeta.boundingBox())!;
+    expect(Math.abs(cerrada.x + cerrada.width / 2 - ancho / 2), `${ancho}px`).toBeLessThan(10);
+    await tarjeta.focus();
+    await page.keyboard.press('Enter');
+    await expect(tarjeta).toHaveAttribute('aria-expanded', 'true');
+    await expect(info).toBeVisible();
+    await expect(info).toContainText('Presentación de prueba del prefecto.');
+    await expect(info.getByRole('listitem')).toHaveText(['Primer punto de prueba', 'Segundo punto de prueba']);
+    await expect.poll(async () => {
+      const [t, i] = await Promise.all([tarjeta.boundingBox(), info.boundingBox()]);
+      return ancho > 760 ? i!.x > t!.x + t!.width : i!.y > t!.y + t!.height - 1;
+    }, `${ancho}px`).toBeTruthy();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${ancho}px`).toBeTruthy();
+    await info.getByRole('button', { name: 'Cerrar la información del prefecto' }).click();
+    await expect(info).toBeHidden();
+    await expect(tarjeta).toBeFocused();
+    await expect(tarjeta).toHaveAttribute('aria-expanded', 'false');
   }
 });
 
@@ -104,7 +144,7 @@ test('al pulsar una foto se abre en grande en esa misma foto y al cerrar vuelve 
   await expect.poll(() => page.evaluate(() => document.documentElement.style.overflow)).toBe('');
 });
 
-test('el panel edita el equipo: añade a alguien sin foto, exige el nombre y guarda con la versión cargada', async ({ page }) => {
+test('el panel edita el equipo: el tipo da el primer puesto libre, exige tipo y nombre y guarda con la versión cargada', async ({ page }) => {
   const data = panelData('admin');
   await mockPanelApi(page, data);
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -112,20 +152,79 @@ test('el panel edita el equipo: añade a alguien sin foto, exige el nombre y gua
   const guardar = page.getByRole('button', { name: 'Guardar borrador' });
   await expect(page.getByLabel('Nombre').first()).toHaveValue('Rosa Valencia');
   await expect(guardar).toBeDisabled();
+
+  // Una tarjeta nueva empieza sin tipo y no se guarda hasta elegirlo.
   await page.getByRole('button', { name: 'Añadir a alguien' }).click();
-  await expect(page.locator('#persona-nombre-2')).toBeFocused();
+  await expect(page.locator('#persona-tipo-2')).toBeFocused();
+  await guardar.click();
+  await expect(page.locator('#panel-estado')).toHaveText('Elige el tipo de cada persona.');
+  await expect(page.locator('#persona-tipo-2')).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.getByText('Elige el tipo.', { exact: true })).toBeVisible();
+  // El 1er concejal urbano ya está: le toca el 2do. La tarjeta no cambia de lugar mientras se edita.
+  await page.locator('#persona-tipo-2').selectOption('urbanos');
+  await expect(page.locator('#persona-tipo-2')).toBeFocused();
+  await expect(page.locator('#persona-puesto-2')).toHaveValue('urbano-2');
+  await expect(page.locator('#persona-puesto-2 option[value="urbano-1"]')).toBeDisabled();
+  await page.locator('#persona-puesto-2').selectOption('urbano-suplente-1');
+  await expect(page.locator('#persona-puesto-2')).toBeFocused();
   await guardar.click();
   await expect(page.locator('#panel-estado')).toHaveText('Escribe el nombre de cada persona.');
+  await expect(page.locator('#persona-nombre-2')).toBeFocused();
   await page.locator('#persona-nombre-2').fill('Marta Angulo');
-  await page.locator('#persona-quien-2').fill('Concejala urbana');
-  await page.getByRole('button', { name: 'Subir persona 3' }).click();
+
+  // Rurales: el 1ro ya está, el siguiente recibe el 2do y el que sigue, el 1er suplente; ninguna tarjeta se mueve.
+  await page.getByRole('button', { name: 'Añadir a alguien' }).click();
+  await page.locator('#persona-tipo-3').selectOption('rurales');
+  await expect(page.locator('#persona-puesto-3')).toHaveValue('rural-2');
+  await page.locator('#persona-nombre-3').fill('Pedro Quiñónez');
+  await page.getByRole('button', { name: 'Añadir a alguien' }).click();
+  await page.locator('#persona-tipo-4').selectOption('rurales');
+  await expect(page.locator('#persona-tipo-4')).toBeFocused();
+  await expect(page.locator('#persona-puesto-4')).toHaveValue('rural-suplente-1');
+  await expect(page.locator('#persona-nombre-3')).toHaveValue('Pedro Quiñónez');
+  await page.locator('#persona-nombre-4').fill('Ana Bone');
+
+  // El prefecto, con su presentación, su trayectoria por puntos y la vista previa.
+  await page.getByRole('button', { name: 'Añadir a alguien' }).click();
+  await page.locator('#persona-tipo-5').selectOption('prefecto');
+  await expect(page.locator('#persona-tipo-5')).toHaveValue('prefecto');
+  await page.locator('#persona-nombre-5').fill('Javier Buitrón');
+  await page.getByLabel('Presentación').fill('Trabaja con las comunidades.');
+  await page.getByRole('button', { name: 'Añadir un punto' }).click();
+  await expect(page.getByRole('textbox', { name: 'Punto 1 de la trayectoria' })).toBeFocused();
+  await page.getByRole('textbox', { name: 'Punto 1 de la trayectoria' }).fill('Director provincial');
+  await page.getByRole('button', { name: 'Añadir un punto' }).click();
+  await page.getByRole('textbox', { name: 'Punto 2 de la trayectoria' }).fill('Punto que sobra');
+  await page.getByRole('button', { name: 'Añadir un punto' }).click();
+  await page.getByRole('textbox', { name: 'Punto 3 de la trayectoria' }).fill('Presidente de la asociación');
+  await page.getByRole('button', { name: 'Quitar el punto 2 de la trayectoria' }).click();
+  const vista = page.locator('[data-vista-prefecto]');
+  await expect(vista).toContainText('Trabaja con las comunidades.');
+  await expect(vista.getByRole('listitem')).toHaveText(['Director provincial', 'Presidente de la asociación']);
+  // Una palabra muy larga se parte dentro de la vista previa en vez de ensancharla.
+  await page.getByLabel('Presentación').fill('d'.repeat(300));
+  const [caja, tarjetaPrefecto] = await Promise.all([vista.boundingBox(), page.locator('#equipo-form > ol > li').filter({ has: vista }).boundingBox()]);
+  expect(caja!.x + caja!.width).toBeLessThanOrEqual(tarjetaPrefecto!.x + tarjetaPrefecto!.width);
+  expect(await vista.evaluate(el => el.scrollWidth <= el.clientWidth)).toBeTruthy();
+  await page.getByLabel('Presentación').fill('Trabaja con las comunidades.');
+  // Ya hay prefecto: otra tarjeta no puede elegirlo.
+  await page.getByRole('button', { name: 'Añadir a alguien' }).click();
+  await expect(page.locator('#persona-tipo-6 option[value="prefecto"]')).toBeDisabled();
+  await page.getByRole('button', { name: 'Quitar a esta persona' }).click();
+
   await guardar.click();
   await expect(page.locator('#panel-estado')).toContainText('Borrador del equipo guardado');
+  const sinExtras = { presentacion: '', trayectoria: [] };
+  // Se envían en el orden en que se crearon; el backend las guarda en el de los puestos.
   expect(data.savedTeam.at(-1)).toEqual({ clave: 'equipo', personas: [
-    { idMedio: 4, nombre: 'Rosa Valencia', quien: 'Concejala rural' },
-    { idMedio: null, nombre: 'Marta Angulo', quien: 'Concejala urbana' },
-    { idMedio: null, nombre: 'Luis Cortez', quien: '' },
+    { idMedio: 4, puesto: 'urbano-1', nombre: 'Rosa Valencia', ...sinExtras },
+    { idMedio: null, puesto: 'rural-1', nombre: 'Luis Cortez', ...sinExtras },
+    { idMedio: null, puesto: 'urbano-suplente-1', nombre: 'Marta Angulo', ...sinExtras },
+    { idMedio: null, puesto: 'rural-2', nombre: 'Pedro Quiñónez', ...sinExtras },
+    { idMedio: null, puesto: 'rural-suplente-1', nombre: 'Ana Bone', ...sinExtras },
+    { idMedio: null, puesto: 'prefecto', nombre: 'Javier Buitrón', presentacion: 'Trabaja con las comunidades.', trayectoria: ['Director provincial', 'Presidente de la asociación'] },
   ] });
+  expect(data.savedTeam).toHaveLength(1);
 });
 
 test('el panel edita una parroquia nunca guardada con versión nula y exige describir cada foto', async ({ page }) => {

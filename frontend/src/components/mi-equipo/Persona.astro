@@ -1,22 +1,55 @@
 ---
 import Foto from "../comun/Foto.astro";
+import Icon from "../comun/Icon.astro";
+import { medidasFoto } from "../../lib/comun/fotos";
 import type { TeamMember } from "../../lib/data/types";
 import { silueta } from "../../lib/mi-equipo/silueta";
 
-interface Props { member: TeamMember }
-const { member } = Astro.props;
+interface Props {
+  member: TeamMember;
+  /** Con el id de la información del prefecto, la tarjeta es el botón que la abre; sin él, un elemento de la grilla. */
+  controla?: string;
+  class?: string;
+}
+const { member, controla, class: className } = Astro.props;
+const Tarjeta = controla ? "button" : "li";
+const Figura = controla ? "span" : "figure";
+const Pie = controla ? "span" : "figcaption";
+const PERSONA = "absolute bottom-0 left-1/2 block h-auto -translate-x-1/2 origin-bottom transition-[scale] duration-[450ms] ease-[cubic-bezier(.2,.7,.2,1)] group-hover:scale-[1.08]";
 ---
 
-<li class="overflow-hidden rounded-[4px] bg-primary [box-shadow:0_10px_30px_#06317622] max-mobile:last:odd:col-span-2 max-mobile:last:odd:w-[calc(50%-6px)] max-mobile:last:odd:justify-self-center">
-  <figure class="m-0">
-    {member.image ? (
-      <Foto class="aspect-[3/4] w-full object-cover" picture={member.image} alt={`Foto de ${member.name}`} sizes="(max-width: 480px) 45vw, (max-width: 1100px) 30vw, 340px" />
-    ) : (
-      <Fragment set:html={silueta("block aspect-[3/4] w-full")} />
-    )}
-    <figcaption class="border-t-4 border-accent px-4 py-3 text-primary-content max-laptop:px-3 max-tablet:px-2.5 max-tablet:py-2.5">
-      <strong class="block font-display text-[1.3rem] leading-[1.1] font-semibold max-laptop:text-[1.15rem] max-tablet:text-[1rem] max-mobile:text-[1.05rem] max-mobile-xs:text-[1rem]">{member.name}</strong>
-      {member.role && <span class="mt-0.5 block text-[0.75rem] text-accent max-tablet:text-[0.72rem]">{member.role}</span>}
-    </figcaption>
-  </figure>
-</li>
+<Tarjeta
+  class:list={[
+    "group flex flex-col before:block before:aspect-[1/0.48] before:content-['']",
+    controla
+      ? "cursor-pointer text-left focus-visible:outline-3 focus-visible:outline-offset-4 focus-visible:outline-neutral"
+      : "col-(--col) row-(--fila) max-mobile:col-auto max-mobile:row-auto max-mobile:last:odd:col-span-2 max-mobile:last:odd:w-[calc(50%-6px)] max-mobile:last:odd:justify-self-center",
+    className,
+  ]}
+  style={controla ? undefined : `--col: ${member.post.columna}; --fila: ${member.post.fila}`}
+  type={controla ? "button" : undefined}
+  aria-expanded={controla ? "false" : undefined}
+  aria-controls={controla}
+>
+  <Figura class="m-0 flex flex-1 flex-col">
+    <span class="relative block aspect-[558/336] overflow-x-clip overflow-y-visible">
+      <span class="absolute inset-0 rounded-[50%_50%_0_0/100%_100%_0_0] bg-accent"></span>
+      {member.image ? (
+        <Foto class={`${PERSONA} w-[min(86%,var(--ancho-foto))]`} style={medidasFoto(member.image)} picture={member.image} alt={`Foto de ${member.name}`} sizes="(max-width: 480px) 40vw, (max-width: 1100px) 27vw, 300px" />
+      ) : (
+        <Fragment set:html={silueta(`${PERSONA} aspect-[480/561] w-[86%]`)} />
+      )}
+    </span>
+    <Pie class="flex flex-1 items-start gap-2 rounded-b-[4px] border-t-4 border-secondary bg-primary px-4 py-3 text-primary-content max-laptop:px-3 max-tablet:px-2.5 max-tablet:py-2.5">
+      <span class="min-w-0 flex-1 wrap-anywhere">
+        <strong class="block font-display text-[1.3rem] leading-[1.1] font-semibold max-laptop:text-[1.15rem] max-tablet:text-[1rem] max-mobile:text-[1.05rem] max-mobile-xs:text-[1rem]">{member.name}</strong>
+        <span class="mt-0.5 block text-[0.75rem] text-accent max-tablet:text-[0.72rem]">{member.post.texto}</span>
+      </span>
+      {controla && (
+        <span aria-hidden="true" class="grid size-7 shrink-0 place-items-center self-center rounded-full bg-accent text-primary transition-[rotate] duration-300 group-aria-expanded:rotate-45">
+          <Icon name="plus" size={16} />
+        </span>
+      )}
+    </Pie>
+  </Figura>
+</Tarjeta>

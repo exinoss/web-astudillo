@@ -1,0 +1,2 @@
+ALTER TABLE "tb_inicio_carruseles" DROP CONSTRAINT "ck_inicio_carruseles_clave";--> statement-breakpoint
+ALTER TABLE "tb_inicio_carruseles" ADD CONSTRAINT "ck_inicio_carruseles_clave" CHECK (clave IN ('principal', 'piezas', 'equipo'));

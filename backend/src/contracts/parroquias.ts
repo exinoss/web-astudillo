@@ -17,5 +17,4 @@ export const PARROQUIAS = [
 
 export type ParroquiaSlug = (typeof PARROQUIAS)[number]['slug'];
 
-export const MAX_EQUIPO = 9;
 export const MAX_FOTOS_PARROQUIA = 6;

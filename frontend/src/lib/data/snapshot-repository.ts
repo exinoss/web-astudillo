@@ -1,5 +1,6 @@
 import initial from '../../../../backend/database/contenido-inicial.json';
 import type { Original } from '../../../../backend/src/contracts/inicio';
+import { PUESTOS } from '../../../../backend/src/contracts/equipo';
 import { PARROQUIAS } from '../../../../backend/src/contracts/parroquias';
 import type { ContentRepository } from './content-repository';
 import { citizenIcons, proposalIcons, proposalModels, proposalSites } from './presentation';
@@ -10,6 +11,8 @@ type ApiHomeImage = { original: Original } | { foto: UploadedPicture };
 interface ApiHomeCarousels {
   principal: { banners: { imagen: ApiHomeImage; celular: UploadedPicture | null; alt: string }[]; retrato: { imagen: ApiHomeImage; alt: string } };
   piezas: { piezas: { imagen: ApiHomeImage; alt: string }[] };
+  /** Ausente en la semilla y en publicaciones anteriores al carrusel del equipo. */
+  equipo?: { fotos: { foto: UploadedPicture; alt: string }[] };
 }
 
 export interface Snapshot {
@@ -22,7 +25,7 @@ export interface Snapshot {
   chat?: { pregunta: string; destacada: boolean }[];
   acercaDeCarlos?: Record<string, ApiAboutCarlosPage>;
   miEquipo?: {
-    equipo: { nombre: string; quien: string | null; foto: UploadedPicture | null }[];
+    equipo: { puesto: string; nombre: string; presentacion: string; trayectoria: string[]; foto: UploadedPicture | null }[];
     parroquias: { slug: string; texto: string; fotos: { foto: UploadedPicture; alt: string }[] }[];
   };
   /** Ausente en publicaciones anteriores a los carruseles editables: valen los de la semilla. */
@@ -71,7 +74,11 @@ export abstract class SnapshotRepository implements ContentRepository {
   async getMyTeam(): Promise<MyTeam> {
     const team = (await this.load()).miEquipo;
     return {
-      members: (team?.equipo ?? []).map(p => ({ name: p.nombre, role: p.quien, image: p.foto })),
+      // Una publicación anterior a los puestos fijos no trae `puesto`: esas personas no se muestran.
+      members: (team?.equipo ?? []).flatMap(p => {
+        const post = PUESTOS.find(x => x.clave === p.puesto);
+        return post ? [{ name: p.nombre, post, image: p.foto, intro: p.presentacion, career: p.trayectoria }] : [];
+      }),
       parishes: PARROQUIAS.map(({ slug, nombre }) => {
         const parish = team?.parroquias.find(p => p.slug === slug);
         return { slug, name: nombre, paragraphs: paragraphs(parish?.texto ?? ''), photos: (parish?.fotos ?? []).map(f => ({ image: f.foto, alt: f.alt })) };
@@ -79,11 +86,12 @@ export abstract class SnapshotRepository implements ContentRepository {
     };
   }
   async getHomeCarousels(): Promise<HomeCarousels> {
-    const { principal, piezas } = (await this.load()).inicio ?? (initial.inicio as ApiHomeCarousels);
+    const { principal, piezas, equipo } = (await this.load()).inicio ?? (initial.inicio as ApiHomeCarousels);
     return {
       banners: principal.banners.map(b => ({ image: homeImage(b.imagen), mobile: b.celular, alt: b.alt })),
       portrait: { image: homeImage(principal.retrato.imagen), alt: principal.retrato.alt },
       pieces: piezas.piezas.map(p => ({ image: homeImage(p.imagen), alt: p.alt })),
+      team: (equipo?.fotos ?? []).map(f => ({ image: f.foto, alt: f.alt })),
     };
   }
 }

@@ -113,6 +113,13 @@
       "when": 1793442966735,
       "tag": "0015_confirmar_accion",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1793887626337,
+      "tag": "0016_carrusel_equipo",
+      "breakpoints": true
     }
   ]
 }

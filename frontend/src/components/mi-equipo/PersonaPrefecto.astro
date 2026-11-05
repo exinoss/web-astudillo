@@ -1,0 +1,48 @@
+---
+import Persona from "./Persona.astro";
+import type { TeamMember } from "../../lib/data/types";
+import { infoPrefecto } from "../../lib/mi-equipo/prefecto";
+
+interface Props { member: TeamMember }
+const { member } = Astro.props;
+const conInfo = Boolean(member.intro || member.career.length);
+---
+
+{conInfo ? (
+  <div class="group/prefecto mt-3 grid grid-cols-3 items-center gap-x-(--gap) max-tablet:grid-cols-1 max-tablet:justify-items-center" data-prefecto>
+    {/* Empieza en la columna del centro; al abrirse pasa a la primera y la información ocupa las otras dos. */}
+    <Persona
+      member={member}
+      controla="prefecto-info"
+      class="col-start-1 row-start-1 w-full translate-x-[calc(100%+var(--gap))] transition-[translate] duration-[600ms] ease-[cubic-bezier(.2,.7,.2,1)] group-[.is-abierto]/prefecto:translate-x-0 max-tablet:w-[calc((100%-2*var(--gap))/3)] max-tablet:translate-x-0 max-tablet:transition-none max-mobile:w-[calc(50%-6px)]"
+    />
+    <div class="contents max-tablet:col-start-1 max-tablet:row-start-2 max-tablet:grid max-tablet:w-full max-tablet:grid-rows-[0fr] max-tablet:overflow-hidden max-tablet:transition-[grid-template-rows] max-tablet:duration-500 group-[.is-abierto]/prefecto:max-tablet:grid-rows-[1fr]">
+      <div
+        id="prefecto-info"
+        role="region"
+        aria-label={`Sobre ${member.name}`}
+        class="invisible col-span-2 col-start-2 row-start-1 -translate-x-8 opacity-0 [transition:opacity_.4s,translate_.6s_cubic-bezier(.2,.7,.2,1),visibility_0s_.6s] group-[.is-abierto]/prefecto:visible group-[.is-abierto]/prefecto:translate-x-0 group-[.is-abierto]/prefecto:opacity-100 group-[.is-abierto]/prefecto:[transition:opacity_.45s_.2s,translate_.6s_.1s_cubic-bezier(.2,.7,.2,1),visibility_0s] max-tablet:col-auto max-tablet:row-auto max-tablet:min-h-0 max-tablet:translate-x-0 max-tablet:-translate-y-3 group-[.is-abierto]/prefecto:max-tablet:mt-4 group-[.is-abierto]/prefecto:max-tablet:translate-y-0"
+        set:html={infoPrefecto(member.intro, member.career, true)}
+      />
+    </div>
+  </div>
+) : (
+  <ul class="mt-3 grid list-none grid-cols-3 gap-(--gap) p-0 max-mobile:grid-cols-2">
+    <Persona member={member} />
+  </ul>
+)}
+
+<script>
+  const escenario = document.querySelector<HTMLElement>("[data-prefecto]");
+  const boton = escenario?.querySelector<HTMLButtonElement>("[aria-controls=prefecto-info]");
+  /** Abre o cierra la información del prefecto. */
+  const abrir = (si: boolean) => {
+    escenario!.classList.toggle("is-abierto", si);
+    boton!.setAttribute("aria-expanded", String(si));
+  };
+  boton?.addEventListener("click", () => abrir(boton.getAttribute("aria-expanded") !== "true"));
+  escenario?.querySelector("[data-cerrar-info]")?.addEventListener("click", () => {
+    abrir(false);
+    boton!.focus();
+  });
+</script>

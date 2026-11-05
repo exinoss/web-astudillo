@@ -9,7 +9,7 @@ import { ACEPTA_FOTOS, FORMATOS_FOTO } from "../../../../../backend/src/contract
 import { GHOST } from "../../../lib/cuenta/panel/campos";
 
 export { ACEPTA_FOTOS, esc, FORMATOS_FOTO, iconSvg };
-export { field, GHOST, HINT, ICON_BUTTON, INPUT, LABEL, moveButtons, thumb, upload } from "../../../lib/cuenta/panel/campos";
+export { field, GHOST, HINT, ICON_BUTTON, INPUT, LABEL, moveButtons, selectField, thumb, upload } from "../../../lib/cuenta/panel/campos";
 
 export const DANGER =
   "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] border border-error/40 bg-transparent px-[18px] text-[0.82rem] font-bold text-error hover:bg-error-soft";
