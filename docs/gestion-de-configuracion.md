@@ -24,7 +24,7 @@ Una sola versión para todo el proyecto, porque frontend y backend se despliegan
 
 - **MAYOR:** un cambio que exige pasos manuales al desplegar o rompe algo existente (variables de entorno nuevas obligatorias, una migración que no se puede aplicar sola, una ruta de la API que cambia de contrato).
 - **MENOR:** funcionalidad nueva compatible (una sección, una opción del panel, una ruta nueva).
-- **PARCHE:** correcciones y cambios internos sin efecto visible para quien usa el sitio.
+- **PARCHE:** correcciones, cambios internos y ajustes visuales pequeños, sin funcionalidad nueva.
 
 La versión vive en tres sitios que deben coincidir: `version` de `frontend/package.json`, `version` de `backend/package.json` y el título de la sección en `CHANGELOG.md`.
 

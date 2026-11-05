@@ -1,7 +1,7 @@
 import { mostrarCarga } from "../../../lib/comun/animaciones";
 import { showStatus } from "../../../lib/cuenta/auth/page";
 import type { Profile } from "../../../lib/data/auth-repository";
-import { adminApi, type Draft } from "../../../lib/data/http/admin-api";
+import { adminApi, type Draft, type Photo } from "../../../lib/data/http/admin-api";
 import { esc } from "../../../lib/comun/html";
 import { iconSvg } from "../../../lib/comun/iconos";
 import { bloquearMientras } from "../../../lib/cuenta/panel/cambios";
@@ -85,4 +85,27 @@ export async function busy(button: HTMLButtonElement | null, action: () => Promi
     }
   };
   await (button ? bloquearMientras(button, run) : run());
+}
+
+let subiendo = false;
+/** Sube las fotos una a una (una sola subida a la vez en el panel); `alSubir` devuelve false para detenerse. Devuelve si subieron todas. */
+export async function subirFotos(archivos: File[], alSubir: (foto: Photo) => boolean | void) {
+  if (subiendo) {
+    notify("Espera a que termine la subida en curso.", true);
+    return false;
+  }
+  subiendo = true;
+  let todas = false;
+  try {
+    await busy(null, async () => {
+      for (const [i, archivo] of archivos.entries()) {
+        notify(archivos.length > 1 ? `Subiendo foto ${i + 1} de ${archivos.length}…` : "Subiendo la foto…");
+        if (alSubir(await adminApi.upload(archivo)) === false) return;
+      }
+      todas = true;
+    }, "Subiendo…");
+  } finally {
+    subiendo = false;
+  }
+  return todas;
 }

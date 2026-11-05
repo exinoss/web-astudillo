@@ -1,8 +1,6 @@
 // Lo carga modo-edicion.ts antes de pintar los textos del borrador: `publicado` guarda la portada tal como se publicó.
 import { MAX_BANNERS, MAX_PIEZAS, type Carrusel, type Original } from "../../../../backend/src/contracts/inicio";
-import { avisoMegapixeles, MAX_PIXELES } from "../../../../backend/src/contracts/media";
 import { mostrarCarga } from "../../lib/comun/animaciones";
-import { medidasArchivo } from "../../lib/comun/foto-local";
 import { medidasFoto, uploadedSrcset, uploadedUrl } from "../../lib/comun/fotos";
 import { iconSvg } from "../../lib/comun/iconos";
 import { bloquearMientras, vigilarCambios } from "../../lib/cuenta/panel/cambios";
@@ -138,8 +136,6 @@ async function subirFotos(archivos: File[]) {
   const terminarCarga = mostrarCarga(ventana, "Subiendo…");
   try {
     for (const [i, archivo] of archivos.entries()) {
-      const medidas = await medidasArchivo(archivo);
-      if (medidas && medidas.ancho * medidas.alto > MAX_PIXELES) throw new Error(avisoMegapixeles(medidas.ancho * medidas.alto));
       opciones.avisar(archivos.length > 1 ? `Subiendo imagen ${i + 1} de ${archivos.length}…` : "Subiendo imagen…");
       subidas.push(await adminApi.upload(archivo));
     }

@@ -2,7 +2,7 @@ import { MAX_EQUIPO } from "../../../../../../backend/src/contracts/parroquias";
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type Photo } from "../../../../lib/data/http/admin-api";
 import { silueta } from "../../../../lib/mi-equipo/silueta";
-import { busy, DRAFT_PILL, esc, field, FORMATOS_FOTO, GHOST, HINT, iconSvg, isPending, moveButtons, notify, previewButton, reloadDraft, reloadPending, state, thumb, upload, value } from "../ui";
+import { busy, DRAFT_PILL, esc, field, FORMATOS_FOTO, GHOST, HINT, iconSvg, isPending, moveButtons, notify, previewButton, reloadDraft, reloadPending, state, thumb, upload, value, subirFotos } from "../ui";
 
 // `clave` sigue a la persona aunque se reordene mientras sube su foto.
 interface Persona { clave: string; nombre: string; quien: string; foto: Photo | null }
@@ -60,15 +60,16 @@ export function renderTeam(body: HTMLElement, rerender: () => void) {
     const archivo = (e.target as HTMLInputElement).files?.[0];
     if (!archivo) return;
     capturar(form);
-    void busy(null, async () => {
-      notify("Subiendo la foto…");
-      const foto = await adminApi.upload(archivo);
+    void subirFotos([archivo], (foto) => {
       const persona = personas?.find((x) => x.clave === p.clave);
-      if (!persona) return notify("Esa persona ya no está en la lista; la foto no se añadió.", true);
+      if (!persona) {
+        notify("Esa persona ya no está en la lista; la foto no se añadió.", true);
+        return false;
+      }
       persona.foto = foto;
       rerender();
       notify("Foto subida. Guarda el borrador para conservarla.");
-    }, "Subiendo…");
+    });
   }));
   vigilarCambios(form, form.querySelector("button[type=submit]")!, paraGuardar(state.draft!.miEquipo.equipo), () => {
     capturar(form);
