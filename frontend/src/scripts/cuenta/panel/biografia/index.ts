@@ -1,7 +1,7 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftBiographyItem } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
-import { ACEPTA_FOTOS, busy, card, DANGER, DRAFT_PILL, esc, field, FORMATOS_FOTO, GHOST, iconSvg, INPUT, isPending, notify, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
+import { ACEPTA_FOTOS, busy, card, DANGER, DRAFT_PILL, esc, field, FORMATOS_FOTO, GHOST, iconSvg, INPUT, isPending, notify, previewButton, reloadDraft, reloadPending, state, value, subirFotos } from "../ui";
 
 const MAX_ITEMS = 30;
 const YEAR = /^\d{4}$/;
@@ -127,15 +127,16 @@ function bind(section: HTMLElement) {
     if (!file) return;
     capture(form);
     const clave = items![selected].clave;
-    void busy(null, async () => {
-      notify("Subiendo la foto…");
-      const foto = await adminApi.upload(file);
+    void subirFotos([file], (foto) => {
       const destino = items?.findIndex((h) => h.clave === clave) ?? -1;
-      if (destino < 0) return notify("El hito ya no existe; la foto no se añadió.", true);
+      if (destino < 0) {
+        notify("El hito ya no existe; la foto no se añadió.", true);
+        return false;
+      }
       items![destino] = { ...items![destino], foto };
       renderBiography(section);
       notify("Foto subida. Describe lo que se ve y guarda el borrador.");
-    }, "Subiendo…");
+    });
   });
   form.addEventListener("submit", (e) => {
     e.preventDefault();

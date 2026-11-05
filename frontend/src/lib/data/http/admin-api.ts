@@ -2,6 +2,8 @@ import type { Carrusel, Original } from '../../../../../backend/src/contracts/in
 import type { ApiAboutCarlosPage } from '../acerca-de-carlos';
 import type { AboutCarlosSlug, AlertType, ParticipationState, SentAlert, SentSuggestion, UploadedPicture } from '../types';
 import { apiRequest } from './api-client';
+import { MAX_PIXELES, avisoMegapixeles } from '../../../../../backend/src/contracts/media';
+import { medidasArchivo } from '../../comun/foto-local';
 
 export type { AboutCarlosSlug };
 export interface Photo extends UploadedPicture { idMedio: number }
@@ -101,7 +103,10 @@ export const adminApi = {
     call<Saved>('/api/admin/contenido/biografia', 'PUT', { hitos, version }),
   saveWork: (slug: string, body: { nota: string; hitos: DraftWork['hitos']; fotos: { idMedio: number; pie: string }[] }, version: string) =>
     call<Saved>(`/api/admin/contenido/obras/${slug}`, 'PUT', { ...body, version }),
-  upload: (file: File) => {
+  /** Rechaza antes de enviar una foto de más de `MAX_PIXELES`, como hará el backend. */
+  upload: async (file: File) => {
+    const medidas = await medidasArchivo(file);
+    if (medidas && medidas.ancho * medidas.alto > MAX_PIXELES) throw new Error(avisoMegapixeles(medidas.ancho * medidas.alto));
     const form = new FormData();
     form.append('foto', file);
     return call<Photo>('/api/admin/medios', 'POST', form);

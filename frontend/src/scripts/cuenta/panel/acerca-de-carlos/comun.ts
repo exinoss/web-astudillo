@@ -1,5 +1,5 @@
 import { adminApi, type AboutCarlosSlug, type DraftAboutCarlosPage, type Photo } from "../../../../lib/data/http/admin-api";
-import { busy, notify } from "../ui";
+import { notify, subirFotos } from "../ui";
 
 export type Section = "tarjetas" | "video" | "retrato" | "entrevista" | "galeria";
 
@@ -23,17 +23,18 @@ export function onFiles(input: HTMLInputElement | null, limit: number, use: (fot
     if (!files.length) return;
     capture();
     const page = editor.page;
-    void busy(null, async () => {
-      for (const [i, file] of files.entries()) {
-        if (files.length > 1) notify(`Subiendo foto ${i + 1} de ${files.length}…`);
-        const foto = await adminApi.upload(file);
-        // Si mientras subía se cambió de página, la foto no se añade a la otra.
-        if (editor.page !== page) return notify("Cambiaste de página mientras se subía la foto; vuelve a subirla.", true);
-        use(foto);
+    void subirFotos(files, (foto) => {
+      // Si mientras subía se cambió de página, la foto no se añade a la otra.
+      if (editor.page !== page) {
+        notify("Cambiaste de página mientras se subía la foto; vuelve a subirla.", true);
+        return false;
       }
+      use(foto);
+    }).then((todas) => {
+      if (!todas) return;
       notify("Foto subida. Completa los datos y guarda el borrador.");
       editor.rerender();
-    }, "Subiendo…");
+    });
   });
 }
 

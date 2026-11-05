@@ -2,7 +2,7 @@ import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftWork } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
 import { STAGE_NAMES, workProgress } from "../../../../lib/ciudadania/obras";
-import { ACEPTA_FOTOS, busy, card, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, notify, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
+import { ACEPTA_FOTOS, busy, card, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, notify, previewButton, reloadDraft, reloadPending, state, value, subirFotos } from "../ui";
 
 const MAX_MILESTONES = 20;
 const MAX_PHOTOS = 24;
@@ -118,18 +118,16 @@ function bind(section: HTMLElement) {
     if (!files.length) return;
     capture(form);
     const slug = work!.slug;
-    void busy(null, async () => {
-      for (const [i, file] of files.entries()) {
-        notify(`Subiendo foto ${i + 1} de ${files.length}…`);
-        // Primero la subida y después leer `work`: mientras sube, otra lectura del formulario puede
-        // reemplazar la copia de trabajo, y la foto se añadiría a la lista vieja.
-        const foto = await adminApi.upload(file);
-        if (work?.slug !== slug) return notify("Cambiaste de obra mientras se subían las fotos; vuelve a subirlas en esa obra.", true);
-        work.fotos.push({ ...foto, pie: "" });
-        renderWorks(section);
+    // `work` se lee después de cada subida: mientras sube, otra lectura del formulario puede
+    // reemplazar la copia de trabajo, y la foto se añadiría a la lista vieja.
+    void subirFotos(files, (foto) => {
+      if (work?.slug !== slug) {
+        notify("Cambiaste de obra mientras se subían las fotos; vuelve a subirlas en esa obra.", true);
+        return false;
       }
-      notify("Fotos subidas. Escribe un pie para cada una y guarda el borrador.");
-    }, "Subiendo…");
+      work.fotos.push({ ...foto, pie: "" });
+      renderWorks(section);
+    }).then((todas) => todas && notify("Fotos subidas. Escribe un pie para cada una y guarda el borrador."));
   });
   vigilarCambios(form, form.querySelector("button[type=submit]")!, saved(state.draft!.obras.find((w) => w.slug === work!.slug)!), () => {
     capture(form);

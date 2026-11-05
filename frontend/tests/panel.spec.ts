@@ -1,3 +1,4 @@
+import sharp from 'sharp';
 import { expect, test, type Locator } from '@playwright/test';
 import { CODIGO_PANEL, CONTRASENIA_PANEL, mockPanelApi, panelData } from './support/panel-api';
 
@@ -374,6 +375,26 @@ test('obras: la foto subida se ve al momento y se guarda con su pie', async ({ p
   await section.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(page.locator('#panel-estado')).toContainText('guardado');
   expect(data.draft.obras[0].fotos.map(f => [f.idMedio, f.pie])).toEqual([[2, 'Tubería instalada'], [90, 'Zanja abierta']]);
+});
+
+test('fotos del panel: se rechaza antes de subir una de más de 40 megapíxeles y no se suben dos a la vez', async ({ page }) => {
+  const data = panelData('admin');
+  await mockPanelApi(page, data);
+  let subidas = 0;
+  await page.route('**/api/admin/medios', async route => { subidas++; await new Promise(r => setTimeout(r, 1200)); await route.fallback(); });
+  await page.goto('/cuenta/panel/#mi-equipo');
+  await expect(page.locator('#persona-foto-0')).toBeAttached();
+  const enorme = await sharp({ create: { width: 9000, height: 5000, channels: 3, background: '#2e86c1' } }).jpeg().toBuffer();
+  await page.locator('#persona-foto-0').setInputFiles({ name: 'enorme.jpg', mimeType: 'image/jpeg', buffer: enorme });
+  await expect(page.locator('#panel-estado')).toContainText('megapíxeles');
+  expect(subidas).toBe(0);
+
+  await page.locator('#persona-foto-0').setInputFiles('src/assets/pieza-respeto-cuadrada.jpg');
+  await expect(page.locator('#panel-estado')).toContainText('Subiendo la foto');
+  await page.locator('#persona-foto-1').setInputFiles('src/assets/pieza-respeto-cuadrada.jpg');
+  await expect(page.locator('#panel-estado')).toHaveText('Espera a que termine la subida en curso.');
+  await expect(page.locator('#panel-estado')).toContainText('Foto subida');
+  expect(subidas).toBe(1);
 });
 
 test('biografía: el año solo acepta cifras y Publicaciones es la última pestaña', async ({ page }) => {

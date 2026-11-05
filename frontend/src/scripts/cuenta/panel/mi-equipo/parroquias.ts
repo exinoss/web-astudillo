@@ -1,7 +1,7 @@
 import { MAX_FOTOS_PARROQUIA, PARROQUIAS } from "../../../../../../backend/src/contracts/parroquias";
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftMyTeam } from "../../../../lib/data/http/admin-api";
-import { busy, DRAFT_PILL, esc, field, FORMATOS_FOTO, HINT, isPending, moveButtons, notify, previewButton, reloadDraft, reloadPending, state, thumb, upload, value } from "../ui";
+import { busy, DRAFT_PILL, esc, field, FORMATOS_FOTO, HINT, isPending, moveButtons, notify, previewButton, reloadDraft, reloadPending, state, thumb, upload, value, subirFotos } from "../ui";
 
 type Parroquia = DraftMyTeam["parroquias"][number];
 let elegida: string = PARROQUIAS[0].slug;
@@ -57,17 +57,12 @@ export function renderParishes(body: HTMLElement, rerender: () => void) {
     if (!archivos.length) return;
     capturar(form);
     const destino = elegida;
-    void busy(null, async () => {
-      for (const [i, archivo] of archivos.entries()) {
-        notify(`Subiendo foto ${i + 1} de ${archivos.length}…`);
-        const foto = await adminApi.upload(archivo);
-        const abierto = document.querySelector<HTMLFormElement>("#parroquia-form");
-        if (destino === elegida && abierto) capturar(abierto);
-        trabajo[destino].fotos.push({ foto, alt: "" });
-        if (destino === elegida) rerender();
-      }
-      notify("Fotos subidas. Describe cada una y guarda el borrador.");
-    }, "Subiendo…");
+    void subirFotos(archivos, (foto) => {
+      const abierto = document.querySelector<HTMLFormElement>("#parroquia-form");
+      if (destino === elegida && abierto) capturar(abierto);
+      trabajo[destino].fotos.push({ foto, alt: "" });
+      if (destino === elegida) rerender();
+    }).then((todas) => todas && notify("Fotos subidas. Describe cada una y guarda el borrador."));
   });
   vigilarCambios(form, form.querySelector("button[type=submit]")!, paraGuardar(delBorrador(elegida)), () => {
     capturar(form);
