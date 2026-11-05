@@ -14,10 +14,7 @@ interface Confirmacion {
   enviar: (confirmacion: string) => Promise<unknown>;
 }
 
-/**
- * Pide la contraseña (o un código enviado al correo, si la cuenta no tiene contraseña) y ejecuta `enviar`.
- * Resuelve true si se hizo y false si se canceló; un 409 (otra persona cambió la cuenta) cierra el modal y se relanza.
- */
+/** Pide la contraseña (o un código por correo) y ejecuta `enviar`; resuelve false si se cancela. */
 export function confirmarIdentidad(o: Confirmacion): Promise<boolean> {
   const conContrasenia = state.profile!.tieneContrasenia;
   const dialogo = document.createElement("dialog");

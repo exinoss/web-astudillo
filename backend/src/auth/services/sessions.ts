@@ -6,7 +6,7 @@ import { randomToken, tokenHash } from "../../security";
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60;
 
-/** Crea sesiones con refresh tokens aleatorios almacenados solo como hash. */
+/** Los refresh tokens se guardan solo como hash. */
 export function createSessions(sql: SQL, security: Security) {
   return {
     async start(user: Account) {
@@ -14,10 +14,7 @@ export function createSessions(sql: SQL, security: Security) {
       await callPg(sql, "sessionCreate", [user.id_usuario, tokenHash(refresh)]);
       return { access: await security.sign(user), refresh };
     },
-    /**
-     * Rota el refresh token y emite un JWT para una sesión activa. Si otra pestaña acaba de rotarlo
-     * (renovaciones simultáneas), no cierra la sesión: emite solo el acceso y `refresh` va nulo.
-     */
+    /** Rota el refresh y emite un acceso; si otra pestaña acaba de rotarlo, da solo el acceso y `refresh` va nulo. */
     async renew(refresh: string | undefined) {
       if (!refresh) throw new ApiError(401, "Sesión no válida");
       const next = randomToken();

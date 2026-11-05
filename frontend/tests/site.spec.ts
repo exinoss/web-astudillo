@@ -90,7 +90,7 @@ test('reporting is reachable from the Ciudadanía menu on mobile', async ({ page
 });
 
 test('proposal 3D model loads only when scrolled into view and replaces its poster', async ({ page }) => {
-  // Short enough that the block sits below the fold plus the 200px preload margin.
+  // Tan baja que el bloque queda bajo el pliegue y fuera del margen de precarga de 200 px.
   await page.setViewportSize({ width: 390, height: 400 });
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -119,6 +119,7 @@ test('the education proposal loads its 3D model', async ({ page }) => {
   await page.goto('/propuestas/educacion/');
   await page.locator('.model-3d').scrollIntoViewIfNeeded();
   await expect.poll(() => page.locator('model-viewer').evaluate((v: any) => v.loaded), { timeout: 30000 }).toBe(true);
+  await expect(page.locator('model-viewer')).toHaveAttribute('disable-pan', '');
   await expect(page.locator('.model-3d-poster')).toHaveCount(0, { timeout: 15000 });
   expect(errors).toEqual([]);
 });
@@ -161,6 +162,32 @@ test('a heavy 3D model waits for the button, shows its progress and is reused on
   await visorCargado(page);
   await expect(boton).toBeHidden();
   expect(modelos).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test('the stadium 3D model can be panned and a click on the sky brings it back to the center', async ({ page }) => {
+  const errors: string[] = [];
+  page.on('pageerror', e => errors.push(e.message));
+  await servirModeloLigero(page);
+  await page.goto(MODELO_PESADO);
+  await page.locator('.model-3d').scrollIntoViewIfNeeded();
+  await page.getByRole('button', { name: /^Ver el modelo 3D/ }).click();
+  await visorCargado(page);
+  const visor = page.locator('model-viewer');
+  await expect(visor).not.toHaveAttribute('disable-pan');
+  await visor.evaluate((v: any) => { v.autoRotate = false; });
+  const caja = (await visor.boundingBox())!;
+  const fueraDelCentro = () => visor.evaluate((v: any) => {
+    const t = v.getCameraTarget(), c = v.getBoundingBoxCenter();
+    return Math.hypot(t.x - c.x, t.z - c.z);
+  });
+  await page.mouse.move(caja.x + caja.width / 2, caja.y + caja.height / 2);
+  await page.mouse.down({ button: 'right' });
+  for (let i = 1; i <= 10; i++) await page.mouse.move(caja.x + caja.width / 2 - i * 10, caja.y + caja.height / 2);
+  await page.mouse.up({ button: 'right' });
+  await expect.poll(fueraDelCentro).toBeGreaterThan(0.1);
+  await page.mouse.click(caja.x + 8, caja.y + 8);
+  await expect.poll(fueraDelCentro).toBeLessThan(0.01);
   expect(errors).toEqual([]);
 });
 

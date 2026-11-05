@@ -465,7 +465,7 @@ test('la propuesta muestra el avance de su obra, cifras centradas y sin lista la
   await expect(page.getByText('Contenido en preparación')).toHaveCount(0);
   await expect(page.getByText('Así avanza la obra.')).toHaveCount(0);
   await expect(page.getByText('Explora las propuestas')).toHaveCount(0);
-  // La franja de cifras queda centrada (antes quedaba pegada a la izquierda).
+  // La franja de cifras queda centrada.
   const dl = (await page.locator('[aria-label^="Cifras de la propuesta"] dl').boundingBox())!;
   expect(Math.abs(dl.x - (1440 - dl.x - dl.width))).toBeLessThanOrEqual(2);
   for (const width of [320, 390, 768, 1440]) {

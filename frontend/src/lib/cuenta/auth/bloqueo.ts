@@ -49,11 +49,7 @@ function recoveryLink(text: string, correo: string, alone: boolean) {
   return link;
 }
 
-/**
- * Muestra el error de un formulario de cuenta. Si es el límite de intentos, bloquea el botón con la
- * cuenta atrás y, en el acceso (`correo`), ofrece restablecer la contraseña en el primer bloqueo o
- * en uno de días.
- */
+/** Muestra el error de un formulario de cuenta y, ante el límite de intentos, bloquea el botón con la cuenta atrás. */
 export function showFormError(status: HTMLElement, error: unknown, button: HTMLButtonElement, correo?: string) {
   if (!(error instanceof ApiError) || error.status !== 429 || !error.retryAfter) {
     showStatus(status, errorText(error), true);

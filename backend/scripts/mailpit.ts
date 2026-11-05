@@ -1,4 +1,3 @@
-// `bun run mailpit`: levanta el contenedor de Mailpit y espera, reintentando, a que su SMTP responda.
 import { connect } from "node:net";
 
 const PUERTO_MAILPIT = 1025;

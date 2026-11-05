@@ -12,8 +12,7 @@ const TYPES = {
 const PASS_THROUGH = /^\/(cuenta|api|medios|@|node_modules|src|__)/;
 
 /**
- * Solo en `astro dev`: hace lo mismo que server-produccion/nginx/default.conf con la cookie `vista_previa`,
- * para ver la vista previa en la misma dirección que el sitio, con la sesión y el panel funcionando.
+ * Solo en `astro dev`: sirve la vista previa como nginx con la cookie `vista_previa`.
  * @param {string} backend
  * @returns {import('vite').Plugin}
  */

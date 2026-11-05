@@ -1,9 +1,13 @@
-// Renderiza cada .glb de public/models/ con el encuadre del visor y lo guarda
-// como póster transparente en src/assets/models/. Corre con Node: bajo Bun,
-// Playwright se cuelga al lanzar el navegador en Windows.
+// Corre con Node: bajo Bun, Playwright se cuelga al lanzar el navegador en Windows.
 import { readdirSync, readFileSync } from "node:fs";
 import { chromium } from "@playwright/test";
-import { ALTO_POSTER, ANCHO_POSTER, ORBITA } from "../src/lib/propuestas/model3d.ts";
+import {
+  ALTO_POSTER,
+  ANCHO_POSTER,
+  MODELOS_RECORRIBLES,
+  ORBITA,
+  ORBITA_RECORRIDO,
+} from "../src/lib/propuestas/model3d.ts";
 
 const archivos: Record<string, [Buffer, string]> = {
   "model-viewer.js": [
@@ -24,6 +28,9 @@ const pagina = await navegador.newPage({
 for (const archivo of readdirSync("public/models").filter((f) =>
   f.endsWith(".glb"),
 )) {
+  const orbita = MODELOS_RECORRIBLES.includes(`/models/${archivo}`)
+    ? ORBITA_RECORRIDO
+    : ORBITA;
   archivos["modelo.glb"] = [
     readFileSync(`public/models/${archivo}`),
     "model/gltf-binary",
@@ -39,7 +46,7 @@ for (const archivo of readdirSync("public/models").filter((f) =>
       body: `<!doctype html><body style="margin:0;background:transparent">
         <script>self.ModelViewerElement = { meshoptDecoderLocation: "/decoder.js" };</script>
         <script type="module" src="/model-viewer.js"></script>
-        <model-viewer id="visor" src="/modelo.glb" camera-orbit="${ORBITA}" shadow-intensity="1"
+        <model-viewer id="visor" src="/modelo.glb" camera-orbit="${orbita}" shadow-intensity="1"
           style="width:${ANCHO_POSTER}px;height:${ALTO_POSTER}px;--poster-color:transparent">
           <div slot="progress-bar"></div>
         </model-viewer></body>`,

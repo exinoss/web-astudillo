@@ -114,8 +114,7 @@ RETURNS TABLE(
   FOR UPDATE OF t;
 $$;
 
--- Indica si este enlace de registro ya se usó y la cuenta existe: abrirlo otra vez (recargar,
--- doble clic en el correo) responde como la primera vez en lugar de dar error.
+-- Indica si el enlace de registro ya creó la cuenta: abrirlo otra vez responde como la primera vez.
 CREATE OR REPLACE FUNCTION fn_registration_verified(p_hash text)
 RETURNS TABLE(verificado boolean) LANGUAGE sql STABLE AS $$
   SELECT EXISTS (
@@ -203,9 +202,7 @@ RETURNS TABLE(id_usuario integer) LANGUAGE sql STABLE AS $$
     AND i.proveedor = 'google' AND i.sujeto_externo = p_sub;
 $$;
 
--- Enlaces por correo de una cuenta existente (recuperar contraseña, acceso por enlace). Igual que
--- el registro: uno solo válido por correo y finalidad. Si hay uno de hace menos de un minuto (doble
--- envío, reintento) devuelve vacío y no se manda otro correo; pasado el minuto, el nuevo anula los anteriores.
+-- Enlace por correo de una cuenta (recuperar, acceso): uno válido por correo y finalidad; vacío si ya se pidió hace menos de un minuto.
 DROP FUNCTION IF EXISTS fn_auth_token_create(integer, text, text, text, text, text, integer);
 DROP FUNCTION IF EXISTS fn_google_token_get(text);
 CREATE OR REPLACE FUNCTION fn_auth_token_create(
@@ -378,8 +375,7 @@ BEGIN
 END;
 $$;
 
--- Otra pestaña renovó con este mismo refresh hace menos de 30 s (renovaciones simultáneas):
--- la sesión sigue siendo válida. Solo da un acceso nuevo; el navegador ya recibió el refresh rotado.
+-- Indica si otra pestaña rotó este refresh hace menos de 30 s: la sesión sigue y solo se da un acceso nuevo.
 CREATE OR REPLACE FUNCTION fn_session_recently_rotated(p_old_hash text)
 RETURNS SETOF tb_usuarios LANGUAGE sql STABLE AS $$
   SELECT u.* FROM tb_sesiones s JOIN tb_usuarios u ON u.id_usuario = s.id_usuario
@@ -393,14 +389,12 @@ RETURNS void LANGUAGE sql AS $$
   WHERE token_hash = p_hash AND revocado_en IS NULL;
 $$;
 
--- ---------- Límite de intentos fallidos ----------
 -- Una fila por clave: pareja correo+IP (`par:`, o `cambio:` al cambiar la contraseña) e IP (`ip:`).
 -- Solo se cuentan fallos. Las esperas (1 min … 6 h) son para cualquiera, también el dueño que se
 -- olvidó la contraseña. El tope, 3 días, es el «bloqueo mortal»: quien llega ahí se trata como atacante.
 -- Si pasan 24 h sin fallar, el contador vuelve a cero (tras los 3 días se puede volver a intentar).
 
--- Estado de las claves pedidas (separadas por salto de línea): espera en segundos y fallos.
--- Un bloqueo vigente cuenta aunque su último fallo tenga más de 24 h (el mortal dura 3 días).
+-- Espera en segundos y fallos de cada clave pedida (separadas por salto de línea).
 CREATE OR REPLACE FUNCTION fn_limit_check(p_keys text)
 RETURNS TABLE(clave varchar, espera integer, fallos integer) LANGUAGE sql STABLE AS $$
   SELECT l.clave, GREATEST(0, ceil(extract(epoch FROM l.bloqueado_hasta - now())))::integer, l.fallos
@@ -409,8 +403,7 @@ RETURNS TABLE(clave varchar, espera integer, fallos integer) LANGUAGE sql STABLE
     AND (l.bloqueado_hasta > now() OR l.ultimo_fallo > now() - interval '24 hours');
 $$;
 
--- Suma un fallo de forma atómica y aplica la escalada: `p_free` fallos sin espera; después
--- 1 min, 5 min, 15 min, 1 h y 6 h; el siguiente es el bloqueo mortal de 3 días. Devuelve la espera y los fallos.
+-- Suma un fallo de forma atómica y aplica la escalada (`p_free` libres, después de 1 min a 3 días); devuelve la espera y los fallos.
 CREATE OR REPLACE FUNCTION fn_limit_fail(p_key text, p_free integer)
 RETURNS TABLE(espera integer, fallos integer) LANGUAGE plpgsql AS $$
 DECLARE v_failures integer; v_wait integer;
@@ -430,8 +423,7 @@ BEGIN
 END;
 $$;
 
--- Bloqueo mortal de una IP: tras llegar al tope con un correo, esa IP no puede probar ningún otro.
--- No suma fallos: el contador propio de la IP (correos al azar) sigue aparte.
+-- Bloqueo mortal de una IP para cualquier correo, sin sumar fallos a su contador propio.
 CREATE OR REPLACE FUNCTION fn_limit_block(p_key text, p_seconds integer)
 RETURNS void LANGUAGE sql AS $$
   INSERT INTO tb_limites_intentos AS l (clave, fallos, bloqueado_hasta, ultimo_fallo)
@@ -441,8 +433,7 @@ RETURNS void LANGUAGE sql AS $$
     ultimo_fallo = now();
 $$;
 
--- IPs distintas con bloqueo mortal vigente sobre un correo: con dos o más, ese correo sufre un
--- ataque desde varios sitios y el dueño termina de entrar con un enlace a su correo.
+-- IPs con bloqueo mortal vigente sobre un correo; con dos o más, el dueño entra por enlace.
 CREATE OR REPLACE FUNCTION fn_limit_attackers(p_email text)
 RETURNS TABLE(total integer) LANGUAGE sql STABLE AS $$
   SELECT count(*)::integer FROM tb_limites_intentos l
@@ -456,8 +447,7 @@ RETURNS void LANGUAGE sql AS $$
   DELETE FROM tb_limites_intentos WHERE clave = p_key;
 $$;
 
--- Quien demuestra controlar el correo (restablece o usa el enlace de acceso) limpia las parejas de
--- ese correo. Las IPs con bloqueo mortal siguen bloqueadas: el atacante no vuelve a entrar por ahí.
+-- Limpia las parejas de un correo cuando su dueño demuestra controlarlo; las IPs con bloqueo mortal siguen bloqueadas.
 CREATE OR REPLACE FUNCTION fn_limit_clear_email(p_email text)
 RETURNS void LANGUAGE sql AS $$
   DELETE FROM tb_limites_intentos

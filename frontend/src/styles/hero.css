@@ -1,4 +1,4 @@
-/* Solo queda el <svg> del botón dentro de la diapositiva alterna. */
+/* Apunta a un <svg>: `Icon.astro` no reenvía `class`. */
 
 @media (max-width: 760px) {
   .alternate-inner .button svg {

@@ -31,7 +31,7 @@ export const video: SectionEditor = {
           ], v.vertical ? "vertical" : "horizontal")}</div>
           <p class="${HINT}">Los reels y los videos de TikTok son verticales.</p>
         </fieldset>
-        <div><span class="${LABEL}">Portada</span>${cover}<p class="${HINT}">Es la imagen que se ve antes de reproducir. Al pegar el enlace se usa la del video si su plataforma la ofrece; puedes cambiarla por otra. Medida recomendada: 1080 × 1920 px si el video es vertical y 1280 × 720 px si es horizontal. Sin portada se muestra una imagen de la campaña.</p></div>
+        <div><span class="${LABEL}">Portada</span>${cover}<p class="${HINT}">Es la imagen que se ve antes de reproducir. Si no subes una, se usa la del video cuando su plataforma la ofrece. Medida recomendada: 1080 × 1920 px si el video es vertical y 1280 × 720 px si es horizontal. Sin portada se muestra una imagen de la campaña.</p></div>
         ${editor.page.video ? `<div class="border-t border-base-300 pt-3"><button type="button" data-video-remove class="${DANGER}">${iconSvg("trash", 17)} Quitar video de la página</button></div>` : ""}
       </div>
       <aside class="min-w-0" aria-label="Vista previa del video">

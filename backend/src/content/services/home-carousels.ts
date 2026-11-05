@@ -25,10 +25,7 @@ const piecesIds = ({ piezas }: HomePiecesInput) => piezas.flatMap(p => ids(p.ima
 const resolve = (image: HomeImageStored, media: Map<number, Photo>): HomeImage | null =>
   'original' in image ? { original: image.original } : media.has(image.idMedio) ? { foto: media.get(image.idMedio)! } : null;
 
-/**
- * Una foto borrada desaparece de su carrusel. Si un carrusel se queda sin imágenes, o el retrato sin la suya,
- * vuelven las de la semilla: la portada nunca queda vacía.
- */
+/** Carruseles de la portada sin las fotos borradas; uno que queda vacío vuelve a las imágenes de la semilla. */
 export async function listHomeCarousels(sql: SQL): Promise<HomeCarousels> {
   const rows = new Map((await callPg<{ clave: Carrusel; contenido: Stored }>(sql, 'homeCarouselsList')).map(r => [r.clave, r.contenido]));
   const principal = (rows.get('principal') ?? HOME_CAROUSELS_SEED.principal) as HomeMainInput;

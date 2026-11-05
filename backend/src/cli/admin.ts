@@ -1,4 +1,3 @@
-// `bun run admin:crear` y `bun run admin:transferir <correo>`: gestionan el único admin maestro.
 // No hay ruta HTTP equivalente a propósito: quien roba una sesión no puede apropiarse del sitio.
 import { SQL } from 'bun';
 import { requireConfirmation, requireNewPassword } from '../auth/password-policy';
@@ -43,10 +42,7 @@ async function preguntar(texto: string, oculto = false): Promise<string> {
 
 const correoValido = (correo: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo) && correo.length <= 320;
 
-/**
- * Repite el paso hasta que `validar` no lance error, mostrando el motivo cada vez.
- * Sin terminal no hay a quién volver a preguntar: el primer error termina el comando.
- */
+/** Repite el paso hasta que `validar` no lance error; sin terminal, el primer error termina el comando. */
 async function hastaQueSeaValido<T>(paso: () => Promise<T>, validar: (valor: T) => void): Promise<T> {
   for (;;) {
     const valor = await paso();

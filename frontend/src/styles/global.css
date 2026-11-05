@@ -32,11 +32,11 @@
 @utility py-section {
   padding-block: 96px;
 
-  @media (width < 1190px) {
+  @media (width <= 1190px) {
     padding-block: 70px;
   }
 
-  @media (width < 760px) {
+  @media (width <= 760px) {
     padding-block: 56px;
   }
 }

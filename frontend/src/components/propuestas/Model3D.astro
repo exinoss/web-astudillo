@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { Image } from "astro:assets";
 import Icon from "../comun/Icon.astro";
 import type { ProposalModel } from "../../lib/data/types";
-import { ORBITA } from "../../lib/propuestas/model3d.ts";
+import { MODELOS_RECORRIBLES, ORBITA, ORBITA_RECORRIDO } from "../../lib/propuestas/model3d.ts";
 
 type Props = ProposalModel;
 const { src, poster, alt } = Astro.props;
@@ -22,6 +22,7 @@ try {
 } catch {}
 const pesado = bytes >= PESADO;
 const megas = Math.round(bytes / 1_000_000);
+const recorrible = MODELOS_RECORRIBLES.includes(src);
 
 const posterClases =
   "model-3d-poster absolute inset-0 h-full w-full object-contain";
@@ -31,7 +32,8 @@ const posterClases =
   class="model-3d mt-[30px] mb-0 rounded-[4px] bg-base-100 p-5 [border-right:1px_solid_#06317630] [border-bottom:1px_solid_#06317630] [border-left:1px_solid_#06317630] [border-top:4px_solid_var(--color-secondary)] [box-shadow:0_4px_14px_#06317608] max-tablet:p-3"
   data-src={pesado ? `${src}?v=${huella}` : src}
   data-alt={alt}
-  data-orbita={ORBITA}
+  data-orbita={recorrible ? ORBITA_RECORRIDO : ORBITA}
+  data-recorrible={recorrible ? "" : undefined}
   data-pesado={pesado ? "" : undefined}
   data-megas={megas}
   data-bytes={bytes}
@@ -88,10 +90,10 @@ const posterClases =
   <figcaption class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-[0.72rem] text-base-content">
     <span class="font-bold tracking-[0.1em] uppercase">Modelo 3D</span>
     <span class="pointer-coarse:hidden">
-      Arrastra para girar · Rueda para acercar
+      {recorrible ? "Arrastra para girar · Clic derecho para mover · Rueda para acercar" : "Arrastra para girar · Rueda para acercar"}
     </span>
     <span class="hidden pointer-coarse:inline">
-      Desliza para girar · Pellizca para acercar
+      {recorrible ? "Desliza para girar · Dos dedos para mover y acercar" : "Desliza para girar · Pellizca para acercar"}
     </span>
   </figcaption>
 </figure>
@@ -101,6 +103,8 @@ const posterClases =
   import visorUrl from "@google/model-viewer/dist/model-viewer.min.js?url";
   import decodificadorUrl from "meshoptimizer/decoder?url";
   import { reproducirEnHilo } from "../../lib/comun/animaciones";
+  import type { ModelViewerElement } from "@google/model-viewer";
+  import { activarRecorrido } from "../../lib/propuestas/recorrido";
 
   const bloques = [...document.querySelectorAll<HTMLElement>(".model-3d")];
 
@@ -191,7 +195,7 @@ const posterClases =
       return;
     }
     const contenedor = bloque.querySelector<HTMLElement>(".model-3d-visor")!;
-    const visor = document.createElement("model-viewer");
+    const visor = document.createElement("model-viewer") as ModelViewerElement;
     visor.className = "absolute inset-0 h-full w-full";
     const modeloUrl = new URL(bloque.dataset.src!, location.href);
     // model-viewer memoriza también los modelos fallidos: otro intento necesita una URL nueva.
@@ -201,7 +205,8 @@ const posterClases =
     visor.setAttribute("camera-orbit", bloque.dataset.orbita!);
     visor.setAttribute("shadow-intensity", "1");
     visor.setAttribute("camera-controls", "");
-    visor.setAttribute("disable-pan", "");
+    if ("recorrible" in bloque.dataset) activarRecorrido(visor, sinMovimiento);
+    else visor.setAttribute("disable-pan", "");
     visor.setAttribute("touch-action", "pan-y");
     visor.setAttribute("interaction-prompt", "none");
     visor.style.setProperty("--poster-color", "transparent");
@@ -234,10 +239,7 @@ const posterClases =
     contenedor.append(visor);
   }
 
-  /**
-   * Pantalla completa con la API nativa; donde no existe (Safari en iPhone) el visor
-   * se fija a toda la ventana. Dentro, el gesto vertical gira el modelo en vez de desplazar.
-   */
+  /** Pantalla completa nativa o, sin ella (Safari en iPhone), el visor fijo a toda la ventana. */
   function prepararPantallaCompleta(contenedor: HTMLElement, visor: HTMLElement) {
     const boton = contenedor.querySelector<HTMLButtonElement>(".model-3d-completa")!;
     const nativa = typeof contenedor.requestFullscreen === "function";
@@ -291,7 +293,7 @@ const posterClases =
   }
 
   // Los modelos pesados se guardan en Cache Storage: la caché HTTP de un celular puede
-  // descartar decenas de MB en cualquier momento, y en nginx los modelos van con `no-cache`.
+  // descartar decenas de MB en cualquier momento.
   const ALMACEN = "modelos-3d";
   const almacen = () => ("caches" in window ? caches.open(ALMACEN) : Promise.resolve(undefined));
 

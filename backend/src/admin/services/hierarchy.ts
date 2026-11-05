@@ -14,10 +14,7 @@ type Account = { id_usuario: number; rol: string; es_maestro: boolean };
 export const assignableRoles = (actor: Account): readonly AssignableRole[] =>
   actor.es_maestro ? ASSIGNABLE_ROLES : ASSIGNABLE_ROLES.filter(role => role !== 'admin');
 
-/**
- * Indica si `actor` puede cambiar el rol o el estado de `target`.
- * Es la misma regla que aplican `fn_role_change` y `fn_user_state_change` en PostgreSQL.
- */
+/** Indica si `actor` puede cambiar el rol o el estado de `target`; la misma regla está en fn_role_change y fn_user_state_change. */
 export function accountRule(actor: Account, target: Account): { allowed: true } | { allowed: false; reason: string } {
   if (actor.id_usuario === target.id_usuario) return { allowed: false, reason: OWN_ACCOUNT };
   if (target.es_maestro || (target.rol === 'admin' && !actor.es_maestro))

@@ -1,7 +1,4 @@
--- Lista paginada y filtrable de cuentas para el panel; p_query ya llega con los comodines de
--- LIKE escapados. El orden no depende de es_maestro para no delatar qué cuenta es la maestra.
--- Siempre devuelve al menos una fila con el total, aunque la página pedida quede vacía
--- (id_usuario nulo); así la paginación conoce el total real.
+-- Cuentas del panel, paginadas y filtradas (`p_query` con los comodines de LIKE ya escapados); siempre trae una fila con el total.
 DROP FUNCTION IF EXISTS fn_admin_users(text, integer, integer);
 CREATE OR REPLACE FUNCTION fn_admin_users(p_query text, p_role text, p_state text,
   p_limit integer, p_offset integer)
@@ -33,10 +30,7 @@ RETURNS SETOF tb_usuarios LANGUAGE sql STABLE AS $$
   SELECT * FROM tb_usuarios WHERE id_usuario = p_user;
 $$;
 
--- Cambia el rol respetando la jerarquía aunque la API fallara: nadie cambia su propio rol
--- ni el del maestro, y solo el maestro cambia el de un admin. Sin fila = cambio denegado.
--- `p_expected` es el rol que veía quien hace el cambio: si otra persona lo cambió antes, no se
--- aplica (sin filas → 409). Pedir el rol que ya tiene es idempotente.
+-- Cambia el rol respetando la jerarquía; sin filas si se deniega o si otra persona lo cambió antes (409).
 DROP FUNCTION IF EXISTS fn_role_change(integer, integer, text);
 CREATE OR REPLACE FUNCTION fn_role_change(p_actor integer, p_target integer, p_role text, p_expected text)
 RETURNS SETOF tb_usuarios LANGUAGE plpgsql AS $$
@@ -60,8 +54,7 @@ BEGIN
 END;
 $$;
 
--- Crea el admin maestro desde la línea de comandos. El índice único parcial impide
--- un segundo maestro incluso con dos ejecuciones simultáneas.
+-- Crea el admin maestro por comando; el índice único parcial impide un segundo aunque se ejecute dos veces a la vez.
 CREATE OR REPLACE FUNCTION fn_master_create(p_email text, p_name text, p_hash text)
 RETURNS TABLE(resultado text, id_usuario integer) LANGUAGE plpgsql AS $$
 DECLARE v_user integer;
@@ -104,10 +97,7 @@ BEGIN
 END;
 $$;
 
--- Activa o desactiva otra cuenta con la misma jerarquía que el cambio de rol. Al desactivar
--- revoca sus sesiones; las funciones de acceso ya rechazan cuentas bloqueadas.
--- Igual que el rol: `p_expected` es el estado que veía quien actúa; si otra persona lo cambió
--- antes, no se aplica (sin filas → 409). Pedir el estado que ya tiene es idempotente.
+-- Activa o desactiva otra cuenta con la jerarquía del rol y revoca sus sesiones; sin filas si se deniega o hay conflicto (409).
 DROP FUNCTION IF EXISTS fn_user_state_change(integer, integer, text);
 CREATE OR REPLACE FUNCTION fn_user_state_change(p_actor integer, p_target integer, p_state text, p_expected text)
 RETURNS SETOF tb_usuarios LANGUAGE plpgsql AS $$

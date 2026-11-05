@@ -49,10 +49,7 @@ export function createConfirmation(sql: SQL, attempts: Attempts, mailer: Mailer)
       }
     },
 
-    /**
-     * Exige la contraseña de `userId` o, si no tiene, su código vigente, que sirve para varios cambios hasta vencer.
-     * Los fallos comparten el contador del cambio de contraseña: no se suman intentos usando las dos vías.
-     */
+    /** Exige la contraseña o, sin ella, el código vigente; los fallos comparten el contador del cambio de contraseña. */
     async require(userId: number, valor: string, ip: string) {
       const keys = attempts.changeKeys(userId, ip);
       await attempts.check(keys);

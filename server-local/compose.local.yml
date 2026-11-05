@@ -1,6 +1,4 @@
-# Entorno completo para probar en local con Docker: lo levanta server-local/iniciar.ps1 (no hace falta
-# instalar Bun ni PostgreSQL en la PC). No es el despliegue de producción (ver backend/docker-compose.yml).
-# Las variables ASTUDILLO_* las calcula iniciar.ps1 a partir de backend/.env.
+# Lo levanta iniciar.ps1, que calcula las variables ASTUDILLO_* a partir de backend/.env.
 name: astudillo-local
 
 x-backend-env: &backend-env
@@ -75,7 +73,6 @@ services:
       timeout: 5s
       retries: 60
 
-  # Compila el sitio con cada publicación del panel y la marca como publicada.
   publicador:
     image: astudillo-local-sitio
     env_file: ../backend/.env

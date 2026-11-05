@@ -40,12 +40,7 @@ export function formatProblem({ format, compression }: { format?: string; compre
   return format && FORMATS.has(format) ? null : WRONG_FORMAT;
 }
 
-/**
- * Valida la foto por su contenido y la guarda como `<nombre>-<ancho>.webp` en cada ancho de `sizes`.
- * Aplica la orientación EXIF y descarta los metadatos (GPS incluido). Con `allSizes` escribe todos los
- * anchos aunque la foto sea menor (sin ampliarla); si no, solo los que caben más el tamaño original.
- * Un enlace atómico publica cada archivo completo; repetir una foto no reemplaza un archivo abierto.
- */
+/** Valida la foto por su contenido y la guarda sin metadatos como `<nombre>-<ancho>.webp` en cada ancho que cabe (todos con `allSizes`). */
 export async function savePhoto(input: Buffer, dir: string, name: string, sizes: number[], allSizes = false) {
   // Leer las medidas no abre la imagen: el tope de píxeles se comprueba aquí para avisar con un mensaje claro.
   const metadata = await sharp(input, { limitInputPixels: false }).metadata()

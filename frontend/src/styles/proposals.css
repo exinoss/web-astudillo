@@ -1,5 +1,4 @@
-/* Sobrantes de la grilla de propuestas: solo reglas que apuntan a <svg>
-   (`Icon.astro` no reenvía `class`). El resto ya son utilidades. */
+/* Reglas que apuntan a <svg>: `Icon.astro` no reenvía `class`. */
 
 .card-top > svg {
   color: var(--color-primary);

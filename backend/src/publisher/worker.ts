@@ -1,8 +1,3 @@
-// `bun run publicador`: toma la publicación en cola y ejecuta `bun run build` del frontend, que deja
-// `<SITE_DIR>/dist` con ese contenido (en local, `frontend/dist`; en producción, el volumen que sirve
-// nginx). La compilación lo lee de GET /api/contenido/publicado, que mientras dura el proceso devuelve
-// justo esta publicación; si falla, `dist` y la API siguen con la anterior. Sin publicaciones en cola,
-// compila la vista previa del borrador en `<SITE_DIR>/dist-vista-previa`.
 import { SQL } from 'bun';
 import { cp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -36,11 +31,7 @@ const preview = target('dist-vista-previa');
 const versionFile = join(siteDir, 'version');
 const previewContent = join(tmpdir(), 'astudillo-vista-previa.json');
 
-/**
- * Compila en `<salida>-nueva` (Astro vacía su carpeta de salida al empezar) y solo si sale bien la pasa a la salida.
- * Si el sitio se sirve desde otro disco (el volumen de nginx), primero copia la compilación a ese disco.
- * Devuelve el final del registro si la compilación falla.
- */
+/** Compila en `<salida>-nueva` y solo si sale bien la pasa a la salida; devuelve el final del registro si falla. */
 async function compile(out: Target, env: Record<string, string> = {}): Promise<string | null> {
   const { buildDir, next } = out;
   await rm(buildDir, { recursive: true, force: true });
@@ -87,10 +78,7 @@ async function buildPreview(content: unknown) {
 
 let retryAt = 0;
 
-/**
- * Con código nuevo, recompila lo último publicado (la API lo entrega mientras no haya otra en curso).
- * No crea publicaciones ni auditoría; si falla, `dist` sigue intacto y se reintenta más tarde.
- */
+/** Con código nuevo recompila lo último publicado, sin crear publicaciones; si falla, `dist` sigue intacto. */
 async function rebuildIfOutdated() {
   if (!appVersion || Date.now() < retryAt) return;
   if (await Bun.file(versionFile).text().catch(() => '') === appVersion) return;

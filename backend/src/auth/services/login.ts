@@ -28,11 +28,7 @@ export function createLogin(sql: SQL, sessions: Sessions, attempts: Attempts, ma
   }
 
   return {
-    /**
-     * Comprueba los bloqueos antes del hash, verifica la contraseña y suma o limpia fallos.
-     * Si el correo sufrió muchos fallos desde IPs distintas, responde `{ link: true }` con contraseña
-     * buena o mala (el atacante no aprende nada) y solo con la buena envía el enlace de acceso.
-     */
+    /** Comprueba bloqueos, verifica la contraseña y suma o limpia fallos; con ataque desde varias IPs responde siempre `{ link: true }`. */
     async login(correoInput: string, password: string, ip: string) {
       const correo = normalizeEmail(correoInput);
       const keys = attempts.loginKeys(correo, ip);

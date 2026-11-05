@@ -1,5 +1,4 @@
--- Indica si la cuenta activa tiene un permiso; las funciones de escritura lo repiten para
--- que la base rechace el cambio aunque la API fallara.
+-- Indica si la cuenta activa tiene un permiso; las funciones de escritura lo repiten aunque la API ya lo comprobara.
 CREATE OR REPLACE FUNCTION fn_has_permission(p_user integer, p_permission text)
 RETURNS boolean LANGUAGE sql STABLE AS $$
   SELECT EXISTS (SELECT 1 FROM fn_authorized_user(p_user, p_permission));
@@ -16,7 +15,6 @@ RETURNS TABLE(clave varchar, valor text) LANGUAGE sql STABLE AS $$
   SELECT i.clave, i.valor FROM tb_textos_iniciales i ORDER BY i.clave;
 $$;
 
--- ---------- Control de concurrencia del contenido ----------
 -- La versión de cada unidad editable es el md5 de su estado (jsonb normaliza el orden de las
 -- claves, así que el mismo contenido da siempre la misma versión). Cada guardado:
 --   1) bloquea la unidad (pg_advisory_xact_lock) para que dos guardados no se crucen;
@@ -96,8 +94,7 @@ RETURNS TABLE(clave varchar, contenido jsonb) LANGUAGE sql STABLE AS $$
   SELECT m.clave, m.contenido FROM tb_mi_equipo m ORDER BY m.clave;
 $$;
 
--- Como los textos: una parte que nunca se guardó no tiene versión (nula) y quien la edita primero envía null.
--- Una clave que no existe la rechaza la restricción ck_mi_equipo_clave.
+-- Guarda una parte de «Mi equipo» con su versión (null si nunca se guardó); la clave la valida ck_mi_equipo_clave.
 CREATE OR REPLACE FUNCTION fn_my_team_save(p_actor integer, p_key text, p_content jsonb, p_version text)
 RETURNS TABLE(resultado text, version text) LANGUAGE plpgsql AS $$
 DECLARE v_current text; v_new text := md5(p_content::text);
@@ -122,8 +119,7 @@ RETURNS TABLE(clave varchar, contenido jsonb) LANGUAGE sql STABLE AS $$
   SELECT c.clave, c.contenido FROM tb_inicio_carruseles c ORDER BY c.clave;
 $$;
 
--- Como en «Mi equipo»; la semilla crea las dos filas, pero un carrusel sin fila se guarda enviando versión nula.
--- Una clave que no existe la rechaza la restricción ck_inicio_carruseles_clave.
+-- Guarda un carrusel de la portada con su versión (null si no tiene fila); la clave la valida ck_inicio_carruseles_clave.
 CREATE OR REPLACE FUNCTION fn_home_carousels_save(p_actor integer, p_key text, p_content jsonb, p_version text)
 RETURNS TABLE(resultado text, version text) LANGUAGE plpgsql AS $$
 DECLARE v_current text; v_new text := md5(p_content::text);
@@ -157,8 +153,7 @@ RETURNS TABLE(versiones jsonb) LANGUAGE sql STABLE AS $$
     'inicio', COALESCE((SELECT jsonb_object_agg(c.clave, md5(c.contenido::text)) FROM fn_home_carousels_list() c), '{}'::jsonb));
 $$;
 
--- Guarda el borrador de un texto; con valor nulo lo borra y vuelve el texto por defecto.
--- Un texto sin cambiar no tiene versión (nula): quien lo edita por primera vez envía null.
+-- Guarda el borrador de un texto (null lo devuelve al original); un texto sin cambiar llega con versión null.
 DROP FUNCTION IF EXISTS fn_text_save(integer, text, text);
 CREATE OR REPLACE FUNCTION fn_text_save(p_actor integer, p_key text, p_value text, p_version text)
 RETURNS TABLE(resultado text, version text) LANGUAGE plpgsql AS $$
@@ -221,8 +216,7 @@ BEGIN
 END;
 $$;
 
--- Hitos de la biografía con su foto, si la tienen. Los anchos salen como jsonb: el driver de
--- Bun 1.3 se cae al leer columnas integer[].
+-- Hitos de la biografía con su foto; los anchos salen como jsonb porque el driver de Bun no lee integer[].
 DROP FUNCTION IF EXISTS fn_biography_list();
 CREATE OR REPLACE FUNCTION fn_biography_list()
 RETURNS TABLE(id_hito integer, anios varchar, titulo varchar, texto varchar, alt varchar,
@@ -300,8 +294,7 @@ BEGIN
 END;
 $$;
 
--- El driver de Bun 1.3 no maneja integer[]: se cae al enlazarlos como parámetro y al leerlos
--- en un resultado. Las listas de números entran como texto «1,2,3» y salen como jsonb.
+-- La firma anterior recibía integer[], que el driver de Bun no enlaza: las listas entran como texto «1,2,3».
 DROP FUNCTION IF EXISTS fn_media_create(integer, text, integer, integer, integer[]);
 DROP FUNCTION IF EXISTS fn_media_by_ids(integer[]);
 DROP FUNCTION IF EXISTS fn_media_create(integer, text, integer, integer, jsonb);
@@ -309,8 +302,7 @@ DROP FUNCTION IF EXISTS fn_media_by_ids(jsonb);
 DROP FUNCTION IF EXISTS fn_media_create(integer, text, integer, integer, text);
 DROP FUNCTION IF EXISTS fn_media_by_ids(text);
 
--- Registra una foto ya procesada y guardada en disco. Si otra subida simultánea del mismo archivo
--- (mismo SHA-256) llegó antes, no inserta nada: el servicio usa la existente y borra sus archivos.
+-- Registra una foto ya guardada en disco; si otra subida del mismo SHA-256 llegó antes, no inserta nada.
 CREATE OR REPLACE FUNCTION fn_media_create(p_actor integer, p_name text, p_width integer,
   p_height integer, p_widths text, p_hash text)
 RETURNS TABLE(id_medio integer, nombre varchar, ancho integer, alto integer, anchos jsonb)
