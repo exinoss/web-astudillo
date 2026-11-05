@@ -131,7 +131,7 @@ const accessButton =
           <span class="account-label"><span class="cuenta-fuera">Iniciar sesión</span><span class="cuenta-dentro">Mi cuenta</span></span>
         </a>
         <button
-          class="menu-toggle relative order-3 hidden h-11 w-11 items-center justify-center rounded-[3px] border border-base-300 bg-transparent text-primary before:absolute before:inset-[-2px] before:content-[''] max-nav:flex max-tablet:w-10 max-tablet:min-w-10"
+          class="menu-toggle relative order-3 hidden h-11 w-11 items-center justify-center rounded-[3px] border border-base-300 bg-transparent text-primary before:absolute before:inset-[-2px] before:content-[''] max-nav:flex max-tablet:w-10 max-tablet:before:right-0 max-tablet:before:-left-1.5 max-tablet:min-w-10"
           aria-label="Abrir menú"
           aria-controls="main-nav"
           aria-expanded="false"
@@ -241,7 +241,7 @@ const accessButton =
             El `::after` amplía el área táctil a 44px sin cambiar el tamaño
             visible. */}
         <button
-          class="back-to-top invisible fixed right-3 bottom-[84px] z-[80] grid h-8 w-8 place-items-center rounded-[4px] border-2 border-base-100 bg-neutral text-neutral-content opacity-0 [box-shadow:0_3px_15px_#06317630] [transition:opacity_0.2s,visibility_0.2s] max-desktop-sm:absolute max-desktop-sm:right-0 max-desktop-sm:bottom-full max-desktop-sm:translate-y-1/2 after:absolute after:inset-[-8px] after:content-[''] [&.is-visible]:visible [&.is-visible]:opacity-100"
+          class="back-to-top invisible fixed right-3 bottom-[84px] z-[80] grid h-8 w-8 place-items-center rounded-[4px] border-2 border-base-100 bg-neutral text-neutral-content opacity-0 [box-shadow:0_3px_15px_var(--color-card-border)] [transition:opacity_0.2s,visibility_0.2s] max-desktop-sm:absolute max-desktop-sm:right-0 max-desktop-sm:bottom-full max-desktop-sm:translate-y-1/2 after:absolute after:inset-[-8px] after:content-[''] [&.is-visible]:visible [&.is-visible]:opacity-100"
           aria-label="Volver al inicio de la página"
         >
           <Icon name="chevronUp" size={17} />
@@ -284,7 +284,7 @@ const accessButton =
         </button>
       </aside>
       <button
-        class="access-toggle grid h-11 w-11 shrink-0 place-items-center rounded-[4px] border-2 border-base-100 bg-primary text-primary-content [box-shadow:0_3px_15px_#06317630]"
+        class="access-toggle grid h-11 w-11 shrink-0 place-items-center rounded-[4px] border-2 border-base-100 bg-primary text-primary-content [box-shadow:0_3px_15px_var(--color-card-border)]"
         aria-label="Herramientas de accesibilidad"
         aria-expanded="false"
         aria-controls="access-panel"

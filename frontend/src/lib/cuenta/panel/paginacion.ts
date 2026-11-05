@@ -30,12 +30,12 @@ export function renderPagination(container: HTMLElement, info: PageInfo, onChang
   const to = Math.min(current * info.porPagina, info.total);
   container.innerHTML = `
     <nav aria-label="Paginación" class="flex items-center justify-between gap-4 pt-4 max-tablet:gap-2.5">
-      <span class="text-[0.82rem] text-[#50617d] max-tablet:hidden">Mostrando <strong class="text-primary">${from}–${to}</strong> de <strong class="text-primary">${info.total}</strong></span>
+      <span class="text-[0.82rem] text-muted max-tablet:hidden">Mostrando <strong class="text-primary">${from}–${to}</strong> de <strong class="text-primary">${info.total}</strong></span>
       <span class="flex items-center gap-1.5 max-tablet:w-full max-tablet:justify-between">
         <button type="button" class="${BUTTON}" data-pagina="${current - 1}" aria-label="Página anterior" ${current === 1 ? "disabled" : ""}>${ARROW(90)}</button>
-        <span class="hidden text-center text-[0.82rem] max-tablet:block"><strong>Página ${current} de ${last}</strong><br><span class="text-[#50617d]">${from}–${to} de ${info.total}</span></span>
+        <span class="hidden text-center text-[0.82rem] max-tablet:block"><strong>Página ${current} de ${last}</strong><br><span class="text-muted">${from}–${to} de ${info.total}</span></span>
         ${visiblePages(current, last).map((p) => p === "…"
-          ? `<span class="px-1 text-[#50617d] max-tablet:hidden" aria-hidden="true">…</span>`
+          ? `<span class="px-1 text-muted max-tablet:hidden" aria-hidden="true">…</span>`
           : `<button type="button" class="${BUTTON} max-tablet:hidden" data-pagina="${p}" aria-label="Página ${p}" ${p === current ? 'aria-current="page"' : ""}>${esc(p)}</button>`).join("")}
         <button type="button" class="${BUTTON}" data-pagina="${current + 1}" aria-label="Página siguiente" ${current === last ? "disabled" : ""}>${ARROW(-90)}</button>
       </span>

@@ -24,7 +24,7 @@ export const filaHistorial = (o: { miniatura: string; titulo: string; estado: Pa
 };
 
 export const cuadroIcono = (icono: string) =>
-  `<span class="grid size-14 place-items-center rounded-[4px] bg-[#eef2f8] text-neutral">${iconSvg(icono, 26)}</span>`;
+  `<span class="grid size-14 place-items-center rounded-[4px] bg-neutral-soft text-neutral">${iconSvg(icono, 26)}</span>`;
 
 /** Pinta el historial del votante en `contenedor`; devuelve la función para volver a cargarlo tras un envío. */
 export function historial<T>(contenedor: HTMLElement, o: {

@@ -12,9 +12,9 @@ export { ACEPTA_FOTOS, esc, FORMATOS_FOTO, iconSvg };
 export { field, GHOST, HINT, ICON_BUTTON, INPUT, LABEL, moveButtons, thumb, upload } from "../../../lib/cuenta/panel/campos";
 
 export const DANGER =
-  "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] border border-error/40 bg-transparent px-[18px] text-[0.82rem] font-bold text-error hover:bg-[#fff2f2]";
+  "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] border border-error/40 bg-transparent px-[18px] text-[0.82rem] font-bold text-error hover:bg-error-soft";
 export const PILL = "inline-flex items-center rounded-full px-3 py-1 text-[0.66rem] font-bold tracking-[0.08em] whitespace-nowrap uppercase";
-export const DRAFT_PILL = `${PILL} border border-secondary/60 bg-[#fff4e5] text-[#8a4b00]`;
+export const DRAFT_PILL = `${PILL} border border-secondary/60 bg-warning-soft text-warning-ink`;
 
 // Sin el permiso de publicar no se conoce lo pendiente: el botón queda siempre activo.
 const nothingToPreview = () => can("contenido.publicar") && !state.pending.length;

@@ -18,7 +18,7 @@ const SLIDE = "relative aspect-[1947/741] w-full max-h-[680px] overflow-hidden m
 const BANNER = "h-full w-full object-cover max-tablet:absolute max-tablet:object-[100%_center]";
 const PORTRAIT = "h-full w-[47%] object-cover object-center max-tablet:w-[49%]";
 const OVERLAY = "hidden max-tablet:absolute max-tablet:inset-y-0 max-tablet:right-auto max-tablet:left-0 max-tablet:flex max-tablet:w-[48%] max-tablet:flex-col max-tablet:justify-center max-tablet:bg-accent max-tablet:pt-6 max-tablet:pr-0 max-tablet:pb-5 max-tablet:pl-5";
-const DOT = "slide-dot relative grid h-[11px] before:absolute before:-inset-x-[5px] before:-inset-y-[17px] before:content-[''] max-tablet:before:-inset-x-1.5 min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5";
+const DOT = "slide-dot relative grid h-[11px] before:absolute before:-inset-x-[7px] before:-inset-y-[18px] before:content-[''] min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5";
 const PIECE_WIDTHS = [400, 640, 850];
 const PIECE_SIZES = "(max-width: 760px) 90vw, 40vw";
 // El modo edición pinta el borrador con estas versiones de las imágenes que vienen con el sitio.
@@ -189,7 +189,7 @@ const contactos = [
                 "citizen-link flex min-h-[70px] items-center gap-[15px] [transition:color_0.18s] max-desktop-sm:gap-2.5 max-tablet:min-h-[80px] max-tablet:gap-[18px]",
                 tone === "rojo" && "rounded-[4px] bg-campaign-red p-[18px] text-primary-content hover:bg-[#b80e18] max-tablet:mb-2.5",
                 tone === "amarillo" && "rounded-[4px] bg-accent p-[18px] text-primary hover:bg-base-100 hover:text-primary max-tablet:mb-2.5",
-                !tone && "[border-left:1px_solid_#ffffff30] pl-6 hover:text-accent max-nav:pl-5 max-tablet:[border-left:0] max-tablet:[border-top:1px_solid_#ffffff30] max-tablet:py-[18px] max-tablet:pl-0",
+                !tone && "rounded-[4px] border border-transparent p-[18px] [background:linear-gradient(var(--color-primary),var(--color-primary))_padding-box,linear-gradient(90deg,var(--color-accent),color-mix(in_srgb,var(--color-accent)_12%,transparent))_border-box] hover:text-accent",
               ]}
               href={`/ciudadania/${p.slug}/`}
             >
@@ -331,7 +331,7 @@ const contactos = [
       <div class="grid grid-cols-[repeat(4,1fr)] gap-[18px] max-nav:grid-cols-[repeat(2,1fr)] max-tablet:gap-3 max-mobile-xs:grid-cols-[1fr]">
         {proposals.map((p) => (
           <a
-            class="proposal-card flex min-h-[242px] flex-col rounded-[4px] bg-base-100 p-7 text-primary [border-right:1px_solid_#06317630] [border-bottom:1px_solid_#06317630] [border-left:1px_solid_#06317630] [border-top:4px_solid_var(--color-secondary)] [box-shadow:0_4px_14px_#06317608] [transition:transform_0.2s,border-color_0.2s,box-shadow_0.2s] hover:-translate-y-1 hover:border-neutral hover:bg-base-100 hover:[box-shadow:0_8px_20px_#06317618] max-nav:min-h-[220px] max-desktop-sm:p-[23px] max-tablet:min-h-[225px] max-tablet:px-4 max-tablet:py-5 max-mobile-xs:min-h-[210px]"
+            class="proposal-card flex min-h-[242px] flex-col rounded-[4px] bg-base-100 p-7 text-primary [border-right:1px_solid_var(--color-card-border)] [border-bottom:1px_solid_var(--color-card-border)] [border-left:1px_solid_var(--color-card-border)] [border-top:4px_solid_var(--color-secondary)] shadow-card [transition:transform_0.2s,border-color_0.2s,box-shadow_0.2s] hover:-translate-y-1 hover:border-neutral hover:bg-base-100 hover:[box-shadow:0_8px_20px_#06317618] max-nav:min-h-[220px] max-desktop-sm:p-[23px] max-tablet:min-h-[225px] max-tablet:px-4 max-tablet:py-5 max-mobile-xs:min-h-[210px]"
             href={`/propuestas/${p.slug}/`}
           >
             <div class="card-top mb-7 flex items-center justify-between max-tablet:mb-6">

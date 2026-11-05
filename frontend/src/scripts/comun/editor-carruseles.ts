@@ -50,7 +50,7 @@ const tarjetaBanner = (b: Principal["banners"][number], i: number, total: number
         <div class="flex flex-wrap items-center gap-3">
           ${b.celular
             ? `<img src="${thumb(b.celular)}" alt="" class="aspect-[4/3] w-[104px] rounded-[3px] bg-base-200 object-cover" />`
-            : `<span class="grid aspect-[4/3] w-[104px] place-items-center rounded-[3px] border border-dashed border-field-border px-2 text-center text-[0.68rem] leading-tight text-[#50617d]">Sin imagen para celular</span>`}
+            : `<span class="grid aspect-[4/3] w-[104px] place-items-center rounded-[3px] border border-dashed border-field-border px-2 text-center text-[0.68rem] leading-tight text-muted">Sin imagen para celular</span>`}
           <span class="flex min-w-0 flex-1 flex-col items-start gap-1">
             <span class="text-[0.82rem] font-bold">Imagen para celular <span class="font-normal">(opcional) · 1520 × 1140 px</span></span>
             <span class="flex flex-wrap gap-2">
@@ -109,7 +109,7 @@ dialogo.innerHTML = `
     <div data-cuerpo class="overflow-y-auto overscroll-contain px-6 py-5 max-tablet:px-4"></div>
     <div class="flex justify-end gap-2.5 border-t border-t-base-300 px-6 pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] max-tablet:px-4">
       <button type="button" data-cerrar class="${GHOST} max-tablet:flex-1">Cancelar</button>
-      <button type="button" data-guardar class="${BUTTON} bg-primary text-primary-content disabled:bg-[#d5dbe3] disabled:text-[#50617d] max-tablet:flex-1">Guardar borrador</button>
+      <button type="button" data-guardar class="${BUTTON} bg-primary text-primary-content disabled:bg-disabled disabled:text-muted max-tablet:flex-1">Guardar borrador</button>
     </div>
   </div>`;
 const guardar = dialogo.querySelector<HTMLButtonElement>("[data-guardar]")!;

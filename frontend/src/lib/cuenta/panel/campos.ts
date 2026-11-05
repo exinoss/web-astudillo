@@ -7,7 +7,7 @@ import type { Photo } from "../../data/http/admin-api";
 export const INPUT =
   "min-h-12 w-full rounded-[3px] border border-field-border bg-base-100 px-3.5 py-3 text-sm text-primary placeholder:text-field-placeholder placeholder:opacity-100 focus-visible:outline-neutral aria-invalid:border-2 aria-invalid:border-error";
 export const LABEL = "mb-[7px] block text-[0.82rem] font-bold";
-export const HINT = "m-0 mt-1.5 text-[0.72rem] leading-normal text-[#50617d]";
+export const HINT = "m-0 mt-1.5 text-[0.72rem] leading-normal text-muted";
 export const GHOST =
   "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] border border-base-300 bg-transparent px-[18px] text-[0.82rem] font-bold text-primary hover:bg-base-200";
 export const ICON_BUTTON =

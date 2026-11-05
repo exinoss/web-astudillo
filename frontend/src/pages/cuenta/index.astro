@@ -23,11 +23,11 @@ import LegalAcceptance from '../../components/comun/LegalAcceptance.astro';
           </div>
           <button type="submit" class="button w-full">Entrar</button>
         </form>
-        <div class="my-5 flex items-center gap-3 text-center text-xs text-[#50617d] before:h-px before:flex-1 before:bg-[#cbd5e1] before:content-[''] after:h-px after:flex-1 after:bg-[#cbd5e1] after:content-['']">o</div>
+        <div class="my-5 flex items-center gap-3 text-center text-xs text-muted before:h-px before:flex-1 before:bg-divider before:content-[''] after:h-px after:flex-1 after:bg-divider after:content-['']">o</div>
         <div id="google-login-button" class="flex min-h-12 w-full justify-center"></div>
-        <p id="google-login-unavailable" hidden class="m-0 text-center text-xs text-[#50617d]">El acceso con Google estará disponible cuando se configure.</p>
-        <p class="m-0 mt-6 mb-2.5 text-center text-sm text-[#50617d]">¿No tienes cuenta?</p>
-        <a class="flex min-h-[50px] w-full items-center justify-center rounded-[3px] border-2 border-primary px-6 text-[0.9375rem] font-bold text-primary no-underline hover:bg-[#eef4fb]" href="/cuenta/registro/">Crear una cuenta</a>
+        <p id="google-login-unavailable" hidden class="m-0 text-center text-xs text-muted">El acceso con Google estará disponible cuando se configure.</p>
+        <p class="m-0 mt-6 mb-2.5 text-center text-sm text-muted">¿No tienes cuenta?</p>
+        <a class="flex min-h-[50px] w-full items-center justify-center rounded-[3px] border-2 border-primary px-6 text-[0.9375rem] font-bold text-primary no-underline hover:bg-primary-soft" href="/cuenta/registro/">Crear una cuenta</a>
       </AccountCard>
     </div>
   </div>
@@ -82,7 +82,7 @@ import LegalAcceptance from '../../components/comun/LegalAcceptance.astro';
           <div id="google-password-step" hidden class="mt-4">
             <p class="m-0 mb-3 text-[0.82rem] leading-normal">Confirma tu identidad con Google para guardar la contraseña.</p>
             <div id="google-password-button" class="flex min-h-12 w-full justify-center"></div>
-            <p id="google-password-unavailable" hidden class="m-0 text-center text-xs text-[#50617d]">No se pudo cargar Google. Inténtalo de nuevo.</p>
+            <p id="google-password-unavailable" hidden class="m-0 text-center text-xs text-muted">No se pudo cargar Google. Inténtalo de nuevo.</p>
           </div>
           <AccountSignOut id="logout-google-button" />
         </AccountCard>

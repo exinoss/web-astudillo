@@ -4,7 +4,7 @@
 
 .button:disabled,
 .button[data-bloqueo] {
-  background: #d5dbe3;
+  background: var(--color-disabled);
   color: #50617d;
   cursor: not-allowed;
   transform: none;
@@ -28,7 +28,7 @@
 }
 
 .candado .ojo {
-  fill: #d5dbe3;
+  fill: var(--color-disabled);
 }
 
 /* El arco baja y encaja en el cuerpo con un rebote corto; el cuerpo acusa el golpe. */

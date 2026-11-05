@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+### Changed
+
+- En la portada, «Chat» de la franja «Tu voz cuenta» lleva un borde dorado que se desvanece hacia la derecha, como una tarjeta junto a «Alerta ciudadana» y «Sugerencias».
+
+### Fixed
+
+- En celular es más fácil tocar las migas de pan, los puntos de la biografía, los de los carruseles de la portada y el botón del menú: responden en una zona más amplia sin cambiar cómo se ven.
+
 ## [1.1.0] - 2026-11-05
 
 ### Added

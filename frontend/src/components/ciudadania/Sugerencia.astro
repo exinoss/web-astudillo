@@ -20,7 +20,7 @@ const temas = [...proposals.map((p) => ({ valor: p.slug, nombre: p.name, icono: 
   </div>
   <div class="mt-7 grid grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] items-start gap-10 max-laptop:gap-6 max-tablet:mt-[22px] max-tablet:grid-cols-1 max-tablet:gap-[30px]">
     <form id="sugerencia-form" class={TARJETA} data-temas={JSON.stringify(temas)} novalidate>
-      <p id="sugerencia-recuperada" class="mt-0 mb-[18px] border-l-4 border-neutral bg-[#eef4fb] px-4 py-3 text-[0.84rem] leading-normal" role="status" hidden>
+      <p id="sugerencia-recuperada" class="mt-0 mb-[18px] border-l-4 border-neutral bg-primary-soft px-4 py-3 text-[0.84rem] leading-normal" role="status" hidden>
         Recuperamos tu sugerencia. Revísala antes de enviarla.
       </p>
       <div class="mb-5 flex items-center justify-between gap-[15px] max-nav:flex-col max-nav:items-start max-nav:gap-2">

@@ -10,7 +10,7 @@ const STORAGE = "modo-edicion";
 const BUTTON = "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] px-[18px] text-[0.82rem] font-bold whitespace-nowrap";
 const IDLE = ["outline-1", "outline-dashed", "outline-current/40", "outline-offset-[6px]", "rounded-[2px]", "cursor-text",
   "hover:outline-2", "hover:outline-current", "focus-visible:outline-2", "focus-visible:outline-current"];
-const ACTIVE = ["outline-2", "outline-solid", "outline-secondary", "bg-[#fffbe8]", "text-primary"];
+const ACTIVE = ["outline-2", "outline-solid", "outline-secondary", "bg-accent-soft", "text-primary"];
 const mobile = matchMedia("(width <= 760px)");
 
 const elements = () => [...document.querySelectorAll<HTMLElement>("[data-editable]")];
@@ -49,7 +49,7 @@ bar.innerHTML = `
     <span class="flex items-center gap-3 max-tablet:gap-2">
       <span id="edicion-pendientes" class="text-[0.82rem] max-nav:hidden"></span>
       <a href="/cuenta/panel/#publicaciones" class="${BUTTON} border border-[#ffffff55] text-primary-content max-nav:hidden">Ver pendientes</a>
-      <button type="button" id="edicion-publicar" class="${BUTTON} bg-accent text-primary disabled:bg-[#d5dbe3] disabled:text-[#50617d]" hidden>${iconSvg("upload", 18)}Publicar</button>
+      <button type="button" id="edicion-publicar" class="${BUTTON} bg-accent text-primary disabled:bg-disabled disabled:text-muted" hidden>${iconSvg("upload", 18)}Publicar</button>
     </span>
   </div>`;
 const toggle = bar.querySelector<HTMLButtonElement>("#edicion-interruptor")!;
@@ -80,7 +80,7 @@ async function refreshPending() {
 
 const toast = document.createElement("p");
 toast.setAttribute("role", "status");
-toast.className = "fixed bottom-4 left-1/2 z-[960] m-0 w-max max-w-[calc(100%-32px)] -translate-x-1/2 border-l-4 border-primary bg-[#eef4fb] px-4 py-3 text-[0.82rem] text-primary [box-shadow:0_10px_35px_#06317626] data-[error=true]:border-error data-[error=true]:bg-[#fff2f2] data-[error=true]:text-error";
+toast.className = "fixed bottom-4 left-1/2 z-[960] m-0 w-max max-w-[calc(100%-32px)] -translate-x-1/2 border-l-4 border-primary bg-primary-soft px-4 py-3 text-[0.82rem] text-primary [box-shadow:0_10px_35px_#06317626] data-[error=true]:border-error data-[error=true]:bg-error-soft data-[error=true]:text-error";
 toast.hidden = true;
 let toastTimer = 0;
 
@@ -166,7 +166,7 @@ sheet.className = "fixed inset-0 z-[945] flex items-end bg-[#06317640]";
 sheet.hidden = true;
 sheet.innerHTML = `
   <div role="dialog" aria-modal="true" aria-labelledby="edicion-hoja-titulo"
-    class="flex w-full flex-col gap-3.5 rounded-t-[12px] border-t-4 border-t-secondary bg-base-100 px-5 pt-[18px] pb-[calc(22px+env(safe-area-inset-bottom,0px))] text-primary [box-shadow:0_-12px_30px_#06317630]">
+    class="flex w-full flex-col gap-3.5 rounded-t-[12px] border-t-4 border-t-secondary bg-base-100 px-5 pt-[18px] pb-[calc(22px+env(safe-area-inset-bottom,0px))] text-primary [box-shadow:0_-12px_30px_var(--color-card-border)]">
     <div class="flex items-center justify-between">
       <strong id="edicion-hoja-titulo" class="flex items-center gap-2 text-[0.95rem]">${iconSvg("edit", 18)} Editar texto</strong>
       <button type="button" data-cerrar class="grid size-11 place-items-center" aria-label="Cerrar">${iconSvg("close", 20)}</button>
@@ -177,7 +177,7 @@ sheet.innerHTML = `
     </div>
     <div class="flex gap-2.5">
       <button type="button" data-cerrar class="${BUTTON} flex-1 border border-[#06317640] text-primary">Cancelar</button>
-      <button type="button" id="edicion-hoja-guardar" class="${BUTTON} flex-1 bg-primary text-primary-content disabled:bg-[#d5dbe3] disabled:text-[#50617d]">Guardar borrador</button>
+      <button type="button" id="edicion-hoja-guardar" class="${BUTTON} flex-1 bg-primary text-primary-content disabled:bg-disabled disabled:text-muted">Guardar borrador</button>
     </div>
   </div>`;
 const sheetField = sheet.querySelector<HTMLTextAreaElement>("#edicion-hoja-campo")!;

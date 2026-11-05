@@ -119,7 +119,7 @@
 .profile-dot::before {
   content: "";
   position: absolute;
-  inset: -26px -3.5px -11px;
+  inset: -33px -3.5px -4px;
 }
 
 .profile-dot.is-active {
