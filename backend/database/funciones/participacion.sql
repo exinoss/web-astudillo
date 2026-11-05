@@ -26,8 +26,7 @@ BEGIN
 END;
 $$;
 
--- Anota una pregunta sin respuesta (suma una vez más si ya estaba). Se limpian las que llevan
--- 90 días sin repetirse para que la tabla no crezca sin límite.
+-- Anota una pregunta sin respuesta (o suma una vez más) y borra las que llevan 90 días sin repetirse.
 CREATE OR REPLACE FUNCTION fn_chat_unanswered_note(p_normalized text, p_example text)
 RETURNS void LANGUAGE sql AS $$
   DELETE FROM tb_chat_sin_respuesta WHERE ultima_vez < now() - interval '90 days';
@@ -184,8 +183,7 @@ RETURNS TABLE(tipo text, estado varchar, total integer) LANGUAGE sql STABLE AS $
   WHERE fn_has_permission(p_actor, 'participacion.ver') GROUP BY s.estado;
 $$;
 
--- Cambio de estado con control optimista: `p_expected` es el estado que veía el panel. Si ya
--- tiene el estado pedido, 'sin_cambios'; si otra persona lo cambió, 'conflicto' sin escribir.
+-- Cambia el estado con control optimista: «sin_cambios» si ya lo tiene y «conflicto» si otra persona lo cambió.
 CREATE OR REPLACE FUNCTION fn_alert_state_change(p_actor integer, p_id integer, p_state text, p_expected text)
 RETURNS TABLE(resultado text, estado varchar) LANGUAGE plpgsql AS $$
 #variable_conflict use_column

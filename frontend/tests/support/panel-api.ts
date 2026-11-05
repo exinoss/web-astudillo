@@ -3,7 +3,6 @@ import initial from '../../../backend/database/contenido-inicial.json' with { ty
 import { PARROQUIAS } from '../../../backend/src/contracts/parroquias';
 import { servirFotos } from './fotos';
 
-// API simulada del panel: guarda el borrador en memoria para que los tests vean el efecto de cada acción.
 /** Lo que el panel simulado acepta para confirmar un cambio de rol o de estado. */
 export const CONTRASENIA_PANEL = 'Ab1!xyz';
 export const CODIGO_PANEL = '482913';

@@ -63,10 +63,7 @@ export function createParticipation(sql: SQL, authorization: Authorization, limi
   const suggestionsInFlight = new Map<string, Promise<SuggestionRow>>();
 
   return {
-    /**
-     * Idempotente por `idempotencia`: un reintento devuelve la alerta ya creada sin volver a procesar
-     * la foto. La foto se nombra por su hash, así una misma imagen no ocupa disco dos veces.
-     */
+    /** Crea la alerta; un reintento con la misma `idempotencia` devuelve la ya creada sin procesar otra vez la foto. */
     async createAlert(access: string | undefined, input: AlertInput) {
       const user = await authorization.require(access, PERMISSIONS.participationSend);
       await requireParticipationAcceptance(sql, user.id_usuario);

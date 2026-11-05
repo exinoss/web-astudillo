@@ -1,4 +1,3 @@
-# Producción en el VPS: PostgreSQL, backend, publicador y nginx. Cloudflare va delante como proxy.
 # Variables en server-produccion/.env (copia de .env.example). VERSION (SHA del commit) la fija desplegar.sh.
 name: astudillo
 

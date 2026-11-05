@@ -67,11 +67,7 @@ export function precargar(animacion: Animacion) {
   Promise.all([cargarReproductor(), cargarDatos(animacion)]).catch(() => {});
 }
 
-/**
- * Reproduce en bucle dentro de `contenedor`; con `reduce-motion` queda en un fotograma fijo.
- * `alCompletarVuelta` se llama al terminar cada vuelta completa.
- * Devuelve la función que la destruye, o nada si no se pudo pintar (error o ahorro de datos).
- */
+/** Reproduce en bucle (fija con `reduce-motion`); devuelve la función que la destruye o nada si no se pudo pintar. */
 export async function reproducir(
   contenedor: HTMLElement,
   animacion: Animacion,
@@ -136,10 +132,7 @@ function cargarReproductorEnHilo() {
   }));
 }
 
-/**
- * Como reproducir(), pero dibuja en un worker: sigue moviéndose aunque la página esté bloqueada
- * (p. ej., mientras el visor 3D prepara un modelo pesado). Resuelve cuando ya se ve.
- */
+/** Como reproducir(), pero en un worker: sigue moviéndose aunque la página esté bloqueada. Resuelve cuando ya se ve. */
 export async function reproducirEnHilo(contenedor: HTMLElement, animacion: Animacion) {
   if (ahorroDatos) return;
   try {
@@ -199,10 +192,7 @@ document.addEventListener("focusin", function alEnfocar(evento) {
   precargar("loader");
 });
 
-/**
- * Cubre `zona` con el loader mientras dura un envío o una carga de datos.
- * Solo aparece si tarda más de 200 ms, para no parpadear en respuestas rápidas.
- */
+/** Cubre `zona` con el loader durante un envío; solo aparece si tarda más de 200 ms. */
 export function mostrarCarga(zona: HTMLElement, texto = "Enviando…") {
   zona.setAttribute("aria-busy", "true");
   let destruir: (() => void) | undefined;

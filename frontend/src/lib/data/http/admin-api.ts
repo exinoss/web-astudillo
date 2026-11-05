@@ -136,8 +136,7 @@ export const adminApi = {
       .map(([k, v]) => [k, String(v)]));
     return call<Page & { usuarios: AdminUser[] }>(`/api/admin/usuarios?${query}`);
   },
-  // Se envía lo que se veía en la lista: si otro admin cambió la cuenta mientras tanto, responde 409.
-  /** `confirmacion`: la contraseña de quien hace el cambio o, si su cuenta no tiene, el código enviado a su correo. */
+  /** Envía el rol que se veía (409 si otro admin lo cambió) y la contraseña o el código de quien hace el cambio. */
   changeRole: (id: number, rol: string, rolAnterior: string, confirmacion: string) =>
     call(`/api/admin/usuarios/${id}/rol`, 'PATCH', { rol, rolAnterior, confirmacion }),
   changeState: (id: number, estado: 'activo' | 'bloqueado', estadoAnterior: 'activo' | 'bloqueado', confirmacion: string) =>

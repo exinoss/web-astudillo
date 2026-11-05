@@ -4,7 +4,7 @@ import { ApiError } from "../../http";
 
 const TOO_MANY = "Demasiados intentos. Espera un momento antes de volver a intentarlo";
 
-/** Crea límites por cantidad y en memoria (registro, recuperación, Google): una ventana fija por clave. */
+/** Límites por cantidad en memoria (registro, recuperación, Google): una ventana fija por clave. */
 export function createLimiter() {
   const entries = new Map<string, { count: number; until: number }>();
   /** Cuenta intentos en una ventana fija y responde 429, con los segundos que faltan, al superar el límite. */
@@ -37,19 +37,13 @@ type Row = { clave: string; espera: number; fallos: number };
 const blocked = (wait: number, firstBlock: boolean) =>
   new ApiError(429, TOO_MANY, { reintentarEn: wait, ...(firstBlock ? { sugerirRecuperacion: true } : {}) });
 
-/**
- * Crea los contadores de fallos, que sobreviven a reinicios y son atómicos entre peticiones simultáneas.
- * Las esperas afectan solo a la pareja correo+IP: el dueño que se olvidó la contraseña espera y entra.
- */
+/** Contadores de fallos en PostgreSQL: sobreviven a reinicios y son atómicos entre peticiones simultáneas. */
 export function createAttempts(sql: SQL) {
   return {
     loginKeys: (correo: string, ip: string): AttemptKeys => ({ pair: `par:${correo}|${ip}`, ip: `ip:${ip}`, email: correo }),
     changeKeys: (userId: number, ip: string): AttemptKeys => ({ pair: `cambio:${userId}|${ip}`, ip: `ip:${ip}` }),
 
-    /**
-     * Lanza 429 si la pareja o la IP están bloqueadas; se llama antes del hash para no gastar CPU.
-     * Devuelve si el correo sufre un ataque desde varias IPs y el dueño debe terminar de entrar por enlace.
-     */
+    /** Lanza 429 si la pareja o la IP están bloqueadas (antes del hash); devuelve si el dueño debe entrar por enlace. */
     async check(keys: AttemptKeys, suggestRecovery = false) {
       const [rows, attackers] = await Promise.all([
         callPg<Row>(sql, "limitCheck", [[keys.pair, keys.ip].join("\n")]),
@@ -61,10 +55,7 @@ export function createAttempts(sql: SQL) {
       return { emailLink: (attackers[0]?.total ?? 0) >= ATTACKERS_FOR_LINK };
     },
 
-    /**
-     * Suma un fallo en la pareja y en la IP; devuelve el 429 a lanzar si alguna quedó bloqueada.
-     * Si la pareja llega al bloqueo mortal, la IP queda bloqueada también para cualquier otro correo.
-     */
+    /** Suma un fallo en la pareja y en la IP y devuelve el 429 a lanzar; en el bloqueo mortal bloquea también la IP. */
     async fail(keys: AttemptKeys, suggestRecovery = false) {
       const [[pair], [ip]] = await Promise.all([
         callPg<Row>(sql, "limitFail", [keys.pair, PAIR_FREE]),

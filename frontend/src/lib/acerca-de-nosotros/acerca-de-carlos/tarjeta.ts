@@ -17,10 +17,7 @@ export interface CardView {
   srcset?: string;
 }
 
-/**
- * También la usa la vista previa del panel. `id` debe ser único en la página: nombra el filtro SVG.
- * La sombra inferior da a «Leer más», que es texto pequeño, el contraste de 4,5:1 sobre cualquier foto.
- */
+/** Tarjeta de una página de Carlos (también en la vista previa del panel); `id` debe ser único: nombra el filtro SVG. */
 export function cardMarkup(card: CardView, number: number, id: string) {
   const { base, ink } = CARD_COLORS[card.color];
   const filter = `${id}-duotono`;

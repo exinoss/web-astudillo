@@ -7,7 +7,6 @@ import { localPreview } from './vista-previa-local.mjs';
 const backend = process.env.API_PROXY_TARGET || 'http://127.0.0.1:3000';
 const proxy = { '/api': backend, '/medios': backend };
 
-// https://astro.build/config
 export default defineConfig({
   site: 'https://lanuevahistoria.tech',
   output: 'static',

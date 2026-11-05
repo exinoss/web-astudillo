@@ -40,10 +40,7 @@ export function visorFotos(id: string, titulo: string, fotos: FotoDelVisor[]) {
   </template>`).join("")}`;
 }
 
-/**
- * Hace funcionar el visor de `root`. `alCambiar` recibe la foto elegida cada vez que cambia, también al montarse:
- * la galería la usa para su vista del móvil.
- */
+/** Hace funcionar el visor de `root`; `alCambiar` recibe la foto elegida cada vez que cambia, también al montarse. */
 export function montarVisor(root: HTMLElement, alCambiar?: (actual: number, foto: DocumentFragment) => void) {
   const plantillas = [...root.querySelectorAll<HTMLTemplateElement>("[data-visor-foto]")];
   const dialogo = root.querySelector<HTMLDialogElement>("[data-visor]")!;
@@ -80,7 +77,6 @@ export function montarVisor(root: HTMLElement, alCambiar?: (actual: number, foto
   const abrir = (indice: number, boton: HTMLElement) => {
     actual = indice;
     origen = boton;
-    // El fondo no se desplaza mientras se miran las fotos.
     document.documentElement.style.overflow = "hidden";
     dialogo.showModal();
     pintar();

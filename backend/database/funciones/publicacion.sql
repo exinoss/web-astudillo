@@ -1,7 +1,4 @@
--- Encola el contenido congelado. Si ya hay una en cola, la reemplaza: se compila una sola vez.
--- Idempotente: si ya hay una publicación en cola o compilándose con este mismo contenido, la
--- devuelve en vez de crear otra (doble clic, dos personas a la vez). Si hay una en cola con
--- contenido distinto, la reemplaza: no tiene sentido compilar dos veces seguidas.
+-- Encola el contenido congelado; devuelve la que ya está en cola o compilando con el mismo contenido y reemplaza una distinta en cola.
 DROP FUNCTION IF EXISTS fn_publication_create(integer, jsonb);
 CREATE OR REPLACE FUNCTION fn_publication_create(p_actor integer, p_content jsonb)
 RETURNS TABLE(id_publicacion integer, estado varchar) LANGUAGE plpgsql AS $$
@@ -41,8 +38,7 @@ LANGUAGE sql STABLE AS $$
   ) pagina ON true;
 $$;
 
--- Última publicación que no falló (en cola, compilándose o publicada): contra ella se calcula
--- lo pendiente, así lo que ya se envió a publicar deja de contar como cambio.
+-- Última publicación que no falló; contra ella se calcula lo pendiente de publicar.
 DROP FUNCTION IF EXISTS fn_publication_last_published();
 CREATE OR REPLACE FUNCTION fn_publication_latest()
 RETURNS TABLE(id_publicacion integer, estado varchar, contenido jsonb) LANGUAGE sql STABLE AS $$
@@ -50,8 +46,7 @@ RETURNS TABLE(id_publicacion integer, estado varchar, contenido jsonb) LANGUAGE 
   ORDER BY p.id_publicacion DESC LIMIT 1;
 $$;
 
--- Contenido que lee el frontend al compilar: el que se está compilando o, si no hay, el último publicado.
--- Nunca devuelve borradores ni publicaciones en cola o fallidas.
+-- Contenido que lee el frontend al compilar: el que se compila o el último publicado, nunca borradores.
 CREATE OR REPLACE FUNCTION fn_publication_current()
 RETURNS TABLE(contenido jsonb) LANGUAGE sql STABLE AS $$
   SELECT p.contenido FROM tb_publicaciones p WHERE p.estado IN ('publicando', 'publicada')
@@ -85,9 +80,7 @@ RETURNS void LANGUAGE sql AS $$
   WHERE estado = 'publicando';
 $$;
 
--- Idempotente: con el mismo contenido en cola, compilándose o listo devuelve ese estado sin
--- compilar otra vez. Con contenido distinto la deja en cola; si había una compilando, al terminar
--- fn_preview_finish no la da por lista porque el estado ya no es 'compilando'.
+-- Pide la vista previa; con el mismo contenido devuelve su estado y con otro la deja en cola.
 CREATE OR REPLACE FUNCTION fn_preview_request(p_actor integer, p_content jsonb)
 RETURNS TABLE(estado varchar) LANGUAGE plpgsql AS $$
 DECLARE v_state varchar;

@@ -1,11 +1,7 @@
 import { enlaceRed, REDES_SOCIALES, type RedSocial } from '../../contracts/redes';
 import { ApiError } from '../../http';
 
-/**
- * Valida el valor de una clave `enlace.*`. Redes: solo https a su dominio (contracts/redes.ts).
- * WhatsApp: un número como se marca (0985658595, +593 98 565 8595); se guarda en formato
- * internacional sin «+» (593985658595), que es lo que espera wa.me.
- */
+/** Valida un `enlace.*`: redes solo por https a su dominio y WhatsApp normalizado a 593… para wa.me. */
 export function linkValue(key: string, value: string) {
   const text = value.trim();
   if (key === 'enlace.whatsapp') {

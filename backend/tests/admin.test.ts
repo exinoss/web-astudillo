@@ -153,7 +153,6 @@ test("crear y transferir el maestro por comando", async () => {
 
 test("cambiar rol o estado con una lista vieja no pisa lo que hizo otro admin; repetirlo es seguro", async () => {
   await account("votante3", "votante");
-  // admin1 y admin2 ven a votante3 como votante. admin1 lo sube a coadmin.
   expect((await changeRole("admin1", "votante3", "coadmin", "votante")).status).toBe(200);
   // El maestro (coadmin1, desde la prueba anterior) no recargó: intenta subirlo a admin creyendo que sigue siendo votante.
   expect((await changeRole("coadmin1", "votante3", "admin", "votante")).status).toBe(409);

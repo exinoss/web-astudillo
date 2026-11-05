@@ -48,6 +48,9 @@ Por qué: la portada debía verse idéntica hasta que alguien la cambie, sin sub
 **D-019 · 2026-10-31 · Una propuesta nueva se añade al final de `propuestas` y `obras` de la semilla, completa, y el código de la semilla no cambia. En una base con datos, el despliegue crea la propuesta y su obra, pero sus cifras y etapas quedan vacías y se llenan desde el panel antes de publicar.**
 Por qué: la semilla añade lo que falta por clave (propuestas, obras, textos) y solo carga las listas (cifras, etapas, biografía, chat) en una tabla vacía; cambiar eso arriesgaría sobrescribir o resucitar lo que editan los administradores. El panel no crea propuestas, así que la semilla es su único camino. Si la propuesta enlaza un sitio propio, su tarjeta va en `proposalSites` de `frontend/src/lib/data/presentation.ts`, como los modelos 3D en `proposalModels`.
 
+**D-021 · 2026-11-04 · El modelo del estadio se sirve con las caras superpuestas resueltas y sin triángulos sin área (30 MB, 9,6 M de triángulos), y no se simplifica más. La versión ligera mientras se gira queda registrada para cuando haga falta.**
+Por qué: quita las rayas del borde de la pista sin cambiar nada más de lo que se ve y da casi toda la fluidez que faltaba. Simplificar con meshoptimizer estropeó las gradas, no cumplió su tope de error y no redujo el parpadeo. La versión ligera exige una segunda descarga y código propio en el visor: solo se hará si en equipos reales sigue habiendo tirones. Detalle: `docs/plan-modelos-3d.md` («Lo que enseñó el estadio»).
+
 ## Trabajo y configuración
 
 **D-011 · 2026-10-03 · Despliegue con Docker Compose, GitHub Actions, GHCR y `server-produccion/desplegar.sh`; descartados Dokploy, Vercel y Jenkins.**

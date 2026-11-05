@@ -41,11 +41,7 @@ export function createGoogleAuth(sql: SQL, security: Security, sessions: Session
   }
 
   return {
-    /**
-     * Inicia sesión por sub o, si es la primera vez, crea o vincula la cuenta del mismo correo.
-     * Con un correo que no es de Google (una cuenta de Google hecha con Outlook, por ejemplo) no se
-     * puede entrar con Google: se pide usar correo y contraseña.
-     */
+    /** Inicia sesión con Google, o crea o vincula la cuenta del mismo correo si es de Gmail o Workspace. */
     async login(credential: string, acceptance?: AceptacionLegal) {
       if (acceptance) requireAcceptance(acceptance);
       const identity = await security.verifyGoogle(credential);

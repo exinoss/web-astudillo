@@ -21,11 +21,7 @@ const FALLBACK = {
 export const normalize = (text: string) => text.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
   .replace(/[^a-z0-9]+/g, ' ').trim();
 
-/**
- * Elige la respuesta cuyas palabras clave más aparecen en la pregunta. Una palabra clave de 4 letras
- * o más también vale como raíz («propuesta» encuentra «propuestas»). Si la pregunta coincide con el
- * texto de una respuesta (los botones de respuesta rápida lo envían tal cual), esa gana.
- */
+/** Respuesta cuyas palabras clave más aparecen en la pregunta; gana la que coincide con el texto de un botón rápido. */
 export function bestAnswer(question: string, answers: ChatAnswer[]) {
   const text = normalize(question);
   const words = text.split(' ');

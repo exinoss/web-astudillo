@@ -107,10 +107,7 @@ export function createContent(sql: SQL, authorization: Authorization) {
       return { ...draft, textos: { ...originales, ...draft.textos }, originales };
     },
 
-    /**
-     * Borrador con la versión de cada parte. Las versiones se leen antes que el contenido: si alguien
-     * guarda entre ambas lecturas, el siguiente guardado da conflicto en vez de pisar su cambio.
-     */
+    /** Borrador con sus versiones, leídas antes que el contenido para que un guardado intermedio dé conflicto. */
     async get(access: string | undefined) {
       await authorization.require(access, PERMISSIONS.contentEdit);
       const [{ versiones }] = await callPg<{ versiones: ContentVersions }>(sql, 'contentVersions');
@@ -202,10 +199,7 @@ export function createContent(sql: SQL, authorization: Authorization) {
       return { cambios: diff(last ? { ...last.contenido,textos:{...originales,...last.contenido.textos} } : null, current) };
     },
 
-    /**
-     * Idempotente: si lo mismo ya está en cola o compilándose, devuelve esa publicación en vez de
-     * crear otra. La base repite la comprobación con un bloqueo por si dos personas publican a la vez.
-     */
+    /** Publica el borrador; es idempotente y la base lo repite con un bloqueo por si dos personas publican a la vez. */
     async publish(access: string | undefined) {
       const actor = await authorization.require(access, PERMISSIONS.contentPublish);
       const [[last], current] = await Promise.all([callPg<Latest>(sql, 'publicationLatest'), snapshot()]);

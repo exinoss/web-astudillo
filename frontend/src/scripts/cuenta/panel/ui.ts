@@ -72,10 +72,7 @@ export function syncPublishButton() {
 export const isPending = (tipo: string, descripcion: string) =>
   state.pending.some((c) => c.tipo === tipo && c.descripcion === descripcion);
 
-/**
- * Ejecuta una acción con el botón bloqueado y el error convertido en aviso. Con `carga`, el loader cubre las
- * secciones (no la sección, que la acción vuelve a pintar); sin él se puede seguir escribiendo mientras se guarda.
- */
+/** Ejecuta la acción con el botón bloqueado y el error como aviso; con `carga`, el loader cubre las secciones. */
 export async function busy(button: HTMLButtonElement | null, action: () => Promise<void>, carga?: string) {
   const run = async () => {
     const terminarCarga = carga ? mostrarCarga(document.querySelector<HTMLElement>("#panel-secciones")!, carga) : () => {};

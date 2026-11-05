@@ -38,4 +38,4 @@ Volver a abrirlo detecta lo que ya existe o ya está encendido y continúa: no r
 - **Datos:** la base y las fotos subidas viven en los volúmenes `astudillo-local_pgdata` y `astudillo-local_medios`. Para empezar de cero: `docker compose -p astudillo-local down -v`.
 - **Cambios en `DATABASE_URL`:** PostgreSQL solo crea el usuario y la base la primera vez. Si después cambias usuario, clave o nombre, hay que empezar de cero (comando de arriba).
 - **Puerto 4321:** tiene que estar libre, porque es el origen que aceptan la API y Google. Cierra antes cualquier `bun run dev` del frontend.
-- **No es el despliegue de producción:** ese está en `backend/docker-compose.yml`.
+- **No es el despliegue de producción:** ese está en `server-produccion/`.

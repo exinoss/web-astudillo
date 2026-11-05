@@ -57,11 +57,7 @@ export async function medidasArchivo(archivo: Blob): Promise<Medidas | null> {
   return null;
 }
 
-/**
- * URL de una miniatura cuyo lado corto mide `lado` px. `createImageBitmap` decodifica fuera del hilo principal
- * y el original se suelta enseguida; la página solo guarda la miniatura. Quien la pide debe revocar la URL.
- * Null si el navegador no puede abrir la foto: nunca se recurre al original.
- */
+/** URL de una miniatura con lado corto `lado` (quien la pide la revoca); null si no se puede abrir, nunca el original. */
 export async function miniaturaLocal(archivo: Blob, lado: number): Promise<string | null> {
   try {
     const bitmap = await createImageBitmap(archivo);

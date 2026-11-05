@@ -19,10 +19,7 @@ export function vigilarCambios(formulario: HTMLElement, boton: HTMLButtonElement
   return comprobar;
 }
 
-/**
- * Ejecuta `accion` con `boton` bloqueado e ignora los clics o Enter que llegan mientras tanto.
- * Al terminar recalcula el botón vigente del formulario, que puede ser otro si se volvió a dibujar.
- */
+/** Ejecuta `accion` con el botón bloqueado e ignora los clics que llegan mientras tanto. */
 export async function bloquearMientras(boton: HTMLButtonElement, accion: () => Promise<void>) {
   const k = clave(boton);
   if (enCurso.has(k)) return;

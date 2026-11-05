@@ -113,11 +113,7 @@ interface Params {
 }
 type Row = Record<string, unknown>;
 
-/**
- * Ejecuta una función PostgreSQL permitida con parámetros enlazados.
- * Los objetos y arreglos de objetos van tal cual a parámetros jsonb. Las listas de números
- * van como texto «1,2,3»: el driver de Bun 1.3 se cae al enlazar arreglos numéricos.
- */
+/** Ejecuta una función PostgreSQL del catálogo con parámetros enlazados; las listas de números van como texto «1,2,3». */
 export function callPg<T extends object = Row>(db: SQL, functionName: 'alertByKey', values: Params['alertByKey']): Promise<T[]>;
 export function callPg<T extends object = Row>(db: SQL, functionName: 'alertCreate', values: Params['alertCreate']): Promise<T[]>;
 export function callPg<T extends object = Row>(db: SQL, functionName: 'suggestionByKey', values: Params['suggestionByKey']): Promise<T[]>;

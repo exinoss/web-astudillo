@@ -9,10 +9,7 @@ import { callPg } from '../src/db/call';
 
 export const PASSWORD = "Ab1!xyz";
 
-/**
- * App real contra la base de pruebas, con correo simulado y cuentas creadas a medida.
- * Con `trustProxyIp`, `call` puede simular la IP del visitante (cabecera X-Real-IP).
- */
+/** App real contra la base de pruebas con correo simulado; con `trustProxyIp`, `call` puede simular la IP. */
 export function testApp(mediaDir = "medios-pruebas", trustProxyIp = false, privateMediaDir = `${mediaDir}-privados`) {
   const url = process.env.TEST_DATABASE_URL;
   if (!url) throw new Error("TEST_DATABASE_URL debe apuntar a una base de pruebas desechable");

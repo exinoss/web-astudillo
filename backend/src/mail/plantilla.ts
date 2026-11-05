@@ -1,6 +1,5 @@
-// Plantilla de los correos de cuenta (diseño aprobado en design/propuestas/correo/). HTML de tablas con
-// estilos en línea, que es lo que respetan Gmail, Outlook y los clientes móviles. Las imágenes viajan
-// incrustadas en el correo (adjuntos CID, ver mailer.ts); la maqueta de design/ las enlaza como archivos.
+// HTML de tablas con estilos en línea, que es lo que respetan Gmail, Outlook y los clientes móviles. Las imágenes
+// viajan incrustadas (adjuntos CID, ver mailer.ts); la maqueta de design/propuestas/correo/ las enlaza como archivos.
 
 interface Comun {
   asunto: string;
@@ -42,7 +41,6 @@ export function correoHtml(m: Mensaje, img: Imagenes = CID) {
     ? `<div style="display:inline-block;background:#eef4fb;border:2px solid ${AZUL};color:${AZUL};font-family:${CUERPO};font-size:32px;font-weight:700;line-height:1;letter-spacing:8px;padding:16px 28px;border-radius:3px;">${esc(m.codigo)}</div>`
     : `<a href="${esc(m.url)}" style="display:inline-block;background:${AZUL};color:#ffffff;font-family:${CUERPO};font-size:16px;font-weight:700;line-height:1;text-decoration:none;text-align:center;padding:18px 36px;border-radius:3px;">${esc(m.boton)}</a>`;
   const respaldo = "codigo" in m ? "" : `
-    <!-- Respaldo si el botón no funciona y aviso de seguridad. -->
     <tr><td class="px" style="padding:0 32px 28px;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #d9e0ea;">
         <tr><td style="padding-top:18px;font-family:${CUERPO};font-size:12px;line-height:1.5;color:${TEXTO_SUAVE};">
@@ -77,7 +75,6 @@ export function correoHtml(m: Mensaje, img: Imagenes = CID) {
 <tr><td align="center" style="padding:24px 12px;">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:3px;overflow:hidden;">
 
-    <!-- Cabecera: como la barra del sitio (amarilla, logo y nombre). -->
     <tr><td class="px" style="background:${AMARILLO};padding:18px 32px;">
       <table role="presentation" cellpadding="0" cellspacing="0"><tr>
         <td style="vertical-align:middle;"><img src="${img.logo}" width="72" height="36" alt="PSC, Lista 6" style="display:block;border:0;font-family:${CUERPO};font-size:12px;font-weight:700;color:${AZUL};"></td>
@@ -89,12 +86,10 @@ export function correoHtml(m: Mensaje, img: Imagenes = CID) {
       </tr></table>
     </td></tr>
 
-    <!-- Foto de campaña. -->
     <tr><td style="background:${AMARILLO};">
       <img src="${img.cabecera}" width="600" alt="Carlos Astudillo, candidato a la alcaldía de San Lorenzo" style="display:block;width:100%;max-width:600px;height:auto;border:0;font-family:${CUERPO};font-size:13px;line-height:1.4;color:${AZUL};padding:0;">
     </td></tr>
 
-    <!-- Título: como la cabecera naranja de las páginas de cuenta. -->
     <tr><td class="px" style="background:${NARANJA};border-bottom:4px solid ${AMARILLO};padding:26px 32px 24px;">
       <div style="font-family:${CUERPO};font-size:11px;font-weight:700;letter-spacing:2px;color:${AZUL};">
         <span style="display:inline-block;width:30px;height:3px;background:${ROJO};vertical-align:middle;margin-right:10px;"></span>PARTICIPA EN SAN LORENZO
@@ -102,7 +97,6 @@ export function correoHtml(m: Mensaje, img: Imagenes = CID) {
       <h1 class="titulo" style="margin:10px 0 0;font-family:${DISPLAY};font-size:42px;line-height:1.05;font-weight:600;color:${AZUL};">${esc(m.titulo)}</h1>
     </td></tr>
 
-    <!-- Mensaje y botón. -->
     <tr><td class="px" style="padding:30px 32px 8px;font-family:${CUERPO};font-size:16px;line-height:1.6;color:${AZUL};">
       ${m.parrafos.map(p => `<p style="margin:0 0 16px;">${esc(p)}</p>`).join('')}
     </td></tr>
@@ -114,7 +108,6 @@ export function correoHtml(m: Mensaje, img: Imagenes = CID) {
     </td></tr>
 ${respaldo}
 
-    <!-- Pie azul con #lanuevahistoria. -->
     <tr><td align="center" style="background:${AZUL};padding:26px 24px 24px;">
       <img src="${img.hashtag}" width="186" height="53" alt="#lanuevahistoria" style="display:block;border:0;margin:0 auto 14px;font-family:${DISPLAY};font-size:22px;font-weight:700;color:${AMARILLO};text-align:center;">
       <div style="font-family:${DISPLAY};font-size:18px;font-weight:700;color:#ffffff;letter-spacing:.5px;">CARLOS ASTUDILLO</div>

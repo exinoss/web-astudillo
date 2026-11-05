@@ -6,11 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-05
+
 ### Added
 
 - Modelo 3D del coliseo en la página de la propuesta «Educación», con sus colores: techo y muros grises, franjas de ladrillo y el letrero «COLISEO» (1,06 MB).
-- Modelo 3D del Centro Deportivo de Alto Rendimiento en la página de su propuesta: estadio, coliseo con piscinas, canchas, viviendas y la entrada con su letrero (35 MB).
-- Los modelos 3D pesados se ven con el botón «Ver el modelo 3D · 35 MB»: la animación de carga muestra cuánto falta, y en las visitas siguientes el modelo aparece sin volver a descargarse.
+- Modelo 3D del Centro Deportivo de Alto Rendimiento en la página de su propuesta: estadio, coliseo con piscinas, canchas, viviendas y la entrada con su letrero (30 MB).
+- Los modelos 3D pesados se ven con el botón «Ver el modelo 3D · 30 MB»: la animación de carga muestra cuánto falta, y en las visitas siguientes el modelo aparece sin volver a descargarse.
+- El modelo 3D del Centro de alto rendimiento se puede recorrer: se mueve con clic derecho o con dos dedos, se acerca hasta ver de cerca las piscinas, las canchas o las gradas, y un clic en el cielo vuelve al estadio. Gira más despacio y empieza con el predio más grande.
 - Página «Mi equipo», en el menú y con el botón «Conoce a mi equipo» de la portada: el equipo con su foto, su nombre y quién es (sin foto se ve una silueta), y las 12 parroquias, cada una con su texto y sus fotos. Las fotos pasan solas en un carrusel y se ven en grande al pulsarlas.
 - Panel: pestaña «Mi equipo» para editar el equipo (hasta 9 personas, con foto opcional) y el texto y las fotos (hasta 6) de cada parroquia.
 - Se pueden subir fotos AVIF en el panel y en las alertas. Una foto HEIC del iPhone que no se puede subir avisa cómo hacerlo.
@@ -26,10 +29,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - Los correos de la cuenta usan el amarillo de la campaña, con el logo nítido y una cabecera nueva más liviana.
 - El logo de la cabecera del sitio se ve nítido en celulares y conserva su placa amarilla en los modos de fondo claro y alto contraste.
 - Panel y modo edición: al subir fotos, publicar, traer la imagen de un video o guardar los carruseles de la portada se ve la animación de carga, que queda a la vista aunque el formulario sea largo.
+- El modelo 3D del Centro de alto rendimiento llega antes la primera vez que se abre, porque se guarda en la red de Cloudflare.
+- Panel: la ayuda de la portada del video es más corta.
 
 ### Fixed
 
-- Los modelos 3D se descargan comprimidos: el estadio ocupa 15 MB de datos en vez de 35, y el de paneles solares 80 KB en vez de 289.
+- En la portada, el espacio entre secciones también se reduce con la ventana justo a 1190 o 760 px de ancho, como a un píxel menos.
+- El modelo 3D del Centro de alto rendimiento ya no muestra rayas grises en el borde de la pista al girarlo, y se mueve con más fluidez.
+- Los modelos 3D se descargan comprimidos: el estadio ocupa 16 MB de datos en vez de 30, y el de paneles solares 80 KB en vez de 289.
 - Una foto de más de 40 megapíxeles ya no se rechaza con «Sube una foto JPG, PNG o WebP»: el aviso dice cuánto mide y el máximo (por ejemplo, 8000 × 5000 px).
 - El formulario de alertas ya no se traba al elegir una foto de muchos megapíxeles: avisa en el momento si supera los 40 y muestra una miniatura liviana.
 
@@ -118,5 +125,6 @@ Primera versión numerada: recoge todo lo hecho desde el inicio del proyecto.
 - Las respuestas simuladas de alertas, sugerencias y chat.
 - Dependencia `daisyui`: no se usaba ninguna de sus clases ni su mecanismo de temas; sus tokens de color pasaron a `@theme`.
 
-[Unreleased]: https://github.com/exinoss/web-astudillo/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/exinoss/web-astudillo/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/exinoss/web-astudillo/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/exinoss/web-astudillo/releases/tag/v1.0.0

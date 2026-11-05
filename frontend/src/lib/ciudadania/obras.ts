@@ -6,10 +6,7 @@ export const STAGE_NAMES: Record<WorkStage, string> = {
   terminada: "Terminada",
 };
 
-/**
- * Avance de una obra según sus hitos: porcentaje de hitos completados y etapa derivada.
- * Lo usan la página pública y el panel, así ambos muestran siempre lo mismo.
- */
+/** Porcentaje de hitos completados y etapa de una obra; lo usan la página y el panel para mostrar lo mismo. */
 export function workProgress(milestones: { done: boolean }[]) {
   const done = milestones.filter((m) => m.done).length;
   const percent = milestones.length ? Math.round((done / milestones.length) * 100) : 0;

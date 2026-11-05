@@ -8,7 +8,7 @@
 2. `bun run modelos` (desde `frontend/`) → genera `public/models/<nombre>.glb` optimizado y su póster en `src/assets/models/<nombre>.png`, con el mismo encuadre que el visor.
 3. Añadir `{ src, poster, alt }` al catálogo `proposalModels` de `frontend/src/lib/data/presentation.ts`, bajo el slug de la propuesta.
 
-Un modelo de millones de triángulos no pasa por `modelos-fuente/` ni por `bun run modelos`: se prepara con `node --max-old-space-size=14000 scripts/preparar-modelo-pesado.ts entrada.glb public/models/<nombre>.glb` y después `node scripts/generar-posters.ts` (ver «Lo que enseñó el estadio»).
+Un modelo de millones de triángulos no pasa por `modelos-fuente/` ni por `bun run modelos`: se prepara con `node --max-old-space-size=14000 scripts/preparar-modelo-pesado.ts entrada.glb public/models/<nombre>.glb`, se limpia de caras superpuestas y triángulos sin área (scripts y pasos en `design/propuestas/modelo-centro-alto-rendimiento/README.md`, fuera de Git) y después se genera el póster con `node scripts/generar-posters.ts` (ver «Lo que enseñó el estadio»).
 
 ## Lo que enseñó el primer modelo
 
@@ -35,8 +35,25 @@ El primer `.glb` real (`tecnologias-emergentes`) contradijo varias suposiciones 
   - **Piezas de 5 M de triángulos como máximo.** Firefox no dibuja más de 30 M índices por llamada (`webgl.max-vert-ids-per-draw`) y corta el resto sin error visible: el estadio, de 45,7 M, salía roto.
   - **16 bits de posición** en vez de 14: en un predio de 378 m, las líneas pintadas parpadeaban.
 - **nginx no comprimía los modelos.** No conoce la extensión `.glb` (la servía como `application/octet-stream`) y Cloudflare no comprime ese tipo: el estadio bajaba entero, 35 MB. `server-produccion/nginx/default.conf` declara `model/gltf-binary` y activa gzip en `/models/`: 15 MB en la red. Con gzip no hay `Content-Length`, así que la barra de progreso usa el tamaño del archivo que `Model3D.astro` lee al compilar.
-- **Pesa demasiado para cargarse solo.** `Model3D.astro` muestra el botón «Ver el modelo 3D · 35 MB» en los modelos de 5 MB o más, enseña el progreso de la descarga y guarda el modelo en Cache Storage, porque nginx sirve los modelos con `no-cache` y un celular puede descartar decenas de MB de su caché. El archivo lleva una huella de su contenido (`?v=`), y una versión nueva reemplaza a la guardada.
+- **Pesa demasiado para cargarse solo.** `Model3D.astro` muestra el botón «Ver el modelo 3D · 30 MB» en los modelos de 5 MB o más, enseña el progreso de la descarga y guarda el modelo en Cache Storage, porque un celular puede descartar decenas de MB de su caché normal. El archivo lleva una huella de su contenido (`?v=`), y una versión nueva reemplaza a la guardada.
+- **Cloudflare no guardaba el modelo** (`cf-cache-status: DYNAMIC`): cada primera visita lo descargaba del VPS. Con la huella, el archivo de una URL no cambia nunca, así que nginx lo sirve como `immutable` y una regla de caché de Cloudflare lo guarda en su red (`server-produccion/README.md`, «Modelos 3D en la caché de Cloudflare»). Los modelos livianos, sin huella, siguen en `no-cache`.
 - **La animación de carga se congelaba.** Preparar 15 M de triángulos bloquea la página unos 3-4 s, y el Lottie normal se dibuja en ese mismo hilo. Se usa `reproducirEnHilo()` (`lib/comun/animaciones.ts`), que dibuja el mismo `.json` en un worker con OffscreenCanvas. Medido con trazas de Edge y vídeo de Firefox con la página bloqueada: el Lottie normal, un vídeo y una imagen animada se congelan en algún navegador; el Lottie en worker sigue en los dos. Una versión anterior con los fotogramas en imágenes se descartó porque se veía pixelada y temblaba.
+- **Parpadeaba al girarlo, y no por la optimización** (diagnóstico del 2026-11-03, con capturas, mediciones y scripts en `design/propuestas/modelo-centro-alto-rendimiento/`, fuera de Git). Había dos causas:
+  - **Caras superpuestas** que ya traía la escena: 519.000 pares de caras de distinto color en el mismo plano exacto. La más visible era la losa gris de base bajo el borde de la pista, que se colaba en rayas.
+  - **Detalles más finos que un píxel** (barandas, árboles, bancas). Eso no se arregla sin deformar el modelo.
+- **Las caras superpuestas se resuelven sin mover nada.**
+  - Si dos caras miran al mismo lado, a la mayor se le recorta el hueco de la menor, que es el detalle.
+  - Donde dos caras coinciden espalda con espalda, cada una se ve solo por su frente (un segundo material de una sola cara).
+  - Además, se quitan los triángulos sin área: el 38 % del modelo, que la GPU procesaba en cada fotograma sin pintar nada.
+  - Resultado: de 15,2 M a 9,6 M triángulos, de 35 a 30 MB (16 MB con gzip, 1 MB más que antes), de 2,07 a 1,73 GB de memoria y de 43-46 a 58-60 fps en una GPU integrada. Fuera de los bordes de la pista, la imagen no cambia.
+- **Simplificar más con meshoptimizer no sirve en un predio así** (probado el 2026-11-04 y descartado):
+  - **Las gradas se estropean**: los triángulos largos y estrechos que deja el simplificador hacen asomar la superficie de debajo, como manchas onduladas, aunque el error pedido sea 0.
+  - **Su tope de error no se cumple**: escala los 380 m del predio a un cubo de lado 1 y calcula en float32, así que desplaza 1-3 cm los detalles pequeños.
+  - **No reduce el parpadeo.**
+  - Para medir el error de verdad, hay que medir distancias entre superficies (`desviacion.mjs`).
+- **Desde el centro no se veía el resto del predio** (380 m): la cámara de los demás modelos no bajaba de 526 m y giraba alrededor del estadio. Se encuadra más cerca y se puede recorrer (`MODELOS_RECORRIBLES` y `ORBITA_RECORRIDO` en `lib/propuestas/model3d.ts`, lógica en `recorrido.ts`; prototipo con los tres modos en `design/propuestas/modelo-centro-alto-rendimiento/orbita/`): llega a 80 m, no baja del suelo, gira a 2°/s, se desplaza con clic derecho, dos dedos o Mayús + flechas, y un clic en el cielo vuelve al centro. El cliente descartó centrar al pulsar un punto: la rueda basta.
+- **model-viewer congelaba la página al desplazar.** Para saber qué hay bajo el puntero recorre los triángulos uno a uno (no tiene índice espacial): con 9,6 M tarda 1,2-1,6 s, al soltar cada desplazamiento y al pulsar. `recorrido.ts` desactiva esa búsqueda (`disable-tap` y `altKey` en el `pointerup`, que model-viewer usa para saltarla) y corta el rayo con el suelo de la caja del modelo: 17 ms al soltar y la vista sin salto. Depende de ese detalle interno de model-viewer 4.3: al actualizarlo hay que repetir la prueba (`design/.../diagnostico/recorrer-prueba.mjs`).
+- **Pendiente solo si hace falta: una versión ligera mientras se gira** (la completa al soltar). Daría fluidez en equipos lentos sin cambiar la imagen en reposo, pero añade una segunda descarga, más memoria y código propio en el visor. Se hará si las pruebas en celulares de gama media y en otros equipos muestran tirones con el modelo actual.
 
 ## Contexto
 
