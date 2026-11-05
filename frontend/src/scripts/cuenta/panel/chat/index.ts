@@ -51,7 +51,7 @@ const row = (c: ChatAnswer, i: number, total: number) => `
         <a data-probar class="${GHOST} self-start" href="${esc(c.enlaceRuta ?? "/")}" target="_blank" rel="noopener" ${c.enlaceRuta ? "" : "hidden"}>Probar el enlace ${iconSvg("external", 17)}</a>
       </fieldset>
       <div class="rounded-[3px] bg-base-200 p-4">
-        <span class="mb-2 block text-[0.72rem] font-bold tracking-[0.08em] text-[#50617d] uppercase">Así se verá en el chat</span>
+        <span class="mb-2 block text-[0.72rem] font-bold tracking-[0.08em] text-muted uppercase">Así se verá en el chat</span>
         <div data-vista-chat class="chat-message">${vistaChat(c)}</div>
       </div>
       <label class="flex min-h-11 items-center gap-2.5 text-[0.85rem]">
@@ -141,7 +141,7 @@ async function drawUnanswered(section: HTMLElement) {
     <p class="m-0 mb-2 text-[0.8rem]">Lo que la gente preguntó y el chat no supo responder, de más a menos repetido.</p>
     <ul class="m-0 list-none p-0">${preguntas.map((p) => `
       <li class="flex flex-wrap items-center justify-between gap-2.5 border-t border-t-base-300 py-3 first:border-t-0">
-        <span class="min-w-0 flex-1 text-[0.86rem] [overflow-wrap:anywhere]">${esc(p.ejemplo)} <small class="text-[#50617d]">· ${p.veces} ${p.veces === 1 ? "vez" : "veces"}</small></span>
+        <span class="min-w-0 flex-1 text-[0.86rem] [overflow-wrap:anywhere]">${esc(p.ejemplo)} <small class="text-muted">· ${p.veces} ${p.veces === 1 ? "vez" : "veces"}</small></span>
         <span class="flex flex-wrap gap-2">
           <button type="button" class="${GHOST}" data-crear="${esc(p.ejemplo)}">${iconSvg("plus", 16)} Crear respuesta</button>
           <button type="button" class="${GHOST}" data-descartar="${esc(p.clave)}">Descartar</button>

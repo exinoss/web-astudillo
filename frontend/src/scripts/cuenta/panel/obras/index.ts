@@ -50,7 +50,7 @@ export function renderWorks(section: HTMLElement) {
     </div>`).join("");
   const form = card(nameOf(work.slug), `
     ${isPending("Obra", nameOf(work.slug)) ? `<p class="-mt-2 mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
-    <div class="mb-6 flex items-center gap-4 border-l-4 border-l-neutral bg-[#eef4fb] px-4 py-4 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-2">
+    <div class="mb-6 flex items-center gap-4 border-l-4 border-l-neutral bg-primary-soft px-4 py-4 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-2">
       <span class="font-display text-[2.4rem] leading-none font-bold">${percent} %</span>
       <div class="flex flex-1 flex-col gap-2">
         <span class="flex items-center justify-between gap-3 text-[0.78rem]"><strong>Avance</strong>
@@ -63,7 +63,7 @@ export function renderWorks(section: HTMLElement) {
         ${field({ id: "obra-nota", label: "Nota", value: work.nota, max: 600, area: true })}
         <div>
           <span class="block text-[0.82rem] font-bold">Hitos</span>
-          <p class="m-0 mb-1.5 text-[0.74rem] text-[#50617d]">Marca cada fase cuando termine.</p>
+          <p class="m-0 mb-1.5 text-[0.74rem] text-muted">Marca cada fase cuando termine.</p>
           <div id="obra-hitos">${hitos}</div>
           <button type="button" id="hito-agregar" class="${GHOST} mt-2.5" ${work.hitos.length >= MAX_MILESTONES ? "disabled" : ""}>${iconSvg("plus", 18)} Añadir hito</button>
         </div>
@@ -74,7 +74,7 @@ export function renderWorks(section: HTMLElement) {
           ${fotos}
           <label class="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-[4px] border-2 border-dashed border-field-border p-2.5 text-center text-neutral focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral ${work.fotos.length >= MAX_PHOTOS ? "hidden" : ""}">
             ${iconSvg("upload", 26)}<strong class="text-[0.82rem] text-primary">Subir fotos</strong>
-            <span class="text-[0.7rem] text-[#50617d]">Varias a la vez · hasta 8 MB cada una · medida recomendada 1260 × 990 px o más</span>
+            <span class="text-[0.7rem] text-muted">Varias a la vez · hasta 8 MB cada una · medida recomendada 1260 × 990 px o más</span>
             <input id="obra-fotos" type="file" accept="${ACEPTA_FOTOS}" multiple class="sr-only" />
           </label>
         </div>

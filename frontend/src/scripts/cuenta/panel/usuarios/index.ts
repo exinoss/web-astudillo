@@ -10,13 +10,13 @@ const filters = { q: "", rol: "", estado: "", pagina: 1 };
 
 const rolePill = (u: AdminUser) => `<span class="${PILL} ${ROLE_CLASSES[u.rol] ?? ""}">${esc(ROLE_NAMES[u.rol] ?? u.rol)}</span>`;
 const statePill = (u: AdminUser) => u.estado === "activo"
-  ? `<span class="${PILL} bg-[#e8f5ec] text-[#1d6b37]">Activa</span>`
-  : `<span class="${PILL} bg-[#fff2f2] text-error">Desactivada</span>`;
+  ? `<span class="${PILL} bg-success-soft text-success-ink">Activa</span>`
+  : `<span class="${PILL} bg-error-soft text-error">Desactivada</span>`;
 const nombre = (u: AdminUser) => u.nombresCompletos ?? u.correo;
 
 /** Acciones de una cuenta; si la jerarquía no lo permite, el motivo genérico que da la API. */
 function actions(u: AdminUser) {
-  if (!u.puedeCambiarEstado) return `<span class="flex items-center gap-2 text-[0.78rem] text-[#50617d]">${iconSvg("lock", 16)} ${esc(u.motivoBloqueo)}</span>`;
+  if (!u.puedeCambiarEstado) return `<span class="flex items-center gap-2 text-[0.78rem] text-muted">${iconSvg("lock", 16)} ${esc(u.motivoBloqueo)}</span>`;
   const select = `<select data-rol-de="${u.id}" aria-label="Nuevo rol de ${esc(nombre(u))}"
       class="min-h-11 min-w-[140px] rounded-[3px] border border-field-border bg-base-100 px-3 text-sm text-primary max-tablet:flex-1">
       ${u.rolesAsignables.includes(u.rol) ? "" : `<option value="" selected disabled>${esc(ROLE_NAMES[u.rol] ?? u.rol)}</option>`}
@@ -49,7 +49,7 @@ export function renderUsers(section: HTMLElement) {
       ${select("usuarios-estado", "Estado", [["", "Todos"], ["activo", "Activas"], ["bloqueado", "Desactivadas"]], filters.estado)}
       <button type="button" id="usuarios-limpiar" class="${GHOST} max-tablet:col-span-2">Limpiar filtros</button>
     </div>
-    <p id="usuarios-total" class="m-0 mb-2.5 text-[0.76rem] text-[#50617d]"></p>
+    <p id="usuarios-total" class="m-0 mb-2.5 text-[0.76rem] text-muted"></p>
     <div id="usuarios-lista"></div>
     <div id="usuarios-paginas"></div>`;
   const input = section.querySelector<HTMLInputElement>("#usuarios-buscar")!;
@@ -79,12 +79,12 @@ async function load(section: HTMLElement) {
   const name = (u: AdminUser) => esc(u.nombresCompletos ?? "Sin nombre");
   const table = `
     <div class="overflow-hidden rounded-[3px] border border-base-300 bg-base-100 max-tablet:hidden">
-      <div class="grid grid-cols-[1.25fr_1fr_110px_120px_2.1fr] gap-3.5 bg-[#eef4fb] px-5 py-3 text-[0.7rem] font-bold tracking-[0.1em] uppercase">
+      <div class="grid grid-cols-[1.25fr_1fr_110px_120px_2.1fr] gap-3.5 bg-primary-soft px-5 py-3 text-[0.7rem] font-bold tracking-[0.1em] uppercase">
         <span>Nombre</span><span>Correo</span><span>Rol</span><span>Estado</span><span>Acciones</span>
       </div>
       ${data.usuarios.map((u) => `
         <div class="grid min-h-16 grid-cols-[1.25fr_1fr_110px_120px_2.1fr] items-center gap-3.5 border-t border-t-base-300 px-5 py-2.5 text-[0.88rem]">
-          <strong class="[overflow-wrap:anywhere]">${name(u)}</strong><span class="text-[#50617d] [overflow-wrap:anywhere]">${esc(u.correo)}</span>
+          <strong class="[overflow-wrap:anywhere]">${name(u)}</strong><span class="text-muted [overflow-wrap:anywhere]">${esc(u.correo)}</span>
           <span>${rolePill(u)}</span><span>${statePill(u)}</span>${actions(u)}
         </div>`).join("")}
     </div>`;
@@ -93,7 +93,7 @@ async function load(section: HTMLElement) {
       ${data.usuarios.map((u) => `
         <div class="flex flex-col gap-2.5 rounded-[3px] border border-base-300 bg-base-100 p-3.5">
           <div class="flex justify-between gap-2.5">
-            <span class="flex min-w-0 flex-col gap-0.5"><strong class="text-[0.92rem]">${name(u)}</strong><span class="text-[0.78rem] text-[#50617d] [overflow-wrap:anywhere]">${esc(u.correo)}</span></span>
+            <span class="flex min-w-0 flex-col gap-0.5"><strong class="text-[0.92rem]">${name(u)}</strong><span class="text-[0.78rem] text-muted [overflow-wrap:anywhere]">${esc(u.correo)}</span></span>
             <span class="flex flex-col items-end gap-1.5">${rolePill(u)}${u.estado === "activo" ? "" : statePill(u)}</span>
           </div>
           ${actions(u)}

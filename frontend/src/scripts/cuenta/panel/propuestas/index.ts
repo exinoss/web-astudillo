@@ -31,7 +31,7 @@ export function renderProposals(section: HTMLElement) {
 function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftProposal, kpis: DraftProposal["kpis"]) {
   const list = proposals.map((p) => `
     <button type="button" data-propuesta="${esc(p.slug)}" aria-current="${p.slug === current.slug}"
-      class="flex min-h-[52px] items-center justify-between gap-2.5 border-t border-t-base-300 border-l-4 border-l-transparent px-4 text-left text-[0.88rem] first:border-t-0 aria-[current=true]:border-l-secondary aria-[current=true]:bg-[#eef4fb] aria-[current=true]:font-bold">
+      class="flex min-h-[52px] items-center justify-between gap-2.5 border-t border-t-base-300 border-l-4 border-l-transparent px-4 text-left text-[0.88rem] first:border-t-0 aria-[current=true]:border-l-secondary aria-[current=true]:bg-primary-soft aria-[current=true]:font-bold">
       <span>${esc(p.nombre)}</span>${isPending("Propuesta", p.nombre) ? `<span class="${DRAFT_PILL}">Borrador</span>` : ""}
     </button>`).join("");
   const select = `
@@ -49,7 +49,7 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
       ${field({ id: "propuesta-intro", label: "Introducción", value: current.introduccion, max: 400, area: true })}
       <div>
         <h3 class="m-0 mt-2 mb-1 font-display text-[1.5rem] font-semibold">Cifras (KPI)</h3>
-        <p class="m-0 mb-1.5 text-[0.8rem] text-[#50617d]">Se muestran bajo la cabecera de la propuesta, en este orden. Máximo ${MAX_KPIS}.</p>
+        <p class="m-0 mb-1.5 text-[0.8rem] text-muted">Se muestran bajo la cabecera de la propuesta, en este orden. Máximo ${MAX_KPIS}.</p>
         <div id="kpis">${kpis.map((k, i) => kpiRow(k, i, kpis.length)).join("")}</div>
         <button type="button" id="kpi-agregar" class="${GHOST} mt-3" ${kpis.length >= MAX_KPIS ? "disabled" : ""}>${iconSvg("plus", 18)} Añadir cifra</button>
       </div>

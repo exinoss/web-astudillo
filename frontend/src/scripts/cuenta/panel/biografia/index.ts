@@ -39,7 +39,7 @@ export function renderBiography(section: HTMLElement) {
   const item = items[selected];
   const list = items.map((h, i) => `
     <button type="button" data-hito="${i}" aria-current="${i === selected}"
-      class="flex w-full items-center gap-3 rounded-[3px] border border-base-300 border-l-4 p-2.5 text-left aria-[current=true]:border-secondary aria-[current=true]:bg-[#fffbe8]">
+      class="flex w-full items-center gap-3 rounded-[3px] border border-base-300 border-l-4 p-2.5 text-left aria-[current=true]:border-secondary aria-[current=true]:bg-accent-soft">
       ${photoPreview(h)}
       <span class="flex min-w-0 flex-col"><strong class="font-display text-[1.2rem] text-neutral">${esc(yearOf(h.anios) || "Sin año")}</strong>
       <span class="truncate text-[0.8rem]">${esc(h.titulo || "Hito sin título")}</span></span>
@@ -70,7 +70,7 @@ export function renderBiography(section: HTMLElement) {
           <div class="flex flex-col gap-2">
             <label class="${GHOST} cursor-pointer self-start border-field-border focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral max-tablet:self-stretch">${iconSvg("upload", 18)} ${item.foto ? "Cambiar foto" : "Subir foto"}
               <input id="hito-foto" type="file" accept="${ACEPTA_FOTOS}" class="sr-only" /></label>
-            <p class="m-0 text-[0.74rem] text-[#50617d]">${FORMATOS_FOTO} de hasta 8 MB. Medida recomendada: 880 px o más en su lado más largo, vertical u horizontal. Se muestra completa, sin recortes.</p>
+            <p class="m-0 text-[0.74rem] text-muted">${FORMATOS_FOTO} de hasta 8 MB. Medida recomendada: 880 px o más en su lado más largo, vertical u horizontal. Se muestra completa, sin recortes.</p>
             ${item.foto ? `<button type="button" id="hito-quitar-foto" class="${GHOST} self-start">Quitar foto</button>` : ""}
           </div>
         </div>

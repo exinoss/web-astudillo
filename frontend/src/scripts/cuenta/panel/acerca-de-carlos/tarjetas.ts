@@ -16,7 +16,7 @@ export const cards: SectionEditor = {
     const list = editor.page.tarjetas;
     selectedCard = Math.min(selectedCard, Math.max(0, list.length - 1));
     const card = list[selectedCard];
-    const items = list.map((c, i) => `<button type="button" data-card-select="${i}" aria-pressed="${i === selectedCard}" class="min-h-14 w-full rounded-[3px] border border-base-300 border-l-4 p-3 text-left text-[0.8rem] font-bold aria-pressed:border-l-secondary aria-pressed:bg-[#fffbe8] [overflow-wrap:anywhere]">${i + 1} · ${esc(c.titulo || "Nueva tarjeta")}</button>`).join("");
+    const items = list.map((c, i) => `<button type="button" data-card-select="${i}" aria-pressed="${i === selectedCard}" class="min-h-14 w-full rounded-[3px] border border-base-300 border-l-4 p-3 text-left text-[0.8rem] font-bold aria-pressed:border-l-secondary aria-pressed:bg-accent-soft [overflow-wrap:anywhere]">${i + 1} · ${esc(c.titulo || "Nueva tarjeta")}</button>`).join("");
     const add = list.length < MAX_ITEMS ? `<div class="mt-3">${upload("tarjeta-nueva", "Añadir tarjeta")}</div>` : "";
     const editorHtml = card ? `
       <div class="flex min-w-0 flex-col gap-[18px]">

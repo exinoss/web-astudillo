@@ -60,10 +60,10 @@ function drawList(section: HTMLElement) {
   list.innerHTML = page.length ? page.map((r) => `
     <div class="flex items-center gap-5 border-t border-t-base-300 px-5 py-4 first:border-t-0 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-2 max-tablet:px-4">
       <span class="flex w-[230px] shrink-0 flex-col gap-1 max-tablet:w-auto"><strong class="text-[0.85rem]">${esc(r.def.lugar)}</strong>
-        <span class="text-[0.74rem] text-[#50617d]">${esc(r.def.campo)}</span></span>
+        <span class="text-[0.74rem] text-muted">${esc(r.def.campo)}</span></span>
       <span class="flex-1 text-[0.86rem] leading-normal whitespace-pre-line">${esc(r.valor)}</span>
       <span class="flex flex-wrap items-center gap-3 max-tablet:justify-between">
-        ${r.borrador ? `<span class="${DRAFT_PILL}">Borrador</span>` : r.cambiado ? `<span class="${PILL} bg-[#e8f5ec] text-[#1d6b37]">Cambiado</span>` : `<span class="${PILL} border border-base-300">Original</span>`}
+        ${r.borrador ? `<span class="${DRAFT_PILL}">Borrador</span>` : r.cambiado ? `<span class="${PILL} bg-success-soft text-success-ink">Cambiado</span>` : `<span class="${PILL} border border-base-300">Original</span>`}
         ${r.cambiado ? `<button type="button" class="${GHOST}" data-original="${esc(r.clave)}">Volver al original</button>` : ""}
         <a class="inline-flex min-h-11 items-center gap-1.5 text-[0.8rem] font-bold whitespace-nowrap" href="${esc(`${r.def.ruta}?editar=${encodeURIComponent(r.clave)}`)}">${iconSvg("edit", 16)} Editar en el sitio</a>
       </span>

@@ -8,7 +8,7 @@ const { title, lead } = Astro.props;
 <Layout title={`${title} · Carlos Astudillo`} description={lead} referrerPolicy="strict-origin-when-cross-origin">
   <div class="bg-base-100">
     <div class="site-container flex items-center gap-2.5 py-[18px] text-[0.72rem] max-tablet:py-3 max-tablet:text-[0.65rem]">
-      <a href="/" class="underline">Inicio</a><span>/</span><span id="account-crumb">{title}</span>
+      <a href="/" class="relative underline before:absolute before:-inset-x-2.5 before:-top-2 before:-bottom-6 before:content-['']">Inicio</a><span>/</span><span id="account-crumb">{title}</span>
     </div>
   </div>
   <section class="border-b-4 border-b-accent bg-secondary py-10 max-tablet:py-7">

@@ -3,10 +3,10 @@ import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { busy, card, esc, iconSvg, notify, PILL, reloadPending, state, syncPublishButton } from "../ui";
 
 const STATES: Record<Publication["estado"], [string, string]> = {
-  en_cola: ["En cola", "bg-[#fff4e5] text-[#8a4b00]"],
-  publicando: ["Publicando…", "bg-[#fff4e5] text-[#8a4b00]"],
-  publicada: ["Publicada", "bg-[#e8f5ec] text-[#1d6b37]"],
-  fallida: ["Falló", "bg-[#fff2f2] text-error"],
+  en_cola: ["En cola", "bg-warning-soft text-warning-ink"],
+  publicando: ["Publicando…", "bg-warning-soft text-warning-ink"],
+  publicada: ["Publicada", "bg-success-soft text-success-ink"],
+  fallida: ["Falló", "bg-error-soft text-error"],
 };
 const date = new Intl.DateTimeFormat("es-EC", { dateStyle: "medium", timeStyle: "short" });
 let page = 1;
@@ -26,7 +26,7 @@ export async function renderPublications(section: HTMLElement) {
         <span class="${PILL} border border-base-300">${esc(c.tipo)}</span><strong class="text-[0.88rem]">${esc(c.descripcion)}</strong>
       </div>`).join("") : `<p class="m-0 py-3 text-[0.86rem]">No hay cambios por publicar.</p>`}
     <button type="button" id="publicar-ahora" class="button mt-4 w-full" ${changes.length ? "" : "disabled"}>${iconSvg("upload", 18)} Publicar ${changes.length || ""} ${changes.length === 1 ? "cambio" : "cambios"}</button>
-    <p class="m-0 mt-2.5 text-center text-[0.74rem] text-[#50617d]">Tarda cerca de un minuto.</p>`);
+    <p class="m-0 mt-2.5 text-center text-[0.74rem] text-muted">Tarda cerca de un minuto.</p>`);
   section.innerHTML = `
     <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] items-start gap-6 max-tablet:grid-cols-1">
       ${pending}
@@ -58,9 +58,9 @@ async function drawHistory(section: HTMLElement) {
       <div class="grid grid-cols-[60px_150px_1fr_1fr_80px] items-center gap-3 border-t border-t-base-300 py-3 text-[0.85rem] first:border-t-0 max-tablet:grid-cols-[auto_1fr] max-tablet:gap-x-3 max-tablet:gap-y-1">
         <strong>#${esc(p.id)}</strong>
         <span class="max-tablet:justify-self-end"><span class="${PILL} ${classes}">${name}</span></span>
-        <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-[#50617d]">${esc(date.format(new Date(p.creadoEn)))}</span>
-        <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-[#50617d]">${esc(p.autor ?? "—")}</span>
-        <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-[#50617d]">${duration(p)}</span>
+        <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-muted">${esc(date.format(new Date(p.creadoEn)))}</span>
+        <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-muted">${esc(p.autor ?? "—")}</span>
+        <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-muted">${duration(p)}</span>
         ${p.detalle ? `<span class="col-span-5 text-[0.78rem] text-error max-tablet:col-span-2">${esc(p.detalle)}</span>` : ""}
       </div>`;
   }).join("") : `<p class="m-0 text-[0.86rem]">Todavía no se ha publicado nada desde el panel.</p>`;
