@@ -4,21 +4,31 @@ import Icon from "../components/comun/Icon.astro";
 import Editable from "../components/comun/Editable.astro";
 import Foto from "../components/comun/Foto.astro";
 import { getImage, Image } from "astro:assets";
-import { medidasFoto } from "../lib/comun/fotos";
+import { imageView, medidasFoto } from "../lib/comun/fotos";
+import { visorFotos } from "../lib/comun/visor-fotos";
 import { ORIGINALES } from "../lib/inicio/originales";
+import fondoPublico from "../assets/fondo-publico-equipo.jpg";
 import { contentRepository } from "../lib/data";
 import { statsRepository } from "../lib/data/stats";
 import { enlaceRed, type TextKey } from "../lib/comun/contenido";
 import { enlaceRedValido, REDES, type RedSocial, usuarioRed } from "../lib/comun/contenido/redes";
 
-const { banners, portrait, pieces } = await contentRepository.getHomeCarousels();
+const { banners, portrait, pieces, team } = await contentRepository.getHomeCarousels();
 const slides = banners.length + 1;
 const BANNER_WIDTHS = [640, 960, 1440, 1947];
-const SLIDE = "relative aspect-[1947/741] w-full max-h-[680px] overflow-hidden min-wide:max-h-[740px] max-tablet:aspect-[4/3] max-tablet:max-h-none";
+const MARCO = "relative aspect-[1947/741] w-full max-h-[680px] overflow-hidden min-wide:max-h-[740px]";
+const SLIDE = `${MARCO} max-tablet:aspect-[4/3] max-tablet:max-h-none`;
 const BANNER = "h-full w-full object-cover max-tablet:absolute max-tablet:object-[100%_center]";
 const PORTRAIT = "h-full w-[47%] object-cover object-center max-tablet:w-[49%]";
 const OVERLAY = "hidden max-tablet:absolute max-tablet:inset-y-0 max-tablet:right-auto max-tablet:left-0 max-tablet:flex max-tablet:w-[48%] max-tablet:flex-col max-tablet:justify-center max-tablet:bg-accent max-tablet:pt-6 max-tablet:pr-0 max-tablet:pb-5 max-tablet:pl-5";
-const DOT = "slide-dot relative grid h-[11px] before:absolute before:-inset-x-[7px] before:-inset-y-[18px] before:content-[''] min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5";
+const DOT = "relative grid h-[11px] before:absolute before:-inset-x-[7px] before:-inset-y-[18px] before:content-[''] min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5";
+const CONTROLES = "pointer-events-none absolute inset-0 flex items-end justify-center pb-4 max-tablet:pb-2.5";
+const PASTILLA = "pointer-events-auto flex items-center gap-2.5 rounded-full bg-base-100/85 px-3 py-2 max-tablet:gap-3 max-tablet:px-2 max-tablet:py-1";
+const FLECHA = "pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-primary/65 text-primary-content hover:bg-primary max-tablet:relative max-tablet:inset-x-auto max-tablet:top-auto max-tablet:size-8 max-tablet:translate-y-0 max-tablet:bg-transparent max-tablet:text-primary max-tablet:before:absolute max-tablet:before:-inset-1.5 max-tablet:before:content-[''] max-tablet:hover:bg-transparent";
+const DIAPO_EQUIPO = `${MARCO} flex items-center justify-center @container-[size] max-tablet:aspect-auto max-tablet:max-h-none max-tablet:@container`;
+const FOTO_EQUIPO = "block aspect-(--proporcion) h-auto w-[min(100cqw,var(--ancho-foto),100cqh*var(--proporcion))] shadow-[0_0_40px_#06317640] max-tablet:w-[min(100cqw,var(--ancho-foto))] max-tablet:shadow-none";
+// En celular la foto ocupa todo el ancho: `max-tablet:bg-none` evita descargar este fondo.
+const fondoEquipo = await getImage({ src: fondoPublico, width: fondoPublico.width, format: "webp" });
 const PIECE_WIDTHS = [400, 640, 850];
 const PIECE_SIZES = "(max-width: 760px) 90vw, 40vw";
 // El modo edición pinta el borrador con estas versiones de las imágenes que vienen con el sitio.
@@ -142,24 +152,24 @@ const contactos = [
         </div>
       </template>
       {/* En escritorio las flechas quedan a los lados; en móvil se unen a los puntos para no tapar el texto. */}
-      <div class="carousel-controls pointer-events-none absolute inset-0 flex items-end justify-center pb-4 max-tablet:pb-2.5">
+      <div class={`carousel-controls ${CONTROLES}`}>
         <div
-          class="pointer-events-auto flex items-center gap-2.5 rounded-full bg-base-100/85 px-3 py-2 max-tablet:gap-3 max-tablet:px-2 max-tablet:py-1"
+          class={PASTILLA}
           role="group"
           aria-label="Controles del carrusel"
         >
-          <button class="slide-prev left-5 pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-primary/65 text-primary-content hover:bg-primary max-tablet:relative max-tablet:inset-x-auto max-tablet:top-auto max-tablet:size-8 max-tablet:translate-y-0 max-tablet:bg-transparent max-tablet:text-primary max-tablet:before:absolute max-tablet:before:-inset-1.5 max-tablet:before:content-[''] max-tablet:hover:bg-transparent" type="button" aria-label="Diapositiva anterior">
+          <button class={`slide-prev left-5 ${FLECHA}`} type="button" aria-label="Diapositiva anterior">
             <Icon name="chevronLeft" size={22} />
           </button>
           {Array.from({ length: slides }, (_, i) => (
             <button
-              class:list={[DOT, !i && "is-active"]}
+              class:list={["slide-dot", DOT, !i && "is-active"]}
               type="button"
               aria-label={`Ver diapositiva ${i + 1}`}
               aria-current={i ? "false" : "true"}
             ></button>
           ))}
-          <button class="slide-next right-5 pointer-events-auto absolute top-1/2 grid size-11 -translate-y-1/2 place-items-center rounded-full bg-primary/65 text-primary-content hover:bg-primary max-tablet:relative max-tablet:inset-x-auto max-tablet:top-auto max-tablet:size-8 max-tablet:translate-y-0 max-tablet:bg-transparent max-tablet:text-primary max-tablet:before:absolute max-tablet:before:-inset-1.5 max-tablet:before:content-[''] max-tablet:hover:bg-transparent" type="button" aria-label="Diapositiva siguiente">
+          <button class={`slide-next right-5 ${FLECHA}`} type="button" aria-label="Diapositiva siguiente">
             <Icon name="chevronRight" size={22} />
           </button>
         </div>
@@ -307,6 +317,36 @@ const contactos = [
           </div>
         </div>
       </div>
+    </div>
+  </section>
+  {/* Sin fotos no se muestra; el modo edición la enseña para agregarlas. */}
+  <section class="bg-accent bg-(image:--fondo) bg-cover bg-center max-tablet:bg-none" style={`--fondo: url(${fondoEquipo.src})`} aria-label="Carlos Astudillo y su equipo" aria-roledescription="carrusel" data-carrusel-editable="equipo" hidden={!team.length}>
+    <div class="relative" data-carrusel data-automatico>
+      {team.map((foto, i) => (
+        <div class={DIAPO_EQUIPO} style={medidasFoto(foto.image)} role="group" aria-roledescription="diapositiva" aria-label={`${i + 1} de ${team.length}`} data-diapositiva hidden={i > 0}>
+          <button type="button" class="relative block cursor-zoom-in" data-visor-abrir={i} aria-label={`Ampliar: ${foto.alt}`}>
+            <Foto class={FOTO_EQUIPO} picture={foto.image} alt={foto.alt} sizes="100vw" />
+            {/* En pantallas táctiles no hay cursor de lupa: el botón avisa que se puede ampliar. */}
+            <span aria-hidden="true" class="absolute top-2 right-2 hidden size-11 place-items-center rounded-[4px] border border-base-300 bg-base-100/90 text-primary max-tablet:grid"><Icon name="expand" size={20} /></span>
+          </button>
+        </div>
+      ))}
+      {/* El modo edición arma con esta plantilla las fotos del borrador. */}
+      <template data-plantilla-equipo>
+        <div class={DIAPO_EQUIPO} role="group" aria-roledescription="diapositiva" data-diapositiva>
+          <img class={FOTO_EQUIPO} alt="" decoding="async" />
+        </div>
+      </template>
+      <div class={`${CONTROLES} max-tablet:static max-tablet:pt-2`} hidden={team.length < 2} data-controles>
+        <div class={PASTILLA} role="group" aria-label="Controles del carrusel del equipo">
+          <button class={`left-5 ${FLECHA}`} type="button" aria-label="Imagen anterior" data-paso="-1"><Icon name="chevronLeft" size={22} /></button>
+          {Array.from({ length: Math.max(team.length, 1) }, (_, i) => (
+            <button class:list={[DOT, !i && "is-active"]} type="button" aria-label={`Ver imagen ${i + 1}`} aria-current={i ? "false" : "true"} data-punto></button>
+          ))}
+          <button class={`right-5 ${FLECHA}`} type="button" aria-label="Imagen siguiente" data-paso="1"><Icon name="chevronRight" size={22} /></button>
+        </div>
+      </div>
+      {team.length > 0 && <Fragment set:html={visorFotos("visor-equipo", "Carlos Astudillo y su equipo", team.map((f) => ({ image: imageView(f.image), alt: f.alt, caption: f.alt })))} />}
     </div>
   </section>
   <section

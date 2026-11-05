@@ -281,6 +281,7 @@ export function diff(before: Snapshot | null, after: Snapshot) {
   if (after.inicio) {
     if (!same(home.principal, after.inicio.principal)) changes.push({ tipo: 'Portada', descripcion: 'Carrusel principal' });
     if (!same(home.piezas, after.inicio.piezas)) changes.push({ tipo: 'Portada', descripcion: 'Carrusel de piezas' });
+    if (!same(before.inicio?.equipo ?? { fotos: [] }, after.inicio.equipo)) changes.push({ tipo: 'Portada', descripcion: 'Carrusel del equipo' });
   }
   return changes;
 }

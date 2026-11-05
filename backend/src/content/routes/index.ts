@@ -1,8 +1,9 @@
 import { Elysia, t } from 'elysia';
 import type { SQL } from 'bun';
 import type { Authorization } from '../../auth/types';
-import { MAX_BANNERS, MAX_PIEZAS, ORIGINALES } from '../../contracts/inicio';
-import { MAX_EQUIPO, MAX_FOTOS_PARROQUIA } from '../../contracts/parroquias';
+import { MAX_PRESENTACION, MAX_PUNTO_TRAYECTORIA, MAX_TRAYECTORIA, PUESTOS } from '../../contracts/equipo';
+import { MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_PIEZAS, ORIGINALES } from '../../contracts/inicio';
+import { MAX_FOTOS_PARROQUIA } from '../../contracts/parroquias';
 import { VIDEO_URL_MAX } from '../../contracts/video';
 import { createAboutCarlosPages } from '../services/about-carlos';
 import { createContent } from '../services/content';
@@ -92,7 +93,13 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
     // Una parte que nunca se guardó no tiene versión: se envía null.
     .put('/contenido/mi-equipo/equipo', ({ cookie, body }) => myTeam.saveTeam(access(cookie), body, body.version), {
       body: t.Object({
-        personas: t.Array(t.Object({ idMedio: t.Union([mediaId, t.Null()]), nombre: text(80), quien: text(60) }, strict), { maxItems: MAX_EQUIPO }),
+        personas: t.Array(t.Object({
+          idMedio: t.Union([mediaId, t.Null()]),
+          puesto: t.Union(PUESTOS.map(p => t.Literal(p.clave))),
+          nombre: text(80),
+          presentacion: text(MAX_PRESENTACION),
+          trayectoria: t.Array(text(MAX_PUNTO_TRAYECTORIA), { maxItems: MAX_TRAYECTORIA }),
+        }, strict), { maxItems: PUESTOS.length }),
         version: t.Union([version, t.Null()]),
       }, strict),
     })
@@ -115,6 +122,13 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
     .put('/contenido/inicio/piezas', ({ cookie, body }) => homeCarousels.savePieces(access(cookie), body, body.version), {
       body: t.Object({
         piezas: t.Array(t.Object({ imagen: homeImage, alt: text(200) }, strict), { minItems: 1, maxItems: MAX_PIEZAS }),
+        version: t.Union([version, t.Null()]),
+      }, strict),
+    })
+    // Puede quedar vacío: sin fotos, la portada no muestra este carrusel.
+    .put('/contenido/inicio/equipo', ({ cookie, body }) => homeCarousels.saveTeamPhotos(access(cookie), body, body.version), {
+      body: t.Object({
+        fotos: t.Array(t.Object({ idMedio: mediaId, alt: text(200) }, strict), { maxItems: MAX_FOTOS_EQUIPO }),
         version: t.Union([version, t.Null()]),
       }, strict),
     })

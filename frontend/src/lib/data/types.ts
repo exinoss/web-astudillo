@@ -1,5 +1,6 @@
 import type { ImageMetadata } from "astro";
 import type { Animacion } from "../comun/animaciones";
+import type { PUESTOS } from "../../../../backend/src/contracts/equipo";
 import type { Original } from "../../../../backend/src/contracts/inicio";
 import type { ParroquiaSlug } from "../../../../backend/src/contracts/parroquias";
 
@@ -156,8 +157,12 @@ export interface AboutCarlosPage {
 
 export interface TeamMember {
   name: string;
-  role: string | null;
+  /** Su puesto de contracts/equipo.ts: el texto del cargo, el grupo y el lugar en la grilla. */
+  post: (typeof PUESTOS)[number];
   image: UploadedPicture | null;
+  /** Presentación y trayectoria: solo las tiene el prefecto. */
+  intro: string;
+  career: string[];
 }
 
 export interface Parish {
@@ -175,9 +180,10 @@ export interface MyTeam {
 export type HomeImage = { original: Original } | { photo: UploadedPicture };
 export interface HomeSlideImage { image: HomeImage; alt: string }
 
-/** Siempre trae al menos un banner y una pieza. */
+/** Siempre trae al menos un banner y una pieza; el del equipo puede venir vacío. */
 export interface HomeCarousels {
   banners: (HomeSlideImage & { mobile: UploadedPicture | null })[];
   portrait: HomeSlideImage;
   pieces: HomeSlideImage[];
+  team: { image: UploadedPicture; alt: string }[];
 }

@@ -1,5 +1,4 @@
-/** Persona sin foto. Sin degradado propio: con varias en la página, sus `id` se repetirían. */
+/** Persona sin foto, en azul, con la cabeza sobre el borde del arco amarillo de la tarjeta. */
 export const silueta = (clases: string) =>
-  `<svg class="bg-linear-to-b from-neutral to-primary ${clases}" viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">` +
-  `<circle cx="200" cy="190" r="78" fill="#feffff" fill-opacity=".85" />` +
-  `<path d="M60 500c0-95 63-160 140-160s140 65 140 160z" fill="#feffff" fill-opacity=".85" /></svg>`;
+  `<svg class="fill-neutral ${clases}" viewBox="-20 100 440 400" preserveAspectRatio="xMidYMax meet" aria-hidden="true">` +
+  `<circle cx="200" cy="190" r="78" /><path d="M60 500c0-95 63-160 140-160s140 65 140 160z" /></svg>`;

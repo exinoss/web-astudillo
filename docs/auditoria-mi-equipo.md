@@ -41,7 +41,7 @@ El modelo de datos sigue el de «Acerca de Carlos» (`tb_acerca_de_carlos`): un 
 
 | Pieza | Lo usan | Dónde está |
 |---|---|---|
-| Lista de parroquias y topes (`PARROQUIAS`, `MAX_EQUIPO`, `MAX_FOTOS_PARROQUIA`) | backend (validación y esquema), sitio y panel | [backend/src/contracts/parroquias.ts](../backend/src/contracts/parroquias.ts), junto a los demás contratos compartidos |
+| Lista de parroquias y topes (`PARROQUIAS`, `MAX_FOTOS_PARROQUIA`) y puestos del equipo (`PUESTOS`) | backend (validación y esquema), sitio y panel | [backend/src/contracts/parroquias.ts](../backend/src/contracts/parroquias.ts) y [backend/src/contracts/equipo.ts](../backend/src/contracts/equipo.ts), junto a los demás contratos compartidos |
 | Formatos de foto y aviso de HEIC | backend, panel y alertas | [backend/src/contracts/media.ts](../backend/src/contracts/media.ts) |
 | `photosById` | servicios de «Acerca de Carlos» y de «Mi equipo» | [content/services/media.ts](../backend/src/content/services/media.ts); antes era una función privada de `about-carlos.ts` |
 | Visor de fotos a pantalla completa | galería de «Conoce más sobre mí» y parroquias | [frontend/src/lib/comun/visor-fotos.ts](../frontend/src/lib/comun/visor-fotos.ts) |

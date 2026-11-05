@@ -10,8 +10,8 @@ export function cardsSection(title: string, list: CardView[]) {
     ${list.map((card, i) => cardMarkup(card, i + 1, `tarjeta-${i + 1}`)).join("")}
   </div>
   <div data-card-navigation hidden class="mt-2 flex items-center justify-end gap-2">
-    <button data-card-previous type="button" aria-label="Ver tarjetas anteriores" class="grid size-11 place-items-center rounded-full bg-primary text-white disabled:opacity-40">${iconSvg("chevronLeft", 17)}</button>
-    <button data-card-next type="button" aria-label="Ver tarjetas siguientes" class="grid size-11 place-items-center rounded-full bg-primary text-white disabled:opacity-40">${iconSvg("chevronRight", 17)}</button>
+    <button data-card-previous type="button" aria-label="Ver tarjetas anteriores" class="boton-redondo bg-primary text-white disabled:opacity-40">${iconSvg("chevronLeft", 17)}</button>
+    <button data-card-next type="button" aria-label="Ver tarjetas siguientes" class="boton-redondo bg-primary text-white disabled:opacity-40">${iconSvg("chevronRight", 17)}</button>
   </div>
 </section>`;
 }

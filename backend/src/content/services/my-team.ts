@@ -1,17 +1,18 @@
 import type { SQL } from 'bun';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
+import { MAX_PRESENTACION, MAX_PUNTO_TRAYECTORIA, ordenPuesto, PUESTOS } from '../../contracts/equipo';
 import { PARROQUIAS, type ParroquiaSlug } from '../../contracts/parroquias';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { plainText } from '../../validation/texto';
 import { CONTENT_CONFLICT } from '../conflictos';
-import type { MyTeam, ParishStored, TeamStored } from '../types';
+import type { MyTeam, ParishStored, TeamMemberStored, TeamStored } from '../types';
 import { photosById } from './media';
 
 type SaveRow = { resultado: 'guardado' | 'sin_cambios' | 'conflicto'; version: string | null };
 
-export interface TeamInput { personas: { idMedio: number | null; nombre: string; quien: string }[] }
+export interface TeamInput { personas: TeamMemberStored[] }
 export interface ParishInput { texto: string; fotos: { idMedio: number; alt: string }[] }
 
 const isParish = (slug: string): slug is ParroquiaSlug => PARROQUIAS.some(p => p.slug === slug);
@@ -27,7 +28,7 @@ export async function listMyTeam(sql: SQL): Promise<MyTeam> {
   const parishes = PARROQUIAS.map(p => ({ slug: p.slug, ...((rows.get(p.slug) as ParishStored | undefined) ?? EMPTY_PARISH) }));
   const media = await photosById(sql, [...team.flatMap(p => (p.idMedio ? [p.idMedio] : [])), ...parishes.flatMap(p => p.fotos.map(f => f.idMedio))]);
   return {
-    equipo: team.map(p => ({ nombre: p.nombre, quien: p.quien, foto: p.idMedio ? media.get(p.idMedio) ?? null : null })),
+    equipo: team.map(({ idMedio, ...p }) => ({ ...p, foto: idMedio ? media.get(idMedio) ?? null : null })),
     parroquias: parishes.map(p => ({
       slug: p.slug, texto: p.texto,
       fotos: p.fotos.flatMap(({ idMedio, alt }) => { const foto = media.get(idMedio); return foto ? [{ foto, alt }] : []; }),
@@ -48,11 +49,19 @@ export function createMyTeam(sql: SQL, authorization: Authorization) {
   return {
     async saveTeam(access: string | undefined, input: TeamInput, version: string | null) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
-      const personas = input.personas.map((p, i) => ({
-        idMedio: p.idMedio,
-        nombre: plainText(p.nombre, `Persona ${i + 1} · nombre`, 80),
-        quien: p.quien.trim() ? plainText(p.quien, `Persona ${i + 1} · quién es`, 60) : null,
-      }));
+      if (new Set(input.personas.map(p => p.puesto)).size < input.personas.length) throw new ApiError(422, 'Cada puesto puede tener una sola persona');
+      // Mismo orden y mismas claves siempre: la versión es el md5 del contenido guardado.
+      const personas = [...input.personas].sort((a, b) => ordenPuesto(a.puesto) - ordenPuesto(b.puesto)).map((p): TeamMemberStored => {
+        const campo = PUESTOS[ordenPuesto(p.puesto)].texto;
+        const prefecto = p.puesto === 'prefecto';
+        return {
+          idMedio: p.idMedio,
+          puesto: p.puesto,
+          nombre: plainText(p.nombre, `${campo} · nombre`, 80),
+          presentacion: prefecto && p.presentacion.trim() ? plainText(p.presentacion, `${campo} · presentación`, MAX_PRESENTACION) : '',
+          trayectoria: prefecto ? p.trayectoria.filter(x => x.trim()).map((x, i) => plainText(x, `${campo} · trayectoria ${i + 1}`, MAX_PUNTO_TRAYECTORIA)) : [],
+        };
+      });
       return save(actor, 'equipo', { personas }, personas.flatMap(p => (p.idMedio ? [p.idMedio] : [])), version);
     },
 

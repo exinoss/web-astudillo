@@ -21,7 +21,8 @@ async function photo(color: string) {
   return (await call('/api/admin/medios', 'POST', form, cookies.coadmin)).json() as Promise<{ idMedio: number }>;
 }
 
-const persona = (nombre: string, idMedio: number | null = null, quien = 'Concejala rural') => ({ idMedio, nombre, quien });
+const persona = (nombre: string, idMedio: number | null = null, puesto = 'urbano-1', extra: object = {}) => ({ idMedio, puesto, nombre, presentacion: '', trayectoria: [], ...extra });
+const sinExtras = { presentacion: '', trayectoria: [] };
 
 beforeAll(async () => {
   await migrate(sql);
@@ -47,17 +48,27 @@ test('sin contenido, el equipo está vacío, salen las doce parroquias y ninguna
 
 test('guardar el equipo resuelve las fotos, admite personas sin foto y repetirlo no duplica nada', async () => {
   const foto = await photo('#c0392b');
-  const body = { personas: [persona('Ana Quiñónez', foto.idMedio), persona('Luis Cortez', null, '   ')], version: await version('equipo') };
+  const body = { personas: [persona('Ana Quiñónez', foto.idMedio, 'rural-1'), persona('Luis Cortez', null, 'urbano-1')], version: await version('equipo') };
   const first = await call(EQUIPO, 'PUT', body, cookies.coadmin);
   expect(first.status).toBe(200);
   const again = await call(EQUIPO, 'PUT', body, cookies.coadmin);
   expect(again.status).toBe(200);
   expect((await again.json()).version).toBe((await first.json()).version);
   const { equipo } = (await draft()).miEquipo;
-  expect(equipo[0]).toMatchObject({ nombre: 'Ana Quiñónez', quien: 'Concejala rural', foto: { idMedio: foto.idMedio } });
-  expect(equipo[1]).toEqual({ nombre: 'Luis Cortez', quien: null, foto: null });
+  // Se guarda en el orden de los puestos, no en el de llegada.
+  expect(equipo[0]).toEqual({ puesto: 'urbano-1', nombre: 'Luis Cortez', ...sinExtras, foto: null });
+  expect(equipo[1]).toMatchObject({ puesto: 'rural-1', nombre: 'Ana Quiñónez', ...sinExtras, foto: { idMedio: foto.idMedio } });
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM tb_auditoria WHERE accion = 'mi_equipo_guardado'`;
   expect(n).toBe(1);
+});
+
+test('solo el prefecto guarda presentación y trayectoria; los puntos vacíos se descartan', async () => {
+  const extra = { presentacion: '  Trabaja con las comunidades.  ', trayectoria: ['Director provincial', '   ', 'Presidente de la asociación'] };
+  const body = { personas: [persona('Javier Buitrón', null, 'prefecto', extra), persona('Yadira Jhayya', null, 'urbano-1', extra)], version: await version('equipo') };
+  expect((await call(EQUIPO, 'PUT', body, cookies.coadmin)).status).toBe(200);
+  const { equipo } = (await draft()).miEquipo;
+  expect(equipo[0]).toMatchObject({ puesto: 'prefecto', presentacion: 'Trabaja con las comunidades.', trayectoria: ['Director provincial', 'Presidente de la asociación'] });
+  expect(equipo[1]).toMatchObject({ puesto: 'urbano-1', ...sinExtras });
 });
 
 test('dos personas guardando a la vez la misma parroquia: una gana y la otra recibe 409 sin pisarla', async () => {
@@ -102,7 +113,7 @@ test('una foto borrada deja a la persona sin foto y desaparece de la parroquia',
   expect((await call(parroquia('tambillo'), 'PUT', { texto: 'Texto.', fotos: [{ idMedio: foto.idMedio, alt: 'Foto' }], version: await version('tambillo') }, cookies.coadmin)).status).toBe(200);
   await sql`DELETE FROM tb_medios WHERE id_medio = ${foto.idMedio}`;
   const { equipo, parroquias } = (await draft()).miEquipo;
-  expect(equipo).toEqual([{ nombre: 'Rosa Valencia', quien: 'Concejala rural', foto: null }]);
+  expect(equipo).toEqual([{ puesto: 'urbano-1', nombre: 'Rosa Valencia', ...sinExtras, foto: null }]);
   expect(parroquias.find((p: { slug: string }) => p.slug === 'tambillo').fotos).toEqual([]);
 });
 
@@ -114,7 +125,13 @@ test('valida textos, fotos, cantidades, permisos y parroquias', async () => {
   expect(await team([persona('<b>Ana</b>')])).toBe(422);
   expect(await team([persona('Ana\nQuiñónez')])).toBe(422);
   expect(await team([persona('Ana', 999999)])).toBe(422);
-  expect(await team(Array.from({ length: 10 }, (_, i) => persona(`Persona ${i}`)))).toBe(422);
+  expect(await team([persona('Ana'), persona('Luis')])).toBe(422);
+  expect(await team([persona('Ana', null, 'concejal')])).toBe(422);
+  expect(await team([{ idMedio: null, nombre: 'Ana', presentacion: '', trayectoria: [] }])).toBe(422);
+  expect(await team([persona('Ana', null, 'prefecto', { presentacion: 'a'.repeat(401) })])).toBe(422);
+  expect(await team([persona('Ana', null, 'prefecto', { trayectoria: Array.from({ length: 6 }, () => 'Punto') })])).toBe(422);
+  expect(await team([persona('Ana', null, 'prefecto', { trayectoria: ['<b>Punto</b>'] })])).toBe(422);
+  expect(await team(Array.from({ length: 12 }, (_, i) => persona(`Persona ${i}`)))).toBe(422);
   expect(await team([{ ...persona('Ana'), extra: true }])).toBe(422);
   expect(await team([persona('Ana')], 'votante')).toBe(403);
   expect(await parish({ texto: '<script>alert(1)</script>' })).toBe(422);

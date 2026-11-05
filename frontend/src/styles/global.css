@@ -41,6 +41,10 @@
   }
 }
 
+@utility boton-redondo {
+  @apply grid size-11 place-items-center rounded-full;
+}
+
 @theme {
   --font-display: "Barlow Condensed", sans-serif;
   --font-sans: "DM Sans", sans-serif;

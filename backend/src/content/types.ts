@@ -1,3 +1,4 @@
+import type { Puesto } from '../contracts/equipo';
 import type { Carrusel, Original } from '../contracts/inicio';
 import type { ParroquiaSlug } from '../contracts/parroquias';
 
@@ -68,27 +69,31 @@ export interface AboutCarlosPage {
 }
 
 /** Contenido guardado de cada parte de «Mi equipo»: el equipo (clave `equipo`) y cada parroquia (su slug). */
-export interface TeamStored { personas: { idMedio: number | null; nombre: string; quien: string | null }[] }
+/** Una persona por puesto, en el orden de contracts/equipo.ts. La presentación y la trayectoria son solo del prefecto. */
+export interface TeamMemberStored { idMedio: number | null; puesto: Puesto; nombre: string; presentacion: string; trayectoria: string[] }
+export interface TeamStored { personas: TeamMemberStored[] }
 export interface ParishStored { texto: string; fotos: { idMedio: number; alt: string }[] }
 
 /** Siempre trae las doce parroquias, en el orden de contracts/parroquias.ts. */
 export interface MyTeam {
-  equipo: { nombre: string; quien: string | null; foto: Photo | null }[];
+  equipo: (Omit<TeamMemberStored, 'idMedio'> & { foto: Photo | null })[];
   parroquias: { slug: ParroquiaSlug; texto: string; fotos: { foto: Photo; alt: string }[] }[];
 }
 
 export type HomeImageStored = { original: Original } | { idMedio: number };
 export type HomeImage = { original: Original } | { foto: Photo };
 
-/** La semilla crea los dos carruseles con las imágenes que vienen con el sitio. */
+/** La semilla crea el principal y el de piezas con las imágenes que vienen con el sitio; el del equipo empieza vacío. */
 export interface HomeCarouselsStored {
   principal: { banners: { imagen: HomeImageStored; celular: number | null; alt: string }[]; retrato: { imagen: HomeImageStored; alt: string } };
   piezas: { piezas: { imagen: HomeImageStored; alt: string }[] };
+  equipo: { fotos: { idMedio: number; alt: string }[] };
 }
 
 export interface HomeCarousels {
   principal: { banners: { imagen: HomeImage; celular: Photo | null; alt: string }[]; retrato: { imagen: HomeImage; alt: string } };
   piezas: { piezas: { imagen: HomeImage; alt: string }[] };
+  equipo: { fotos: { foto: Photo; alt: string }[] };
 }
 
 /**

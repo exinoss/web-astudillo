@@ -6,8 +6,17 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+### Added
+
+- En la portada, antes de «Propuestas», un carrusel con las fotos de Carlos y su equipo, con el público de fondo a los lados. Aparece cuando tiene imágenes y, al tocar una, se abre en grande.
+- «Mi equipo» separa a las personas en Prefecto, Concejales urbanos y Concejales rurales. Cada concejal principal aparece con su suplente debajo (en celular, a su lado).
+- Al pulsar la tarjeta del prefecto se abre su presentación y su trayectoria.
+- Panel: el cargo de cada persona del equipo se elige de una lista (tipo y puesto), y el prefecto lleva presentación y trayectoria por puntos, con su vista previa.
+- Modo edición: el carrusel del equipo se llena desde la portada con «Agregar imágenes». Solo admite imágenes horizontales.
+
 ### Changed
 
+- Nuevo diseño de las tarjetas de «Mi equipo»: la persona recortada sobre un arco amarillo, con zoom al pasar el mouse. Las fotos se suben sin fondo (PNG o WebP).
 - En la portada, «Chat» de la franja «Tu voz cuenta» lleva un borde dorado que se desvanece hacia la derecha, como una tarjeta junto a «Alerta ciudadana» y «Sugerencias».
 
 ### Fixed

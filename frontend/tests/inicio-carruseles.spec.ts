@@ -158,3 +158,71 @@ test('el editor funciona con teclado, se cierra con Escape y no desborda la pág
     await expect(boton).toBeFocused();
   }
 });
+
+test('el carrusel del equipo muestra sus fotos completas, cambia con los puntos y abre el visor; en celular no desborda', async ({ page }) => {
+  await page.route('**/api/**', route => route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":"Inicia sesión"}' }));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/');
+  const carrusel = page.getByRole('region', { name: 'Carlos Astudillo y su equipo' });
+  await expect(carrusel).toBeVisible();
+  // Va antes de «Propuestas» y con el marco del primer carrusel.
+  expect(await page.evaluate(() => document.querySelector('[data-carrusel-editable="equipo"]')!.nextElementSibling!.id)).toBe('propuestas');
+  const [marco, primero] = await Promise.all([carrusel.locator('[data-diapositiva]').first(), page.locator('.hero-slides [data-slide="0"]')].map(l => l.boundingBox()));
+  expect(Math.round(marco!.height)).toBe(Math.round(primero!.height));
+  // La foto de prueba mide 1600 × 1200: no se dibuja más grande que su archivo.
+  const foto = carrusel.getByRole('img', { name: 'Foto del equipo de prueba 1' });
+  expect((await foto.boundingBox())!.width).toBeLessThanOrEqual(1600);
+  await carrusel.getByRole('button', { name: 'Ver imagen 2' }).click();
+  await expect(carrusel.getByRole('img', { name: 'Foto del equipo de prueba 2' })).toBeVisible();
+  await expect(carrusel.getByRole('button', { name: 'Ver imagen 2' })).toHaveAttribute('aria-current', 'true');
+  await expect(page.locator('.slide-dot')).toHaveCount(2);
+  for (const width of [320, 390, 768]) {
+    await page.setViewportSize({ width, height: 800 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `${width}px`).toBeLessThanOrEqual(0);
+  }
+  // En celular la foto usa todo el ancho y los controles van debajo, sin taparla.
+  await page.setViewportSize({ width: 390, height: 800 });
+  const imagen = (await carrusel.getByRole('img', { name: 'Foto del equipo de prueba 2' }).boundingBox())!;
+  const controles = (await carrusel.getByRole('group', { name: 'Controles del carrusel del equipo' }).boundingBox())!;
+  expect(Math.round(imagen.width)).toBe(390);
+  expect(controles.y).toBeGreaterThanOrEqual(imagen.y + imagen.height - 1);
+  const ampliar = carrusel.getByRole('button', { name: 'Ampliar: Foto del equipo de prueba 2' });
+  await ampliar.click();
+  const visor = page.getByRole('dialog', { name: 'Carlos Astudillo y su equipo' });
+  await expect(visor).toBeVisible();
+  await expect(visor.locator('[data-visor-contador]')).toHaveText('2 / 2');
+  await page.keyboard.press('Escape');
+  await expect(ampliar).toBeFocused();
+});
+
+test('el carrusel del equipo se edita: sin fotos ofrece agregarlas, rechaza las verticales y guarda las horizontales', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const data = await abrirEdicion(page);
+  // El borrador no tiene fotos: en vez del carrusel publicado se ve la franja para agregarlas.
+  await expect(page.getByText('Aún no tiene imágenes y no se muestra en el sitio.')).toBeVisible();
+  await expect(page.locator('[data-carrusel-editable="equipo"] [data-diapositiva]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Agregar imágenes al carrusel del equipo' }).click();
+  const dialogo = page.getByRole('dialog', { name: 'Carrusel del equipo' });
+  await expect(dialogo.getByText('Hasta 8 · imágenes horizontales · 2000 × 761 px · Máximo 8 MB.')).toBeVisible();
+  for (const [name, width, height] of [['vertical.png', 900, 1200], ['cuadrada.png', 1000, 1000]] as const) {
+    await dialogo.locator('#equipo-nuevas').setInputFiles(await archivo(name, width, height));
+    await expect(page.getByRole('status').filter({ hasText: 'En este carrusel solo van imágenes horizontales (más anchas que altas).' })).toBeVisible();
+  }
+  expect(data.uploads).toBe(0);
+  await dialogo.locator('#equipo-nuevas').setInputFiles(await archivo('equipo.png', 2000, 761));
+  await expect(dialogo.getByText('Imagen 1')).toBeVisible();
+  await dialogo.locator('#equipo-alt-0').fill('Carlos con su equipo');
+  await dialogo.getByRole('button', { name: 'Guardar borrador' }).dblclick();
+  await expect(dialogo).toBeHidden();
+  expect(data.savedHome).toEqual([{ clave: 'equipo', fotos: [{ idMedio: 90, alt: 'Carlos con su equipo' }] }]);
+  await expect(page.getByText('Aún no tiene imágenes y no se muestra en el sitio.')).toBeHidden();
+  const borrador = page.locator('[data-carrusel-editable="equipo"] [data-diapositiva] img');
+  await expect(borrador).toHaveCount(1);
+  await expect(borrador).toHaveAttribute('srcset', /foto-90-480\.webp 480w/);
+  await expect(page.getByRole('button', { name: 'Cambiar las imágenes del carrusel del equipo' })).toBeVisible();
+  // Al salir del modo vuelven las fotos publicadas, con su visor.
+  await page.getByRole('switch', { name: /Modo edición/ }).click();
+  await expect(page.locator('[data-carrusel-editable="equipo"] [data-diapositiva]')).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Ampliar: Foto del equipo de prueba 1' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /carrusel del equipo/ })).toHaveCount(0);
+});
