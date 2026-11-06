@@ -2,7 +2,7 @@ import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type AdminUser } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { confirmarIdentidad } from "../confirmacion";
-import { busy, DANGER, esc, GHOST, iconSvg, notify, PILL } from "../ui";
+import { busy, cargar, DANGER, esc, GHOST, iconSvg, notify, PILL } from "../ui";
 
 const ROLE_NAMES: Record<string, string> = { admin: "Admin", coadmin: "Coadmin", analista: "Analista", votante: "Votante" };
 const ROLE_CLASSES: Record<string, string> = { admin: "bg-neutral text-neutral-content", coadmin: "bg-accent text-primary", analista: "border border-base-300", votante: "border border-base-300" };
@@ -56,19 +56,19 @@ export function renderUsers(section: HTMLElement) {
   let timer = 0;
   input.addEventListener("input", () => {
     clearTimeout(timer);
-    timer = window.setTimeout(() => { filters.q = input.value; filters.pagina = 1; void load(section); }, 300);
+    timer = window.setTimeout(() => { filters.q = input.value; filters.pagina = 1; cargar(load(section)); }, 300);
   });
   for (const [id, key] of [["#usuarios-rol", "rol"], ["#usuarios-estado", "estado"]] as const)
     section.querySelector<HTMLSelectElement>(id)!.addEventListener("change", (e) => {
       filters[key] = (e.target as HTMLSelectElement).value;
       filters.pagina = 1;
-      void load(section);
+      cargar(load(section));
     });
   section.querySelector("#usuarios-limpiar")!.addEventListener("click", () => {
     Object.assign(filters, { q: "", rol: "", estado: "", pagina: 1 });
     renderUsers(section);
   });
-  void load(section);
+  cargar(load(section));
 }
 
 async function load(section: HTMLElement) {
@@ -101,7 +101,7 @@ async function load(section: HTMLElement) {
     </div>`;
   list.innerHTML = data.usuarios.length ? table + cards : `<p class="m-0 text-[0.86rem]">Ninguna cuenta coincide con los filtros.</p>`;
   bind(section, list);
-  renderPagination(section.querySelector("#usuarios-paginas")!, data, (p) => { filters.pagina = p; void load(section); });
+  renderPagination(section.querySelector("#usuarios-paginas")!, data, (p) => { filters.pagina = p; cargar(load(section)); });
 }
 
 function bind(section: HTMLElement, list: HTMLElement) {

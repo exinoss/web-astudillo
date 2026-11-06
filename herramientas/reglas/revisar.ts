@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { isAbsolute, join, relative } from "node:path";
-import { clasesRepetidas, comprobarArchivo, conjuntosDeClases, dependenciasNuevas, type Archivo, type Falta } from "./comprobaciones";
+import { clasesRepetidas, comprobarArchivo, conjuntosDeClases, dependenciasNuevas, funcionesDeclaradas, funcionesRepetidas, paqueteDe, type Archivo, type Falta } from "./comprobaciones";
 
 type Excepcion = { regla: string; archivo: string; texto: string; motivo: string };
 type Modo = "diff" | "staged" | "todo";
@@ -37,17 +37,20 @@ function leer(ruta: string, modo: Modo): string | null {
   return existsSync(completa) ? readFileSync(completa, "utf8").replaceAll("\r\n", "\n") : null;
 }
 
-/** Índice de cada conjunto de clases con los archivos donde aparece, para detectar copias. */
-function indiceDeClases(modo: Modo, propios: Archivo[]) {
-  const indice = new Map<string, Set<string>>();
+/** Índices de todo el código para detectar copias: conjuntos de clases y funciones exportadas, con sus archivos. */
+function indices(modo: Modo, propios: Archivo[]) {
+  const clases = new Map<string, Set<string>>(), exportadas = new Map<string, Set<string>>();
+  const anotar = (mapa: Map<string, Set<string>>, clave: string, ruta: string) => mapa.set(clave, (mapa.get(clave) ?? new Set()).add(ruta));
   const propiosPorRuta = new Map(propios.map((a) => [a.ruta, a]));
-  const todos = [...lista(git("ls-files", "frontend/src")), ...lista(git("ls-files", "--others", "--exclude-standard", "frontend/src"))];
+  const carpetas = ["frontend/src", "backend/src", "herramientas"];
+  const todos = [...lista(git("ls-files", ...carpetas)), ...lista(git("ls-files", "--others", "--exclude-standard", ...carpetas))];
   for (const ruta of new Set(todos)) {
     const contenido = propiosPorRuta.get(ruta)?.contenido ?? leer(ruta, modo === "staged" ? "diff" : modo);
     if (contenido === null) continue;
-    for (const { clave } of conjuntosDeClases({ ruta, contenido })) indice.set(clave, (indice.get(clave) ?? new Set()).add(ruta));
+    for (const { clave } of conjuntosDeClases({ ruta, contenido })) anotar(clases, clave, ruta);
+    for (const f of funcionesDeclaradas({ ruta, contenido })) if (f.exportada) anotar(exportadas, `${paqueteDe(ruta)}:${f.nombre}`, ruta);
   }
-  return indice;
+  return { clases, exportadas };
 }
 
 /** Lee la lista de excepciones aprobadas. */
@@ -59,10 +62,11 @@ const claveDe = (f: { regla: string; archivo: string; texto: string }) => `${f.r
 /** Revisa las rutas indicadas y devuelve las faltas que no están en la lista de excepciones. */
 export function revisar(rutas: string[], modo: Modo, conExcepciones = true): Falta[] {
   const archivos = rutas.flatMap((ruta) => { const contenido = leer(ruta, modo); return contenido === null ? [] : [{ ruta, contenido }]; });
-  const indice = indiceDeClases(modo, archivos);
+  const { clases, exportadas } = indices(modo, archivos);
   const faltas = archivos.flatMap((a) => [
     ...comprobarArchivo(a),
-    ...clasesRepetidas(a, indice),
+    ...clasesRepetidas(a, clases),
+    ...funcionesRepetidas(a, exportadas),
     ...dependenciasNuevas(a, modo === "todo" ? null : git("show", `HEAD:${a.ruta}`)),
   ]);
   if (!conExcepciones) return faltas;

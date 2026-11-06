@@ -1,6 +1,6 @@
 import { adminApi, type Publication } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
-import { busy, card, esc, iconSvg, notify, PILL, reloadPending, state, syncPublishButton } from "../ui";
+import { busy, card, cargar, esc, iconSvg, notify, PILL, reloadPending, state, syncPublishButton } from "../ui";
 
 const STATES: Record<Publication["estado"], [string, string]> = {
   en_cola: ["En cola", "bg-warning-soft text-warning-ink"],
@@ -64,8 +64,8 @@ async function drawHistory(section: HTMLElement) {
         ${p.detalle ? `<span class="col-span-5 text-[0.78rem] text-error max-tablet:col-span-2">${esc(p.detalle)}</span>` : ""}
       </div>`;
   }).join("") : `<p class="m-0 text-[0.86rem]">Todavía no se ha publicado nada desde el panel.</p>`;
-  renderPagination(section.querySelector("#historial-paginas")!, data, (p) => { page = p; void drawHistory(section); });
+  renderPagination(section.querySelector("#historial-paginas")!, data, (p) => { page = p; cargar(drawHistory(section)); });
   // Mientras algo compila, se consulta de nuevo hasta que termine.
   if (data.publicaciones.some((p) => p.estado === "en_cola" || p.estado === "publicando"))
-    poll = window.setTimeout(() => { if (!section.hidden) void renderPublications(section); }, 4000);
+    poll = window.setTimeout(() => { if (!section.hidden) cargar(renderPublications(section)); }, 4000);
 }

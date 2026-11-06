@@ -4,7 +4,7 @@ import {
 } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { ESTADOS, TIPOS_ALERTA } from "../../../../lib/ciudadania/participacion/tipos";
-import { busy, can, card, esc, iconSvg, notify, PILL, state } from "../ui";
+import { busy, can, card, cargar, esc, iconSvg, notify, PILL, state } from "../ui";
 
 const view = { tipo: "alertas" as ParticipationKind, estado: "" as ParticipationState | "", pagina: 1 };
 const STATES = Object.keys(ESTADOS) as ParticipationState[];
@@ -72,7 +72,7 @@ export async function renderParticipation(section: HTMLElement) {
 }
 
 function bind(section: HTMLElement, data: ParticipationPage<unknown>) {
-  const reload = () => void renderParticipation(section).catch((e) => notify(e instanceof Error ? e.message : "No se pudo cargar.", true));
+  const reload = () => cargar(renderParticipation(section));
   section.querySelectorAll<HTMLButtonElement>("[data-tipo]").forEach((b) => b.addEventListener("click", () => {
     Object.assign(view, { tipo: b.dataset.tipo, estado: "", pagina: 1 });
     reload();

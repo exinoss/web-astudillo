@@ -26,6 +26,7 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 - Panel: una foto de más de 40 megapíxeles se rechaza al elegirla, sin esperar a que se suba, y si eliges otra mientras una se está subiendo, te avisa que esperes en vez de subir las dos a la vez.
 - En celular es más fácil tocar las migas de pan, los puntos de la biografía, los de los carruseles de la portada y el botón del menú: responden en una zona más amplia sin cambiar cómo se ven.
+- Panel: si se pierde la conexión al buscar, filtrar o cambiar de página en Usuarios, o al cambiar de página o actualizar el historial de Publicaciones, ahora se muestra un aviso en lugar de quedarse sin responder.
 
 ## [1.1.0] - 2026-11-05
 

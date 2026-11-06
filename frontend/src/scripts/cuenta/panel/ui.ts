@@ -50,6 +50,10 @@ export function notify(message: string, error = false) {
   status.scrollIntoView({ block: "nearest" });
 }
 
+/** Espera una carga sin bloquear y, si falla (por ejemplo, sin red), avisa del error en lugar de no mostrar nada. */
+export const cargar = (carga: unknown, mensaje = "No se pudo cargar.") =>
+  void Promise.resolve(carga).catch((error) => notify(error instanceof Error ? error.message : mensaje, true));
+
 /** Avisa del error y marca los campos obligatorios vacíos de `raiz`. */
 export function avisarVacios(raiz: ParentNode, message: string) {
   notify(message, true);

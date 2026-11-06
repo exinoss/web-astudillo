@@ -9,6 +9,7 @@ Las reglas de `CLAUDE.md` y `AGENTS.md` que se pueden comprobar de forma mecáni
 | `color-a-mano` | Colores escritos a mano (`#1e7a3c`, `bg-[#06317618]`) en `frontend/src`, en lugar de tokens de `@theme` |
 | `breakpoint-a-mano` | `@min-[…]:`, `max-[…]:`, `md:`, `@media` en `.ts`/`.astro`, en lugar de las variantes de `global.css` |
 | `clases-repetidas` | El mismo conjunto de 4 o más clases en tres archivos o más |
+| `funcion-repetida` | Una función de nivel superior con el nombre de otra que ya se exporta desde otro archivo del mismo paquete (`frontend`, `backend` o `herramientas`): o es una copia que debe importarse, o necesita un nombre que diga lo que hace. No cuenta los nombres que exige Astro (`GET`, `getStaticPaths`…) |
 | `comentario-de-funcion` | Funciones de TypeScript (nivel superior) y SQL sin una sola línea de comentario encima |
 | `fetch-fuera-de-datos` | `fetch(` en `frontend/src` fuera de `src/lib/data/` |
 | `imagen-sin-assets` | Imágenes locales enlazadas con una ruta escrita a mano |

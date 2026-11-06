@@ -319,6 +319,12 @@
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
+      "regla": "funcion-repetida",
+      "archivo": "backend/src/admin/routes/index.ts",
+      "texto": "const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
       "regla": "comentario-de-funcion",
       "archivo": "backend/src/admin/services/users.ts",
       "texto": "export function createAdminUsers(sql: SQL, authorization: Authorization, confirmation: Confirmation) {",
@@ -730,6 +736,12 @@
       "regla": "comentario-de-funcion",
       "archivo": "backend/src/participation/routes/index.ts",
       "texto": "export function participationRoutes(sql: SQL, authorization: Authorization, photoDir: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "funcion-repetida",
+      "archivo": "backend/src/participation/routes/index.ts",
+      "texto": "const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
@@ -1285,6 +1297,12 @@
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
+      "regla": "funcion-repetida",
+      "archivo": "frontend/src/lib/cuenta/auth/page.ts",
+      "texto": "export function value(form: HTMLFormElement, name: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/lib/cuenta/auth/password.ts",
       "texto": "export function requirePassword(password: string, confirmation: string) {",
@@ -1330,6 +1348,12 @@
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/lib/data/mock/acerca-de-carlos.ts",
       "texto": "const video = (title: string) => ({",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "funcion-repetida",
+      "archivo": "frontend/src/lib/data/mock/acerca-de-carlos.ts",
+      "texto": "const card = (title: string, foto: number, color: 'rojo' | 'azul') => ({",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
@@ -1579,6 +1603,12 @@
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
+      "regla": "funcion-repetida",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "async function subirFotos(archivos: File[], horizontales = false) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/scripts/comun/layout.ts",
       "texto": "function closeDropdowns() {",
@@ -1720,6 +1750,12 @@
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
       "texto": "async function setMode(value: boolean) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "funcion-repetida",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "function notify(message: string, error = false) {",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
@@ -2095,6 +2131,12 @@
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
+      "regla": "funcion-repetida",
+      "archivo": "frontend/src/scripts/cuenta/panel/redes/index.ts",
+      "texto": "const leer = (form: HTMLElement) => Object.fromEntries(RED_LIST.map((red) => {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/scripts/cuenta/panel/textos/index.ts",
       "texto": "const normalize = (s: string) => s.normalize(\"NFD\").replace(/\\p{Diacritic}/gu, \"\").toLowerCase();",
@@ -2140,6 +2182,12 @@
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/scripts/cuenta/panel/ui.ts",
       "texto": "export const isPending = (tipo: string, descripcion: string) =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "funcion-repetida",
+      "archivo": "frontend/src/scripts/cuenta/panel/ui.ts",
+      "texto": "export const value = (root: ParentNode, selector: string) =>",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
