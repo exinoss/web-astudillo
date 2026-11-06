@@ -1,8 +1,9 @@
 import "../campos";
+import { marcarError, MENSAJE_CAMPO } from "../../../lib/comun/campos";
 import { bloquearMientras } from "../../../lib/cuenta/panel/cambios";
 import { adminApi } from "../../../lib/data/http/admin-api";
 import { ApiError } from "../../../lib/data/http/api-client";
-import { DANGER, esc, GHOST, HINT, INPUT, LABEL, state } from "./ui";
+import { DANGER, esc, GHOST, HINT, LABEL, state } from "./ui";
 
 const ESPERA_REENVIO = 60;
 
@@ -25,14 +26,14 @@ export function confirmarIdentidad(o: Confirmacion): Promise<boolean> {
   const campo = conContrasenia
     ? `<label for="confirmar-valor" class="${LABEL}">Tu contraseña</label>
       <div class="relative">
-        <input id="confirmar-valor" type="password" autocomplete="current-password" maxlength="128" required aria-describedby="confirmar-error" class="${INPUT} pr-[90px]" />
+        <input id="confirmar-valor" type="password" autocomplete="current-password" maxlength="128" required aria-describedby="confirmar-valor-error" class="campo pr-[90px]" />
         <button type="button" class="password-toggle absolute inset-y-0 right-0 min-h-11 min-w-[76px] px-3 text-[0.82rem] font-bold" data-target="confirmar-valor" aria-label="Mostrar tu contraseña" aria-pressed="false">Mostrar</button>
       </div>`
     : `<p class="m-0 mb-3 text-[0.88rem]" data-aviso-codigo>Te enviaremos un código a <strong class="[overflow-wrap:anywhere]">${esc(state.profile!.correo)}</strong>.</p>
       <button type="button" class="${GHOST} w-full disabled:cursor-not-allowed disabled:opacity-60" data-enviar-codigo>Enviar código</button>
       <div data-con-codigo hidden>
         <label for="confirmar-valor" class="${LABEL} mt-4">Código</label>
-        <input id="confirmar-valor" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required aria-describedby="confirmar-error confirmar-pista" class="${INPUT} tracking-[0.3em]" />
+        <input id="confirmar-valor" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" required aria-describedby="confirmar-valor-error confirmar-pista" class="campo tracking-[0.3em]" />
         <p id="confirmar-pista" class="${HINT}">Vence en 10 minutos.</p>
       </div>`;
   dialogo.innerHTML = `
@@ -40,7 +41,7 @@ export function confirmarIdentidad(o: Confirmacion): Promise<boolean> {
       <h2 id="confirmar-titulo" class="m-0 mb-2 text-[1.8rem] leading-[1.05]">Confirma que eres tú</h2>
       <p class="m-0 mb-5 text-[0.9rem] leading-normal">${o.resumen}</p>
       ${campo}
-      <p id="confirmar-error" class="m-0 mt-2 text-[0.8rem] font-bold text-error" role="alert" hidden></p>
+      <p id="confirmar-valor-error" class="${MENSAJE_CAMPO}" role="alert" hidden></p>
       <div class="mt-6 flex justify-end gap-2.5 max-tablet:flex-col-reverse">
         <button type="button" class="${GHOST}" data-cancelar>Cancelar</button>
         <button type="submit" class="${o.peligro ? DANGER : "button"}" ${conContrasenia ? "" : "disabled"}>${esc(o.boton)}</button>
@@ -49,13 +50,8 @@ export function confirmarIdentidad(o: Confirmacion): Promise<boolean> {
   document.body.append(dialogo);
   const form = dialogo.querySelector<HTMLFormElement>("form")!;
   const valor = dialogo.querySelector<HTMLInputElement>("#confirmar-valor")!;
-  const error = dialogo.querySelector<HTMLElement>("#confirmar-error")!;
   const confirmar = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
-  const avisar = (mensaje: string | null) => {
-    error.textContent = mensaje ?? "";
-    error.hidden = !mensaje;
-    valor.toggleAttribute("aria-invalid", !!mensaje);
-  };
+  const avisar = (mensaje: string | null) => marcarError(valor, mensaje);
 
   return new Promise<boolean>((resolver, rechazar) => {
     let hecho = false;

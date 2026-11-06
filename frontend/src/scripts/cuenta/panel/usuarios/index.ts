@@ -18,7 +18,7 @@ const nombre = (u: AdminUser) => u.nombresCompletos ?? u.correo;
 function actions(u: AdminUser) {
   if (!u.puedeCambiarEstado) return `<span class="flex items-center gap-2 text-[0.78rem] text-muted">${iconSvg("lock", 16)} ${esc(u.motivoBloqueo)}</span>`;
   const select = `<select data-rol-de="${u.id}" aria-label="Nuevo rol de ${esc(nombre(u))}"
-      class="min-h-11 min-w-[140px] rounded-[3px] border border-field-border bg-base-100 px-3 text-sm text-primary max-tablet:flex-1">
+      class="campo min-w-[140px] px-3 max-tablet:flex-1">
       ${u.rolesAsignables.includes(u.rol) ? "" : `<option value="" selected disabled>${esc(ROLE_NAMES[u.rol] ?? u.rol)}</option>`}
       ${u.rolesAsignables.map((r) => `<option value="${esc(r)}" ${r === u.rol ? "selected" : ""}>${esc(ROLE_NAMES[r] ?? r)}</option>`).join("")}
     </select>`;
@@ -34,7 +34,7 @@ export function renderUsers(section: HTMLElement) {
   const select = (id: string, label: string, options: [string, string][], current: string) => `
     <div class="flex min-w-[180px] flex-col gap-1.5 max-tablet:min-w-0">
       <label for="${id}" class="text-[0.76rem] font-bold">${label}</label>
-      <select id="${id}" class="min-h-12 rounded-[3px] border border-field-border bg-base-100 px-3.5 text-sm text-primary">
+      <select id="${id}" class="campo">
         ${options.map(([v, t]) => `<option value="${v}" ${v === current ? "selected" : ""}>${t}</option>`).join("")}
       </select>
     </div>`;
@@ -43,7 +43,7 @@ export function renderUsers(section: HTMLElement) {
       <div class="flex flex-1 flex-col gap-1.5 max-tablet:col-span-2">
         <label for="usuarios-buscar" class="text-[0.76rem] font-bold">Buscar</label>
         <input id="usuarios-buscar" type="search" maxlength="120" value="${esc(filters.q)}" placeholder="Nombre o correo"
-          class="min-h-12 rounded-[3px] border border-field-border bg-base-100 px-3.5 text-sm text-primary placeholder:text-field-placeholder placeholder:opacity-100" />
+          class="campo" />
       </div>
       ${select("usuarios-rol", "Rol", [["", "Todos"], ["admin", "Admin"], ["coadmin", "Coadmin"], ["votante", "Votante"]], filters.rol)}
       ${select("usuarios-estado", "Estado", [["", "Todos"], ["activo", "Activas"], ["bloqueado", "Desactivadas"]], filters.estado)}

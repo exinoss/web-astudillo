@@ -28,6 +28,10 @@
 }
 @custom-variant max-mobile-xs (@media (width <= 360px));
 @custom-variant min-wide (@media (width >= 1700px));
+/* Mide el `@container` más cercano, no la pantalla: sirve para filas que comparten espacio con una barra lateral. */
+@custom-variant contenedor-estrecho (@container (width <= 559px));
+/* En rem a propósito: crece con el tamaño de letra del panel de accesibilidad. */
+@custom-variant contenedor-minimo (@container (width < 15.25rem));
 
 @utility py-section {
   padding-block: 96px;
@@ -43,6 +47,33 @@
 
 @utility boton-redondo {
   @apply grid size-11 place-items-center rounded-full;
+}
+
+/* El foco, el valor válido y el error engrosan el borde con una sombra interior, para que el campo no cambie de tamaño.
+   El orden importa: el verde y el rojo siguen visibles con el foco. */
+@utility campo {
+  @apply min-h-12 w-full rounded-[3px] border border-field-border bg-base-100 px-3.5 py-3 text-sm text-primary;
+
+  &::placeholder {
+    color: var(--color-field-placeholder);
+    opacity: 1;
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-neutral);
+    box-shadow: inset 0 0 0 1px var(--color-neutral);
+  }
+
+  &[data-valido] {
+    border-color: var(--color-success);
+    box-shadow: inset 0 0 0 1px var(--color-success);
+  }
+
+  &[aria-invalid="true"] {
+    border-color: var(--color-error);
+    box-shadow: inset 0 0 0 1px var(--color-error);
+  }
 }
 
 @theme {
@@ -71,6 +102,7 @@
   --color-accent-soft: #fffbe8;
   --color-warning-soft: #fff4e5;
   --color-warning-ink: #8a4b00;
+  --color-success: #1e7a3c;
   --color-success-soft: #e8f5ec;
   --color-success-ink: #1d6b37;
   --color-disabled: #d5dbe3;

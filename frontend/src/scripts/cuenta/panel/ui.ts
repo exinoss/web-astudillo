@@ -1,4 +1,5 @@
 import { mostrarCarga } from "../../../lib/comun/animaciones";
+import { marcarVacios } from "../../../lib/comun/campos";
 import { showStatus } from "../../../lib/cuenta/auth/page";
 import type { Profile } from "../../../lib/data/auth-repository";
 import { adminApi, type Draft, type Photo } from "../../../lib/data/http/admin-api";
@@ -9,7 +10,7 @@ import { ACEPTA_FOTOS, FORMATOS_FOTO } from "../../../../../backend/src/contract
 import { GHOST } from "../../../lib/cuenta/panel/campos";
 
 export { ACEPTA_FOTOS, esc, FORMATOS_FOTO, iconSvg };
-export { field, GHOST, HINT, ICON_BUTTON, INPUT, LABEL, moveButtons, selectField, thumb, upload } from "../../../lib/cuenta/panel/campos";
+export { field, GHOST, HINT, ICON_BUTTON, LABEL, moveButtons, selectField, thumb, upload } from "../../../lib/cuenta/panel/campos";
 
 export const DANGER =
   "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] border border-error/40 bg-transparent px-[18px] text-[0.82rem] font-bold text-error hover:bg-error-soft";
@@ -47,6 +48,12 @@ const publishButton = document.querySelector<HTMLButtonElement>("#panel-publicar
 export function notify(message: string, error = false) {
   showStatus(status, message, error);
   status.scrollIntoView({ block: "nearest" });
+}
+
+/** Avisa del error y marca los campos obligatorios vacíos de `raiz`. */
+export function avisarVacios(raiz: ParentNode, message: string) {
+  notify(message, true);
+  marcarVacios(raiz);
 }
 
 export const can = (permission: string) => state.profile?.permisos.includes(permission) ?? false;

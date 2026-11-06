@@ -1,7 +1,7 @@
 import { MAX_FOTOS_PARROQUIA, PARROQUIAS } from "../../../../../../backend/src/contracts/parroquias";
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftMyTeam } from "../../../../lib/data/http/admin-api";
-import { busy, DRAFT_PILL, esc, field, FORMATOS_FOTO, HINT, isPending, moveButtons, notify, previewButton, reloadDraft, reloadPending, state, thumb, upload, value, subirFotos } from "../ui";
+import { avisarVacios, busy, DRAFT_PILL, esc, field, FORMATOS_FOTO, HINT, isPending, moveButtons, notify, previewButton, reloadDraft, reloadPending, state, thumb, upload, value, subirFotos } from "../ui";
 
 type Parroquia = DraftMyTeam["parroquias"][number];
 let elegida: string = PARROQUIAS[0].slug;
@@ -22,13 +22,13 @@ export function renderParishes(body: HTMLElement, rerender: () => void) {
   const fotos = p.fotos.map((f, i) => `
     <li class="flex min-w-0 flex-col gap-3 rounded-[3px] border border-base-300 p-3">
       <img src="${esc(thumb(f.foto))}" alt="" class="aspect-[4/3] w-full rounded-[3px] object-cover" />
-      ${field({ id: `parroquia-foto-${i}`, label: "Descripción de la foto", value: f.alt, max: 200, hint: "Se lee debajo de la foto." })}
+      ${field({ id: `parroquia-foto-${i}`, label: "Descripción de la foto", value: f.alt, max: 200, hint: "Se lee debajo de la foto." , required: true })}
       <div class="flex flex-wrap gap-1">${moveButtons("foto", i, p.fotos.length, `foto ${i + 1}`)}</div>
     </li>`).join("");
   body.innerHTML = `
     <div class="mb-5 flex items-center gap-3.5 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-1.5">
       <label for="parroquia-selector" class="text-[0.82rem] font-bold">Parroquia</label>
-      <select id="parroquia-selector" class="min-h-12 min-w-[320px] rounded-[3px] border border-field-border bg-base-100 px-3.5 text-sm text-primary max-tablet:min-w-0">
+      <select id="parroquia-selector" class="campo min-w-[320px] max-tablet:min-w-0">
         ${PARROQUIAS.map((x) => `<option value="${x.slug}" ${x.slug === elegida ? "selected" : ""}>${esc(x.nombre)}</option>`).join("")}
       </select>
     </div>
@@ -71,7 +71,7 @@ export function renderParishes(body: HTMLElement, rerender: () => void) {
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     capturar(form);
-    if (trabajo[elegida].fotos.some((f) => !f.alt)) return notify("Describe cada foto antes de guardar.", true);
+    if (trabajo[elegida].fotos.some((f) => !f.alt)) return avisarVacios(form, "Describe cada foto antes de guardar.");
     const slug = elegida;
     void busy(form.querySelector("button[type=submit]"), async () => {
       await adminApi.saveParish(slug, paraGuardar(trabajo[slug]), state.draft!.versiones.miEquipo[slug] ?? null);

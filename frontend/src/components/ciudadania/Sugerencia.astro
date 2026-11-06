@@ -3,7 +3,8 @@ import Icon from "../comun/Icon.astro";
 import LegalAcceptance from '../comun/LegalAcceptance.astro';
 import type { Proposal } from "../../lib/data/types";
 import { MIN_SUGERENCIA } from "../../lib/ciudadania/participacion/tipos";
-import { TARJETA, CAMPO, ETIQUETA, AYUDA, ERROR, ESTADO } from "./estilos";
+import { TARJETA, ETIQUETA, AYUDA, ERROR, ESTADO } from "./estilos";
+import { MENSAJE_CAMPO } from "../../lib/comun/campos";
 
 interface Props {
   proposals: Proposal[];
@@ -42,9 +43,9 @@ const temas = [...proposals.map((p) => ({ valor: p.slug, nombre: p.name, icono: 
       <p id="sugerencia-tema-error" class={ERROR} hidden></p>
 
       <label class={ETIQUETA} for="sugerencia-mensaje">¿Qué te gustaría proponer? *</label>
-      <textarea id="sugerencia-mensaje" class={CAMPO} name="mensaje" rows="5" maxlength="1500" placeholder="Cuéntanos tu idea…" aria-describedby="sugerencia-mensaje-ayuda sugerencia-mensaje-error"></textarea>
+      <textarea id="sugerencia-mensaje" class="campo min-h-[110px] resize-y" name="mensaje" rows="5" maxlength="1500" placeholder="Cuéntanos tu idea…" aria-describedby="sugerencia-mensaje-ayuda sugerencia-mensaje-error"></textarea>
       <p id="sugerencia-mensaje-ayuda" class={AYUDA}>Mínimo {MIN_SUGERENCIA} caracteres. Evita incluir datos sensibles.</p>
-      <p id="sugerencia-mensaje-error" class={ERROR} hidden></p>
+      <p id="sugerencia-mensaje-error" class={MENSAJE_CAMPO} hidden></p>
 
       <LegalAcceptance id="sugerencia-aceptacion" hidden prompt="Antes de enviar tu sugerencia, confirma:" />
       <button class="button mt-6 w-full" type="submit" data-envia><span data-envio-texto>Enviar sugerencia</span> <Icon name="arrow" size={18} /></button>

@@ -13,6 +13,8 @@
     "admin:crear": "bun src/cli/admin.ts crear",
     "admin:transferir": "bun src/cli/admin.ts transferir",
     "check": "tsc --noEmit",
+    "reglas": "bun ../herramientas/reglas/revisar.ts",
+    "prepare": "git config core.hooksPath .githooks || true",
     "test": "bun test --timeout 20000"
   },
   "dependencies": {

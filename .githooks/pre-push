@@ -1,0 +1,3 @@
+#!/bin/sh
+# Pasa las pruebas de Playwright de lo que se va a subir respecto a main.
+exec bun herramientas/reglas/antes-de-subir.ts

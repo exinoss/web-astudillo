@@ -7,8 +7,8 @@ export const gallery: SectionEditor = {
     const items = list.map((g, i) => `
       <div class="flex min-w-0 flex-col gap-3 rounded-[3px] border border-base-300 p-3">
         <img src="${esc(thumb(g.foto))}" alt="" class="aspect-[4/3] w-full rounded-[3px] object-cover" />
-        ${field({ id: `galeria-alt-${i}`, label: "Descripción de la foto", value: g.alt, max: 200 })}
-        ${field({ id: `galeria-pie-${i}`, label: "Pie de foto", value: g.pie, max: 200 })}
+        ${field({ id: `galeria-alt-${i}`, label: "Descripción de la foto", value: g.alt, max: 200 , required: true })}
+        ${field({ id: `galeria-pie-${i}`, label: "Pie de foto", value: g.pie, max: 200 , required: true })}
         <div class="flex flex-wrap gap-1">${moveButtons("foto", i, list.length, `foto ${i + 1}`)}</div>
       </div>`).join("");
     return `<div class="grid grid-cols-3 gap-4 max-laptop:grid-cols-2 max-tablet:grid-cols-1">${items}</div>

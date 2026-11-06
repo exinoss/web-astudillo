@@ -1,3 +1,4 @@
+import { CAMPO_VACIO, marcarError } from '../../comun/campos';
 import { authRepository } from '../../data/auth';
 import { ApiError } from '../../data/http/api-client';
 import { requirePassword } from './password';
@@ -11,33 +12,17 @@ export function showStatus(element: HTMLElement, message: string, error = false)
   element.hidden = false;
 }
 
-export function clearFieldErrors(form: HTMLFormElement) {
-  form.querySelectorAll<HTMLInputElement>('input[aria-invalid="true"]').forEach(input => {
-    input.removeAttribute('aria-invalid');
-    const error = document.getElementById(`${input.id}-error`);
-    if (error) { error.textContent = ''; error.hidden = true; }
-  });
-}
-
-export function fieldError(form: HTMLFormElement, name: string, message: string, focus = true) {
-  const input = form.elements.namedItem(name);
-  if (!(input instanceof HTMLInputElement)) return;
-  input.setAttribute('aria-invalid', 'true');
-  const error = document.getElementById(`${input.id}-error`);
-  if (error) { error.textContent = message; error.hidden = false; }
-  if (focus) input.focus();
-}
-
 /** Valida campos HTML y la política de contraseña antes de enviar el formulario. */
 export function validateFields(form: HTMLFormElement) {
-  clearFieldErrors(form);
+  form.querySelectorAll<HTMLInputElement>('input[aria-invalid="true"]').forEach(input => marcarError(input, null));
   const mark = (name: string, message: string) => {
-    fieldError(form, name, message, false);
+    const input = form.elements.namedItem(name);
+    if (input instanceof HTMLInputElement) marcarError(input, message);
   };
   for (const input of form.querySelectorAll<HTMLInputElement>('input')) {
     let message = '';
     if (input.required && input.type === 'checkbox' && !input.checked) message = 'Marca la casilla para continuar.';
-    else if (input.required && !input.value.trim()) message = 'Completa este campo.';
+    else if (input.required && !input.value.trim()) message = CAMPO_VACIO;
     else if (input.type === 'email' && input.value &&
       (!input.validity.valid || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value)))
       message = 'Escribe un correo válido, por ejemplo nombre@ejemplo.com.';

@@ -20,9 +20,9 @@ export const cards: SectionEditor = {
     const add = list.length < MAX_ITEMS ? `<div class="mt-3">${upload("tarjeta-nueva", "Añadir tarjeta")}</div>` : "";
     const editorHtml = card ? `
       <div class="flex min-w-0 flex-col gap-[18px]">
-        ${field({ id: "tarjeta-titulo", label: "Título", value: card.titulo, max: 60, hint: "Hasta 60 caracteres." })}
-        ${field({ id: "tarjeta-texto", label: "Texto", value: card.texto, max: 180, area: true, hint: "Hasta 180 caracteres. Se lee al pulsar «Leer más»." })}
-        ${field({ id: "tarjeta-alt", label: "Descripción de la foto", value: card.alt, max: 200 })}
+        ${field({ id: "tarjeta-titulo", label: "Título", value: card.titulo, max: 60, hint: "Hasta 60 caracteres." , required: true })}
+        ${field({ id: "tarjeta-texto", label: "Texto", value: card.texto, max: 180, area: true, hint: "Hasta 180 caracteres. Se lee al pulsar «Leer más»." , required: true })}
+        ${field({ id: "tarjeta-alt", label: "Descripción de la foto", value: card.alt, max: 200 , required: true })}
         <div>
           <span class="${LABEL}">Foto</span>
           ${upload("tarjeta-foto", "Cambiar foto")}

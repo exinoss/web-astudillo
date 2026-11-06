@@ -3,7 +3,7 @@ import { prepararAceptacion } from './aceptacion';
 import { ApiError } from "../../data/http/api-client";
 import { guardar, type Formulario } from "./borrador";
 
-export { marcarError } from './campos';
+export { marcarError } from '../../comun/campos';
 
 interface Envio<T> {
   form: HTMLFormElement;

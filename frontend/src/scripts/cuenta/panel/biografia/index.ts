@@ -1,7 +1,7 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftBiographyItem } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
-import { ACEPTA_FOTOS, busy, card, DANGER, DRAFT_PILL, esc, field, FORMATOS_FOTO, GHOST, iconSvg, INPUT, isPending, notify, previewButton, reloadDraft, reloadPending, state, value, subirFotos } from "../ui";
+import { ACEPTA_FOTOS, avisarVacios, busy, card, DANGER, DRAFT_PILL, esc, field, FORMATOS_FOTO, GHOST, iconSvg, isPending, notify, previewButton, reloadDraft, reloadPending, state, value, subirFotos } from "../ui";
 
 const MAX_ITEMS = 30;
 const YEAR = /^\d{4}$/;
@@ -57,12 +57,12 @@ export function renderBiography(section: HTMLElement) {
         <div>
           <label for="hito-anios" class="mb-[7px] block text-[0.82rem] font-bold">Año</label>
           <input id="hito-anios" name="hito-anios" value="${esc(yearOf(item.anios))}" list="hito-anios-lista" inputmode="numeric" maxlength="4"
-            autocomplete="off" placeholder="Escribe o elige" class="${INPUT}" />
+            autocomplete="off" placeholder="Escribe o elige" class="campo" required />
           <datalist id="hito-anios-lista">${YEARS.map((y) => `<option value="${y}"></option>`).join("")}</datalist>
         </div>
-        ${field({ id: "hito-titulo", label: "Título", value: item.titulo, max: 120 })}
+        ${field({ id: "hito-titulo", label: "Título", value: item.titulo, max: 120 , required: true })}
       </div>
-      ${field({ id: "hito-texto", label: "Texto", value: item.texto, max: 3000, area: true, hint: "Deja una línea en blanco para separar párrafos." })}
+      ${field({ id: "hito-texto", label: "Texto", value: item.texto, max: 3000, area: true, hint: "Deja una línea en blanco para separar párrafos." , required: true })}
       <div>
         <span class="mb-[7px] block text-[0.82rem] font-bold">Foto</span>
         <div class="grid grid-cols-[260px_minmax(0,1fr)] items-center gap-4 max-nav:grid-cols-1">
@@ -75,7 +75,7 @@ export function renderBiography(section: HTMLElement) {
           </div>
         </div>
       </div>
-      ${item.foto ? field({ id: "hito-alt", label: "Descripción de la foto", value: item.alt ?? "", max: 200, hint: "Describe lo que se ve en la foto." }) : ""}
+      ${item.foto ? field({ id: "hito-alt", label: "Descripción de la foto", value: item.alt ?? "", max: 200, hint: "Describe lo que se ve en la foto." , required: true }) : ""}
       <div class="flex flex-wrap justify-between gap-2.5 border-t border-t-base-300 pt-[18px] max-tablet:flex-col-reverse">
         <button type="button" id="hito-eliminar" class="${DANGER}">${iconSvg("trash", 18)} Eliminar hito</button>
         <span class="flex flex-wrap gap-2.5 max-tablet:flex-col-reverse">
@@ -88,7 +88,7 @@ export function renderBiography(section: HTMLElement) {
     <div class="grid grid-cols-[340px_minmax(0,1fr)] items-start gap-6 max-nav:grid-cols-[240px_minmax(0,1fr)] max-tablet:grid-cols-1">
       <div class="flex flex-col gap-2.5">
         <label for="hito-selector" class="hidden text-[0.82rem] font-bold max-tablet:block">Hito ${selected + 1} de ${items.length}</label>
-        <select id="hito-selector" class="hidden min-h-12 w-full rounded-[3px] border border-field-border bg-base-100 px-3.5 text-sm text-primary max-tablet:block">
+        <select id="hito-selector" class="campo hidden max-tablet:block">
           ${items.map((h, i) => `<option value="${i}" ${i === selected ? "selected" : ""}>${esc(`${yearOf(h.anios) || "Sin año"} · ${h.titulo}`)}</option>`).join("")}
         </select>
         <div class="flex flex-col gap-2.5 max-tablet:hidden">${list}</div>
@@ -145,7 +145,7 @@ function bind(section: HTMLElement) {
     if (incomplete >= 0) {
       selected = incomplete;
       renderBiography(section);
-      return notify("Elige el año y completa título, texto y la descripción de la foto de cada hito.", true);
+      return avisarVacios(section, "Elige el año y completa título, texto y la descripción de la foto de cada hito.");
     }
     void busy(form.querySelector("button[type=submit]"), async () => {
       await adminApi.saveBiography(

@@ -3,7 +3,7 @@ import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type Photo, type TeamMemberBody } from "../../../../lib/data/http/admin-api";
 import { infoPrefecto } from "../../../../lib/mi-equipo/prefecto";
 import { silueta } from "../../../../lib/mi-equipo/silueta";
-import { busy, DRAFT_PILL, esc, field, GHOST, HINT, ICON_BUTTON, iconSvg, INPUT, isPending, LABEL, notify, previewButton, reloadDraft, reloadPending, selectField, state, subirFotos, thumb, upload, value } from "../ui";
+import { avisarVacios, busy, DRAFT_PILL, esc, field, GHOST, HINT, ICON_BUTTON, iconSvg, isPending, LABEL, notify, previewButton, reloadDraft, reloadPending, selectField, state, subirFotos, thumb, upload, value } from "../ui";
 
 // `clave` sigue a la persona aunque cambie de lugar en la lista mientras sube su foto.
 interface Persona { clave: string; puesto: Puesto | null; nombre: string; presentacion: string; trayectoria: string[]; foto: Photo | null }
@@ -67,11 +67,11 @@ function tarjeta(p: Persona, i: number) {
       ${p.foto ? `<button type="button" class="${GHOST}" data-quitar-foto="${i}">Quitar foto</button>` : ""}
     </div>
   </div>`;
-  const campos = `${tipo}${puesto}${field({ id: `persona-nombre-${i}`, label: "Nombre", value: p.nombre, max: 80 })}`;
+  const campos = `${tipo}${puesto}${field({ id: `persona-nombre-${i}`, label: "Nombre", value: p.nombre, max: 80 , required: true })}`;
   if (p.puesto !== "prefecto")
     return `<li class="flex gap-4 rounded-[3px] border border-base-300 p-3 max-mobile:flex-col">${foto}<div class="flex min-w-0 flex-1 flex-col gap-3">${campos}${quitar}</div></li>`;
   const puntos = p.trayectoria.map((punto, j) => `<li class="flex items-center gap-1">
-    <input id="persona-trayectoria-${i}-${j}" data-trayectoria="${i}" maxlength="${MAX_PUNTO_TRAYECTORIA}" value="${esc(punto)}" class="${INPUT}" aria-label="Punto ${j + 1} de la trayectoria" />
+    <input id="persona-trayectoria-${i}-${j}" data-trayectoria="${i}" maxlength="${MAX_PUNTO_TRAYECTORIA}" value="${esc(punto)}" class="campo" aria-label="Punto ${j + 1} de la trayectoria" />
     <button type="button" class="${ICON_BUTTON}" data-quitar-punto="${j}" aria-label="Quitar el punto ${j + 1} de la trayectoria">${iconSvg("close", 18)}</button>
   </li>`).join("");
   return `<li class="col-span-2 flex gap-4 rounded-[3px] border border-base-300 p-3 max-laptop:col-span-1 max-mobile:flex-col">${foto}
@@ -166,14 +166,9 @@ export function renderTeam(body: HTMLElement, rerender: () => void) {
     if (sinTipo >= 0) {
       marcarSinTipo = true;
       rerender();
-      document.querySelector<HTMLElement>(`#persona-tipo-${sinTipo}`)?.focus();
-      return notify("Elige el tipo de cada persona.", true);
+      return avisarVacios(document.querySelector("#equipo-form")!, "Elige el tipo de cada persona.");
     }
-    const sinNombre = personas!.findIndex((p) => !p.nombre);
-    if (sinNombre >= 0) {
-      document.querySelector<HTMLElement>(`#persona-nombre-${sinNombre}`)?.focus();
-      return notify("Escribe el nombre de cada persona.", true);
-    }
+    if (personas!.some((p) => !p.nombre)) return avisarVacios(form, "Escribe el nombre de cada persona.");
     void busy(form.querySelector("button[type=submit]"), async () => {
       await adminApi.saveTeam(paraGuardar(personas!) as TeamMemberBody[], state.draft!.versiones.miEquipo.equipo ?? null);
       await Promise.all([reloadDraft(), reloadPending()]);

@@ -1,11 +1,10 @@
 import { ACEPTA_FOTOS } from "../../../../../backend/src/contracts/media";
 import { uploadedUrl } from "../../comun/fotos";
+import { MENSAJE_CAMPO } from "../../comun/campos";
 import { esc } from "../../comun/html";
 import { iconSvg } from "../../comun/iconos";
 import type { Photo } from "../../data/http/admin-api";
 
-export const INPUT =
-  "min-h-12 w-full rounded-[3px] border border-field-border bg-base-100 px-3.5 py-3 text-sm text-primary placeholder:text-field-placeholder placeholder:opacity-100 focus-visible:outline-neutral aria-invalid:border-2 aria-invalid:border-error";
 export const LABEL = "mb-[7px] block text-[0.82rem] font-bold";
 export const HINT = "m-0 mt-1.5 text-[0.72rem] leading-normal text-muted";
 export const GHOST =
@@ -25,8 +24,8 @@ export const moveButtons = (kind: string, i: number, total: number, name: string
   <button type="button" class="${ICON_BUTTON} text-error" data-remove="${kind}" data-index="${i}" aria-label="Quitar ${name}" ${total <= minimo ? "disabled" : ""}>${iconSvg("trash", 18)}</button>`;
 
 /** Campo de texto con etiqueta; `area` lo convierte en textarea. Todos los valores se escapan. */
-export function field(o: { id: string; label: string; value: string; max: number; area?: boolean; hint?: string; name?: string }) {
-  const common = `id="${esc(o.id)}" name="${esc(o.name ?? o.id)}" maxlength="${o.max}" class="${INPUT}${o.area ? " min-h-[110px] resize-y" : ""}"`;
+export function field(o: { id: string; label: string; value: string; max: number; area?: boolean; hint?: string; name?: string; required?: boolean }) {
+  const common = `id="${esc(o.id)}" name="${esc(o.name ?? o.id)}" maxlength="${o.max}" class="campo${o.area ? " min-h-[110px] resize-y" : ""}"${o.required ? " required" : ""}`;
   return `<div>
     <label for="${esc(o.id)}" class="${LABEL}">${esc(o.label)}</label>
     ${o.area ? `<textarea ${common} rows="4">${esc(o.value)}</textarea>` : `<input ${common} value="${esc(o.value)}" />`}
@@ -37,11 +36,11 @@ export function field(o: { id: string; label: string; value: string; max: number
 /** Lista desplegable con etiqueta; una opción `disabled` se ve pero no se elige, y `error` marca el campo. Todo se escapa. */
 export function selectField(o: { id: string; label: string; value: string; options: { value: string; label: string; disabled?: boolean }[]; placeholder?: string; error?: string }) {
   return `<div>
-    <label for="${esc(o.id)}" class="${LABEL}">${esc(o.label)}</label>
-    <select id="${esc(o.id)}" name="${esc(o.id)}" class="${INPUT}" ${o.error ? `aria-invalid="true" aria-describedby="${esc(o.id)}-error"` : ""}>
+    <label for="${esc(o.id)}" class="${LABEL}${o.error ? " text-error" : ""}">${esc(o.label)}</label>
+    <select id="${esc(o.id)}" name="${esc(o.id)}" class="campo" ${o.error ? `aria-invalid="true" aria-describedby="${esc(o.id)}-error"` : ""}>
       ${o.placeholder ? `<option value="" disabled ${o.value ? "" : "selected"}>${esc(o.placeholder)}</option>` : ""}
       ${o.options.map((x) => `<option value="${esc(x.value)}" ${x.value === o.value ? "selected" : ""} ${x.disabled ? "disabled" : ""}>${esc(x.label)}</option>`).join("")}
     </select>
-    ${o.error ? `<p id="${esc(o.id)}-error" class="m-0 mt-1.5 text-[0.72rem] text-error">${esc(o.error)}</p>` : ""}
+    ${o.error ? `<p id="${esc(o.id)}-error" class="${MENSAJE_CAMPO}">${esc(o.error)}</p>` : ""}
   </div>`;
 }
