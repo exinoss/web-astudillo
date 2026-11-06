@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/prueba';
 
 test('las cifras de la portada se ven grandes, con su texto, y cuentan hasta el valor', async ({ page }) => {
   await page.goto('/');

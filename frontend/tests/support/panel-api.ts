@@ -1,7 +1,6 @@
 import type { Page } from '@playwright/test';
 import initial from '../../../backend/database/contenido-inicial.json' with { type:'json' };
 import { PARROQUIAS } from '../../../backend/src/contracts/parroquias';
-import { servirFotos } from './fotos';
 
 /** Lo que el panel simulado acepta para confirmar un cambio de rol o de estado. */
 export const CONTRASENIA_PANEL = 'Ab1!xyz';
@@ -90,7 +89,6 @@ export function panelData(rol: 'admin' | 'coadmin') {
 }
 
 export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData>) {
-  await servirFotos(page);
   await page.route('**/api/**', async route => {
     const url = new URL(route.request().url());
     const method = route.request().method();

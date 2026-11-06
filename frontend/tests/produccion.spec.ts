@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/prueba';
 import { execFile } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer, type Server } from 'node:http';

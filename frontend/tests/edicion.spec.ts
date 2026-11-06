@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/prueba';
 import { mockPanelApi, panelData } from './support/panel-api';
 
 test('un visitante no descarga el editor', async ({ page }) => {

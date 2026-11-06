@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './support/prueba';
 
 const token = 'A'.repeat(43);
 
@@ -408,7 +408,8 @@ test('recuperación, restablecimiento y verificación conservan los enlaces de u
 });
 
 test('tras muchos intentos el botón se bloquea con candado y cuenta atrás, y sugiere restablecer la contraseña', async ({ page }) => {
-  await page.clock.install();
+  const inicio = new Date('2026-11-06T10:00:00');
+  await page.clock.install({ time: inicio });
   await page.route('**/api/**', route => {
     const path = new URL(route.request().url()).pathname;
     if (path === '/api/auth/login') return route.fulfill({ status: 429, contentType: 'application/json',
@@ -417,6 +418,8 @@ test('tras muchos intentos el botón se bloquea con candado y cuenta atrás, y s
     return route.fulfill({ status: 401, contentType: 'application/json', body: '{"error":"Inicia sesión"}' });
   });
   await page.goto('/cuenta/');
+  // Con el reloj parado, la cuenta atrás solo avanza con `runFor`, aunque el equipo vaya lento.
+  await page.clock.pauseAt(new Date(inicio.getTime() + 60_000));
   await page.locator('#login-correo').fill('maria@example.com');
   await page.locator('#login-contrasenia').fill('equivocada');
   await page.getByRole('button', { name: 'Entrar' }).click();

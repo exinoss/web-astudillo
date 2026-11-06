@@ -1,7 +1,5 @@
-import { test, expect, type Page } from '@playwright/test';
-import { servirFotos } from './support/fotos';
+import { test, expect, type Page } from './support/prueba';
 
-test.beforeEach(({ page }) => servirFotos(page));
 
 test('desktop navigation, carousel and accessibility', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });

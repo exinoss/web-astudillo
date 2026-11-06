@@ -6,6 +6,8 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-06
+
 ### Added
 
 - En la portada, antes de «Propuestas», un carrusel con las fotos de Carlos y su equipo, con el público de fondo a los lados. Aparece cuando tiene imágenes y, al tocar una, se abre en grande.
@@ -147,6 +149,7 @@ Primera versión numerada: recoge todo lo hecho desde el inicio del proyecto.
 - Las respuestas simuladas de alertas, sugerencias y chat.
 - Dependencia `daisyui`: no se usaba ninguna de sus clases ni su mecanismo de temas; sus tokens de color pasaron a `@theme`.
 
-[Unreleased]: https://github.com/exinoss/web-astudillo/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/exinoss/web-astudillo/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/exinoss/web-astudillo/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/exinoss/web-astudillo/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/exinoss/web-astudillo/releases/tag/v1.0.0

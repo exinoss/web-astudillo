@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/prueba';
 import initial from '../../backend/database/contenido-inicial.json' with { type:'json' };
 import { publicPaths, SITE } from '../src/lib/comun/seo';
 
