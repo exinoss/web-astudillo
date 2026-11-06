@@ -3,7 +3,8 @@ import Icon from "../comun/Icon.astro";
 import LegalAcceptance from '../comun/LegalAcceptance.astro';
 import { MIN_DESCRIPCION, TIPOS_ALERTA } from "../../lib/ciudadania/participacion/tipos";
 import { FORMATOS_FOTO } from "../../../../backend/src/contracts/media";
-import { TARJETA, CAMPO, ETIQUETA, AYUDA, ERROR, ESTADO } from "./estilos";
+import { TARJETA, ETIQUETA, AYUDA, ERROR, ESTADO } from "./estilos";
+import { MENSAJE_CAMPO } from "../../lib/comun/campos";
 ---
 
 <section class="site-container max-w-[1100px] pt-8 pb-14 max-tablet:pt-6 max-tablet:pb-10">
@@ -37,16 +38,16 @@ import { TARJETA, CAMPO, ETIQUETA, AYUDA, ERROR, ESTADO } from "./estilos";
       <p id="alerta-tipo-error" class={ERROR} hidden></p>
 
       <label class={ETIQUETA} for="alerta-sector">Sector o barrio *</label>
-      <input id="alerta-sector" class={CAMPO} name="sector" placeholder="Indica el sector" maxlength="120" aria-describedby="alerta-sector-error" />
-      <p id="alerta-sector-error" class={ERROR} hidden></p>
+      <input id="alerta-sector" class="campo" name="sector" placeholder="Indica el sector" maxlength="120" aria-describedby="alerta-sector-error" />
+      <p id="alerta-sector-error" class={MENSAJE_CAMPO} hidden></p>
 
       <label class={ETIQUETA} for="alerta-referencia">Dirección o punto de referencia <span class="font-normal text-base-content">(opcional)</span></label>
-      <input id="alerta-referencia" class={CAMPO} name="referencia" maxlength="180" placeholder="Por ejemplo: frente al parque, calle principal" />
+      <input id="alerta-referencia" class="campo" name="referencia" maxlength="180" placeholder="Por ejemplo: frente al parque, calle principal" />
 
       <label class={ETIQUETA} for="alerta-descripcion">¿Qué está ocurriendo? *</label>
-      <textarea id="alerta-descripcion" class={CAMPO} name="descripcion" rows="4" maxlength="1500" placeholder="Describe la situación y dónde ocurre…" aria-describedby="alerta-descripcion-ayuda alerta-descripcion-error"></textarea>
+      <textarea id="alerta-descripcion" class="campo min-h-[110px] resize-y" name="descripcion" rows="4" maxlength="1500" placeholder="Describe la situación y dónde ocurre…" aria-describedby="alerta-descripcion-ayuda alerta-descripcion-error"></textarea>
       <p id="alerta-descripcion-ayuda" class={AYUDA}>Mínimo {MIN_DESCRIPCION} caracteres. Evita incluir datos sensibles.</p>
-      <p id="alerta-descripcion-error" class={ERROR} hidden></p>
+      <p id="alerta-descripcion-error" class={MENSAJE_CAMPO} hidden></p>
 
       <span class={ETIQUETA}>Foto del problema <span class="font-normal text-base-content">(opcional)</span></span>
       <!-- Sin «capture»: así el celular ofrece cámara o galería. -->

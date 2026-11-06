@@ -413,3 +413,41 @@ test('biografía: el año solo acepta cifras y Publicaciones es la última pesta
   await page.locator('#seccion-biografia').getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(page.locator('#panel-estado')).toContainText('Elige el año');
 });
+
+test('guardar con campos vacíos los marca y lleva el foco al primero; escribir quita la marca', async ({ page }) => {
+  await mockPanelApi(page, panelData('coadmin'));
+  await page.goto('/cuenta/panel/');
+  const nombre = page.locator('#propuesta-nombre'), categoria = page.locator('#propuesta-categoria'), cifra = page.locator('#kpi-valor-1');
+  await categoria.fill('');
+  await cifra.fill('');
+  await page.getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.locator('#panel-estado')).toHaveText('Completa todos los campos, también etiqueta y cifra de cada KPI.');
+  for (const campo of [categoria, cifra]) {
+    await expect(campo).toHaveAttribute('aria-invalid', 'true');
+    await expect(campo).toHaveAccessibleDescription('Completa este campo.');
+  }
+  await expect(categoria).toBeFocused();
+  await expect(nombre).not.toHaveAttribute('aria-invalid');
+  await categoria.fill('Servicios básicos');
+  await expect(categoria).not.toHaveAttribute('aria-invalid');
+  await expect(page.locator('#propuesta-categoria-error')).toBeHidden();
+  await expect(cifra).toHaveAttribute('aria-invalid', 'true');
+  // El foco engrosa el propio borde en vez de dibujar un contorno separado.
+  await nombre.focus();
+  await expect(nombre).toHaveCSS('outline-style', 'none');
+  await expect(nombre).toHaveCSS('box-shadow', 'rgb(5, 73, 148) 0px 0px 0px 1px inset');
+});
+
+test('el enlace del video se ve verde si es válido, rojo si no y normal si está vacío, también con el foco', async ({ page }) => {
+  await mockPanelApi(page, panelData('coadmin'));
+  await page.goto('/cuenta/panel/#acerca-de-carlos');
+  await page.locator('[data-acerca-seccion="video"]').first().click();
+  const enlace = page.locator('#video-enlace');
+  const borde = (color: string) => expect(enlace).toHaveCSS('box-shadow', `${color} 0px 0px 0px 1px inset`);
+  await enlace.fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  await borde('rgb(30, 122, 60)');
+  await enlace.fill('https://ejemplo.com/nada');
+  await borde('rgb(165, 9, 19)');
+  await enlace.fill('');
+  await borde('rgb(5, 73, 148)');
+});

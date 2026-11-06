@@ -9,7 +9,7 @@ export const portrait: SectionEditor = {
     return `<div class="flex flex-wrap items-start gap-6">
       <img src="${esc(uploadedUrl(r.foto, r.foto.anchos[0]))}" alt="" class="aspect-[4/5] w-40 rounded-[12px] object-cover object-top" />
       <div class="flex min-w-[240px] flex-1 flex-col gap-[18px]">
-        ${field({ id: "retrato-alt", label: "Descripción de la foto", value: r.alt, max: 200 })}
+        ${field({ id: "retrato-alt", label: "Descripción de la foto", value: r.alt, max: 200 , required: true })}
         <div class="flex flex-wrap gap-2">${upload("retrato-foto", "Cambiar retrato")}<button type="button" data-portrait-remove class="${DANGER}">${iconSvg("trash", 17)} Quitar retrato</button></div>
       </div>
     </div>`;

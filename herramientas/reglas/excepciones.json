@@ -1,0 +1,2218 @@
+{
+  "excepciones": [
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_cleanup_tokens() RETURNS void LANGUAGE sql AS $$",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_user_by_email(p_email text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_active_user(p_user integer)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_legal_accepted(p_user integer, p_version text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_legal_accept(p_user integer, p_version text, p_text text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_registration_complete(p_token integer)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_google_user(p_sub text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_google_identity_owner(p_sub text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_auth_token_get(p_hash text, p_purpose text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_auth_token_consume(p_token integer)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_confirmation_code(p_user integer)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_password_user(p_email text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_session_rotate(p_old_hash text, p_new_hash text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_session_revoke(p_hash text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/auth.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_limit_clear(p_key text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/contenido.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_texts_list()",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/contenido.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_texts_initial()",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/contenido.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_proposal_state(p_slug text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/contenido.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_biography_state()",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/contenido.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_work_state(p_slug text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/contenido.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_chat_state()",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/contenido.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_about_carlos_state(p_slug text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/contenido.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_about_carlos_list()",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/contenido.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_my_team_list()",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/contenido.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_home_carousels_list()",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/contenido.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_proposals_list()",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/contenido.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_media_details(p_ids text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/participacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_chat_list()",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/participacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_chat_send(",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/participacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_chat_unanswered_list(p_actor integer, p_limit integer)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/participacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_alert_create(p_user integer, p_key uuid, p_type text, p_sector text,",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/participacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_alerts_mine(p_user integer, p_limit integer)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/participacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_suggestion_create(p_user integer, p_key uuid, p_topic text, p_message text, p_version text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/participacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_suggestions_mine(p_user integer, p_limit integer)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/participacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_suggestions_list(p_actor integer, p_state text, p_limit integer, p_offset integer)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/participacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_participation_counts(p_actor integer)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/participacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_suggestion_state_change(p_actor integer, p_id integer, p_state text, p_expected text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/perfil.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_profile_update(p_user integer, p_name text, p_address text, p_version integer)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/publicacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_preview_state()",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/publicacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_preview_claim()",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/database/funciones/publicacion.sql",
+      "texto": "CREATE OR REPLACE FUNCTION fn_preview_finish(p_ok boolean, p_detail text)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "backend/package.json",
+      "texto": "drizzle-orm",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "backend/package.json",
+      "texto": "elysia",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "backend/package.json",
+      "texto": "jose",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "backend/package.json",
+      "texto": "nodemailer",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "backend/package.json",
+      "texto": "sharp",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "backend/package.json",
+      "texto": "@types/bun",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "backend/package.json",
+      "texto": "drizzle-kit",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "backend/package.json",
+      "texto": "pg",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "backend/package.json",
+      "texto": "typescript",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/admin/routes/index.ts",
+      "texto": "const literals = (values: readonly string[]) => t.Union(values.map(value => t.Literal(value)));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/admin/routes/index.ts",
+      "texto": "const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/admin/routes/index.ts",
+      "texto": "export function adminRoutes(sql: SQL, authorization: Authorization, confirmation: Confirmation, trustProxyIp: boolean) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/admin/services/users.ts",
+      "texto": "export function createAdminUsers(sql: SQL, authorization: Authorization, confirmation: Confirmation) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/app.ts",
+      "texto": "export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; security: Security }) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/password-policy.ts",
+      "texto": "export function requireNewPassword(value: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/password-policy.ts",
+      "texto": "export function requireConfirmation(password: string, confirmation: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/routes/common.ts",
+      "texto": "export function clearCookie(cookie: Cookie<unknown>, config: AuthContextType['config'], path: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/routes/common.ts",
+      "texto": "export function clearSession(context: AuthContextType, cookie: Record<string, Cookie<unknown>>) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/routes/consent.ts",
+      "texto": "export function consentRoutes(sql: SQL, authorization: Authorization) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/routes/google.ts",
+      "texto": "export function googleRoutes(context: AuthContext) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/routes/index.ts",
+      "texto": "export function authRoutes(sql: SQL, config: Config, mailer: Mailer,",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/routes/passwords.ts",
+      "texto": "export function passwordRoutes(context: AuthContext) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/routes/registration.ts",
+      "texto": "export function registrationRoutes({ config, registration, limit }: AuthContext) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/routes/sessions.ts",
+      "texto": "export function sessionRoutes(context: AuthContext) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/authorization.ts",
+      "texto": "export function createAuthorization(sql: SQL, security: Security) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/confirmation.ts",
+      "texto": "const coincide = (codigo: string, guardado: string) => {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/confirmation.ts",
+      "texto": "export function createConfirmation(sql: SQL, attempts: Attempts, mailer: Mailer) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/consent.ts",
+      "texto": "export function requireAcceptance(input: AceptacionLegal) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/consent.ts",
+      "texto": "export async function hasAcceptance(sql: SQL, user: number) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/consent.ts",
+      "texto": "export async function acceptTerms(sql: SQL, user: number, input: AceptacionLegal) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/consent.ts",
+      "texto": "export async function requireParticipationAcceptance(sql: SQL, user: number) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/google.ts",
+      "texto": "export function createGoogleAuth(sql: SQL, security: Security, sessions: Sessions) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/limits.ts",
+      "texto": "export const passwordHash = (password: string) => hashSlot(() => Bun.password.hash(password, \"argon2id\"));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/limits.ts",
+      "texto": "export const passwordVerify = (password: string, hash: string) => hashSlot(() => Bun.password.verify(password, hash));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/login.ts",
+      "texto": "export function createLogin(sql: SQL, sessions: Sessions, attempts: Attempts, mailer: Mailer, config: Config) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/passwords.ts",
+      "texto": "export function createPasswords(sql: SQL, security: Security, attempts: Attempts, mailer: Mailer, config: Config) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/auth/services/registration.ts",
+      "texto": "export function createRegistration(sql: SQL, mailer: Mailer, config: Config) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/cli/admin.ts",
+      "texto": "const correoValido = (correo: string) => /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(correo) && correo.length <= 320;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/cli/admin.ts",
+      "texto": "async function crear(sql: SQL) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/cli/admin.ts",
+      "texto": "async function transferir(sql: SQL, correo: string | undefined) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/config.ts",
+      "texto": "export function loadConfig(env = process.env): Config {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/routes/index.ts",
+      "texto": "export const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/routes/index.ts",
+      "texto": "const text = (max: number) => t.String({ maxLength: max * 4 });",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/routes/index.ts",
+      "texto": "export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/about-carlos.ts",
+      "texto": "const isSlug = (slug: string): slug is AboutCarlosSlug => (ABOUT_CARLOS_PAGES as readonly string[]).includes(slug);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/about-carlos.ts",
+      "texto": "const optional = (value: string | null | undefined, field: string, max: number, options?: { multiline?: boolean }) =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/about-carlos.ts",
+      "texto": "function clean(slug: AboutCarlosSlug, input: AboutCarlosPageInput): AboutCarlosPageStored {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/about-carlos.ts",
+      "texto": "export function createAboutCarlosPages(sql: SQL, authorization: Authorization, mediaDir: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/content.ts",
+      "texto": "export function createContent(sql: SQL, authorization: Authorization) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/home-carousels.ts",
+      "texto": "const ids = (image: HomeImageStored) => ('idMedio' in image ? [image.idMedio] : []);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/home-carousels.ts",
+      "texto": "const mainIds = ({ banners, retrato }: HomeMainInput) => [...banners.flatMap(b => [...ids(b.imagen), ...(b.celular ? [b.celular] : [])]), ...ids(retrato.imagen)];",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/home-carousels.ts",
+      "texto": "const piecesIds = ({ piezas }: HomePiecesInput) => piezas.flatMap(p => ids(p.imagen));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/home-carousels.ts",
+      "texto": "const resolve = (image: HomeImageStored, media: Map<number, Photo>): HomeImage | null =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/home-carousels.ts",
+      "texto": "const alt = (value: string, field: string) => plainText(value, `${field} · descripción`, 200);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/home-carousels.ts",
+      "texto": "export function createHomeCarousels(sql: SQL, authorization: Authorization) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/media.ts",
+      "texto": "export const toPhoto = (row: MediaRow): Photo => ({",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/media.ts",
+      "texto": "export const sha256 = (input: Buffer) => createHash('sha256').update(input).digest('hex');",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/media.ts",
+      "texto": "export function createMedia(sql: SQL, authorization: Authorization, mediaDir: string, fetchCover = fetchVideoCover) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/my-team.ts",
+      "texto": "const isParish = (slug: string): slug is ParroquiaSlug => PARROQUIAS.some(p => p.slug === slug);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/my-team.ts",
+      "texto": "export const emptyMyTeam = (): MyTeam => ({ equipo: [], parroquias: PARROQUIAS.map(p => ({ slug: p.slug, texto: '', fotos: [] })) });",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/my-team.ts",
+      "texto": "export function createMyTeam(sql: SQL, authorization: Authorization) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/preview.ts",
+      "texto": "export function createPreview(sql: SQL, authorization: Authorization, security: Security, content: ReturnType<typeof createContent>) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/video-cover.ts",
+      "texto": "const allowed = (url: string, hosts: RegExp[]) => {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/video-cover.ts",
+      "texto": "async function get(url: string, hosts: RegExp[], headers: Record<string, string> = {}) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/video-cover.ts",
+      "texto": "async function image(url: string | undefined, maxBytes: number) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/content/services/video-cover.ts",
+      "texto": "const ogImage = async (pageUrl: string) => {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/contracts/media.ts",
+      "texto": "export const cardVariantFile = (name: string) => `${name}-tarjeta-${CARD_SIZE}.webp`;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/contracts/media.ts",
+      "texto": "export const avisoMegapixeles = (pixeles: number) =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/contracts/video.ts",
+      "texto": "const host = (url: URL) => url.hostname.toLowerCase().replace(/^(www|m|web|mobile)\\./, '');",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/db/call.ts",
+      "texto": "export function callPg<T extends object = Row>(db: SQL, functionName: 'alertCreate', values: Params['alertCreate']): Promise<T[]>;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/db/call.ts",
+      "texto": "export function callPg<T extends object = Row>(db: SQL, functionName: 'suggestionByKey', values: Params['suggestionByKey']): Promise<T[]>;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/db/call.ts",
+      "texto": "export function callPg<T extends object = Row>(db: SQL, functionName: 'suggestionCreate', values: Params['suggestionCreate']): Promise<T[]>;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/db/call.ts",
+      "texto": "export function callPg<T extends object = Row>(db: SQL, functionName: Exclude<PgFunction, keyof Params>, values?: unknown[]): Promise<T[]>;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/db/call.ts",
+      "texto": "export function callPg<T extends object = Row>(db: SQL, functionName: PgFunction, values: unknown[] = []): Promise<T[]> {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/db/seed.ts",
+      "texto": "export async function seedContent(sql: Pick<SQL, 'unsafe'>) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/mail/plantilla.ts",
+      "texto": "const esc = (s: string) => s.replace(/[&<>\"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '\"': '&quot;', \"'\": '&#39;' })[c]!);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/mailer.ts",
+      "texto": "export function createMailer(config: Config): Mailer {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/participation/routes/index.ts",
+      "texto": "const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/participation/routes/index.ts",
+      "texto": "const literals = (values: readonly string[]) => t.Union(values.map(value => t.Literal(value)));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/participation/routes/index.ts",
+      "texto": "const text = (max: number) => t.String({ maxLength: max * 4 });",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/participation/routes/index.ts",
+      "texto": "export function participationRoutes(sql: SQL, authorization: Authorization, photoDir: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/participation/services/chat.ts",
+      "texto": "export function createChat(sql: SQL, authorization: Authorization, limit: Limiter, content: Content) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/participation/services/participation.ts",
+      "texto": "const toAlert = (r: AlertRow) => ({",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/participation/services/participation.ts",
+      "texto": "const toSuggestion = (r: SuggestionRow) => ({",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/participation/services/participation.ts",
+      "texto": "export function createParticipation(sql: SQL, authorization: Authorization, limit: Limiter, photoDir: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/profile/routes/index.ts",
+      "texto": "export function profileRoutes(sql: SQL, authorization: Authorization) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/profile/services/profile.ts",
+      "texto": "export function createProfile(sql: SQL, authorization: Authorization) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/publisher/salida-estatica.ts",
+      "texto": "async function exists(path: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/publisher/salida-estatica.ts",
+      "texto": "async function preserveAssets(dist: string, next: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/publisher/salida-estatica.ts",
+      "texto": "export async function swap({ dist, next, previous }: Output) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/publisher/worker.ts",
+      "texto": "const wait = (ms: number) => new Promise(r => setTimeout(r, ms));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/publisher/worker.ts",
+      "texto": "const target = (name: string): Target => ({",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/publisher/worker.ts",
+      "texto": "async function build(id: number) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/security.ts",
+      "texto": "export const randomToken = () => randomBytes(32).toString(\"base64url\");",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/security.ts",
+      "texto": "export const tokenHash = (value: string) => createHash(\"sha256\").update(value).digest(\"hex\");",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/security.ts",
+      "texto": "export const normalizeEmail = (value: string) => value.trim().toLowerCase();",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/security.ts",
+      "texto": "export function createSecurity(config: Config): SecurityContract {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/stats/routes/index.ts",
+      "texto": "export function statsRoutes(sql: SQL, config: Config) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "backend/src/stats/services/stats.ts",
+      "texto": "export function createStats(sql: SQL) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "@fontsource/barlow-condensed",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "@fontsource/dm-sans",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "@google/model-viewer",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "astro",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "lottie-web",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "meshoptimizer",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "@astrojs/check",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "@gltf-transform/cli",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "@gltf-transform/core",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "@gltf-transform/extensions",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "@gltf-transform/functions",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "@playwright/test",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "@tailwindcss/vite",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "@types/node",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "prettier-plugin-astro",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "tailwindcss",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "dependencia-nueva",
+      "archivo": "frontend/package.json",
+      "texto": "typescript",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/components/ciudadania/Alerta.astro",
+      "texto": "<label id=\"alerta-foto-zona\" class=\"relative flex min-h-[190px] cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[6px] border-2 border-dashed border-field-border bg-[#f4f7fb] px-4 py-6 text-center text-primary transition-colors hover:border-primary hover:bg-[#eaf0f8] focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral\">",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/components/ciudadania/Chat.astro",
+      "texto": "class=\"inline-flex min-h-11 items-center gap-2 rounded-full border border-[#ffffff55] bg-transparent px-3.5 text-[0.74rem] font-bold aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-primary\">",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/components/ciudadania/ObraProgreso.astro",
+      "texto": "class=\"h-2.5 overflow-hidden rounded-full bg-[#06317618]\"",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "fetch-fuera-de-datos",
+      "archivo": "frontend/src/components/propuestas/Model3D.astro",
+      "texto": "const respuesta = await fetch(decodificadorUrl);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "fetch-fuera-de-datos",
+      "archivo": "frontend/src/components/propuestas/Model3D.astro",
+      "texto": "const respuesta = await fetch(url);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/layouts/Layout.astro",
+      "texto": "<meta name=\"theme-color\" content=\"#063176\" />",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/layouts/Layout.astro",
+      "texto": "<div class=\"site-container relative grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-5 border-t border-t-[#ffffff25] pt-[22px] text-[0.62rem] text-footer-muted max-tablet:gap-2 max-tablet:leading-[1.7]\">",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/cabeceras.ts",
+      "texto": "export function alcaldeHeader(t: Record<string, string>) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/cabeceras.ts",
+      "texto": "export function conoceMasHeader(t: Record<string, string>, portrait: AboutCarlosPageView[\"portrait\"]) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/cierre.ts",
+      "texto": "export const closingSection = (text: string, href: string, label: string) => `",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/entrevista.ts",
+      "texto": "export function interviewSection(items: AboutCarlosPageView[\"interview\"]) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/galeria.ts",
+      "texto": "export function gallerySection(photos: AboutCarlosPageView[\"gallery\"]) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/interacciones.ts",
+      "texto": "function cardStrip(root: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/interacciones.ts",
+      "texto": "function gallery(root: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/interacciones.ts",
+      "texto": "function video(root: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/interacciones.ts",
+      "texto": "export function initAboutCarlosPage(root: ParentNode) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/reproductor.ts",
+      "texto": "export function mountPlayer(stage: HTMLElement, source: VideoSource, title: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/tarjeta.ts",
+      "texto": "rojo: { base: \"#d81919\", ink: \"#6e0400\" },",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/tarjeta.ts",
+      "texto": "azul: { base: \"#284e9c\", ink: \"#001c48\" },",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/tarjeta.ts",
+      "texto": "<summary data-card-face class=\"relative isolate flex h-full min-h-[380px] w-full cursor-pointer list-none flex-col px-7 pt-4 pb-3 text-[#ffc20e] [&::-webkit-details-marker]:hidden max-tablet:min-h-[300px] max-tablet:px-[22px] group-data-[layout=mobile]/card:min-h-[300px] group-data-[layout=mobile]/card:px-[22px]\">",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/tarjetas.ts",
+      "texto": "export function cardsSection(title: string, list: CardView[]) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/video.ts",
+      "texto": "export function videoSection(v: AboutCarlosPageView[\"video\"]) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/vista.ts",
+      "texto": "async function defaultCover(vertical: boolean): Promise<ImageView> {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/vista.ts",
+      "texto": "export async function publishedPageView(slug: AboutCarlosSlug): Promise<AboutCarlosPageView> {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/ciudadania/participacion/aceptacion.ts",
+      "texto": "function crearControl(form: HTMLFormElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/ciudadania/participacion/aceptacion.ts",
+      "texto": "export function prepararAceptacion(form: HTMLFormElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/ciudadania/participacion/borrador.ts",
+      "texto": "export async function leerFoto(): Promise<File | null> {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/ciudadania/participacion/borrador.ts",
+      "texto": "export function borrar() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/ciudadania/participacion/historial.ts",
+      "texto": "export const cuadroIcono = (icono: string) =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/animaciones.ts",
+      "texto": "export const sinMovimiento = () => html.classList.contains(\"reduce-motion\");",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/animaciones.ts",
+      "texto": "function cargarDatos(animacion: Animacion) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/animaciones.ts",
+      "texto": "function aplicarMovimiento({ item, quieto, bucle }: Activa) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "fetch-fuera-de-datos",
+      "archivo": "frontend/src/lib/comun/animaciones.ts",
+      "texto": "promesa = fetch(ANIMACIONES[animacion].url)",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "fetch-fuera-de-datos",
+      "archivo": "frontend/src/lib/comun/animaciones.ts",
+      "texto": "const respuesta = await fetch(url);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/contenido.ts",
+      "texto": "export async function texto(clave: TextKey) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/contenido.ts",
+      "texto": "export async function enlaceRed(red: Red) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/contenido/textos.ts",
+      "texto": "const t = (lugar: string, campo: string, max = 120): TextDefinition =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/foto-local.ts",
+      "texto": "const ascii = (b: Uint8Array, i: number, texto: string) => [...texto].every((c, j) => b[i + j] === c.charCodeAt(0));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/foto-local.ts",
+      "texto": "function jpeg(b: Uint8Array, v: DataView): Medidas | null {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/foto-local.ts",
+      "texto": "function webp(b: Uint8Array, v: DataView): Medidas | null {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/fotos.ts",
+      "texto": "export const uploadedUrl = (picture: UploadedPicture, width: number) => `/medios/${picture.nombre}-${width}.webp`;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/fotos.ts",
+      "texto": "export const uploadedSrcset = (picture: UploadedPicture) =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/fotos.ts",
+      "texto": "export const cardImageUrl =(picture: UploadedPicture) => `/medios/${cardVariantFile(picture.nombre)}`;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/fotos.ts",
+      "texto": "export const imageView = (picture: UploadedPicture): ImageView => ({",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/html.ts",
+      "texto": "export const img = (image: ImageView, alt: string, className: string, sizes: string, loading: \"lazy\" | \"eager\" = \"lazy\") =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/seo.ts",
+      "texto": "export const absoluteUrl = (path: string) => new URL(path, SITE).href;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/seo.ts",
+      "texto": "export const plainDescription = (text: string) => text.replace(/\\s+/g, ' ').trim().slice(0, 200);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/comun/seo.ts",
+      "texto": "export const jsonLd = (data: unknown) => JSON.stringify(data).replace(/</g, '\\\\u003c');",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/lib/comun/visor-fotos.ts",
+      "texto": "<dialog data-visor aria-labelledby=\"${id}-titulo\" class=\"m-0 h-dvh max-h-none w-screen max-w-none overscroll-contain bg-[#021530]/97 p-0 text-white backdrop:bg-transparent\">",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "fetch-fuera-de-datos",
+      "archivo": "frontend/src/lib/comun/vista-previa.ts",
+      "texto": "await fetch(EXIT, { redirect: \"manual\", credentials: \"same-origin\" }).catch(() => {});",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/auth/acceptance.ts",
+      "texto": "export function acceptanceOf(form: HTMLFormElement): AceptacionLegal | undefined {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/auth/bloqueo.ts",
+      "texto": "export const isLocked = (button: HTMLButtonElement) => button.dataset.bloqueo !== undefined;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/auth/bloqueo.ts",
+      "texto": "function recoveryLink(text: string, correo: string, alone: boolean) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/auth/google.ts",
+      "texto": "export function clearGoogleSelection() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/auth/page.ts",
+      "texto": "const plural = (amount: number, unit: string) => `${amount} ${unit}${amount === 1 ? '' : 's'}`;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/auth/page.ts",
+      "texto": "export function errorText(error: unknown) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/auth/page.ts",
+      "texto": "export function value(form: HTMLFormElement, name: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/auth/password.ts",
+      "texto": "export function requirePassword(password: string, confirmation: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/panel/cambios.ts",
+      "texto": "const clave = (boton: HTMLButtonElement) => (boton.type === \"submit\" && boton.form?.id) || boton;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/panel/campos.ts",
+      "texto": "export const thumb = (foto: Photo) => uploadedUrl(foto, foto.anchos[0]);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/panel/campos.ts",
+      "texto": "export const upload = (id: string, label: string, multiple = false) =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/panel/paginacion.ts",
+      "texto": "const ARROW = (turn: number) =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/cuenta/panel/paginacion.ts",
+      "texto": "export function renderPagination(container: HTMLElement, info: PageInfo, onChange: (page: number) => void) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/data/acerca-de-carlos.ts",
+      "texto": "export const toAboutCarlosPage = (page?: ApiAboutCarlosPage): AboutCarlosPage => ({",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/data/mock/acerca-de-carlos.ts",
+      "texto": "const video = (title: string) => ({",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/data/mock/mi-equipo.ts",
+      "texto": "const fotos = (desde: number, cantidad: number) => Array.from({ length: cantidad }, (_, i) => ({ foto: fotoDePrueba(desde + i), alt: `Foto de prueba ${i + 1}` }));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/data/snapshot-repository.ts",
+      "texto": "const homeImage = (image: ApiHomeImage): HomeImage => ('foto' in image ? { photo: image.foto } : { original: image.original });",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/lib/data/snapshot-repository.ts",
+      "texto": "const paragraphs = (text: string) => text.split(/\\n\\s*\\n/).map(p => p.trim()).filter(Boolean);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "clases-repetidas",
+      "archivo": "frontend/src/pages/404.astro",
+      "texto": "max-tablet:pb-10 max-tablet:pt-6 pb-14 pt-8 site-container",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "clases-repetidas",
+      "archivo": "frontend/src/pages/ciudadania/obras-en-ejecucion.astro",
+      "texto": "max-tablet:pb-10 max-tablet:pt-6 pb-14 pt-8 site-container",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "clases-repetidas",
+      "archivo": "frontend/src/pages/cuenta/acceso.astro",
+      "texto": "inline-flex items-center min-h-11 mt-5 text-[0.82rem] underline",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/pages/cuenta/index.astro",
+      "texto": "<p class=\"m-0 mt-[18px] border border-[#d9e0ea] bg-[#f8f9fc] px-4 py-3 text-[0.82rem] leading-normal\">Al cambiarla, se cerrarán tus sesiones y tendrás que ingresar otra vez.</p>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "clases-repetidas",
+      "archivo": "frontend/src/pages/cuenta/restablecer.astro",
+      "texto": "inline-flex items-center min-h-11 mt-5 text-[0.82rem] underline",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "clases-repetidas",
+      "archivo": "frontend/src/pages/cuenta/verificar.astro",
+      "texto": "inline-flex items-center min-h-11 mt-5 text-[0.82rem] underline",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/pages/index.astro",
+      "texto": "facebook: \"bg-[#1877f2]\",",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/pages/index.astro",
+      "texto": "instagram: \"bg-[linear-gradient(45deg,#f58529,#dd2a7b_50%,#8134af_75%,#515bd4)]\",",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/pages/index.astro",
+      "texto": "tiktok: \"bg-[#111]\",",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/pages/index.astro",
+      "texto": "fondo: \"bg-[#25d366]\", clave: \"inicio.contacto.whatsapp.texto\" as TextKey, etiqueta: \"Escribir por WhatsApp a Carlos Astudillo (abre en otra pestaña)\",",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/pages/index.astro",
+      "texto": "tone === \"rojo\" && \"rounded-[4px] bg-campaign-red p-[18px] text-primary-content hover:bg-[#b80e18] max-tablet:mb-2.5\",",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "clases-repetidas",
+      "archivo": "frontend/src/pages/propuestas/[slug].astro",
+      "texto": "max-tablet:pb-10 max-tablet:pt-6 pb-14 pt-8 site-container",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/pages/robots.txt.ts",
+      "texto": "export const GET: APIRoute=()=>new Response(`User-agent: *\\nAllow: /\\nSitemap: ${absoluteUrl('/sitemap.xml')}\\n`,{headers:{'Content-Type':'text/plain; charset=utf-8'}});",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/pages/sitemap.xml.ts",
+      "texto": "export const GET: APIRoute = async () => {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/ciudadania/alerta.ts",
+      "texto": "const tipoElegido = () => form.querySelector<HTMLInputElement>('input[name=\"tipo\"]:checked')?.value as AlertType | undefined;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/ciudadania/chat.ts",
+      "texto": "function bloquear(activo: boolean) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/ciudadania/chat.ts",
+      "texto": "const leerPreferencia = () => { try { return localStorage.getItem(PREFERENCIA); } catch { return null; } };",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/ciudadania/chat.ts",
+      "texto": "function activarVoz(activa: boolean, recordar = true) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/ciudadania/chat.ts",
+      "texto": "function leerEnVozAlta(texto: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/ciudadania/sugerencia.ts",
+      "texto": "const marcarTema = (valor: string | null | undefined) =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/ciudadania/sugerencia.ts",
+      "texto": "const temaElegido = () => form.querySelector<HTMLInputElement>('input[name=\"tema\"]:checked')?.value;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/carrusel-fotos.ts",
+      "texto": "const quieto = () => document.documentElement.classList.contains(\"reduce-motion\");",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "dialogo.className = \"fixed inset-0 z-[950] flex items-center justify-center bg-[#06317659] p-4 max-tablet:items-end max-tablet:p-0\";",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "const miniatura = (imagen: DraftHomeImage) => (\"foto\" in imagen ? thumb(imagen.foto) : originales[imagen.original].miniatura);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "const cuerpoImagen = (imagen: DraftHomeImage): HomeImageBody => (\"foto\" in imagen ? { idMedio: imagen.foto.idMedio } : { original: imagen.original });",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "const tarjetaBanner = (b: Principal[\"banners\"][number], i: number, total: number) => `",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "const htmlPrincipal = (p: Principal) => `",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "const htmlPiezas = (p: Piezas) => `",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "const htmlEquipo = (e: Equipo) => `",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "function pintar() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "function abrir(cual: Carrusel, origen: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "function cerrar() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "function ponerImagen(img: HTMLImageElement, imagen: DraftHomeImage, alt: string, sizes: string, tope = false) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "function puntos(grupo: HTMLElement, selector: string, total: number, nombre: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "function pintarBorrador() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "export function iniciarCarruseles(o: Opciones) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "export function mostrarCarruseles(draft: Pick<Draft, \"inicio\" | \"versiones\">) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/editor-carruseles.ts",
+      "texto": "export function ocultarCarruseles() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/layout.ts",
+      "texto": "function closeDropdowns() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/layout.ts",
+      "texto": "const setAccess = (open: boolean) => {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "<span class=\"edicion-pista inline-flex h-6 w-[42px] shrink-0 items-center rounded-full bg-[#ffffff40] p-[3px] max-tablet:h-[22px] max-tablet:w-[38px]\">",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "<a href=\"/cuenta/panel/#publicaciones\" class=\"${BUTTON} border border-[#ffffff55] text-primary-content max-nav:hidden\">Ver pendientes</a>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "track.classList.toggle(\"bg-[#ffffff40]\", !on);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "sheet.className = \"fixed inset-0 z-[945] flex items-end bg-[#06317640]\";",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "<button type=\"button\" data-cerrar class=\"${BUTTON} flex-1 border border-[#06317640] text-primary\">Cancelar</button>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "const elements = () => [...document.querySelectorAll<HTMLElement>(\"[data-editable]\")];",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "const read = () => { try { return localStorage.getItem(STORAGE) === \"1\"; } catch { return false; } };",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "const remember = (value: boolean) => { try { localStorage.setItem(STORAGE, value ? \"1\" : \"0\"); } catch { /* sin almacenamiento */ } };",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "const definition = (el: HTMLElement) => TEXTOS[el.dataset.editable as TextKey];",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "const current = (key: string) => texts[key] ?? \"\";",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "function drawBar() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "async function refreshPending() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "function notify(message: string, error = false) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "function placeChip() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "function startInline(el: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "function finishInline(keep: boolean) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "const syncSheet = () => { sheetSave.disabled = !sheetTarget || clean(sheetField.value) === current(sheetTarget.dataset.editable!); };",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "function openSheet(el: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "function closeSheet() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "const edit = (el: HTMLElement) => (mobile.matches ? openSheet(el) : startInline(el));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "function decorar(raiz: ParentNode) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
+      "texto": "async function setMode(value: boolean) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/comun/transicion.ts",
+      "texto": "function ocultar() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/index.ts",
+      "texto": "function heading(title: string, lead: string) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/index.ts",
+      "texto": "async function loadProfile() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/index.ts",
+      "texto": "const syncProfileButton = () => {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/comun.ts",
+      "texto": "export const radios = (name: string, options: [string, string, string][], checked: string) => options.map(([val, label, mark]) => `",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/comun.ts",
+      "texto": "export function onFiles(input: HTMLInputElement | null, limit: number, use: (foto: Photo) => void, editor: Editor, capture: () => void) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "clases-repetidas",
+      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/index.ts",
+      "texto": "flex gap-3.5 items-center max-tablet:flex-col max-tablet:gap-1.5 max-tablet:items-stretch mb-5",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "clases-repetidas",
+      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/index.ts",
+      "texto": "border-t border-t-base-300 flex flex-wrap gap-2.5 justify-end max-tablet:flex-col-reverse mt-6 pt-[18px]",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/index.ts",
+      "texto": "const toBody = (p: DraftAboutCarlosPage): AboutCarlosPageBody => ({",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/index.ts",
+      "texto": "function problem(p: DraftAboutCarlosPage) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/index.ts",
+      "texto": "export function renderAboutCarlos(root: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/index.ts",
+      "texto": "function bind(root: HTMLElement, editor: Editor) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/tarjetas.ts",
+      "texto": "[\"rojo\", \"Rojo\", '<span aria-hidden=\"true\" class=\"size-6 rounded-full bg-[#d81919]\"></span>'],",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/tarjetas.ts",
+      "texto": "[\"azul\", \"Azul\", '<span aria-hidden=\"true\" class=\"size-6 rounded-full bg-[#284e9c]\"></span>'],",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/tarjetas.ts",
+      "texto": "function cardPreview(editor: Editor) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/biografia/index.ts",
+      "texto": "const photoPreview = (item: DraftBiographyItem, big = false) => item.foto",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/biografia/index.ts",
+      "texto": "export function renderBiography(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/biografia/index.ts",
+      "texto": "function bind(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/chat/index.ts",
+      "texto": "const vistaChat = (c: Pick<ChatAnswer, \"respuesta\" | \"enlaceTexto\" | \"enlaceRuta\">) =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/chat/index.ts",
+      "texto": "const row = (c: ChatAnswer, i: number, total: number) => `",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/chat/index.ts",
+      "texto": "export async function renderChat(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/chat/index.ts",
+      "texto": "function bind(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/chat/index.ts",
+      "texto": "async function drawUnanswered(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/index.ts",
+      "texto": "const available = () => tabs.filter((t) => !t.hidden).map((t) => t.dataset.pestania!);",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/index.ts",
+      "texto": "function bindTabs() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/index.ts",
+      "texto": "async function start() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "clases-repetidas",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/equipo.ts",
+      "texto": "border-t border-t-base-300 flex flex-wrap gap-2.5 justify-end max-tablet:flex-col-reverse mt-6 pt-[18px]",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/equipo.ts",
+      "texto": "const grupoDe = (puesto: Puesto | null) => PUESTOS.find((p) => p.clave === puesto)?.grupo;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/equipo.ts",
+      "texto": "const cuantos = (grupo: Grupo) => PUESTOS.filter((p) => p.grupo === grupo).length;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/equipo.ts",
+      "texto": "const ocupados = (salvo: Persona) => new Set(personas!.flatMap((p) => (p !== salvo && p.puesto ? [p.puesto] : [])));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/equipo.ts",
+      "texto": "const libres = (grupo: Grupo, salvo: Persona) => delGrupo(grupo).filter((p) => !ocupados(salvo).has(p.clave));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/equipo.ts",
+      "texto": "const desdeBorrador = (): Persona[] => state.draft!.miEquipo.equipo.map(({ foto, ...p }) => ({ clave: crypto.randomUUID(), ...p, foto }));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/equipo.ts",
+      "texto": "const paraGuardar = (lista: (Omit<Persona, \"clave\" | \"puesto\"> & { puesto: Puesto | null })[]) =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/equipo.ts",
+      "texto": "function capturar(form: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/equipo.ts",
+      "texto": "export function renderTeam(body: HTMLElement, rerender: () => void) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/index.ts",
+      "texto": "export function renderMyTeam(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "clases-repetidas",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/parroquias.ts",
+      "texto": "flex gap-3.5 items-center max-tablet:flex-col max-tablet:gap-1.5 max-tablet:items-stretch mb-5",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "clases-repetidas",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/parroquias.ts",
+      "texto": "border-t border-t-base-300 flex flex-wrap gap-2.5 justify-end max-tablet:flex-col-reverse mt-6 pt-[18px]",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/parroquias.ts",
+      "texto": "const nombre = (slug: string) => PARROQUIAS.find((p) => p.slug === slug)!.nombre;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/parroquias.ts",
+      "texto": "const delBorrador = (slug: string) => state.draft!.miEquipo.parroquias.find((p) => p.slug === slug)!;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/parroquias.ts",
+      "texto": "const paraGuardar = (p: Parroquia) => ({ texto: p.texto, fotos: p.fotos.map((f) => ({ idMedio: f.foto.idMedio, alt: f.alt })) });",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/parroquias.ts",
+      "texto": "function capturar(form: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/parroquias.ts",
+      "texto": "export function renderParishes(body: HTMLElement, rerender: () => void) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "clases-repetidas",
+      "archivo": "frontend/src/scripts/cuenta/panel/obras/index.ts",
+      "texto": "flex gap-3.5 items-center max-tablet:flex-col max-tablet:gap-1.5 max-tablet:items-stretch mb-5",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "color-a-mano",
+      "archivo": "frontend/src/scripts/cuenta/panel/obras/index.ts",
+      "texto": "<div class=\"h-2.5 overflow-hidden rounded-full bg-[#06317618]\"><div class=\"h-full rounded-full bg-neutral\" style=\"width: ${percent}%\"></div></div>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/obras/index.ts",
+      "texto": "const nameOf = (slug: string) => state.draft!.propuestas.find((p) => p.slug === slug)?.nombre ?? slug;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/obras/index.ts",
+      "texto": "export function renderWorks(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/obras/index.ts",
+      "texto": "function bind(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/participacion/index.ts",
+      "texto": "const topicName = (slug: string) => slug === \"otro\" ? \"Otra idea\" : state.draft!.propuestas.find((p) => p.slug === slug)?.nombre ?? slug;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/participacion/index.ts",
+      "texto": "const stateControl = (id: number, current: ParticipationState) => can(\"participacion.gestionar\") ? `",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/participacion/index.ts",
+      "texto": "function alertItem(a: ReviewedAlert) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/participacion/index.ts",
+      "texto": "function suggestionItem(s: ReviewedSuggestion) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/participacion/index.ts",
+      "texto": "export async function renderParticipation(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/participacion/index.ts",
+      "texto": "function bind(section: HTMLElement, data: ParticipationPage<unknown>) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/propuestas/index.ts",
+      "texto": "const readKpis = (form: HTMLElement) => [...form.querySelectorAll<HTMLElement>(\".kpi\")].map((row) => ({",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/propuestas/index.ts",
+      "texto": "export function renderProposals(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/propuestas/index.ts",
+      "texto": "function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftProposal, kpis: DraftProposal[\"kpis\"]) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/publicaciones/index.ts",
+      "texto": "const duration = (p: Publication) => p.iniciadoEn && p.terminadoEn",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/publicaciones/index.ts",
+      "texto": "export async function renderPublications(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/publicaciones/index.ts",
+      "texto": "async function drawHistory(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/redes/index.ts",
+      "texto": "const guardado = (red: Red) => state.draft!.textos[REDES[red].clave] ?? \"\";",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/redes/index.ts",
+      "texto": "export function renderSocial(container: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/textos/index.ts",
+      "texto": "const normalize = (s: string) => s.normalize(\"NFD\").replace(/\\p{Diacritic}/gu, \"\").toLowerCase();",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/textos/index.ts",
+      "texto": "export function renderTexts(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/textos/index.ts",
+      "texto": "function drawList(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/ui.ts",
+      "texto": "export const value = (root: ParentNode, selector: string) =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/ui.ts",
+      "texto": "export const can = (permission: string) => state.profile?.permisos.includes(permission) ?? false;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/ui.ts",
+      "texto": "export async function reloadDraft() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/ui.ts",
+      "texto": "export function syncPublishButton() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/ui.ts",
+      "texto": "export const isPending = (tipo: string, descripcion: string) =>",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/usuarios/index.ts",
+      "texto": "const rolePill = (u: AdminUser) => `<span class=\"${PILL} ${ROLE_CLASSES[u.rol] ?? \"\"}\">${esc(ROLE_NAMES[u.rol] ?? u.rol)}</span>`;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/usuarios/index.ts",
+      "texto": "const statePill = (u: AdminUser) => u.estado === \"activo\"",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/usuarios/index.ts",
+      "texto": "const nombre = (u: AdminUser) => u.nombresCompletos ?? u.correo;",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/usuarios/index.ts",
+      "texto": "export function renderUsers(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/usuarios/index.ts",
+      "texto": "async function load(section: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/panel/usuarios/index.ts",
+      "texto": "function bind(section: HTMLElement, list: HTMLElement) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/vista-previa.ts",
+      "texto": "const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/cuenta/vista-previa.ts",
+      "texto": "async function open() {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/inicio/cifras.ts",
+      "texto": "function contar(el: HTMLElement, final: number) {",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/inicio/index.ts",
+      "texto": "const slideDots = () => [...document.querySelectorAll<HTMLButtonElement>(\".slide-dot\")];",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/inicio/index.ts",
+      "texto": "const profileImages = () => [...document.querySelectorAll<HTMLElement>(\"[data-profile-image]\")];",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    },
+    {
+      "regla": "comentario-de-funcion",
+      "archivo": "frontend/src/scripts/inicio/index.ts",
+      "texto": "const profileDots = () => [...document.querySelectorAll<HTMLButtonElement>(\".profile-dot\")];",
+      "motivo": "Existente al congelar la lista; pendiente de corregir."
+    }
+  ]
+}

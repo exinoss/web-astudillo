@@ -1,6 +1,6 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type ChatAnswer } from "../../../../lib/data/http/admin-api";
-import { busy, card, DANGER, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, INPUT, isPending, LABEL, notify, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
+import { avisarVacios, busy, card, DANGER, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, LABEL, notify, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
 import { paginasDelSitio } from "./paginas";
 
 const MAX_ITEMS = 60;
@@ -38,16 +38,16 @@ const row = (c: ChatAnswer, i: number, total: number) => `
       ${c.destacada ? `<span class="inline-flex shrink-0 items-center rounded-full border border-base-300 px-3 py-1 text-[0.66rem] tracking-[0.08em] uppercase">Botón</span>` : ""}
     </summary>
     <div class="mt-3 flex flex-col gap-3.5">
-      ${field({ id: `faq-pregunta-${i}`, label: "Pregunta", value: c.pregunta, max: 160, hint: "Si se marca como botón, es el texto del botón." })}
-      ${field({ id: `faq-claves-${i}`, label: "Palabras clave", value: c.palabrasClave, max: 300, hint: "Separadas por comas." })}
-      ${field({ id: `faq-respuesta-${i}`, label: "Respuesta", value: c.respuesta, max: 1000, area: true })}
+      ${field({ id: `faq-pregunta-${i}`, label: "Pregunta", value: c.pregunta, max: 160, hint: "Si se marca como botón, es el texto del botón." , required: true })}
+      ${field({ id: `faq-claves-${i}`, label: "Palabras clave", value: c.palabrasClave, max: 300, hint: "Separadas por comas." , required: true })}
+      ${field({ id: `faq-respuesta-${i}`, label: "Respuesta", value: c.respuesta, max: 1000, area: true , required: true })}
       <fieldset class="m-0 flex min-w-0 flex-col gap-3.5 rounded-[3px] border border-base-300 p-4">
         <legend class="px-1 text-[0.82rem] font-bold">Enlace bajo la respuesta (opcional)</legend>
         <div>
           <label for="faq-enlace-ruta-${i}" class="${LABEL}">¿A qué página lleva?</label>
-          <select id="faq-enlace-ruta-${i}" class="${INPUT}">${opcionesDePagina(c.enlaceRuta)}</select>
+          <select id="faq-enlace-ruta-${i}" class="campo" ${c.enlaceTexto ? "required" : ""}>${opcionesDePagina(c.enlaceRuta)}</select>
         </div>
-        ${field({ id: `faq-enlace-texto-${i}`, label: "Texto del enlace", value: c.enlaceTexto ?? "", max: 60, hint: "Hasta 60 caracteres. Por ejemplo «Ver propuestas» o «Reportar un problema»." })}
+        ${field({ id: `faq-enlace-texto-${i}`, label: "Texto del enlace", value: c.enlaceTexto ?? "", max: 60, hint: "Hasta 60 caracteres. Por ejemplo «Ver propuestas» o «Reportar un problema»." , required: !!c.enlaceRuta })}
         <a data-probar class="${GHOST} self-start" href="${esc(c.enlaceRuta ?? "/")}" target="_blank" rel="noopener" ${c.enlaceRuta ? "" : "hidden"}>Probar el enlace ${iconSvg("external", 17)}</a>
       </fieldset>
       <div class="rounded-[3px] bg-base-200 p-4">
@@ -121,8 +121,8 @@ function bind(section: HTMLElement) {
     const incomplete = items!.findIndex((c) => !c.pregunta || !c.palabrasClave || !c.respuesta || !c.enlaceTexto !== !c.enlaceRuta);
     if (incomplete >= 0) {
       open = incomplete;
-      void renderChat(section);
-      return notify("Completa pregunta, palabras clave y respuesta; si eliges una página, escribe también el texto del enlace.", true);
+      return void renderChat(section).then(() =>
+        avisarVacios(section, "Completa pregunta, palabras clave y respuesta; si eliges una página, escribe también el texto del enlace."));
     }
     void busy(form.querySelector("button[type=submit]"), async () => {
       await adminApi.saveChat(items!, state.draft!.versiones.chat);

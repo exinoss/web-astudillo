@@ -1,0 +1,3 @@
+#!/bin/sh
+# Revisa las reglas del proyecto en los archivos preparados para el commit.
+exec bun herramientas/reglas/revisar.ts --staged

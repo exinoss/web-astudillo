@@ -4,7 +4,6 @@ import { adminApi } from "../../../../lib/data/http/admin-api";
 import { busy, DANGER, esc, field, GHOST, HINT, iconSvg, LABEL, notify, thumb, upload, value } from "../ui";
 import { onFiles, radios, type Editor, type SectionEditor } from "./comun";
 
-const VALID = "#1e7a3c";
 const PROVIDERS = { youtube: "YouTube", facebook: "Facebook", tiktok: "TikTok", vimeo: "Vimeo", mp4: "Archivo MP4" };
 const EMPTY_VIDEO = { titulo: "", descripcion: null, enlace: "", vertical: false, portada: null };
 
@@ -17,10 +16,10 @@ export const video: SectionEditor = {
       : `<div class="flex flex-wrap items-center gap-3">${upload("video-portada", "Subir portada")}${fromVideo}</div>`;
     return `<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] gap-8 max-tablet:grid-cols-1">
       <div class="flex min-w-0 flex-col gap-[18px]">
-        ${field({ id: "video-titulo", label: "Título de la sección", value: v.titulo, max: 80 })}
+        ${field({ id: "video-titulo", label: "Título de la sección", value: v.titulo, max: 80 , required: !!editor.page.video })}
         ${field({ id: "video-descripcion", label: "Texto breve (opcional)", value: v.descripcion ?? "", max: 200, area: true, hint: "Hasta 200 caracteres." })}
         <div>
-          ${field({ id: "video-enlace", label: "Enlace del video", value: v.enlace, max: 500, hint: "Pega el enlace de Facebook, TikTok, YouTube o Vimeo tal como aparece en la barra del navegador al abrir el video." })}
+          ${field({ id: "video-enlace", label: "Enlace del video", value: v.enlace, max: 500, hint: "Pega el enlace de Facebook, TikTok, YouTube o Vimeo tal como aparece en la barra del navegador al abrir el video." , required: !!editor.page.video })}
           <p id="video-detectado" role="status" class="m-0 mt-2 flex min-h-7 items-center gap-2 text-[0.85rem] font-bold"></p>
         </div>
         <fieldset class="min-w-0 rounded-[3px] border border-base-300 p-4">
@@ -75,12 +74,11 @@ export const video: SectionEditor = {
     const detect = () => {
       const text = input.value.trim();
       const source = text ? videoSource(text) : null;
-      if (source) status.innerHTML = `<span aria-hidden="true" class="grid size-7 shrink-0 place-items-center rounded-full text-white" style="background:${VALID}">${iconSvg("check", 17)}</span><span style="color:${VALID}">Enlace válido · ${PROVIDERS[source.provider]}</span>`;
+      if (source) status.innerHTML = `<span aria-hidden="true" class="grid size-7 shrink-0 place-items-center rounded-full bg-success text-white">${iconSvg("check", 17)}</span><span class="text-success">Enlace válido · ${PROVIDERS[source.provider]}</span>`;
       else status.textContent = text ? videoLinkProblem(text) : "";
       status.classList.toggle("text-error", Boolean(text) && !source);
       input.setAttribute("aria-invalid", String(Boolean(text) && !source));
-      input.classList.toggle("border-2", Boolean(source));
-      input.style.borderColor = source ? VALID : "";
+      input.toggleAttribute("data-valido", Boolean(source));
       if (source && input.value !== last) form.querySelectorAll<HTMLInputElement>('[name="video-formato"]').forEach((r) => { r.checked = (r.value === "vertical") === source.vertical; });
       if (input.value !== last) { stage.querySelector("iframe, video")?.remove(); play.hidden = false; }
       last = input.value;

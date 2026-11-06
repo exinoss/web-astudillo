@@ -1,6 +1,6 @@
 import { acceptanceOf } from '../../cuenta/auth/acceptance';
 import { authRepository } from '../../data/auth';
-import { marcarError } from './campos';
+import { marcarError } from '../../comun/campos';
 
 const controls = new WeakMap<HTMLFormElement, ReturnType<typeof crearControl>>();
 

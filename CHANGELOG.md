@@ -18,6 +18,9 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 - Nuevo diseño de las tarjetas de «Mi equipo»: la persona recortada sobre un arco amarillo, con zoom al pasar el mouse. Las fotos se suben sin fondo (PNG o WebP).
 - En la portada, «Chat» de la franja «Tu voz cuenta» lleva un borde dorado que se desvanece hacia la derecha, como una tarjeta junto a «Alerta ciudadana» y «Sugerencias».
+- Campos de texto de la cuenta, la participación y el panel: el campo en el que escribes se resalta con un borde más grueso en lugar de un contorno separado, y un campo con error se marca en rojo, con su etiqueta y el mensaje debajo. Todos tienen el mismo aspecto: los nombres de los hitos de Obras se ven como campos y el cuadro de texto de las alertas y sugerencias es un poco más bajo.
+- Panel: al guardar con datos vacíos se marcan todos los campos que faltan con «Completa este campo.» y el cursor va al primero; la marca se quita al escribir.
+- Panel, cifras de cada propuesta: si falta espacio, la etiqueta ocupa su propia línea y la cifra va debajo junto a los botones, para que el texto no se corte; con un error, los campos y los botones no se descuadran. Con la letra agrandada desde el panel de accesibilidad, si la cifra no cabe junto a los botones, estos pasan a su propia línea y la cifra se lee entera.
 
 ### Fixed
 

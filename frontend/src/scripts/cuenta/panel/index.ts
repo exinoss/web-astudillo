@@ -1,4 +1,5 @@
 import { mostrarCarga } from "../../../lib/comun/animaciones";
+import { desmarcarAlEscribir } from "../../../lib/comun/campos";
 import { setAccountNav } from "../../../lib/cuenta/auth/navigation";
 import { authRepository } from "../../../lib/data/auth";
 import { ApiError } from "../../../lib/data/http/api-client";
@@ -27,6 +28,7 @@ const TABS: Record<string, { title: string; render: (section: HTMLElement) => un
   usuarios: { title: "Usuarios", render: renderUsers },
 };
 const ROLE_NAMES: Record<string, string> = { admin: "Admin", coadmin: "Coadmin" };
+desmarcarAlEscribir(document.querySelector<HTMLElement>("#panel-secciones")!);
 
 const loading = document.querySelector<HTMLElement>("#panel-cargando")!;
 const tablist = document.querySelector<HTMLElement>("#panel-pestanias")!;

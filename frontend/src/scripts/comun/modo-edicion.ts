@@ -173,7 +173,7 @@ sheet.innerHTML = `
     </div>
     <div class="flex flex-col gap-[7px]">
       <label for="edicion-hoja-campo" id="edicion-hoja-etiqueta" class="text-[0.82rem] font-bold"></label>
-      <textarea id="edicion-hoja-campo" rows="4" class="min-h-24 w-full rounded-[3px] border border-field-border bg-base-100 px-3.5 py-3 text-[0.88rem] leading-normal text-primary"></textarea>
+      <textarea id="edicion-hoja-campo" rows="4" class="campo min-h-24 text-[0.88rem] leading-normal"></textarea>
     </div>
     <div class="flex gap-2.5">
       <button type="button" data-cerrar class="${BUTTON} flex-1 border border-[#06317640] text-primary">Cancelar</button>

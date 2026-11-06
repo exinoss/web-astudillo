@@ -13,7 +13,7 @@ export function renderTexts(section: HTMLElement) {
   const select = (id: string, label: string, options: [string, string][], current: string) => `
     <div class="flex min-w-[200px] flex-col gap-1.5 max-tablet:min-w-0">
       <label for="${id}" class="text-[0.76rem] font-bold">${label}</label>
-      <select id="${id}" class="min-h-12 rounded-[3px] border border-field-border bg-base-100 px-3.5 text-sm text-primary">
+      <select id="${id}" class="campo">
         ${options.map(([v, t]) => `<option value="${esc(v)}" ${v === current ? "selected" : ""}>${esc(t)}</option>`).join("")}
       </select>
     </div>`;
@@ -24,7 +24,7 @@ export function renderTexts(section: HTMLElement) {
       <div class="flex flex-1 flex-col gap-1.5 max-tablet:col-span-2">
         <label for="textos-buscar" class="text-[0.76rem] font-bold">Buscar</label>
         <input id="textos-buscar" type="search" value="${esc(filters.q)}" placeholder="Texto o página"
-          class="min-h-12 rounded-[3px] border border-field-border bg-base-100 px-3.5 text-sm text-primary placeholder:text-field-placeholder placeholder:opacity-100" />
+          class="campo" />
       </div>
       ${select("textos-lugar", "Página", [["", "Todas"], ...places.map((p): [string, string] => [p, p])], filters.lugar)}
       ${select("textos-estado", "Estado", [["", "Todos"], ["borrador", "Borrador"], ["cambiado", "Cambiado"], ["original", "Original"]], filters.estado)}

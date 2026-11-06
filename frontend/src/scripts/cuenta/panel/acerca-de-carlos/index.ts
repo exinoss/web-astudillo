@@ -7,7 +7,7 @@ import { gallery } from "./galeria";
 import { portrait } from "./retrato";
 import { cards } from "./tarjetas";
 import { video } from "./video";
-import { busy, card, DRAFT_PILL, esc, isPending, notify, previewButton, reloadDraft, reloadPending, state } from "../ui";
+import { avisarVacios, busy, card, DRAFT_PILL, esc, isPending, notify, previewButton, reloadDraft, reloadPending, state } from "../ui";
 
 const SECTIONS: Record<Section, SectionEditor & { name: string }> = {
   tarjetas: { name: "Tarjetas", ...cards },
@@ -53,7 +53,7 @@ export function renderAboutCarlos(root: HTMLElement) {
   root.innerHTML = `
     <div class="mb-5 flex items-center gap-3.5 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-1.5">
       <label for="acerca-pagina" class="text-[0.82rem] font-bold">Página</label>
-      <select id="acerca-pagina" class="min-h-12 min-w-[320px] rounded-[3px] border border-field-border bg-base-100 px-3.5 text-sm text-primary max-tablet:min-w-0">
+      <select id="acerca-pagina" class="campo min-w-[320px] max-tablet:min-w-0">
         ${Object.entries(PAGES).map(([id, p]) => `<option value="${id}" ${id === slug ? "selected" : ""}>${esc(p.name)}</option>`).join("")}
       </select>
     </div>
@@ -90,7 +90,10 @@ function bind(root: HTMLElement, editor: Editor) {
     e.preventDefault();
     capture();
     const message = problem(editor.page);
-    if (message) return notify(message, true);
+    if (message) {
+      editor.rerender();
+      return avisarVacios(root, message);
+    }
     const saving = slug;
     void busy(submit, async () => {
       await adminApi.saveAboutCarlosPage(saving, toBody(editor.page), state.draft!.versiones.acercaDeCarlos[saving]);
