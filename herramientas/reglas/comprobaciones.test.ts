@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { clasesRepetidas, comprobarArchivo, dependenciasNuevas } from "./comprobaciones";
+import { clasesRepetidas, comprobarArchivo, dependenciasNuevas, funcionesDeclaradas, funcionesRepetidas } from "./comprobaciones";
 
 /** Reglas incumplidas por un archivo de ejemplo. */
 const reglas = (ruta: string, contenido: string) => comprobarArchivo({ ruta, contenido }).map((f) => f.regla);
@@ -38,4 +38,16 @@ test("el mismo conjunto de clases en tres archivos", () => {
   const clave = "flex gap-2 p-4 text-sm";
   expect(clasesRepetidas(archivo, new Map([[clave, new Set(["frontend/src/a.astro", "frontend/src/b.astro"])]]))).toHaveLength(0);
   expect(clasesRepetidas(archivo, new Map([[clave, new Set(["frontend/src/a.astro", "frontend/src/b.astro", "frontend/src/c.ts"])]]))).toHaveLength(1);
+});
+
+test("una función con el nombre de otra ya exportada en el mismo paquete", () => {
+  const exportadas = new Map([["frontend:esc", new Set(["frontend/src/lib/comun/html.ts"])], ["frontend:GET", new Set(["frontend/src/pages/a.ts"])]]);
+  const archivo = (contenido: string, ruta = "frontend/src/pages/sitemap.xml.ts") => funcionesRepetidas({ ruta, contenido }, exportadas).map((f) => f.texto);
+  expect(archivo("/** Escapa. */\nconst esc = (t: string) => t;")).toEqual(["const esc = (t: string) => t;"]);
+  expect(archivo("/** Escapa. */\nexport function esc(t: string) { return t; }", "frontend/src/lib/comun/html.ts")).toEqual([]);
+  expect(archivo("/** Escapa. */\nconst esc = (t: string) => t;", "backend/src/a.ts")).toEqual([]);
+  expect(archivo("/** Escapa. */\nconst escapar = (t: string) => t;")).toEqual([]);
+  expect(archivo("/** Mapa. */\nexport const GET = () => new Response();")).toEqual([]);
+  expect(funcionesDeclaradas({ ruta: "frontend/src/a.ts", contenido: "export async function a() {}\nconst b = async (x) => x;\n  function c() {}" })
+    .map((f) => [f.nombre, f.exportada])).toEqual([["a", true], ["b", false]]);
 });

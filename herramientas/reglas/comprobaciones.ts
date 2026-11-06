@@ -4,6 +4,10 @@ export type Archivo = { ruta: string; contenido: string };
 const FRONT = /^frontend\/src\/.*\.(ts|astro)$/;
 const CODIGO_TS = /^(?:(?:frontend|backend)\/src\/.*|herramientas\/.*)\.ts$/;
 const SQL = /^backend\/database\/funciones\/.*\.sql$/;
+// Función de nivel superior: grupos 1/3/5 = `export`, 2/4/6 = nombre.
+const FUNCION_TS = /^(export\s+)?(?:async\s+)?function\s*\*?\s*(\w+)|^(export\s+)?const\s+(\w+)(?:\s*:[^=]+)?\s*=\s*(?:async\s+)?(?:\([^)]*\)?|\w+)\s*(?::[^=]+)?=>|^(export\s+)?const\s+(\w+)\s*=\s*(?:async\s+)?\(\s*$/;
+// Nombres que el framework exige repetir (rutas de Astro).
+const NOMBRES_DEL_FRAMEWORK = new Set(["GET", "POST", "PUT", "PATCH", "DELETE", "getStaticPaths"]);
 
 /** Recorre las líneas de un archivo y devuelve una falta por cada coincidencia de `patron`. */
 function porLinea(a: Archivo, regla: string, patron: RegExp, mensaje: string): Falta[] {
@@ -29,9 +33,7 @@ function breakpointAMano(a: Archivo) {
 function comentarioDeFuncion(a: Archivo) {
   const ts = CODIGO_TS.test(a.ruta) && !a.ruta.endsWith(".d.ts");
   if (!ts && !SQL.test(a.ruta)) return [];
-  const declaracion = ts
-    ? /^(?:export\s+)?(?:async\s+)?function\s*\*?\s*\w+|^(?:export\s+)?const\s+\w+(?:\s*:[^=]+)?\s*=\s*(?:async\s+)?(?:\([^)]*\)?|\w+)\s*(?::[^=]+)?=>|^(?:export\s+)?const\s+\w+\s*=\s*(?:async\s+)?\(\s*$/
-    : /^\s*create\s+(?:or\s+replace\s+)?function\b/i;
+  const declaracion = ts ? FUNCION_TS : /^\s*create\s+(?:or\s+replace\s+)?function\b/i;
   const comentario = ts ? /^\s*(?:\/\/|\/\*\*.*\*\/\s*$)/ : /^\s*--/;
   const sigue = ts ? /^\s*(?:\/\/|\*|\/\*)/ : /^\s*--/;
   const lineas = a.contenido.split("\n");
@@ -87,12 +89,35 @@ export function conjuntosDeClases(a: Archivo) {
 
 /** El mismo conjunto de 4 o más clases en tres archivos o más (la regla pide extraerlo antes de la tercera copia). */
 export function clasesRepetidas(a: Archivo, indice: Map<string, Set<string>>) {
-  return conjuntosDeClases(a).flatMap(({ clave, linea, texto }) => {
+  return conjuntosDeClases(a).flatMap(({ clave, linea }) => {
     const archivos = indice.get(clave);
     if (!archivos || archivos.size < 3) return [];
     const otros = [...archivos].filter((r) => r !== a.ruta).slice(0, 3).join(", ");
     return [{ regla: "clases-repetidas", archivo: a.ruta, linea, texto: clave,
       mensaje: `Estas clases ya están en ${archivos.size - 1} archivos más (${otros}): extráelas a un componente, una @utility o una constante de lib/.` }];
+  });
+}
+
+/** Funciones de nivel superior de un archivo de TypeScript, con su línea y si se exportan. */
+export function funcionesDeclaradas(a: Archivo) {
+  if (!CODIGO_TS.test(a.ruta) || a.ruta.endsWith(".d.ts")) return [];
+  return a.contenido.split("\n").flatMap((texto, i) => {
+    const m = texto.match(FUNCION_TS);
+    const nombre = m && (m[2] ?? m[4] ?? m[6]);
+    return nombre && !NOMBRES_DEL_FRAMEWORK.has(nombre)
+      ? [{ nombre, exportada: Boolean(m[1] ?? m[3] ?? m[5]), linea: i + 1, texto: texto.trim() }] : [];
+  });
+}
+
+/** Paquete al que pertenece una ruta: las funciones solo se comparan dentro del mismo. */
+export const paqueteDe = (ruta: string) => ruta.split("/")[0];
+
+/** Funciones con el nombre de otra que ya se exporta desde otro archivo del mismo paquete. */
+export function funcionesRepetidas(a: Archivo, exportadas: Map<string, Set<string>>) {
+  return funcionesDeclaradas(a).flatMap(({ nombre, linea, texto }) => {
+    const otros = [...(exportadas.get(`${paqueteDe(a.ruta)}:${nombre}`) ?? [])].filter((r) => r !== a.ruta);
+    return otros.length ? [{ regla: "funcion-repetida", archivo: a.ruta, linea, texto,
+      mensaje: `Ya hay una función «${nombre}» exportada en ${otros.slice(0, 3).join(", ")}: impórtala o, si hace otra cosa, ponle un nombre que lo diga.` }] : [];
   });
 }
 

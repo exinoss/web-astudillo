@@ -12,7 +12,7 @@ import { renderParticipation } from "./participacion";
 import { renderProposals } from "./propuestas";
 import { publish, renderPublications } from "./publicaciones";
 import { renderTexts } from "./textos";
-import { can, notify, reloadDraft, reloadPending, state } from "./ui";
+import { can, cargar, reloadDraft, reloadPending, state } from "./ui";
 import { renderUsers } from "./usuarios";
 
 const TABS: Record<string, { title: string; render: (section: HTMLElement) => unknown }> = {
@@ -50,8 +50,7 @@ function open(id: string, focus = false) {
   document.querySelector("#panel-titulo")!.textContent = TABS[id].title;
   document.title = `${TABS[id].title} · Panel de administración · Carlos Astudillo`;
   if (location.hash !== `#${id}`) history.replaceState(null, "", `#${id}`);
-  void Promise.resolve(TABS[id].render(document.querySelector<HTMLElement>(`#seccion-${id}`)!))
-    .catch((error) => notify(error instanceof Error ? error.message : "No se pudo cargar la sección.", true));
+  cargar(TABS[id].render(document.querySelector<HTMLElement>(`#seccion-${id}`)!), "No se pudo cargar la sección.");
 }
 
 function bindTabs() {

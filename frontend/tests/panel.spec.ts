@@ -451,3 +451,24 @@ test('el enlace del video se ve verde si es válido, rojo si no y normal si est�
   await enlace.fill('');
   await borde('rgb(5, 73, 148)');
 });
+
+test('si falla la red al filtrar usuarios o al paginar publicaciones, el panel lo avisa', async ({ page }) => {
+  const data = panelData('admin');
+  data.publications = Array.from({ length: 12 }, (_, i) => ({ id: i + 1, estado: 'publicada', creadoEn: '2026-11-01T10:00:00.000Z', iniciadoEn: null, terminadoEn: null, autor: 'Ana', detalle: null }));
+  await mockPanelApi(page, data);
+  const estado = page.locator('#panel-estado');
+
+  await page.goto('/cuenta/panel/#usuarios');
+  const usuarios = page.locator('#seccion-usuarios');
+  await expect(usuarios.locator('#usuarios-total')).toHaveText('23 cuentas');
+  await page.route(/\/api\/admin\/usuarios\?/, (r) => r.abort());
+  await usuarios.locator('#usuarios-rol').selectOption('admin');
+  await expect(estado).toHaveText('No se pudo conectar. Inténtalo de nuevo.');
+
+  await page.goto('/cuenta/panel/#publicaciones');
+  const publicaciones = page.locator('#seccion-publicaciones');
+  await expect(publicaciones.locator('#historial')).toContainText('#12');
+  await page.route(/\/api\/admin\/publicaciones\?pagina=/, (r) => r.abort());
+  await publicaciones.getByRole('button', { name: 'Página 2' }).click();
+  await expect(estado).toHaveText('No se pudo conectar. Inténtalo de nuevo.');
+});
