@@ -1,8 +1,6 @@
-import { expect, test, type Page } from '@playwright/test';
-import { servirFotos } from './support/fotos';
+import { expect, test, type Page } from './support/prueba';
 import { mockPanelApi, panelData } from './support/panel-api';
 
-test.beforeEach(({ page }) => servirFotos(page));
 
 const abrirParroquias = async (page: Page, ...nombres: string[]) => {
   await page.getByRole('heading', { name: 'Parroquias' }).click();

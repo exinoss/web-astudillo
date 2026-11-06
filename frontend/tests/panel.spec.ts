@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, test, type Locator } from './support/prueba';
 import { CODIGO_PANEL, CONTRASENIA_PANEL, mockPanelApi, panelData } from './support/panel-api';
 
 test('un visitante sin permiso no ve el panel ni el enlace en su cuenta', async ({ page }) => {

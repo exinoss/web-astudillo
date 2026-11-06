@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './support/prueba';
 import sharp from 'sharp';
 import { mockPanelApi, panelData } from './support/panel-api';
 

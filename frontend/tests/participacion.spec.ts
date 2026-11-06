@@ -1,5 +1,5 @@
 import sharp from 'sharp';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Page } from './support/prueba';
 import { VERSION_LEGAL } from '../src/lib/legal/legal';
 
 // API simulada de participación: sesión, alertas, sugerencias y chat en memoria.

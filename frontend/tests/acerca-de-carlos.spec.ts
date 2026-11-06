@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test';
-import { servirFotos } from './support/fotos';
+import { expect, test } from './support/prueba';
 import { mockPanelApi, panelData } from './support/panel-api';
 
 const ALCALDE = '/acerca-de-nosotros/por-que-quiero-ser-alcalde/';
@@ -7,7 +6,6 @@ const CONOCE = '/acerca-de-nosotros/conoce-mas/';
 const MODES = ['grayscale', 'high-contrast', 'negative-contrast', 'light-bg', 'underline-links', 'readable-font', 'reduce-motion'];
 
 test.beforeEach(async ({ page }) => {
-  await servirFotos(page);
   await page.route(/facebook\.com|tiktok\.com|youtube/, route => route.fulfill({ contentType: 'text/html', body: '<p>video</p>' }));
 });
 

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './support/prueba';
 import { mockPanelApi, panelData } from './support/panel-api';
 
 test('la vista previa espera a que el borrador esté listo y abre la página pedida', async ({ page }) => {
