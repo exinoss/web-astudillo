@@ -23,7 +23,7 @@ Lo que exige criterio (si un texto revela la seguridad, si el resultado se ve id
 | Un agente edita un archivo (hook `PostToolUse`) | Reglas sobre ese archivo; el fallo le llega al agente al instante | 0,4 s |
 | Un agente termina un turno (hook `Stop`) | Solo los archivos cambiados desde la última verificación: reglas y `check` del paquete tocado | 0,4 s sin cambios; hasta ~15 s |
 | `git commit` (hook `pre-commit` en `.githooks/`) | Reglas sobre lo preparado | 1 s |
-| `git push` (hook `pre-push` en `.githooks/`) | Las pruebas de Playwright de lo que se sube respecto a `main` (`herramientas/reglas/pruebas.ts`) | ~35–60 s, una vez por push |
+| `git push` (hook `pre-push` en `.githooks/`) | Las pruebas de Playwright de lo nuevo (`herramientas/reglas/pruebas.ts`): en una rama nueva, respecto a `main`; en una ya subida, desde su último push | ~20–25 s por zona tocada (50 s con cuatro); 0,2 s sin cambios nuevos |
 | Integración continua | Las 148 pruebas, en cada PR y en `main` | sin cambios |
 | A mano | `bun run reglas` en `frontend/` o `backend/` | 0,5 s |
 
@@ -33,7 +33,7 @@ Los hooks de los agentes están en `herramientas/reglas/agentes/` y los usan Cla
 
 El hook `Stop` no repite la verificación si los archivos no cambiaron desde la última que pasó, la hiciera Claude Code o Codex. Si falla, el agente debe corregirlo; tras tres intentos fallidos deja terminar con un aviso visible para el usuario.
 
-`bun install` activa el `pre-commit` y el `pre-push` (`git config core.hooksPath .githooks`, en el script `prepare`). El `pre-push` prueba los archivos tal como están en disco: si hay cambios sin commit, avisa.
+`bun install` activa el `pre-commit` y el `pre-push` (`git config core.hooksPath .githooks`, en el script `prepare`). El `pre-push` prueba los archivos tal como están en disco: si hay cambios sin commit, avisa. Sin ellos, recuerda qué pruebas pasaron con ese mismo código (por su árbol de Git) y no las repite, por ejemplo al reintentar un push que falló por la red. Usar más procesos en paralelo no lo acelera: con 8 el equipo se satura, tarda más y hay pruebas que fallan al azar.
 
 ## Excepciones
 
