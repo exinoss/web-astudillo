@@ -6,6 +6,8 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-07
+
 ### Added
 
 - Panel, video de «Acerca de Carlos»: al guardar, si Facebook, YouTube o Vimeo no permiten mostrar el video en otros sitios (por la música, porque su dueño lo desactivó o porque es privado), no se guarda y el aviso explica qué hacer junto al enlace. Con un enlace de TikTok se recuerda que, si usa música con derechos, puede verse sin sonido.
