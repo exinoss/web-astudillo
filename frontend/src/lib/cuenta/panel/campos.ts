@@ -17,11 +17,11 @@ const UPLOAD = `${GHOST} cursor-pointer focus-within:outline-3 focus-within:outl
 export const thumb = (foto: Photo) => uploadedUrl(foto, foto.anchos[0]);
 export const upload = (id: string, label: string, multiple = false) =>
   `<label class="${UPLOAD}">${iconSvg("upload", 17)} ${esc(label)}<input id="${id}" type="file" accept="${ACEPTA_FOTOS}" ${multiple ? "multiple" : ""} class="sr-only" /></label>`;
-/** Con `minimo`, el botón de quitar se desactiva cuando la lista no puede quedar más corta. */
-export const moveButtons = (kind: string, i: number, total: number, name: string, minimo = 0) => `
-  <button type="button" class="${ICON_BUTTON}" data-move="${kind}" data-index="${i}" data-step="-1" aria-label="Subir ${name}" ${i === 0 ? "disabled" : ""}>${iconSvg("up", 18)}</button>
-  <button type="button" class="${ICON_BUTTON}" data-move="${kind}" data-index="${i}" data-step="1" aria-label="Bajar ${name}" ${i === total - 1 ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>
-  <button type="button" class="${ICON_BUTTON} text-error" data-remove="${kind}" data-index="${i}" aria-label="Quitar ${name}" ${total <= minimo ? "disabled" : ""}>${iconSvg("trash", 18)}</button>`;
+/** Con `minimo`, quitar se desactiva si la lista no puede acortarse; los `fijos` primeros no se mueven ni se quitan. */
+export const moveButtons = (kind: string, i: number, total: number, name: string, minimo = 0, fijos = 0) => `
+  <button type="button" class="${ICON_BUTTON}" data-move="${kind}" data-index="${i}" data-step="-1" aria-label="Subir ${name}" ${i <= fijos ? "disabled" : ""}>${iconSvg("up", 18)}</button>
+  <button type="button" class="${ICON_BUTTON}" data-move="${kind}" data-index="${i}" data-step="1" aria-label="Bajar ${name}" ${i === total - 1 || i < fijos ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>
+  ${i < fijos ? "" : `<button type="button" class="${ICON_BUTTON} text-error" data-remove="${kind}" data-index="${i}" aria-label="Quitar ${name}" ${total <= minimo ? "disabled" : ""}>${iconSvg("trash", 18)}</button>`}`;
 
 /** Campo de texto con etiqueta; `area` lo convierte en textarea. Todos los valores se escapan. */
 export function field(o: { id: string; label: string; value: string; max: number; area?: boolean; hint?: string; name?: string; required?: boolean }) {

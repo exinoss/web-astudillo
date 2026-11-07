@@ -72,6 +72,19 @@ test('un banner subido convive con el original, lleva su foto para celular y rep
   expect(n).toBe(1);
 });
 
+test('el primer banner no se puede quitar ni mover, y el borrador no cambia', async () => {
+  const foto = await photo('#d35400');
+  const portada = { imagen: { original: 'portada' }, celular: null, alt: 'Banner original' };
+  const subido = { imagen: { idMedio: foto.idMedio }, celular: null, alt: 'Banner subido' };
+  const antes = (await draft()).inicio.principal.banners;
+  for (const banners of [[subido], [subido, portada]]) {
+    const reply = await call(PRINCIPAL, 'PUT', { banners, retrato, version: await version('principal') }, cookies.coadmin);
+    expect(reply.status).toBe(422);
+    expect((await reply.json()).error).toBe('El primer banner no se puede quitar ni mover.');
+  }
+  expect((await draft()).inicio.principal.banners).toEqual(antes);
+});
+
 test('dos personas guardando a la vez el mismo carrusel: una gana y la otra recibe 409 sin pisarla', async () => {
   const loaded = await version('piezas');
   const save = (alt: string) => call(PIEZAS, 'PUT', { piezas: [{ imagen: { original: 'pieza-ferrocarril' }, alt }], version: loaded }, cookies.coadmin);
@@ -144,14 +157,16 @@ test('valida descripciones, fotos, cantidades, imágenes del sitio y permisos', 
     (await call(PRINCIPAL, 'PUT', { banners: [{ imagen: { original: 'portada' }, celular: null, alt: 'Banner' }], retrato, version: await version('principal'), ...body }, cookies[who])).status;
   const pieces = async (piezas: object[]) => (await call(PIEZAS, 'PUT', { piezas, version: await version('piezas') }, cookies.coadmin)).status;
   const banner = (extra: object = {}) => ({ imagen: { idMedio: foto.idMedio }, celular: null, alt: 'Banner', ...extra });
+  const portada = banner({ imagen: { original: 'portada' } });
+  expect(await main({ banners: [portada, banner()] })).toBe(200);
   expect(await main({ banners: [] })).toBe(422);
-  expect(await main({ banners: Array.from({ length: 6 }, () => banner()) })).toBe(422);
-  expect(await main({ banners: [banner({ alt: '   ' })] })).toBe(422);
-  expect(await main({ banners: [banner({ alt: '<b>Banner</b>' })] })).toBe(422);
-  expect(await main({ banners: [banner({ imagen: { idMedio: 999999 } })] })).toBe(422);
-  expect(await main({ banners: [banner({ celular: 999999 })] })).toBe(422);
-  expect(await main({ banners: [banner({ imagen: { original: 'otra' } })] })).toBe(422);
-  expect(await main({ banners: [banner({ imagen: { original: 'portada', idMedio: foto.idMedio } })] })).toBe(422);
+  expect(await main({ banners: [portada, ...Array.from({ length: 5 }, () => banner())] })).toBe(422);
+  expect(await main({ banners: [portada, banner({ alt: '   ' })] })).toBe(422);
+  expect(await main({ banners: [portada, banner({ alt: '<b>Banner</b>' })] })).toBe(422);
+  expect(await main({ banners: [portada, banner({ imagen: { idMedio: 999999 } })] })).toBe(422);
+  expect(await main({ banners: [portada, banner({ celular: 999999 })] })).toBe(422);
+  expect(await main({ banners: [portada, banner({ imagen: { original: 'otra' } })] })).toBe(422);
+  expect(await main({ banners: [portada, banner({ imagen: { original: 'portada', idMedio: foto.idMedio } })] })).toBe(422);
   expect(await main({ retrato: { imagen: { original: 'portada' }, alt: '' } })).toBe(422);
   expect(await main({}, 'votante')).toBe(403);
   expect(await pieces([])).toBe(422);
