@@ -51,7 +51,7 @@ const tarjetaBanner = (b: Principal["banners"][number], i: number, total: number
   <li class="flex flex-col gap-3 rounded-[3px] border border-base-300 p-3">
     <div class="flex items-center justify-between gap-2">
       <strong class="text-[0.85rem]">Banner ${i + 1}</strong>
-      <span class="flex">${moveButtons("banner", i, total, `banner ${i + 1}`, 1)}</span>
+      <span class="flex">${moveButtons("banner", i, total, `banner ${i + 1}`, 0, 1)}</span>
     </div>
     <div class="grid grid-cols-[minmax(0,260px)_minmax(0,1fr)] items-start gap-4 max-tablet:grid-cols-1">
       <img src="${miniatura(b.imagen)}" alt="" class="aspect-[1947/741] w-full rounded-[3px] bg-base-200 object-cover" />

@@ -6,6 +6,10 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+### Changed
+
+- Modo edición, carrusel principal: el primer banner queda fijo, siempre en el primer lugar y sin opción de quitarlo. Los demás banners se pueden mover y quitar como antes.
+
 ## [1.3.0] - 2026-11-07
 
 ### Added

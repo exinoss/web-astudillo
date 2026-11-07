@@ -20,6 +20,7 @@ export type HomeTeamInput = HomeCarouselsStored['equipo'];
 /** Solo trae imágenes que vienen con el sitio: vale tal cual como contenido guardado y como publicado. */
 export const HOME_CAROUSELS_SEED = initial.inicio as Pick<HomeCarousels & HomeCarouselsStored, 'principal' | 'piezas'>;
 
+const BANNER_FIJO = 'portada';
 const ids = (image: HomeImageStored) => ('idMedio' in image ? [image.idMedio] : []);
 const mainIds = ({ banners, retrato }: HomeMainInput) => [...banners.flatMap(b => [...ids(b.imagen), ...(b.celular ? [b.celular] : [])]), ...ids(retrato.imagen)];
 const piecesIds = ({ piezas }: HomePiecesInput) => piezas.flatMap(p => ids(p.imagen));
@@ -70,6 +71,8 @@ export function createHomeCarousels(sql: SQL, authorization: Authorization) {
   return {
     async saveMain(access: string | undefined, input: HomeMainInput, version: string | null) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
+      const primero = input.banners[0].imagen;
+      if (!('original' in primero && primero.original === BANNER_FIJO)) throw new ApiError(422, 'El primer banner no se puede quitar ni mover.');
       const content: HomeMainInput = {
         banners: input.banners.map((b, i) => ({ imagen: image(b.imagen), celular: b.celular, alt: alt(b.alt, `Banner ${i + 1}`) })),
         retrato: { imagen: image(input.retrato.imagen), alt: alt(input.retrato.alt, 'Retrato') },

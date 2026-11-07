@@ -41,10 +41,15 @@ test('añade un banner con imagen para celular, lo guarda una sola vez y la port
   await expect(dialogo).toBeVisible();
   const guardar = dialogo.getByRole('button', { name: 'Guardar borrador' });
   await expect(guardar).toBeDisabled();
-  await expect(dialogo.getByRole('button', { name: 'Quitar banner 1' })).toBeDisabled();
+  await expect(dialogo.getByRole('button', { name: 'Quitar banner 1' })).toHaveCount(0);
 
   await dialogo.locator('#banners-nuevos').setInputFiles(await archivo('banner.png'));
   await expect(dialogo.getByText('Banner 2')).toBeVisible();
+  // El primero queda fijo: ni él baja ni el segundo sube a su lugar.
+  await expect(dialogo.getByRole('button', { name: 'Quitar banner 1' })).toHaveCount(0);
+  await expect(dialogo.getByRole('button', { name: 'Bajar banner 1' })).toBeDisabled();
+  await expect(dialogo.getByRole('button', { name: 'Subir banner 2' })).toBeDisabled();
+  await expect(dialogo.getByRole('button', { name: 'Quitar banner 2' })).toBeEnabled();
   await dialogo.locator('#banner-celular-1').setInputFiles(await archivo('celular.png', 1520, 1140));
   await expect(dialogo.locator('[data-quitar-celular="1"]')).toBeVisible();
   // Sin descripción no se guarda: el foco va al campo que falta.
