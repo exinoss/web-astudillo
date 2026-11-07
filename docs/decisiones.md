@@ -34,6 +34,9 @@ Por qué: quien encuentre la sesión de un admin abierta en un equipo no debe po
 **D-022 · 2026-11-05 · En «Mi equipo», cada persona ocupa un puesto fijo de una lista cerrada: prefecto, 3 concejales urbanos y sus 3 suplentes, y 2 concejales rurales y sus 2 suplentes. El cargo visible sale del puesto, en mayúsculas y en masculino genérico, como la pancarta («1er CONCEJAL URBANO»); no se escribe a mano.**
 Por qué: el cargo en texto libre salía con faltas («Consejal»), sin orden y sin agrupar. Con el puesto, la página agrupa con franjas, coloca a cada suplente bajo su principal y el backend rechaza puestos repetidos o inexistentes. Solo el prefecto lleva presentación y trayectoria. No hay migración de datos: los registros con cargo libre se borran desde el panel antes de desplegar. Detalle: `backend/src/contracts/equipo.ts` y `design/propuestas/mi-equipo-grupos.md` (fuera de Git).
 
+**D-024 · 2026-11-07 · Avisos para quien administra: campana con todo lo pendiente (`GET /api/admin/avisos`), una notificación global única (`lib/comun/notificacion.ts`) y bloqueo de la publicación mientras un video del borrador no se pueda ver en el sitio.**
+Por qué: un video publicado puede dejar de verse después (música con derechos, privado, borrado) y nadie se enteraba. Los textos de cada aviso los arma el backend (contrato `contracts/avisos.ts`), así un tipo nuevo de aviso no toca el frontend. La campana se actualiza tras las acciones propias, al volver a la pestaña y cada minuto, sin WebSocket; la comprobación de los videos publicados se recuerda una hora mientras no cambien los enlaces.
+
 ## Diseño y fotos
 
 **D-008 · 2026-10-23 · Las fotos de Biografía se muestran completas dentro de una caja de 440 × 440 px y nunca más grandes que su archivo.**

@@ -4,7 +4,7 @@ import {
 } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { ESTADOS, TIPOS_ALERTA } from "../../../../lib/ciudadania/participacion/tipos";
-import { busy, can, card, cargar, esc, iconSvg, notify, PILL, state } from "../ui";
+import { busy, can, card, cargar, confirmarCambio, esc, iconSvg, PILL, state } from "../ui";
 
 const view = { tipo: "alertas" as ParticipationKind, estado: "" as ParticipationState | "", pagina: 1 };
 const STATES = Object.keys(ESTADOS) as ParticipationState[];
@@ -50,6 +50,11 @@ function suggestionItem(s: ReviewedSuggestion) {
   </li>`;
 }
 
+/** Deja elegidos el tipo y el estado de un aviso de la campana (se ignora un estado que no existe). */
+export function filtrarParticipacion(tipo: ParticipationKind, estado: string) {
+  if (STATES.includes(estado as ParticipationState)) Object.assign(view, { tipo, estado, pagina: 1 });
+}
+
 export async function renderParticipation(section: HTMLElement) {
   const data = await adminApi.participation<ReviewedAlert | ReviewedSuggestion>(view.tipo, view.pagina, view.estado || undefined);
   const counts = data.conteo[view.tipo];
@@ -90,7 +95,7 @@ function bind(section: HTMLElement, data: ParticipationPage<unknown>) {
     button.addEventListener("click", () => void busy(button, async () => {
       await adminApi.changeParticipationState(view.tipo, Number(control.dataset.estadoDe), select.value as ParticipationState, before);
       await renderParticipation(section);
-      notify(`Estado actualizado a «${ESTADOS[select.value as ParticipationState].nombre}».`);
+      confirmarCambio({ tipo: "exito", titulo: `Estado actualizado a «${ESTADOS[select.value as ParticipationState].nombre}»` });
     }));
   });
   const filtered = view.estado ? data.conteo[view.tipo][view.estado] : STATES.reduce((sum, s) => sum + data.conteo[view.tipo][s], 0);

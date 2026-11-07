@@ -86,7 +86,7 @@ test('cambiar un rol pide la contraseña; una incorrecta o cancelar no cambian n
   await page.locator('#confirmar-valor').fill(CONTRASENIA_PANEL);
   await dialogo.getByRole('button', { name: 'Cambiar rol' }).click();
   await expect(dialogo).toBeHidden();
-  await expect(page.locator('#panel-estado')).toHaveText('Rol actualizado.');
+  await expect(page.getByRole('status').filter({ hasText: 'Rol actualizado' })).toBeVisible();
   expect(data.users.find(u => u.id === 5)!.rol).toBe('coadmin');
 });
 
@@ -171,7 +171,7 @@ test('Publicar y Guardar borrador solo se encienden cuando hay cambios', async (
   await expect(guardar).toBeDisabled();
   await page.locator('#propuesta-nombre').fill('Agua potable para todos');
   await guardar.click();
-  await expect(page.locator('#panel-estado')).toContainText('guardado');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   await expect(publicar).toBeEnabled();
   await expect(publicar).toHaveCSS('background-color', AZUL);
   await expect(page.locator('#seccion-propuestas').getByRole('button', { name: 'Guardar borrador' })).toBeDisabled();
@@ -225,7 +225,7 @@ test('Guardar borrador sigue bloqueado mientras se guarda, aunque se siga escrib
   await page.reload();
   await nombre.fill('Agua potable para todos');
   await guardar.click();
-  await expect(page.locator('#panel-estado')).toContainText('guardado');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   await expect(guardar).toBeDisabled();
   expect(puts).toBe(3);
 });
@@ -259,7 +259,7 @@ for (const { seccion, api, campo } of [
     await expect(guardar).toBeDisabled();
     await guardar.click({ force: true });
     release();
-    await expect(page.locator('#panel-estado')).toContainText('guardad');
+    await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
     await expect(guardar).toBeDisabled();
     expect(puts).toBe(1);
   });
@@ -284,7 +284,7 @@ test('participación: el estado se cambia y un cambio ajeno no se pisa', async (
   await page.reload();
   await section.getByLabel('Estado', { exact: true }).selectOption('recibida');
   await section.getByRole('button', { name: 'Guardar' }).click();
-  await expect(page.locator('#panel-estado')).toContainText('Estado actualizado a «Recibida»');
+  await expect(page.getByRole('status').filter({ hasText: 'Estado actualizado a «Recibida»' })).toBeVisible();
   expect(data.alertas[0].estado).toBe('recibida');
 });
 
@@ -299,7 +299,7 @@ test('redes sociales: WhatsApp se escribe como número y se guarda en formato in
   await expect(guardar).toBeDisabled();
   await page.locator('#red-whatsapp').fill('098 565 8595');
   await guardar.click();
-  await expect(page.locator('#panel-estado')).toContainText('Enlaces guardados');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.draft.textos['enlace.whatsapp']).toBe('593985658595');
   expect(data.draft.textos['enlace.facebook']).toBe(facebook);
   await expect(page.locator('#red-whatsapp')).toHaveValue('+593985658595');
@@ -317,7 +317,7 @@ test('chat: se añade una pregunta desde «sin respuesta» y se guarda', async (
   await page.locator('#faq-claves-1').fill('caravana, recorrido');
   await page.locator('#faq-respuesta-1').fill('La agenda se publica en Facebook cada semana.');
   await guardar.click();
-  await expect(page.locator('#panel-estado')).toContainText('Preguntas del chat guardadas');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.draft.chat).toHaveLength(2);
   expect(data.draft.chat[1]).toMatchObject({ pregunta: '¿Cuándo hay caravana?', palabrasClave: 'caravana, recorrido', destacada: false });
   await section.getByRole('button', { name: 'Descartar' }).click();
@@ -337,7 +337,7 @@ test('chat: el enlace se elige por el nombre de la página y se ve como quedará
   await page.locator('#faq-enlace-texto-0').fill('Ver la propuesta de agua');
   await expect(page.locator('#seccion-chat [data-vista-chat]').first().getByRole('link')).toHaveText('Ver la propuesta de agua');
   await page.locator('#seccion-chat').getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(page.locator('#panel-estado')).toContainText('Preguntas del chat guardadas');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.draft.chat[0]).toMatchObject({ enlaceRuta: '/propuestas/agua-potable/', enlaceTexto: 'Ver la propuesta de agua' });
 
   await pagina.selectOption('');
@@ -352,7 +352,7 @@ test('redes: Instagram se añade desde el panel y vacío no da error', async ({ 
   await expect(instagram).toHaveValue('');
   await instagram.fill('https://www.instagram.com/carlosastudillo/');
   await page.locator('#redes-form').getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(page.locator('#panel-estado')).toContainText('Enlaces guardados');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.draft.textos['enlace.instagram']).toBe('https://www.instagram.com/carlosastudillo/');
 });
 
@@ -373,7 +373,7 @@ test('obras: la foto subida se ve al momento y se guarda con su pie', async ({ p
   await expect.poll(() => section.locator('img').nth(1).evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
   await page.locator('#foto-pie-1').fill('Zanja abierta');
   await section.getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(page.locator('#panel-estado')).toContainText('guardado');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.draft.obras[0].fotos.map(f => [f.idMedio, f.pie])).toEqual([[2, 'Tubería instalada'], [90, 'Zanja abierta']]);
 });
 
@@ -471,4 +471,36 @@ test('si falla la red al filtrar usuarios o al paginar publicaciones, el panel l
   await page.route(/\/api\/admin\/publicaciones\?pagina=/, (r) => r.abort());
   await publicaciones.getByRole('button', { name: 'Página 2' }).click();
   await expect(estado).toHaveText('No se pudo conectar. Inténtalo de nuevo.');
+});
+
+test('si la plataforma no deja mostrar el video, no se guarda y el aviso aparece junto al enlace', async ({ page }) => {
+  await mockPanelApi(page, panelData('coadmin'));
+  const aviso = 'Facebook no permite mostrar este video en otros sitios, normalmente por la música. Elige otro, quítale la música o súbelo a YouTube.';
+  let intentos = 0;
+  await page.route(/\/api\/admin\/contenido\/acerca-de-carlos\//, (r) => {
+    if (r.request().method() !== 'PUT') return r.fallback();
+    intentos++;
+    return r.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ error: aviso }) });
+  });
+  await page.goto('/cuenta/panel/#acerca-de-carlos');
+  await page.locator('[data-acerca-seccion="video"]').first().click();
+  await page.locator('#video-titulo').fill('Carlos en el barrio');
+  const enlace = page.locator('#video-enlace');
+  await enlace.fill('https://www.facebook.com/reel/4119395378341161/');
+  await expect(page.locator('#video-detectado')).toContainText('Enlace válido · Facebook');
+  await expect(page.locator('#video-nota')).toBeHidden();
+
+  // Se guarda desde otra sección: el panel vuelve a «Video» para mostrar el aviso.
+  await page.locator('[data-acerca-seccion="tarjetas"]').first().click();
+  await page.getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.locator('#panel-estado')).toHaveText('Revisa el enlace del video.');
+  await expect(page.locator('[data-acerca-seccion="video"]').first()).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('#video-detectado')).toHaveText(aviso);
+  await expect(enlace).toHaveAttribute('aria-invalid', 'true');
+  expect(intentos).toBe(1);
+
+  await enlace.fill('https://www.tiktok.com/@carlosastudillo01/video/7400000000000000000');
+  await expect(enlace).not.toHaveAttribute('aria-invalid', 'true');
+  await expect(page.locator('#video-detectado')).toContainText('Enlace válido · TikTok');
+  await expect(page.locator('#video-nota')).toHaveText('Si usa música con derechos, en el sitio puede verse sin sonido.');
 });

@@ -7,11 +7,13 @@ import { plainText } from '../../validation/texto';
 import { CONTENT_CONFLICT } from '../conflictos';
 import type { BiographyItem, ChatAnswer, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
 import { PARROQUIAS } from '../../contracts/parroquias';
+import { videoSource } from '../../contracts/video';
 import { listAboutCarlosPages } from './about-carlos';
 import { emptyMyTeam, listMyTeam } from './my-team';
 import { HOME_CAROUSELS_SEED, listHomeCarousels } from './home-carousels';
 import { toPhoto } from './media';
 import { linkValue, sitePath, year } from './validation';
+import { videoInsertable } from './video-cover';
 
 export const PUBLICATIONS_PAGE_SIZE = 10;
 const KEY = /^[a-z0-9]+([.-][a-z0-9]+)*$/;
@@ -39,7 +41,8 @@ export interface WorkInput {
   fotos: { idMedio: number; pie: string }[];
 }
 
-export function createContent(sql: SQL, authorization: Authorization) {
+/** Borrador, publicación y textos del sitio; `checkVideo` permite simular las plataformas de video en las pruebas. */
+export function createContent(sql: SQL, authorization: Authorization, checkVideo = videoInsertable) {
   /** Lee el borrador actual completo, con la misma forma que se congela al publicar. */
   async function snapshot(): Promise<Snapshot> {
     // En una transacción REPEATABLE READ las ocho lecturas ven el mismo instante; sueltas, dos guardados
@@ -208,6 +211,14 @@ export function createContent(sql: SQL, authorization: Authorization) {
         if (last.estado === 'publicada') throw new ApiError(409, 'No hay cambios para publicar');
         return { id: last.id_publicacion, estado: last.estado };
       }
+      // Mientras un video del borrador no se pueda ver en el sitio, no se publica nada (al guardar ya se comprueba).
+      const videos = Object.entries(current.acercaDeCarlos ?? {}).flatMap(([slug, page]) => {
+        const source = page.video && videoSource(page.video.enlace);
+        return source ? [{ slug, source }] : [];
+      });
+      const checks = await Promise.all(videos.map(v => checkVideo(v.source)));
+      const blocked = videos.find((_, i) => checks[i]);
+      if (blocked) throw new ApiError(422, `No se publicó: el video de «${PAGE_NAMES[blocked.slug] ?? blocked.slug}» no se puede ver en el sitio. Cámbialo y vuelve a publicar.`);
       const [row] = await callPg<{ id_publicacion: number; estado: string }>(sql, 'publicationCreate', [actor.id_usuario, current]);
       if (!row) throw new ApiError(403, 'Permiso insuficiente');
       return { id: row.id_publicacion, estado: row.estado };
@@ -244,7 +255,7 @@ export function createContent(sql: SQL, authorization: Authorization) {
 const stable = (value: unknown): string => JSON.stringify(value, (_, v) =>
   v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b))) : v);
 
-const PAGE_NAMES: Record<string, string> = {
+export const PAGE_NAMES: Record<string, string> = {
   'por-que-quiero-ser-alcalde': 'Por qué quiero ser alcalde', 'conoce-mas': 'Conoce más sobre mí',
 };
 const EMPTY_PAGE = { tarjetas: [], video: null, retrato: null, entrevista: [], galeria: [] };

@@ -86,7 +86,18 @@ export function videoSource(value: string): VideoSource | null {
   return null;
 }
 
-const SHORT_LINK = 'Es un enlace corto para compartir y no se puede reproducir en la página. Ábrelo en el navegador y copia el enlace de la barra de direcciones';
+/** Por qué una plataforma no deja mostrar un video en el sitio. */
+export type MotivoNoInsertable = 'bloqueado' | 'no-existe';
+
+/** Aviso para la API y el panel cuando la plataforma no deja mostrar el video en el sitio. */
+export function avisoNoInsertable(provider: VideoProvider, motivo: MotivoNoInsertable) {
+  if (motivo === 'no-existe') return 'Este video no existe o es privado. Revisa el enlace o hazlo público.';
+  if (provider === 'facebook') return 'Facebook no permite mostrar este video en otros sitios, normalmente por la música. Elige otro, quítale la música o súbelo a YouTube.';
+  if (provider === 'youtube') return 'YouTube no permite mostrar este video en otros sitios porque su dueño lo desactivó. Elige otro.';
+  return 'Vimeo no permite mostrar este video en este sitio. Cambia su privacidad para permitir insertarlo o elige otro.';
+}
+
+const SHORT_LINK ='Es un enlace corto para compartir y no se puede reproducir en la página. Ábrelo en el navegador y copia el enlace de la barra de direcciones';
 
 /** Mensaje para el panel y la API cuando el enlace no es admitido; explica los enlaces cortos de compartir. */
 export function videoLinkProblem(value: string) {

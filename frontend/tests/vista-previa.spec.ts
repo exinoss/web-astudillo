@@ -62,6 +62,6 @@ test('sin cambios por publicar, la vista previa no se ofrece hasta que se guarda
   await expect(button).toBeDisabled();
   await section.getByLabel('Nombre', { exact: true }).fill('Agua potable para todos');
   await section.getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(page.locator('#panel-estado')).toContainText('guardad');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   await expect(button).toBeEnabled();
 });

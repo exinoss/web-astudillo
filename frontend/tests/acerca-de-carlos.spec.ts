@@ -141,7 +141,7 @@ test('el panel edita una tarjeta con vista previa, valida el video y guarda la p
   await expect(section.locator('#video-escenario iframe')).toHaveAttribute('src', /tiktok\.com\/player\/v1\/6718335390845095173/);
 
   await save.click();
-  await expect(page.locator('#panel-estado')).toContainText('Borrador de «Por qué quiero ser alcalde» guardado');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.savedPages.at(-1)).toMatchObject({
     slug: 'por-que-quiero-ser-alcalde',
     tarjetas: [{ idMedio: 3, titulo: 'Atender lo cotidiano', color: 'azul' }],
@@ -164,7 +164,7 @@ test('el panel de la página personal añade entrevista y exige completar los ca
   await expect(page.locator('#panel-estado')).toContainText('Completa la pregunta y la respuesta');
   await section.getByLabel('Respuesta').fill('Mi casa.');
   await section.getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(page.locator('#panel-estado')).toContainText('Borrador de «Conoce más sobre mí» guardado');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.savedPages.at(-1)).toMatchObject({ slug: 'conoce-mas', entrevista: [{ pregunta: '¿Qué significa San Lorenzo para ti?', respuesta: 'Mi casa.' }] });
 });
 
@@ -194,7 +194,7 @@ test('la portada del video se toma del video al pegar el enlace y se puede cambi
   await section.getByRole('button', { name: 'Usar la imagen del video' }).click();
   await expect(section.locator('#video-escenario img')).toHaveAttribute('src', /foto-91/);
   await section.getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(page.locator('#panel-estado')).toContainText('guardado');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.savedPages.at(-1)).toMatchObject({ video: { enlace: 'https://www.facebook.com/reel/28327883403549284/', idPortada: 91 } });
 });
 

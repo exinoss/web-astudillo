@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test';
 import initial from '../../../backend/database/contenido-inicial.json' with { type:'json' };
 import { PARROQUIAS } from '../../../backend/src/contracts/parroquias';
+import type { Aviso } from '../../../backend/src/contracts/avisos';
 
 /** Lo que el panel simulado acepta para confirmar un cambio de rol o de estado. */
 export const CONTRASENIA_PANEL = 'Ab1!xyz';
@@ -83,6 +84,9 @@ export function panelData(rol: 'admin' | 'coadmin') {
       rol: i === 0 ? 'admin' : i < 3 ? 'coadmin' : 'votante', estado: i === 5 ? 'bloqueado' : 'activo',
     })),
     publications: [] as { id: number; estado: string; creadoEn: string; iniciadoEn: null; terminadoEn: null; autor: string; detalle: null }[],
+    // Cómo termina la próxima publicación: el sitio simulado la da por terminada al instante.
+    publishResult: 'publicada' as 'publicada' | 'fallida',
+    avisos: [] as Aviso[],
     // Estados que va devolviendo la vista previa; el último se repite.
     preview: { states: ['en_cola', 'compilando', 'lista'], requests: 0, entered: false },
   };
@@ -99,11 +103,12 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
     const path = url.pathname;
     if (path === '/api/me') return json(data.profile);
     if (path === '/api/admin/contenido') return json(data.draft);
+    if (path === '/api/admin/avisos') return json({ avisos: data.avisos });
     if (path === '/api/admin/publicaciones/pendientes') return json({ cambios: data.pending });
     if (path === '/api/admin/publicaciones' && method === 'GET')
       return json({ total: data.publications.length, pagina: 1, porPagina: 10, publicaciones: data.publications });
     if (path === '/api/admin/publicaciones') {
-      data.publications.unshift({ id: data.publications.length + 1, estado: 'publicada', creadoEn: new Date().toISOString(),
+      data.publications.unshift({ id: data.publications.length + 1, estado: data.publishResult, creadoEn: new Date().toISOString(),
         iniciadoEn: null, terminadoEn: null, autor: 'Ana Torres', detalle: null });
       data.pending = [];
       return json({ id: data.publications.length });

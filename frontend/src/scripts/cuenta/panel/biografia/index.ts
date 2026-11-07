@@ -1,7 +1,7 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftBiographyItem } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
-import { ACEPTA_FOTOS, avisarVacios, busy, card, DANGER, DRAFT_PILL, esc, field, FORMATOS_FOTO, GHOST, iconSvg, isPending, notify, previewButton, reloadDraft, reloadPending, state, value, subirFotos } from "../ui";
+import { ACEPTA_FOTOS, avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DANGER, DRAFT_PILL, esc, field, FORMATOS_FOTO, GHOST, iconSvg, isPending, notify, previewButton, reloadDraft, reloadPending, state, subirFotos, value } from "../ui";
 
 const MAX_ITEMS = 30;
 const YEAR = /^\d{4}$/;
@@ -155,7 +155,7 @@ function bind(section: HTMLElement) {
       await Promise.all([reloadDraft(), reloadPending()]);
       items = null;
       renderBiography(section);
-      notify("Borrador de la biografía guardado. Publica para que se vea en el sitio.");
+      confirmarCambio(BORRADOR_GUARDADO);
     });
   });
 }

@@ -40,7 +40,7 @@ test('un coadmin edita un texto en el sitio, cancela con Escape y publica', asyn
   expect(new URL(page.url()).pathname).toBe('/');
 
   await page.getByRole('button', { name: 'Publicar' }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Publicación en cola' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Sitio publicado' })).toBeVisible();
   expect(data.publications).toHaveLength(1);
 
   // Al desactivarlo vuelve el texto publicado; el borrador sigue guardado.
@@ -85,7 +85,7 @@ test('si otra persona guardó el mismo texto antes, se avisa y no se pisa su cam
   await title.click();
   await page.keyboard.type('Mi versión.');
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('status').filter({ hasText: 'Otra persona guardó cambios' })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'Otra persona guardó cambios' })).toBeVisible();
   await expect(title).toHaveText('Tu voz cuenta.');
   expect(data.draft.textos['inicio.participa.titulo']).toBe('Texto de la otra persona.');
 });
@@ -99,7 +99,7 @@ test('pulsar «Publicar» varias veces seguidas no crea publicaciones repetidas'
   const publish = page.getByRole('button', { name: 'Publicar' });
   await publish.click();
   // El botón se bloquea mientras se envía y, sin nada pendiente, queda deshabilitado.
-  await expect(page.getByRole('status').filter({ hasText: 'Publicación en cola' })).toBeVisible();
+  await expect(page.getByRole('status').filter({ hasText: 'Sitio publicado' })).toBeVisible();
   await expect(publish).toBeDisabled();
   expect(data.publications).toHaveLength(1);
 });

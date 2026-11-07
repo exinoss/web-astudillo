@@ -1,7 +1,7 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { normalizarWhatsapp, REDES, type Red } from "../../../../lib/comun/contenido/redes";
 import { adminApi } from "../../../../lib/data/http/admin-api";
-import { busy, card, DRAFT_PILL, field, isPending, notify, reloadDraft, reloadPending, state } from "../ui";
+import { BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, field, isPending, reloadDraft, reloadPending, state } from "../ui";
 
 const RED_LIST = Object.keys(REDES) as Red[];
 const guardado = (red: Red) => state.draft!.textos[REDES[red].clave] ?? "";
@@ -40,7 +40,7 @@ export function renderSocial(container: HTMLElement) {
         await adminApi.saveText(REDES[red].clave, valores[red] || null, state.draft!.versiones.textos[REDES[red].clave] ?? null);
       await Promise.all([reloadDraft(), reloadPending()]);
       renderSocial(container);
-      notify("Enlaces guardados como borrador. Publica para que se vean en el sitio.");
+      confirmarCambio(BORRADOR_GUARDADO);
     });
   });
 }

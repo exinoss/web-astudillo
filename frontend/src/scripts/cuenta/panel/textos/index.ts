@@ -2,7 +2,7 @@ import { TEXTOS, type TextKey } from "../../../../lib/comun/contenido/textos";
 import { adminApi } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { renderSocial } from "../redes";
-import { busy, DRAFT_PILL, esc, GHOST, iconSvg, isPending, notify, PILL, reloadDraft, reloadPending, state } from "../ui";
+import { BORRADOR_GUARDADO, busy, confirmarCambio, DRAFT_PILL, esc, GHOST, iconSvg, isPending, PILL, reloadDraft, reloadPending, state } from "../ui";
 
 const PAGE_SIZE = 20;
 const filters = { q: "", lugar: "", estado: "", pagina: 1 };
@@ -73,7 +73,7 @@ function drawList(section: HTMLElement) {
       await adminApi.saveText(b.dataset.original!, null, state.draft!.versiones.textos[b.dataset.original!] ?? null);
       await Promise.all([reloadDraft(), reloadPending()]);
       drawList(section);
-      notify("El texto vuelve al original en el borrador. Publica para que se vea en el sitio.");
+      confirmarCambio(BORRADOR_GUARDADO);
     })));
   renderPagination(section.querySelector("#textos-paginas")!, { total: rows.length, pagina: filters.pagina, porPagina: PAGE_SIZE }, (p) => {
     filters.pagina = p;

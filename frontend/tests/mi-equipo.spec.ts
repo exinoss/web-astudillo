@@ -211,7 +211,7 @@ test('el panel edita el equipo: el tipo da el primer puesto libre, exige tipo y 
   await page.getByRole('button', { name: 'Quitar a esta persona' }).click();
 
   await guardar.click();
-  await expect(page.locator('#panel-estado')).toContainText('Borrador del equipo guardado');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   const sinExtras = { presentacion: '', trayectoria: [] };
   // Se envían en el orden en que se crearon; el backend las guarda en el de los puestos.
   expect(data.savedTeam.at(-1)).toEqual({ clave: 'equipo', personas: [
@@ -241,7 +241,7 @@ test('el panel edita una parroquia nunca guardada con versión nula y exige desc
   await expect(page.locator('#panel-estado')).toHaveText('Describe cada foto antes de guardar.');
   await page.getByLabel('Descripción de la foto').fill('Recorrido por el río');
   await page.getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(page.locator('#panel-estado')).toContainText('Borrador de «Calderón» guardado');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.savedTeam.at(-1)).toEqual({ clave: 'calderon', texto: 'Caminos lastrados.\n\nAgua segura.', fotos: [{ idMedio: 90, alt: 'Recorrido por el río' }] });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
 });

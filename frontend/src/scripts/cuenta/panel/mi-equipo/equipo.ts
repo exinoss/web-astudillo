@@ -3,7 +3,7 @@ import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type Photo, type TeamMemberBody } from "../../../../lib/data/http/admin-api";
 import { infoPrefecto } from "../../../../lib/mi-equipo/prefecto";
 import { silueta } from "../../../../lib/mi-equipo/silueta";
-import { avisarVacios, busy, DRAFT_PILL, esc, field, GHOST, HINT, ICON_BUTTON, iconSvg, isPending, LABEL, notify, previewButton, reloadDraft, reloadPending, selectField, state, subirFotos, thumb, upload, value } from "../ui";
+import { avisarVacios, BORRADOR_GUARDADO, busy, confirmarCambio, DRAFT_PILL, esc, field, GHOST, HINT, ICON_BUTTON, iconSvg, isPending, LABEL, notify, previewButton, reloadDraft, reloadPending, selectField, state, subirFotos, thumb, upload, value } from "../ui";
 
 // `clave` sigue a la persona aunque cambie de lugar en la lista mientras sube su foto.
 interface Persona { clave: string; puesto: Puesto | null; nombre: string; presentacion: string; trayectoria: string[]; foto: Photo | null }
@@ -175,7 +175,7 @@ export function renderTeam(body: HTMLElement, rerender: () => void) {
       personas = null;
       marcarSinTipo = false;
       rerender();
-      notify("Borrador del equipo guardado. Publica para que se vea en el sitio.");
+      confirmarCambio(BORRADOR_GUARDADO);
     });
   });
   return () => capturar(form);

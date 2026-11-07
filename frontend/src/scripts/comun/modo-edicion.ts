@@ -5,8 +5,12 @@ import type { Profile } from "../../lib/data/auth-repository";
 import { adminApi } from "../../lib/data/http/admin-api";
 import { escLines } from "../../lib/comun/html";
 import { iconSvg } from "../../lib/comun/iconos";
+import { seguirPublicacion } from "../../lib/comun/avisos";
+import { BORRADOR_GUARDADO, notificar } from "../../lib/comun/notificacion";
 
 const STORAGE = "modo-edicion";
+// Lo envían este archivo y editor-carruseles.ts al guardar en el borrador.
+const GUARDADO = "Guardado como borrador. Publica para que se vea en el sitio.";
 const BUTTON = "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] px-[18px] text-[0.82rem] font-bold whitespace-nowrap";
 const IDLE = ["outline-1", "outline-dashed", "outline-current/40", "outline-offset-[6px]", "rounded-[2px]", "cursor-text",
   "hover:outline-2", "hover:outline-current", "focus-visible:outline-2", "focus-visible:outline-current"];
@@ -78,18 +82,9 @@ async function refreshPending() {
 }
 
 
-const toast = document.createElement("p");
-toast.setAttribute("role", "status");
-toast.className = "fixed bottom-4 left-1/2 z-[960] m-0 w-max max-w-[calc(100%-32px)] -translate-x-1/2 border-l-4 border-primary bg-primary-soft px-4 py-3 text-[0.82rem] text-primary [box-shadow:0_10px_35px_#06317626] data-[error=true]:border-error data-[error=true]:bg-error-soft data-[error=true]:text-error";
-toast.hidden = true;
-let toastTimer = 0;
-
+/** Avisa con la notificación global; un guardado en el borrador usa la de «Guardado como borrador». */
 function notify(message: string, error = false) {
-  toast.textContent = message;
-  toast.dataset.error = String(error);
-  toast.hidden = false;
-  clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => { toast.hidden = true; }, 5000);
+  notificar(error ? { tipo: "error", titulo: message } : message === GUARDADO ? BORRADOR_GUARDADO : { tipo: "exito", titulo: message });
 }
 
 
@@ -123,7 +118,7 @@ async function save(el: HTMLElement, raw: string, before: string) {
     // Los textos compartidos (el lema, por ejemplo) cambian en todos los sitios de la página.
     for (const other of elements()) if (other.dataset.editable === key) paint(other, value);
     await refreshPending();
-    notify("Guardado como borrador. Publica para que se vea en el sitio.");
+    notify(GUARDADO);
     return true;
   } catch (error) {
     paint(el, before);
@@ -274,15 +269,14 @@ export async function startEditMode(profile: Profile) {
   canPublish = profile.permisos.includes("contenido.publicar");
   canUpload = profile.permisos.includes("medios.subir");
   document.querySelector(".site-header")!.append(bar);
-  document.body.append(chip, sheet, toast);
+  document.body.append(chip, sheet);
 
   toggle.addEventListener("click", () => void setMode(!on).catch(() => notify("No se pudo activar el modo edición.", true)));
   // Bloqueado mientras se envía; la API además es idempotente, así que un segundo envío no duplica.
   publishButton.addEventListener("click", async () => {
     publishButton.disabled = true;
     try {
-      await adminApi.publish();
-      notify("Publicación en cola. El sitio se actualizará en cerca de un minuto.");
+      seguirPublicacion((await adminApi.publish()).id);
     } catch (error) {
       notify(error instanceof Error ? error.message : "No se pudo publicar.", true);
     }

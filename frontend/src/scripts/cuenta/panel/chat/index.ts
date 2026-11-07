@@ -1,6 +1,6 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type ChatAnswer } from "../../../../lib/data/http/admin-api";
-import { avisarVacios, busy, card, DANGER, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, LABEL, notify, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
+import { avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DANGER, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, LABEL, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
 import { paginasDelSitio } from "./paginas";
 
 const MAX_ITEMS = 60;
@@ -129,7 +129,7 @@ function bind(section: HTMLElement) {
       await Promise.all([reloadDraft(), reloadPending()]);
       items = null;
       await renderChat(section);
-      notify("Preguntas del chat guardadas como borrador. Publica para que el chat las use.");
+      confirmarCambio(BORRADOR_GUARDADO);
     });
   });
 }

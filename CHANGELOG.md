@@ -6,6 +6,18 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+### Added
+
+- Panel, video de «Acerca de Carlos»: al guardar, si Facebook, YouTube o Vimeo no permiten mostrar el video en otros sitios (por la música, porque su dueño lo desactivó o porque es privado), no se guarda y el aviso explica qué hacer junto al enlace. Con un enlace de TikTok se recuerda que, si usa música con derechos, puede verse sin sonido.
+- Para quien administra el sitio: campana de avisos a la derecha de «Mi cuenta», con el número de todo lo pendiente. Avisa de los videos publicados que ya no se pueden ver en el sitio y de las alertas ciudadanas y sugerencias nuevas o en revisión; cada aviso lleva directo a su lugar del panel, con el filtro puesto. Se pone al día sola.
+- Al entrar al sitio, si algún video publicado ya no se puede ver, una notificación lo avisa con un botón que lleva al panel. Ahí la pestaña, la sección y el enlace del video aparecen marcados en rojo hasta corregirlo.
+- Notificaciones al guardar un borrador o cambiar un estado o un rol en el panel, y al terminar una publicación (o si falla). Se cierran solas; una línea debajo muestra cuánto tiempo queda, y se detiene con el mouse encima.
+
+### Changed
+
+- Publicar: si un video del borrador no se puede ver en el sitio, no se publica ningún cambio hasta cambiarlo, y el aviso dice cuál es.
+- Modo edición: sus avisos tienen el nuevo diseño, y al pulsar «Publicar» ya no se avisa en ese momento sino cuando la publicación termina.
+
 ## [1.2.0] - 2026-11-06
 
 ### Added

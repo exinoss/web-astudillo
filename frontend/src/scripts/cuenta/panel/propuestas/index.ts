@@ -1,6 +1,6 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftProposal } from "../../../../lib/data/http/admin-api";
-import { avisarVacios, busy, card, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, LABEL, notify, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
+import { avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, LABEL, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
 
 const MAX_KPIS = 6;
 let selected = "";
@@ -102,7 +102,7 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
       await adminApi.saveProposal(current.slug, body, state.draft!.versiones.propuestas[current.slug]);
       await Promise.all([reloadDraft(), reloadPending()]);
       renderProposals(section);
-      notify(`Borrador de «${body.nombre}» guardado. Publica para que se vea en el sitio.`);
+      confirmarCambio(BORRADOR_GUARDADO);
     });
   });
 }

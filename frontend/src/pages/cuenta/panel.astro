@@ -46,7 +46,7 @@ const pestanias = [
             aria-controls={`seccion-${p.id}`}
             aria-selected="false"
             data-pestania={p.id}
-            class="relative min-h-11 py-4 text-[0.88rem] font-bold text-neutral aria-selected:text-primary aria-selected:after:absolute aria-selected:after:inset-x-0 aria-selected:after:-bottom-px aria-selected:after:h-[3px] aria-selected:after:bg-secondary aria-selected:after:content-['']"
+            class="relative min-h-11 py-4 text-[0.88rem] font-bold text-neutral aria-selected:text-primary data-aviso:text-error data-aviso:aria-selected:text-error aria-selected:after:absolute aria-selected:after:inset-x-0 aria-selected:after:-bottom-px aria-selected:after:h-[3px] aria-selected:after:bg-secondary aria-selected:after:content-['']"
             hidden={p.id === "usuarios" || p.id === "participacion"}
           >
             {p.nombre}

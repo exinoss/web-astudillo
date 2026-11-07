@@ -20,6 +20,7 @@ export const ICON_PATHS: Record<string, string> = {
   tech: "M8 8h8v8H8zM10 3v3m4-3v3m-4 12v3m4-3v3M3 10h3m-3 4h3m12-4h3m-3 4h3",
   idea: "M9 18h6m-6 3h6M8 15a7 7 0 1 1 8 0l-1 3H9l-1-3Zm4-15v2M1 8h2m18 0h2",
   alert: "m12 3 10 18H2L12 3Zm0 6v5m0 3v1",
+  bell: "M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0",
   chat: "M21 11a9 9 0 0 1-9 9H3l1-5a9 9 0 1 1 17-4ZM8 11h.01m4 0h.01m4 0h.01",
   location:
     "M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0Zm-4 0a3 3 0 1 1-6 0 3 3 0 0 1 6 0",

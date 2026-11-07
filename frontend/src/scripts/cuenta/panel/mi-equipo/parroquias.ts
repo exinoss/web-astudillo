@@ -1,7 +1,7 @@
 import { MAX_FOTOS_PARROQUIA, PARROQUIAS } from "../../../../../../backend/src/contracts/parroquias";
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftMyTeam } from "../../../../lib/data/http/admin-api";
-import { avisarVacios, busy, DRAFT_PILL, esc, field, FORMATOS_FOTO, HINT, isPending, moveButtons, notify, previewButton, reloadDraft, reloadPending, state, thumb, upload, value, subirFotos } from "../ui";
+import { avisarVacios, BORRADOR_GUARDADO, busy, confirmarCambio, DRAFT_PILL, esc, field, FORMATOS_FOTO, HINT, isPending, moveButtons, notify, previewButton, reloadDraft, reloadPending, state, subirFotos, thumb, upload, value } from "../ui";
 
 type Parroquia = DraftMyTeam["parroquias"][number];
 let elegida: string = PARROQUIAS[0].slug;
@@ -78,7 +78,7 @@ export function renderParishes(body: HTMLElement, rerender: () => void) {
       await Promise.all([reloadDraft(), reloadPending()]);
       delete trabajo[slug];
       rerender();
-      notify(`Borrador de «${nombre(slug)}» guardado. Publica para que se vea en el sitio.`);
+      confirmarCambio(BORRADOR_GUARDADO);
     });
   });
   return () => capturar(form);

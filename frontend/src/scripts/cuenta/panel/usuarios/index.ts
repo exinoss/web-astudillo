@@ -2,7 +2,7 @@ import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type AdminUser } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { confirmarIdentidad } from "../confirmacion";
-import { busy, cargar, DANGER, esc, GHOST, iconSvg, notify, PILL } from "../ui";
+import { busy, cargar, confirmarCambio, DANGER, esc, GHOST, iconSvg, notify, PILL } from "../ui";
 
 const ROLE_NAMES: Record<string, string> = { admin: "Admin", coadmin: "Coadmin", analista: "Analista", votante: "Votante" };
 const ROLE_CLASSES: Record<string, string> = { admin: "bg-neutral text-neutral-content", coadmin: "bg-accent text-primary", analista: "border border-base-300", votante: "border border-base-300" };
@@ -118,7 +118,7 @@ function bind(section: HTMLElement, list: HTMLElement) {
       });
       if (!hecho) return;
       await load(section);
-      notify("Rol actualizado.");
+      confirmarCambio({ tipo: "exito", titulo: "Rol actualizado" });
     }));
   });
   list.querySelectorAll<HTMLButtonElement>("[data-estado]").forEach((b) => b.addEventListener("click", () =>

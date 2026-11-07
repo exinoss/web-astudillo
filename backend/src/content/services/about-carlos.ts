@@ -1,12 +1,13 @@
 import type { SQL } from 'bun';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
-import { videoLinkProblem, videoSource } from '../../contracts/video';
+import { avisoNoInsertable, videoLinkProblem, videoSource } from '../../contracts/video';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { ABOUT_CARLOS_PAGES, type AboutCarlosPage, type AboutCarlosSlug, type AboutCarlosPageStored } from '../types';
 import { CONTENT_CONFLICT } from '../conflictos';
 import { ensureCardVariant, photosById } from './media';
+import { videoInsertable } from './video-cover';
 import { plainText } from '../../validation/texto';
 
 type SaveRow = { resultado: 'guardado' | 'sin_cambios' | 'conflicto'; version: string | null };
@@ -80,12 +81,16 @@ function clean(slug: AboutCarlosSlug, input: AboutCarlosPageInput): AboutCarlosP
   };
 }
 
-export function createAboutCarlosPages(sql: SQL, authorization: Authorization, mediaDir: string) {
+/** Guarda las páginas «Por qué quiero ser alcalde» y «Conoce más», comprobando que su video se pueda mostrar. */
+export function createAboutCarlosPages(sql: SQL, authorization: Authorization, mediaDir: string, checkVideo = videoInsertable) {
   return {
     async save(access: string | undefined, slug: string, input: AboutCarlosPageInput, version: string) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       if (!isSlug(slug)) throw new ApiError(404, 'No encontrado');
       const page = clean(slug, input);
+      const source = page.video && videoSource(page.video.enlace);
+      const motivo = source ? await checkVideo(source) : null;
+      if (source && motivo) throw new ApiError(422, avisoNoInsertable(source.provider, motivo));
       const ids = [...page.tarjetas.map(t => t.idMedio), ...page.galeria.map(g => g.idMedio),
         ...(page.retrato ? [page.retrato.idMedio] : []), ...(page.video?.idPortada ? [page.video.idPortada] : [])];
       const media = await photosById(sql, ids);
