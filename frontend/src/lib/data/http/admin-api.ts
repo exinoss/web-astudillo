@@ -1,5 +1,6 @@
 import type { Puesto } from '../../../../../backend/src/contracts/equipo';
 import type { Carrusel, Original } from '../../../../../backend/src/contracts/inicio';
+import type { Aviso } from '../../../../../backend/src/contracts/avisos';
 import type { ApiAboutCarlosPage } from '../acerca-de-carlos';
 import type { AboutCarlosSlug, AlertType, ParticipationState, SentAlert, SentSuggestion, UploadedPicture } from '../types';
 import { apiRequest } from './api-client';
@@ -141,6 +142,7 @@ export const adminApi = {
   /** Idempotente: si lo mismo ya está en cola o compilándose, devuelve esa publicación. */
   publish: () => call<{ id: number; estado: Publication['estado'] }>('/api/admin/publicaciones', 'POST'),
   publications: (pagina: number) => call<Page & { publicaciones: Publication[] }>(`/api/admin/publicaciones?pagina=${pagina}`),
+  avisos: () => call<{ avisos: Aviso[] }>('/api/admin/avisos'),
   users: (filtros: { q?: string; rol?: string; estado?: string; pagina: number }) => {
     const query = new URLSearchParams(Object.entries(filtros).filter(([, v]) => v !== undefined && v !== '')
       .map(([k, v]) => [k, String(v)]));

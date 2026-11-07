@@ -1,13 +1,15 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
-import { videoLinkProblem, videoSource } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
+import { alCambiarAvisos, avisosActuales } from "../../../../lib/comun/avisos";
+import { sinMovimiento } from "../../../../lib/comun/animaciones";
+import { avisoNoInsertable, videoLinkProblem, videoSource } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
 import { adminApi, type AboutCarlosPageBody, type AboutCarlosSlug, type DraftAboutCarlosPage } from "../../../../lib/data/http/admin-api";
 import type { Editor, Section, SectionEditor } from "./comun";
 import { interview } from "./entrevista";
 import { gallery } from "./galeria";
 import { portrait } from "./retrato";
 import { cards } from "./tarjetas";
-import { video } from "./video";
-import { avisarVacios, busy, card, DRAFT_PILL, esc, isPending, notify, previewButton, reloadDraft, reloadPending, state } from "../ui";
+import { marcarNoInsertable, video } from "./video";
+import { avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, esc, iconSvg, isPending, previewButton, reloadDraft, reloadPending, state } from "../ui";
 
 const SECTIONS: Record<Section, SectionEditor & { name: string }> = {
   tarjetas: { name: "Tarjetas", ...cards },
@@ -25,6 +27,31 @@ let slug: AboutCarlosSlug = "por-que-quiero-ser-alcalde";
 let section: Section = "tarjetas";
 // Una copia por página: cambiar de página o de sección no pierde lo escrito.
 const working: Partial<Record<AboutCarlosSlug, DraftAboutCarlosPage>> = {};
+const TAB = "min-h-11 rounded-[3px] border bg-base-100 px-4 text-[0.82rem] font-bold aria-pressed:text-white";
+const TAB_NORMAL = "border-base-300 aria-pressed:border-primary aria-pressed:bg-primary";
+const TAB_AVISO = "inline-flex items-center gap-1.5 border-error text-error aria-pressed:border-error aria-pressed:bg-error";
+let enfocarEnlace = false;
+let marcados = "";
+let refrescar: (() => void) | null = null;
+
+/** El aviso de la campana sobre el video publicado de esa página, si lo hay. */
+const avisoDe = (s: AboutCarlosSlug) => avisosActuales().find((a) => a.clave === `video:${s}`);
+
+/** Abre la sección Video de la página del aviso, con el foco en su enlace. */
+export function abrirVideo(pagina: string) {
+  if (!(pagina in PAGES)) return;
+  slug = pagina as AboutCarlosSlug;
+  section = "video";
+  enfocarEnlace = true;
+}
+
+// Cuando aparece o se resuelve un aviso de video, se vuelve a pintar conservando lo escrito.
+alCambiarAvisos((avisos) => {
+  const ahora = avisos.filter((a) => a.clave.startsWith("video:")).map((a) => a.clave).join();
+  if (ahora === marcados) return;
+  marcados = ahora;
+  refrescar?.();
+});
 
 const toBody = (p: DraftAboutCarlosPage): AboutCarlosPageBody => ({
   tarjetas: p.tarjetas.map(({ foto, ...t }) => ({ ...t, idMedio: foto.idMedio })),
@@ -49,12 +76,16 @@ export function renderAboutCarlos(root: HTMLElement) {
   const page = (working[slug] ??= structuredClone(state.draft!.acercaDeCarlos[slug]));
   if (!info.sections.includes(section)) section = "tarjetas";
   const editor: Editor = { slug, page, rerender: () => renderAboutCarlos(root) };
-  const tabs = info.sections.map((id) => `<button type="button" data-acerca-seccion="${id}" aria-pressed="${id === section}" class="min-h-11 rounded-[3px] border border-base-300 bg-base-100 px-4 text-[0.82rem] font-bold aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-white">${SECTIONS[id].name}</button>`).join("");
+  const aviso = avisoDe(slug);
+  const tabs = info.sections.map((id) => {
+    const marcada = id === "video" && aviso;
+    return `<button type="button" data-acerca-seccion="${id}" aria-pressed="${id === section}" class="${TAB} ${marcada ? TAB_AVISO : TAB_NORMAL}"${marcada ? ` aria-label="${SECTIONS[id].name}, tiene un aviso"` : ""}>${SECTIONS[id].name}${marcada ? iconSvg("alert", 16) : ""}</button>`;
+  }).join("");
   root.innerHTML = `
     <div class="mb-5 flex items-center gap-3.5 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-1.5">
       <label for="acerca-pagina" class="text-[0.82rem] font-bold">Página</label>
       <select id="acerca-pagina" class="campo min-w-[320px] max-tablet:min-w-0">
-        ${Object.entries(PAGES).map(([id, p]) => `<option value="${id}" ${id === slug ? "selected" : ""}>${esc(p.name)}</option>`).join("")}
+        ${Object.entries(PAGES).map(([id, p]) => `<option value="${id}" ${id === slug ? "selected" : ""}>${esc(p.name)}${avisoDe(id as AboutCarlosSlug) ? " · Revisar el video" : ""}</option>`).join("")}
       </select>
     </div>
     ${card(info.name, `
@@ -68,11 +99,26 @@ export function renderAboutCarlos(root: HTMLElement) {
         </div>
       </form>`)}`;
   bind(root, editor);
+  if (section !== "video") return;
+  // El campo se marca mientras el borrador tenga el mismo enlace que se publicó.
+  if (aviso?.detalle && page.video?.enlace === aviso.valor) marcarNoInsertable(root, aviso.detalle);
+  if (!enfocarEnlace) return;
+  enfocarEnlace = false;
+  const enlace = root.querySelector<HTMLInputElement>("#video-enlace");
+  enlace?.scrollIntoView({ block: "center", behavior: sinMovimiento() ? "auto" : "smooth" });
+  enlace?.focus({ preventScroll: true });
 }
 
 function bind(root: HTMLElement, editor: Editor) {
   const form = root.querySelector<HTMLFormElement>("#acerca-form")!;
   const capture = () => SECTIONS[section].capture(form, editor);
+  refrescar = () => {
+    if (!root.isConnected || root.closest("[hidden]")) return;
+    const foco = root.contains(document.activeElement) ? document.activeElement!.id : "";
+    capture();
+    renderAboutCarlos(root);
+    if (foco) root.querySelector<HTMLElement>(`#${CSS.escape(foco)}`)?.focus({ preventScroll: true });
+  };
   root.querySelector<HTMLSelectElement>("#acerca-pagina")!.addEventListener("change", (e) => {
     capture();
     slug = (e.target as HTMLSelectElement).value as AboutCarlosSlug;
@@ -96,11 +142,21 @@ function bind(root: HTMLElement, editor: Editor) {
     }
     const saving = slug;
     void busy(submit, async () => {
-      await adminApi.saveAboutCarlosPage(saving, toBody(editor.page), state.draft!.versiones.acercaDeCarlos[saving]);
+      try {
+        await adminApi.saveAboutCarlosPage(saving, toBody(editor.page), state.draft!.versiones.acercaDeCarlos[saving]);
+      } catch (error) {
+        const source = editor.page.video && videoSource(editor.page.video.enlace);
+        const aviso = error instanceof Error && source && (["bloqueado", "no-existe"] as const).map((m) => avisoNoInsertable(source.provider, m)).find((t) => t === error.message);
+        if (!aviso) throw error;
+        section = "video";
+        renderAboutCarlos(root);
+        marcarNoInsertable(root, aviso);
+        throw new Error("Revisa el enlace del video.");
+      }
       await Promise.all([reloadDraft(), reloadPending()]);
       delete working[saving];
       renderAboutCarlos(root);
-      notify(`Borrador de «${PAGES[saving].name}» guardado. Publica para que se vea en el sitio.`);
+      confirmarCambio(BORRADOR_GUARDADO);
     });
   });
 }

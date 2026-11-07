@@ -1,6 +1,6 @@
 import type { VideoSource } from "../../../../../backend/src/contracts/video";
 
-export { PROVIDER_NAMES, videoLinkProblem, videoSource, type VideoSource } from "../../../../../backend/src/contracts/video";
+export { avisoNoInsertable, PROVIDER_NAMES, videoLinkProblem, videoSource, type VideoSource } from "../../../../../backend/src/contracts/video";
 
 export function mountPlayer(stage: HTMLElement, source: VideoSource, title: string) {
   stage.querySelector("iframe, video")?.remove();

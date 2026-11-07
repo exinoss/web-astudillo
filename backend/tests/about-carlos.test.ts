@@ -2,6 +2,7 @@ import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { readdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import sharp from 'sharp';
+import { avisoNoInsertable } from '../src/contracts/video';
 import { diff } from '../src/content/services/content';
 import { migrate } from '../src/db/migrate';
 import { testApp } from './helpers';
@@ -25,6 +26,13 @@ async function photo(color: string, width = 1200, height = 800) {
 const card = (idMedio: number, titulo = 'Escuchar a su gente') =>
   ({ idMedio, alt: 'Vecinos en una calle', titulo, texto: 'Conocer las necesidades de los barrios.', color: 'rojo', enfoque: { x: 50, y: 40 } });
 const empty = { tarjetas: [], video: null, retrato: null, entrevista: [], galeria: [] };
+
+// Las plataformas de video responden simuladas, para no salir a internet; una prueba puede cambiar `plataforma`.
+const REPRODUCTOR = '<body dir="ltr" class="plugin"><video src="video.mp4"></video></body>';
+let plataforma = (url: string) => new Response(url.includes('/plugins/video.php') ? REPRODUCTOR : '{}');
+const fetchReal = globalThis.fetch;
+globalThis.fetch = (async (input: string | URL | Request) => plataforma(String(input instanceof Request ? input.url : input))) as typeof fetch;
+afterAll(() => { globalThis.fetch = fetchReal; });
 
 beforeAll(async () => {
   await migrate(sql);
@@ -177,5 +185,28 @@ test('la portada del video se obtiene de su plataforma, solo de sus dominios, y 
     expect((await portada('https://example.com/no-es-video')).status).toBe(422);
   } finally {
     globalThis.fetch = original;
+  }
+});
+
+test('no guarda un video que su plataforma no deja mostrar; si no se puede comprobar, lo guarda', async () => {
+  const inicial = await version('por-que-quiero-ser-alcalde');
+  const put = (enlace: string) => call(ALCALDE, 'PUT',
+    { ...empty, version: inicial, video: { titulo: 'Video', descripcion: null, enlace, vertical: true, idPortada: null } }, cookies.coadmin);
+  const error = async (enlace: string) => { const r = await put(enlace); return [r.status, (await r.json()).error]; };
+  const anterior = plataforma;
+  try {
+    plataforma = (url) => new Response(url.includes('/plugins/video.php') ? '<body dir="ltr" class="plugin"><div>No disponible</div></body>' : '{}');
+    expect(await error(REEL)).toEqual([422, avisoNoInsertable('facebook', 'bloqueado')]);
+    plataforma = (url) => new Response('', { status: url.includes('youtube.com/oembed') ? 401 : 200 });
+    expect(await error('https://youtu.be/abc12345678')).toEqual([422, avisoNoInsertable('youtube', 'bloqueado')]);
+    plataforma = () => new Response('', { status: 404 });
+    expect(await error('https://vimeo.com/123456789')).toEqual([422, avisoNoInsertable('vimeo', 'no-existe')]);
+    expect(await version('por-que-quiero-ser-alcalde')).toBe(inicial);
+
+    // Sin respuesta de la plataforma no se bloquea: no se pudo comprobar.
+    plataforma = () => { throw new Error('sin red'); };
+    expect((await put(REEL)).status).toBe(200);
+  } finally {
+    plataforma = anterior;
   }
 });

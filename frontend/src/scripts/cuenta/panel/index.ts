@@ -3,12 +3,14 @@ import { desmarcarAlEscribir } from "../../../lib/comun/campos";
 import { setAccountNav } from "../../../lib/cuenta/auth/navigation";
 import { authRepository } from "../../../lib/data/auth";
 import { ApiError } from "../../../lib/data/http/api-client";
+import { alCambiarAvisos, avisosActuales, type Aviso } from "../../../lib/comun/avisos";
+import { iconSvg } from "../../../lib/comun/iconos";
 import { renderBiography } from "./biografia";
-import { renderAboutCarlos } from "./acerca-de-carlos";
+import { abrirVideo, renderAboutCarlos } from "./acerca-de-carlos";
 import { renderMyTeam } from "./mi-equipo";
 import { renderChat } from "./chat";
 import { renderWorks } from "./obras";
-import { renderParticipation } from "./participacion";
+import { filtrarParticipacion, renderParticipation } from "./participacion";
 import { renderProposals } from "./propuestas";
 import { publish, renderPublications } from "./publicaciones";
 import { renderTexts } from "./textos";
@@ -51,6 +53,30 @@ function open(id: string, focus = false) {
   document.title = `${TABS[id].title} · Panel de administración · Carlos Astudillo`;
   if (location.hash !== `#${id}`) history.replaceState(null, "", `#${id}`);
   cargar(TABS[id].render(document.querySelector<HTMLElement>(`#seccion-${id}`)!), "No se pudo cargar la sección.");
+}
+
+/** Marca en rojo las pestañas donde hay algo publicado que no se ve bien. */
+function marcarPestanias(avisos: Aviso[]) {
+  const conError = new Set(avisos.filter((a) => a.tipo === "error").map((a) => a.ruta.split("#")[1]));
+  for (const tab of tabs) {
+    const marcada = conError.has(tab.dataset.pestania!);
+    if (marcada === tab.hasAttribute("data-aviso")) continue;
+    tab.toggleAttribute("data-aviso", marcada);
+    tab.querySelector("[data-marca-aviso]")?.remove();
+    tab.removeAttribute("aria-label");
+    if (!marcada) continue;
+    tab.setAttribute("aria-label", `${TABS[tab.dataset.pestania!].title}, tiene avisos`);
+    tab.insertAdjacentHTML("beforeend", `<span data-marca-aviso class="ml-1.5 inline-grid align-[-3px]">${iconSvg("alert", 16)}</span>`);
+  }
+}
+
+/** Prepara la sección del aviso con que se entró (`?aviso=…`) antes de abrir su pestaña. */
+function prepararAviso(clave: string | null) {
+  if (!clave) return;
+  history.replaceState(null, "", location.pathname + location.hash);
+  const [tipo, valor] = clave.split(":");
+  if (tipo === "video") abrirVideo(valor);
+  else if (tipo === "alertas" || tipo === "sugerencias") filtrarParticipacion(tipo, valor);
 }
 
 function bindTabs() {
@@ -105,7 +131,13 @@ async function start() {
   tabs.find((t) => t.dataset.pestania === "participacion")!.hidden = !can("participacion.ver");
   tablist.hidden = false;
   bindTabs();
+  const aviso = new URLSearchParams(location.search).get("aviso");
+  prepararAviso(aviso);
   open(location.hash.slice(1));
+  // En celular la barra de pestañas se desplaza: se lleva hasta la del aviso.
+  if (aviso) tabs.find((t) => t.getAttribute("aria-selected") === "true")?.scrollIntoView({ block: "nearest", inline: "center" });
+  marcarPestanias(avisosActuales());
+  alCambiarAvisos(marcarPestanias);
 }
 
 void start();

@@ -13,8 +13,18 @@ if (location.pathname !== '/cuenta/') {
       setAccountNav(true);
       // La vista previa es solo para mirar: se edita y se publica en el panel.
       if (profile.permisos?.includes('contenido.editar') && !location.pathname.startsWith('/cuenta/') && !inDraftPreview()) void loadEditMode(profile);
+      if (profile.permisos?.includes('contenido.editar') && !inDraftPreview()) void loadNotices();
     })
     .catch(error => setAccountNav(error instanceof ApiError && error.status === 403));
+}
+
+/** Descarga la campana de avisos solo para quien puede editar; si la red falla, reintenta una vez. */
+async function loadNotices(attempt = 0): Promise<void> {
+  try {
+    await (await import('./avisos')).iniciarAvisos(location.pathname.startsWith('/cuenta/panel'));
+  } catch {
+    if (attempt < 1) setTimeout(() => void loadNotices(attempt + 1), 3000);
+  }
 }
 
 /** Descarga el editor solo para quien puede editar; si la red falla, reintenta una vez. */

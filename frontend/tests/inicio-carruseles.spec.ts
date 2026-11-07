@@ -49,7 +49,7 @@ test('añade un banner con imagen para celular, lo guarda una sola vez y la port
   await expect(dialogo.locator('[data-quitar-celular="1"]')).toBeVisible();
   // Sin descripción no se guarda: el foco va al campo que falta.
   await guardar.click();
-  await expect(page.getByRole('status').filter({ hasText: 'Describe cada imagen antes de guardar.' })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'Describe cada imagen antes de guardar.' })).toBeVisible();
   await expect(dialogo.locator('#banner-alt-1')).toBeFocused();
   await dialogo.locator('#banner-alt-1').fill('Carlos con vecinos en el malecón');
   await guardar.dblclick();
@@ -89,7 +89,7 @@ test('una foto de más de 40 megapíxeles se rechaza sin subirla ni mostrarla', 
   const dialogo = page.getByRole('dialog', { name: 'Carrusel de piezas' });
   const enorme = await sharp({ create: { width: 9000, height: 5000, channels: 3, background: '#2e86c1' } }).jpeg().toBuffer();
   await dialogo.locator('#piezas-nuevas').setInputFiles({ name: 'enorme.jpg', mimeType: 'image/jpeg', buffer: enorme });
-  await expect(page.getByRole('status').filter({ hasText: 'La foto mide 45 megapíxeles; el máximo es 40' })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'La foto mide 45 megapíxeles; el máximo es 40' })).toBeVisible();
   expect(data.uploads).toBe(0);
   await expect(dialogo.locator('li')).toHaveCount(3);
   const mayor = await page.evaluate(() => Math.max(...[...document.images].map(i => i.naturalWidth * i.naturalHeight)));
@@ -137,7 +137,7 @@ test('si otra persona guardó antes, avisa sin cerrar el editor y no pisa su cam
   const dialogo = page.getByRole('dialog', { name: 'Carrusel de piezas' });
   await dialogo.getByRole('button', { name: 'Bajar pieza 1' }).click();
   await dialogo.getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(page.getByRole('status').filter({ hasText: 'Otra persona guardó cambios' })).toBeVisible();
+  await expect(page.getByRole('alert').filter({ hasText: 'Otra persona guardó cambios' })).toBeVisible();
   await expect(dialogo).toBeVisible();
   expect(data.savedHome).toEqual([]);
 });
@@ -206,7 +206,7 @@ test('el carrusel del equipo se edita: sin fotos ofrece agregarlas, rechaza las 
   await expect(dialogo.getByText('Hasta 8 · imágenes horizontales · 2000 × 761 px · Máximo 8 MB.')).toBeVisible();
   for (const [name, width, height] of [['vertical.png', 900, 1200], ['cuadrada.png', 1000, 1000]] as const) {
     await dialogo.locator('#equipo-nuevas').setInputFiles(await archivo(name, width, height));
-    await expect(page.getByRole('status').filter({ hasText: 'En este carrusel solo van imágenes horizontales (más anchas que altas).' })).toBeVisible();
+    await expect(page.getByRole('alert').filter({ hasText: 'En este carrusel solo van imágenes horizontales (más anchas que altas).' })).toBeVisible();
   }
   expect(data.uploads).toBe(0);
   await dialogo.locator('#equipo-nuevas').setInputFiles(await archivo('equipo.png', 2000, 761));

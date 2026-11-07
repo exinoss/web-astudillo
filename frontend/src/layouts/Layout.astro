@@ -122,14 +122,20 @@ const accessButton =
             </small>
           </span>
         </a>
-        <a
-          class="account-link order-2 flex min-h-12 items-center justify-center gap-2.5 rounded-[4px] bg-primary px-[17px] py-3.5 text-[0.85rem] font-bold whitespace-nowrap text-primary-content hover:bg-neutral max-nav:ml-auto max-tablet:min-h-11 max-tablet:gap-1.5 max-tablet:px-2.5 max-tablet:py-[11px] max-tablet:text-[0.72rem] max-mobile-xs:text-[0.7rem]"
-          href="/cuenta/"
-          aria-current={current === "/cuenta/" ? "page" : undefined}
-        >
-          <Icon name="user" size={19} />
-          <span class="account-label"><span class="cuenta-fuera">Iniciar sesión</span><span class="cuenta-dentro">Mi cuenta</span></span>
-        </a>
+        <div class="order-2 flex items-center gap-1.5 max-nav:ml-auto">
+          <a
+            class="account-link flex min-h-12 items-center justify-center gap-2.5 rounded-[4px] bg-primary px-[17px] py-3.5 text-[0.85rem] font-bold whitespace-nowrap text-primary-content hover:bg-neutral max-tablet:min-h-11 max-tablet:gap-1.5 max-tablet:px-2.5 max-tablet:py-[11px] max-tablet:text-[0.72rem] max-mobile-xs:text-[0.7rem]"
+            href="/cuenta/"
+            aria-current={current === "/cuenta/" ? "page" : undefined}
+          >
+            <Icon name="user" size={19} />
+            <span class="account-label"><span class="cuenta-fuera">Iniciar sesión</span><span class="cuenta-dentro">Mi cuenta</span></span>
+          </a>
+          <button id="avisos-campana" type="button" class="relative grid size-11 shrink-0 place-items-center rounded-full text-primary" aria-label="Avisos" aria-controls="avisos-lista" aria-expanded="false" hidden>
+            <Icon name="bell" size={26} />
+            <span data-avisos-numero aria-hidden="true" class="absolute -top-1 -right-1.5 h-5 min-w-5 rounded-full bg-campaign-red px-[5px] text-center text-[0.7rem] leading-5 font-bold text-white [box-shadow:0_0_0_2px_var(--color-accent)]" hidden></span>
+          </button>
+        </div>
         <button
           class="menu-toggle relative order-3 hidden h-11 w-11 items-center justify-center rounded-[3px] border border-base-300 bg-transparent text-primary before:absolute before:inset-[-2px] before:content-[''] max-nav:flex max-tablet:w-10 max-tablet:before:right-0 max-tablet:before:-left-1.5 max-tablet:min-w-10"
           aria-label="Abrir menú"

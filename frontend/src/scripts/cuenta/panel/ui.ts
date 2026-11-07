@@ -8,8 +8,11 @@ import { iconSvg } from "../../../lib/comun/iconos";
 import { bloquearMientras } from "../../../lib/cuenta/panel/cambios";
 import { ACEPTA_FOTOS, FORMATOS_FOTO } from "../../../../../backend/src/contracts/media";
 import { GHOST } from "../../../lib/cuenta/panel/campos";
+import { pedirAvisos } from "../../../lib/comun/avisos";
+import { notificar, type Notificacion } from "../../../lib/comun/notificacion";
 
 export { ACEPTA_FOTOS, esc, FORMATOS_FOTO, iconSvg };
+export { BORRADOR_GUARDADO } from "../../../lib/comun/notificacion";
 export { field, GHOST, HINT, ICON_BUTTON, LABEL, moveButtons, selectField, thumb, upload } from "../../../lib/cuenta/panel/campos";
 
 export const DANGER =
@@ -48,6 +51,12 @@ const publishButton = document.querySelector<HTMLButtonElement>("#panel-publicar
 export function notify(message: string, error = false) {
   showStatus(status, message, error);
   status.scrollIntoView({ block: "nearest" });
+}
+
+/** Confirma con la notificación global y quita el mensaje de debajo de las pestañas, que ya no aplica. */
+export function confirmarCambio(n: Notificacion) {
+  status.hidden = true;
+  notificar(n);
 }
 
 /** Espera una carga sin bloquear y, si falla (por ejemplo, sin red), avisa del error en lugar de no mostrar nada. */
@@ -89,6 +98,8 @@ export async function busy(button: HTMLButtonElement | null, action: () => Promi
     const terminarCarga = carga ? mostrarCarga(document.querySelector<HTMLElement>("#panel-secciones")!, carga) : () => {};
     try {
       await action();
+      // Guardar o cambiar un estado puede resolver un aviso: la campana se pone al día.
+      pedirAvisos();
     } catch (error) {
       notify(error instanceof Error ? error.message : "No se pudo completar la acción.", true);
     } finally {

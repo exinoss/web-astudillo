@@ -2,7 +2,7 @@ import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftWork } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
 import { STAGE_NAMES, workProgress } from "../../../../lib/ciudadania/obras";
-import { ACEPTA_FOTOS, avisarVacios, busy, card, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, notify, previewButton, reloadDraft, reloadPending, state, value, subirFotos } from "../ui";
+import { ACEPTA_FOTOS, avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, notify, previewButton, reloadDraft, reloadPending, state, subirFotos, value } from "../ui";
 
 const MAX_MILESTONES = 20;
 const MAX_PHOTOS = 24;
@@ -144,7 +144,7 @@ function bind(section: HTMLElement) {
       await Promise.all([reloadDraft(), reloadPending()]);
       work = null;
       renderWorks(section);
-      notify(`Borrador de «${nameOf(selected)}» guardado. Publica para que se vea en el sitio.`);
+      confirmarCambio(BORRADOR_GUARDADO);
     });
   });
 }

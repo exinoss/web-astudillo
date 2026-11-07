@@ -7,6 +7,16 @@ import { onFiles, radios, type Editor, type SectionEditor } from "./comun";
 const PROVIDERS = { youtube: "YouTube", facebook: "Facebook", tiktok: "TikTok", vimeo: "Vimeo", mp4: "Archivo MP4" };
 const EMPTY_VIDEO = { titulo: "", descripcion: null, enlace: "", vertical: false, portada: null };
 
+/** Marca el enlace con el aviso de la plataforma que no deja mostrar el video; cambiar el enlace lo quita. */
+export function marcarNoInsertable(root: ParentNode, mensaje: string) {
+  const input = root.querySelector<HTMLInputElement>("#video-enlace"), status = root.querySelector<HTMLElement>("#video-detectado");
+  if (!input || !status) return;
+  status.textContent = mensaje;
+  status.classList.add("text-error");
+  input.removeAttribute("data-valido");
+  input.setAttribute("aria-invalid", "true");
+}
+
 export const video: SectionEditor = {
   html(editor: Editor) {
     const v = editor.page.video ?? EMPTY_VIDEO;
@@ -21,6 +31,7 @@ export const video: SectionEditor = {
         <div>
           ${field({ id: "video-enlace", label: "Enlace del video", value: v.enlace, max: 500, hint: "Pega el enlace de Facebook, TikTok, YouTube o Vimeo tal como aparece en la barra del navegador al abrir el video." , required: !!editor.page.video })}
           <p id="video-detectado" role="status" class="m-0 mt-2 flex min-h-7 items-center gap-2 text-[0.85rem] font-bold"></p>
+          <p id="video-nota" class="${HINT}" hidden>Si usa música con derechos, en el sitio puede verse sin sonido.</p>
         </div>
         <fieldset class="min-w-0 rounded-[3px] border border-base-300 p-4">
           <legend class="px-1 text-[0.82rem] font-bold">Formato</legend>
@@ -79,6 +90,7 @@ export const video: SectionEditor = {
       status.classList.toggle("text-error", Boolean(text) && !source);
       input.setAttribute("aria-invalid", String(Boolean(text) && !source));
       input.toggleAttribute("data-valido", Boolean(source));
+      form.querySelector<HTMLElement>("#video-nota")!.hidden = source?.provider !== "tiktok";
       if (source && input.value !== last) form.querySelectorAll<HTMLInputElement>('[name="video-formato"]').forEach((r) => { r.checked = (r.value === "vertical") === source.vertical; });
       if (input.value !== last) { stage.querySelector("iframe, video")?.remove(); play.hidden = false; }
       last = input.value;
