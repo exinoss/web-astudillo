@@ -6,6 +6,8 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-08
+
 ### Added
 
 - Portada, primer banner en computadora: al pasar el mouse sobre Carlos, su figura se amplía un poco con una sombra, y el carrusel espera mientras el mouse sigue encima.
@@ -173,7 +175,9 @@ Primera versión numerada: recoge todo lo hecho desde el inicio del proyecto.
 - Las respuestas simuladas de alertas, sugerencias y chat.
 - Dependencia `daisyui`: no se usaba ninguna de sus clases ni su mecanismo de temas; sus tokens de color pasaron a `@theme`.
 
-[Unreleased]: https://github.com/exinoss/web-astudillo/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/exinoss/web-astudillo/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/exinoss/web-astudillo/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/exinoss/web-astudillo/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/exinoss/web-astudillo/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/exinoss/web-astudillo/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/exinoss/web-astudillo/releases/tag/v1.0.0
