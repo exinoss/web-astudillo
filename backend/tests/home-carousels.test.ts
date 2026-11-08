@@ -25,6 +25,9 @@ async function photo(color: string, width = 2400, height = 914) {
 }
 
 const retrato = { imagen: { original: 'pieza-respeto' }, alt: 'Retrato de Carlos Astudillo' };
+type BannerGuardado = { imagen: { original?: string; foto?: { idMedio: number } }; celular: { idMedio: number } | null; alt: string };
+/** Convierte un banner del borrador en el cuerpo que acepta la API. */
+const cuerpoBanner = (b: BannerGuardado) => ({ imagen: b.imagen.foto ? { idMedio: b.imagen.foto.idMedio } : b.imagen, celular: b.celular?.idMedio ?? null, alt: b.alt });
 
 beforeAll(async () => {
   await migrate(sql);
@@ -85,6 +88,19 @@ test('el primer banner no se puede quitar ni mover, y el borrador no cambia', as
   expect((await draft()).inicio.principal.banners).toEqual(antes);
 });
 
+test('el primer banner se guarda siempre sin imagen para celular, también al repetir el envío', async () => {
+  const celular = await photo('#16a085', 1520, 1140);
+  const antes = (await draft()).inicio.principal.banners;
+  const banners = antes.map((b: BannerGuardado, i: number) => ({ ...cuerpoBanner(b), celular: i ? b.celular?.idMedio ?? null : celular.idMedio }));
+  const body = { banners, retrato, version: await version('principal') };
+  const first = await call(PRINCIPAL, 'PUT', body, cookies.coadmin);
+  expect(first.status).toBe(200);
+  const again = await call(PRINCIPAL, 'PUT', body, cookies.coadmin);
+  expect(again.status).toBe(200);
+  expect((await again.json()).version).toBe((await first.json()).version);
+  expect((await draft()).inicio.principal.banners).toEqual(antes);
+});
+
 test('dos personas guardando a la vez el mismo carrusel: una gana y la otra recibe 409 sin pisarla', async () => {
   const loaded = await version('piezas');
   const save = (alt: string) => call(PIEZAS, 'PUT', { piezas: [{ imagen: { original: 'pieza-ferrocarril' }, alt }], version: loaded }, cookies.coadmin);
@@ -100,9 +116,7 @@ test('una foto borrada desaparece de su carrusel; sin imágenes, vuelven las de 
   expect((await call(PIEZAS, 'PUT', { piezas: [{ imagen: { idMedio: foto.idMedio }, alt: 'Pieza' }], version: await version('piezas') }, cookies.coadmin)).status).toBe(200);
   const nuevoRetrato = { imagen: { idMedio: foto.idMedio }, alt: 'Otro retrato' };
   const { banners } = (await draft()).inicio.principal;
-  const body = banners.map((b: { imagen: { original?: string; foto?: { idMedio: number } }; celular: { idMedio: number } | null; alt: string }) => ({
-    imagen: b.imagen.foto ? { idMedio: b.imagen.foto.idMedio } : b.imagen, celular: b.celular?.idMedio ?? null, alt: b.alt,
-  }));
+  const body = banners.map(cuerpoBanner);
   expect((await call(PRINCIPAL, 'PUT', { banners: body, retrato: nuevoRetrato, version: await version('principal') }, cookies.coadmin)).status).toBe(200);
   await sql`DELETE FROM tb_medios WHERE id_medio = ${foto.idMedio}`;
   const { inicio } = await draft();

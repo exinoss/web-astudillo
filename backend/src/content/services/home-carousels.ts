@@ -74,7 +74,8 @@ export function createHomeCarousels(sql: SQL, authorization: Authorization) {
       const primero = input.banners[0].imagen;
       if (!('original' in primero && primero.original === BANNER_FIJO)) throw new ApiError(422, 'El primer banner no se puede quitar ni mover.');
       const content: HomeMainInput = {
-        banners: input.banners.map((b, i) => ({ imagen: image(b.imagen), celular: b.celular, alt: alt(b.alt, `Banner ${i + 1}`) })),
+        // El banner 1 tiene su propia versión para celular en la portada.
+        banners: input.banners.map((b, i) => ({ imagen: image(b.imagen), celular: i ? b.celular : null, alt: alt(b.alt, `Banner ${i + 1}`) })),
         retrato: { imagen: image(input.retrato.imagen), alt: alt(input.retrato.alt, 'Retrato') },
       };
       return save(actor, 'principal', content, mainIds(content), version);

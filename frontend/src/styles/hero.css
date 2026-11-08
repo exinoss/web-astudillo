@@ -5,3 +5,46 @@
     width: 14px;
   }
 }
+
+/* Zoom del candidato en el banner 1: el polígono es la zona del puntero y el fondo sin él tapa al original. */
+.silueta-portada {
+  display: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+@media (width > 760px) and (hover: hover) {
+  .silueta-portada {
+    display: block;
+  }
+}
+
+.silueta-portada polygon {
+  fill: transparent;
+  pointer-events: all;
+}
+
+.silueta-portada image {
+  opacity: 0;
+  transition: opacity 0s 0.35s;
+}
+
+.silueta-portada .silueta-recorte {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  transition: transform 0.35s ease, filter 0.35s ease, opacity 0s 0.35s;
+}
+
+html:not(.reduce-motion) .silueta-portada:has(polygon:hover) image {
+  opacity: 1;
+  transition: opacity 0s;
+}
+
+html:not(.reduce-motion) .silueta-portada:has(polygon:hover) .silueta-recorte {
+  transform: scale(1.05);
+  filter: drop-shadow(0 14px 18px #06317655);
+  transition: transform 0.35s ease, filter 0.35s ease, opacity 0s;
+}

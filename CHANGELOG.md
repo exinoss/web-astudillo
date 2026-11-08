@@ -6,9 +6,15 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+### Added
+
+- Portada, primer banner en computadora: al pasar el mouse sobre Carlos, su figura se amplía un poco con una sombra, y el carrusel espera mientras el mouse sigue encima.
+
 ### Changed
 
 - Modo edición, carrusel principal: el primer banner queda fijo, siempre en el primer lugar y sin opción de quitarlo. Los demás banners se pueden mover y quitar como antes.
+- Portada, primer banner en celular: Carlos aparece recortado sobre el público, junto a los textos, en lugar de la foto con el fondo naranja.
+- Modo edición, carrusel principal: el primer banner ya no ofrece «Imagen para celular», porque tiene su propia versión.
 
 ## [1.3.0] - 2026-11-07
 

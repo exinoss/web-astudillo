@@ -19,7 +19,7 @@ test('la portada muestra los carruseles de la semilla y no ofrece editarlos a qu
   await expect(page.locator('.slide-dot')).toHaveCount(2);
   await expect(page.locator('[data-profile-image]')).toHaveCount(3);
   await expect(page.locator('.profile-dot')).toHaveCount(3);
-  await expect(page.locator('[data-slide="0"] img')).toHaveAttribute('fetchpriority', 'high');
+  await expect(page.locator('[data-slide="0"] picture img')).toHaveAttribute('fetchpriority', 'high');
   await expect(page.getByRole('button', { name: /Cambiar las imágenes/ })).toHaveCount(0);
 });
 
@@ -42,6 +42,9 @@ test('añade un banner con imagen para celular, lo guarda una sola vez y la port
   const guardar = dialogo.getByRole('button', { name: 'Guardar borrador' });
   await expect(guardar).toBeDisabled();
   await expect(dialogo.getByRole('button', { name: 'Quitar banner 1' })).toHaveCount(0);
+  // El banner 1 tiene su propia versión para celular: no ofrece subir otra.
+  await expect(dialogo.getByText('Este banner ya tiene su versión para celular.')).toBeVisible();
+  await expect(dialogo.locator('#banner-celular-0')).toHaveCount(0);
 
   await dialogo.locator('#banners-nuevos').setInputFiles(await archivo('banner.png'));
   await expect(dialogo.getByText('Banner 2')).toBeVisible();
@@ -78,6 +81,7 @@ test('añade un banner con imagen para celular, lo guarda una sola vez y la port
   await expect(nueva.locator('img')).toHaveAttribute('srcset', /foto-90-480\.webp 480w/);
   await expect(nueva.locator('[data-editable]')).toHaveCount(0);
   await expect(page.locator('[data-slide="0"] [data-editable="inicio.carrusel.titulo"]')).toHaveAttribute('tabindex', '0');
+  await expect(page.locator('[data-slide="0"] .silueta-portada polygon')).toHaveCount(1);
   await page.locator('.slide-next').click();
   await expect(nueva).toBeVisible();
 
