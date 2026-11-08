@@ -3,6 +3,7 @@ import Layout from "../layouts/Layout.astro";
 import Icon from "../components/comun/Icon.astro";
 import Editable from "../components/comun/Editable.astro";
 import Foto from "../components/comun/Foto.astro";
+import BannerPortada from "../components/inicio/BannerPortada.astro";
 import { getImage, Image } from "astro:assets";
 import { imageView, medidasFoto } from "../lib/comun/fotos";
 import { visorFotos } from "../lib/comun/visor-fotos";
@@ -16,6 +17,8 @@ import { enlaceRedValido, REDES, type RedSocial, usuarioRed } from "../lib/comun
 const { banners, portrait, pieces, team } = await contentRepository.getHomeCarousels();
 const slides = banners.length + 1;
 const BANNER_WIDTHS = [640, 960, 1440, 1947];
+// El banner 1 tiene su propia versión para celular: no usa la imagen para celular aunque quede una guardada.
+const esPortada = (b: (typeof banners)[number]) => "original" in b.image && b.image.original === "portada";
 const MARCO = "relative aspect-[1947/741] w-full max-h-[680px] overflow-hidden min-wide:max-h-[740px]";
 const SLIDE = `${MARCO} max-tablet:aspect-[4/3] max-tablet:max-h-none`;
 const BANNER = "h-full w-full object-cover max-tablet:absolute max-tablet:object-[100%_center]";
@@ -85,7 +88,9 @@ const contactos = [
           aria-label={`${i + 1} de ${slides}`}
           hidden={i > 0}
         >
-          {"original" in banner.image ? (
+          {esPortada(banner) ? (
+            <BannerPortada class={BANNER} alt={banner.alt} widths={BANNER_WIDTHS} />
+          ) : "original" in banner.image ? (
             <Image
               class={BANNER}
               src={ORIGINALES[banner.image.original]}
@@ -101,7 +106,7 @@ const contactos = [
           ) : (
             <Foto class={BANNER} picture={banner.image.photo} mobile={banner.mobile} alt={banner.alt} sizes="100vw" loading={i ? "lazy" : "eager"} fetchpriority={i ? undefined : "high"} />
           )}
-          {!banner.mobile && (
+          {(!banner.mobile || esPortada(banner)) && (
             <div class={OVERLAY}>
               <Editable clave="inicio.carrusel.antetitulo" class="max-tablet:text-[0.56rem] max-tablet:font-bold max-tablet:tracking-[0.08em]" />
               <Editable as="h2" clave="inicio.carrusel.titulo" class="max-tablet:mx-0 max-tablet:mt-[15px] max-tablet:mb-[18px] max-tablet:text-[clamp(2rem,8vw,3.6rem)]" />

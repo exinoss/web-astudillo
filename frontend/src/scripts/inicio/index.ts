@@ -26,7 +26,8 @@ function syncAutoplay() {
   const motionOff =
     document.documentElement.classList.contains("reduce-motion");
   if (!motionOff && !document.hidden)
-    timer = setInterval(() => showSlide(index + 1), 6000);
+    // No avanza mientras el puntero está sobre el candidato del banner 1, para no cortar su zoom.
+    timer = setInterval(() => { if (!document.querySelector(".silueta-portada polygon:hover")) showSlide(index + 1); }, 6000);
 }
 document.addEventListener("visibilitychange", syncAutoplay);
 new MutationObserver(syncAutoplay).observe(document.documentElement, {
@@ -35,6 +36,13 @@ new MutationObserver(syncAutoplay).observe(document.documentElement, {
 });
 syncAutoplay();
 const carousel = document.querySelector<HTMLElement>(".hero-slides")!;
+// El fondo sin el candidato solo sirve para el zoom con ratón: se descarga al entrar el puntero, no en celular.
+carousel.addEventListener("pointerenter", (e) => {
+  const fondo = carousel.querySelector<SVGImageElement>(".silueta-portada [data-href]");
+  if (e.pointerType !== "mouse" || !fondo) return;
+  fondo.setAttribute("href", fondo.dataset.href!);
+  fondo.removeAttribute("data-href");
+});
 carousel.addEventListener("click", (e) => {
   const target = e.target as Element;
   const dot = target.closest<HTMLButtonElement>(".slide-dot");

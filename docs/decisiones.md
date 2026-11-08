@@ -60,6 +60,9 @@ Por qué: quita las rayas del borde de la pista sin cambiar nada más de lo que 
 **D-023 · 2026-11-05 · El carrusel del equipo de la portada no tiene semilla: sin fotos no se muestra, y en modo edición ofrece «Agregar imágenes». Es la excepción a D-018. Solo admite imágenes horizontales (más anchas que altas), con los límites de siempre (40 MP y 8 MB), y usa el marco del carrusel principal con la foto completa.**
 Por qué: no hay imágenes del cliente que poner por defecto, y recortar una foto de grupo cortaría nombres y caras. A los lados de la foto se ve el público de una balconera, editado por el usuario (`frontend/src/assets/fondo-publico-equipo.jpg`). En celular no se descarga, porque la foto ocupa todo el ancho.
 
+**D-026 · 2026-11-08 · El banner 1 (`portada.jpg`, fijo) tiene una composición propia: en celular, el candidato recortado sobre el público del carrusel del equipo, junto a los textos; en escritorio con ratón, un polígono con su silueta lo amplía al pasar el puntero, sobre una franja del banner sin él. No admite imagen para celular, y su foto no se cambia.**
+Por qué: una imagen para celular reemplazaría toda la composición por una foto suelta, así que el editor no la ofrece y el backend la descarta. El recorte, el polígono y la franja están hechos para `portada.jpg`: si alguna vez cambia, hay que rehacer los tres. No hay foto original en alta resolución, así que el recorte (624 px de ancho) no llega al triple de su tamaño en pantalla: excepción aprobada por el usuario. El carrusel no avanza mientras el puntero está sobre el candidato. Detalle: `components/inicio/BannerPortada.astro`, `lib/inicio/silueta-portada.ts` y `design/propuestas/banner-candidato/README.md` (fuera de Git), con los scripts que generan los tres.
+
 ## Trabajo y configuración
 
 **D-011 · 2026-10-03 · Despliegue con Docker Compose, GitHub Actions, GHCR y `server-produccion/desplegar.sh`; descartados Dokploy, Vercel y Jenkins.**

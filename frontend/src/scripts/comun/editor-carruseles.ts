@@ -56,7 +56,7 @@ const tarjetaBanner = (b: Principal["banners"][number], i: number, total: number
     <div class="grid grid-cols-[minmax(0,260px)_minmax(0,1fr)] items-start gap-4 max-tablet:grid-cols-1">
       <img src="${miniatura(b.imagen)}" alt="" class="aspect-[1947/741] w-full rounded-[3px] bg-base-200 object-cover" />
       <div class="flex flex-col gap-3">
-        <div class="flex flex-wrap items-center gap-3">
+        ${i === 0 ? `<p class="${HINT} mt-0">Este banner ya tiene su versión para celular.</p>` : `<div class="flex flex-wrap items-center gap-3">
           ${b.celular
             ? `<img src="${thumb(b.celular)}" alt="" class="aspect-[4/3] w-[104px] rounded-[3px] bg-base-200 object-cover" />`
             : `<span class="grid aspect-[4/3] w-[104px] place-items-center rounded-[3px] border border-dashed border-field-border px-2 text-center text-[0.68rem] leading-tight text-muted">Sin imagen para celular</span>`}
@@ -67,7 +67,7 @@ const tarjetaBanner = (b: Principal["banners"][number], i: number, total: number
               ${b.celular ? `<button type="button" class="${GHOST}" data-quitar-celular="${i}">Quitar</button>` : ""}
             </span>
           </span>
-        </div>
+        </div>`}
         ${field({ id: `banner-alt-${i}`, label: "Descripción de la imagen", value: b.alt, max: 200 })}
       </div>
     </div>
@@ -335,13 +335,19 @@ function puntos(grupo: HTMLElement, selector: string, total: number, nombre: str
 function pintarBorrador() {
   const { banners, retrato } = borrador.principal;
   const segunda = [...hero.querySelectorAll<HTMLElement>("[data-slide]")].at(-1)!;
-  hero.querySelectorAll<HTMLElement>("[data-slide]").forEach((s) => { if (s !== segunda) s.remove(); });
+  // El banner 1 es fijo: se conserva su diapositiva publicada, con su versión para celular y su zoom.
+  const primera = hero.querySelector<HTMLElement>('[data-slide="0"]')!;
+  hero.querySelectorAll<HTMLElement>("[data-slide]").forEach((s) => { if (s !== segunda && s !== primera) s.remove(); });
   const total = banners.length + 1;
-  const nuevas = banners.map((b, i) => {
+  primera.querySelector("img")!.alt = banners[0].alt;
+  primera.setAttribute("aria-label", `1 de ${total}`);
+  primera.hidden = false;
+  const nuevas = banners.slice(1).map((b, j) => {
+    const i = j + 1;
     const slide = plantilla.content.firstElementChild!.cloneNode(true) as HTMLElement;
     const img = slide.querySelector("img")!;
     ponerImagen(img, b.imagen, b.alt, "100vw");
-    img.loading = i ? "lazy" : "eager";
+    img.loading = "lazy";
     if (b.celular) {
       const picture = document.createElement("picture");
       picture.className = "contents";
@@ -355,7 +361,7 @@ function pintarBorrador() {
     }
     slide.dataset.slide = String(i);
     slide.setAttribute("aria-label", `${i + 1} de ${total}`);
-    slide.hidden = i > 0;
+    slide.hidden = true;
     opciones.decorar(slide);
     return slide;
   });

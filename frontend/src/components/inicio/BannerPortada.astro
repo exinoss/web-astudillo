@@ -1,0 +1,34 @@
+---
+import { getImage, Image } from "astro:assets";
+import portada from "../../assets/portada.jpg";
+import fondoPublico from "../../assets/fondo-publico-equipo.jpg";
+import recorte from "../../assets/candidato-portada-recorte.png";
+import sinCandidato from "../../assets/portada-sin-candidato.jpg";
+import { SILUETA_PORTADA } from "../../lib/inicio/silueta-portada";
+
+interface Props {
+  class: string;
+  alt: string;
+  widths: number[];
+}
+const { class: clase, alt, widths } = Astro.props;
+// En celular el fondo cubre un marco 4:3 más estrecho que la foto: se dibuja a 1,63 veces el ancho de la pantalla.
+const fondoMovil = await getImage({ src: fondoPublico, widths: [640, 960, 1440], format: "webp" });
+const [candidato, fondo] = await Promise.all([
+  getImage({ src: recorte, width: recorte.width, format: "webp" }),
+  getImage({ src: sinCandidato, width: sinCandidato.width, format: "webp" }),
+]);
+const { puntos, recorte: esquina } = SILUETA_PORTADA;
+---
+
+<picture class="contents">
+  <source media="(width <= 760px)" srcset={fondoMovil.srcSet.attribute} sizes="163vw" />
+  <Image class={`${clase} max-tablet:object-[70%_center]!`} src={portada} alt={alt} widths={widths} sizes="100vw" width={portada.width} height={portada.height} loading="eager" fetchpriority="high" quality={85} />
+</picture>
+<img src={candidato.src} alt="" width={recorte.width} height={recorte.height} decoding="async"
+  class="hidden max-tablet:absolute max-tablet:-right-[3%] max-tablet:bottom-0 max-tablet:block max-tablet:h-[94%] max-tablet:w-auto max-tablet:max-w-none" />
+<svg class="silueta-portada" viewBox={`0 0 ${portada.width} ${portada.height}`} preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  <image data-href={fondo.src} x={portada.width - sinCandidato.width} y="0" width={sinCandidato.width} height={sinCandidato.height} />
+  <image class="silueta-recorte" href={candidato.src} x={esquina.x} y={esquina.y} width={recorte.width} height={recorte.height} />
+  <polygon points={puntos} />
+</svg>
