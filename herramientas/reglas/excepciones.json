@@ -2096,12 +2096,6 @@
     },
     {
       "regla": "comentario-de-funcion",
-      "archivo": "frontend/src/scripts/cuenta/panel/propuestas/index.ts",
-      "texto": "function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftProposal, kpis: DraftProposal[\"kpis\"]) {",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
       "archivo": "frontend/src/scripts/cuenta/panel/publicaciones/index.ts",
       "texto": "const duration = (p: Publication) => p.iniciadoEn && p.terminadoEn",
       "motivo": "Existente al congelar la lista; pendiente de corregir."

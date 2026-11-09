@@ -70,6 +70,20 @@ function mockApi(page: Page, opciones: { loggedIn?: boolean; accepted?: boolean 
   return data;
 }
 
+test('al cargar se pide el perfil una sola vez, y otra vez al volver a la pestaña', async ({ page }) => {
+  mockApi(page, { loggedIn: true });
+  let perfiles = 0;
+  await page.route('**/api/me', async (route) => { perfiles++; await new Promise((r) => setTimeout(r, 400)); await route.fallback(); });
+  for (const path of ['/ciudadania/alerta-ciudadana/', '/ciudadania/sugerencias/', '/ciudadania/chat/']) {
+    perfiles = 0;
+    await page.goto(path);
+    await page.waitForLoadState('networkidle');
+    expect(perfiles).toBe(1);
+    await page.evaluate(() => dispatchEvent(new Event('focus')));
+    await expect.poll(() => perfiles).toBe(2);
+  }
+});
+
 test('la aceptación pendiente conserva la alerta y la foto, y se guarda para los demás formularios', async ({ page }) => {
   const api = mockApi(page, { loggedIn: true, accepted: false });
   await page.goto('/ciudadania/alerta-ciudadana/');

@@ -172,6 +172,23 @@ test("demasiados envíos seguidos responden 429 con la espera", async () => {
   expect(Number(last!.headers.get("retry-after"))).toBeGreaterThan(0);
 });
 
+test("los reintentos de una alerta no gastan el límite de envíos, tampoco a la vez", async () => {
+  await account("alerta-reintentos", "votante");
+  const foto = await photo();
+  const fields = alert();
+  const send = (extra: Record<string, string> = fields) => call("/api/participacion/alertas", "POST",
+    alertForm(extra, foto), cookies["alerta-reintentos"]);
+  const together = await Promise.all([1, 2, 3, 4].map(() => send()));
+  expect(together.map(r => r.status)).toEqual([200, 200, 200, 200]);
+  expect(new Set(await Promise.all(together.map(async r => (await r.json()).id))).size).toBe(1);
+  for (let i = 0; i < 3; i++) expect((await send()).status).toBe(200);
+  // Un envío gastado: quedan cuatro claves nuevas antes del 429.
+  for (let i = 0; i < 4; i++) expect((await send(alert())).status).toBe(200);
+  expect((await send(alert())).status).toBe(429);
+  expect((await send()).status).toBe(200);
+  expect((await sql`SELECT count(*)::int AS total FROM tb_alertas WHERE id_usuario = ${ids["alerta-reintentos"]}`)[0].total).toBe(5);
+});
+
 test("el chat responde con lo publicado y anota lo que no sabe", async () => {
   const ask = async (mensaje: string) => (await (await call("/api/participacion/chat", "POST", { mensaje,
     idempotencia: crypto.randomUUID() }, cookies.otro)).json());
@@ -212,6 +229,20 @@ test('el chat cuenta una vez los reintentos concurrentes y distingue claves y cu
   expect((await sql`SELECT count(*)::int AS n FROM tb_chat_envios WHERE clave_idempotencia = ${idempotencia}`)[0].n).toBe(2);
   expect((await call('/api/participacion/chat', 'POST', { mensaje }, cookies.otro)).status).toBe(422);
   expect((await send('no-es-un-uuid')).status).toBe(422);
+});
+
+test('los reintentos del chat no gastan el límite de consultas, tampoco a la vez', async () => {
+  await account('chat-reintentos', 'votante');
+  const send = (idempotencia: string, mensaje = 'Pregunta repetida qwzx') =>
+    call('/api/participacion/chat', 'POST', { mensaje, idempotencia }, cookies['chat-reintentos']);
+  const repeated = crypto.randomUUID();
+  expect((await Promise.all([1, 2, 3, 4].map(() => send(repeated)))).map(r => r.status)).toEqual([200, 200, 200, 200]);
+  for (let i = 0; i < 35; i++) expect((await send(repeated)).status).toBe(200);
+  expect((await send(repeated, 'Otro texto qwzx')).status).toBe(409);
+  // Una consulta gastada de 30: quedan 29 claves nuevas antes del 429.
+  for (let i = 0; i < 29; i++) expect((await send(crypto.randomUUID())).status).toBe(200);
+  expect((await send(crypto.randomUUID())).status).toBe(429);
+  expect((await send(repeated)).status).toBe(200);
 });
 
 test('el reintento conserva la respuesta aunque cambie el contenido publicado', async () => {
@@ -256,6 +287,7 @@ test('una cuenta bloqueada no puede recuperar respuestas guardadas ni usar la fu
     expect((await call('/api/participacion/chat', 'POST', body, cookies.votante)).status).toBe(401);
     expect(await callPg(sql, 'chatSend', [user.id_usuario, body.idempotencia, 'a'.repeat(64),
       { texto: 'Prueba' }, null, body.mensaje, VERSION_LEGAL])).toEqual([]);
+    expect(await callPg(sql, 'chatByKey', [user.id_usuario, body.idempotencia])).toEqual([]);
   } finally {
     await sql`UPDATE tb_usuarios SET estado = 'activo' WHERE id_usuario = ${user.id_usuario}`;
   }

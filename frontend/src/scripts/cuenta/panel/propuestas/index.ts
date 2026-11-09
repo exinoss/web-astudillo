@@ -4,6 +4,8 @@ import { avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PIL
 
 const MAX_KPIS = 6;
 let selected = "";
+// Una copia por propuesta: cambiar de propuesta no pierde lo escrito.
+const trabajo: Record<string, DraftProposal> = {};
 
 /** Fila editable de una cifra, con botones para ordenarla o quitarla. */
 const kpiRow = (k: { etiqueta: string; valor: string }, i: number, total: number) => `
@@ -27,11 +29,12 @@ const readKpis = (form: HTMLElement) => [...form.querySelectorAll<HTMLElement>("
 export function renderProposals(section: HTMLElement) {
   const proposals = state.draft!.propuestas;
   selected ||= proposals[0]?.slug ?? "";
-  const current = proposals.find((p) => p.slug === selected)!;
-  draw(section, proposals, current, current.kpis);
+  draw(section, proposals, (trabajo[selected] ??= structuredClone(proposals.find((p) => p.slug === selected)!)));
 }
 
-function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftProposal, kpis: DraftProposal["kpis"]) {
+/** Pinta la lista de propuestas y el formulario de la copia de trabajo de la elegida. */
+function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftProposal) {
+  const { kpis } = current;
   const list = proposals.map((p) => `
     <button type="button" data-propuesta="${esc(p.slug)}" aria-current="${p.slug === current.slug}"
       class="flex min-h-[52px] items-center justify-between gap-2.5 border-t border-t-base-300 border-l-4 border-l-transparent px-4 text-left text-[0.88rem] first:border-t-0 aria-[current=true]:border-l-secondary aria-[current=true]:bg-primary-soft aria-[current=true]:font-bold">
@@ -68,14 +71,18 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
       ${form}
     </div>`;
 
-  const pick = (slug: string) => { selected = slug; renderProposals(section); };
+  const formEl = section.querySelector<HTMLFormElement>("#propuesta-form")!;
+  const read = () => ({
+    nombre: value(formEl, "#propuesta-nombre"), categoria: value(formEl, "#propuesta-categoria"),
+    introduccion: value(formEl, "#propuesta-intro"), kpis: readKpis(formEl),
+  });
+  const pick = (slug: string) => { Object.assign(current, read()); selected = slug; renderProposals(section); };
   section.querySelectorAll<HTMLButtonElement>("[data-propuesta]").forEach((b) => b.addEventListener("click", () => pick(b.dataset.propuesta!)));
   section.querySelector<HTMLSelectElement>("#propuesta-selector")!.addEventListener("change", (e) => pick((e.target as HTMLSelectElement).value));
 
-  const formEl = section.querySelector<HTMLFormElement>("#propuesta-form")!;
   const redraw = (next: DraftProposal["kpis"]) => {
-    const edited = { ...current, nombre: value(formEl, "#propuesta-nombre"), categoria: value(formEl, "#propuesta-categoria"), introduccion: value(formEl, "#propuesta-intro") };
-    draw(section, proposals, edited, next);
+    Object.assign(current, read(), { kpis: next });
+    draw(section, proposals, current);
   };
   formEl.querySelector("#kpi-agregar")!.addEventListener("click", () => redraw([...readKpis(formEl), { etiqueta: "", valor: "" }]));
   formEl.querySelectorAll<HTMLButtonElement>("[data-quitar]").forEach((b) => b.addEventListener("click", () =>
@@ -86,10 +93,6 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
     [list[i], list[j]] = [list[j], list[i]];
     redraw(list);
   }));
-  const read = () => ({
-    nombre: value(formEl, "#propuesta-nombre"), categoria: value(formEl, "#propuesta-categoria"),
-    introduccion: value(formEl, "#propuesta-intro"), kpis: readKpis(formEl),
-  });
   const saved = proposals.find((p) => p.slug === current.slug)!;
   vigilarCambios(formEl, formEl.querySelector("button[type=submit]")!,
     { nombre: saved.nombre, categoria: saved.categoria, introduccion: saved.introduccion, kpis: saved.kpis }, read);
@@ -101,6 +104,7 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
     void busy(formEl.querySelector("button[type=submit]"), async () => {
       await adminApi.saveProposal(current.slug, body, state.draft!.versiones.propuestas[current.slug]);
       await Promise.all([reloadDraft(), reloadPending()]);
+      delete trabajo[current.slug];
       renderProposals(section);
       confirmarCambio(BORRADOR_GUARDADO);
     });

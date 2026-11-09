@@ -8,7 +8,8 @@ const MAX_MILESTONES = 20;
 const MAX_PHOTOS = 24;
 const STAGE_CLASSES = { "por-iniciar": "border border-base-300 text-primary", "en-ejecucion": "bg-secondary text-primary", terminada: "bg-primary text-primary-content" };
 let selected = "";
-let work: DraftWork | null = null; // copia de trabajo de la obra abierta
+// Una copia por obra: cambiar de obra no pierde lo escrito.
+const trabajo: Record<string, DraftWork> = {};
 
 const nameOf = (slug: string) => state.draft!.propuestas.find((p) => p.slug === slug)?.nombre ?? slug;
 
@@ -17,27 +18,28 @@ const saved = (w: DraftWork) => ({ nota: w.nota, hitos: w.hitos, fotos: w.fotos.
 
 /** Pasa a la copia de trabajo lo escrito en el formulario. */
 function capture(form: HTMLElement) {
-  work = {
-    ...work!,
+  const work = trabajo[selected];
+  trabajo[selected] = {
+    ...work,
     nota: value(form, "#obra-nota"),
     hitos: [...form.querySelectorAll<HTMLElement>(".obra-hito")].map((row) => ({
       nombre: value(row, '[name="hito"]'), completado: row.querySelector<HTMLInputElement>('[name="completado"]')!.checked,
     })),
-    fotos: work!.fotos.map((f, i) => ({ ...f, pie: value(form, `#foto-pie-${i}`) })),
+    fotos: work.fotos.map((f, i) => ({ ...f, pie: value(form, `#foto-pie-${i}`) })),
   };
 }
 
 export function renderWorks(section: HTMLElement) {
   const works = state.draft!.obras;
   selected ||= works[0]?.slug ?? "";
-  if (!work || work.slug !== selected) work = structuredClone(works.find((w) => w.slug === selected)!);
+  const work = (trabajo[selected] ??= structuredClone(works.find((w) => w.slug === selected)!));
   const { percent, stage } = workProgress(work.hitos.map((h) => ({ done: h.completado })));
   const hitos = work.hitos.map((h, i) => `
     <div class="obra-hito flex items-center gap-2 border-t border-t-base-300 py-1.5 first:border-t-0">
       <input type="checkbox" name="completado" id="hito-completado-${i}" ${h.completado ? "checked" : ""} class="size-6 shrink-0 accent-neutral" aria-label="Hito ${i + 1} completado" />
       <div class="min-w-0 flex-1"><input id="hito-nombre-${i}" name="hito" value="${esc(h.nombre)}" maxlength="120" aria-label="Nombre del hito ${i + 1}" required class="campo" /></div>
       <button type="button" class="${ICON_BUTTON}" data-mover="-1" data-indice="${i}" aria-label="Subir hito ${i + 1}" ${i === 0 ? "disabled" : ""}>${iconSvg("up", 18)}</button>
-      <button type="button" class="${ICON_BUTTON}" data-mover="1" data-indice="${i}" aria-label="Bajar hito ${i + 1}" ${i === work!.hitos.length - 1 ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>
+      <button type="button" class="${ICON_BUTTON}" data-mover="1" data-indice="${i}" aria-label="Bajar hito ${i + 1}" ${i === work.hitos.length - 1 ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>
       <button type="button" class="${ICON_BUTTON} text-error" data-quitar-hito="${i}" aria-label="Quitar hito ${i + 1}">${iconSvg("trash", 18)}</button>
     </div>`).join("");
   const fotos = work.fotos.map((f, i) => `
@@ -98,51 +100,44 @@ export function renderWorks(section: HTMLElement) {
 function bind(section: HTMLElement) {
   const form = section.querySelector<HTMLFormElement>("#obra-form")!;
   const edit = (change: () => void) => { capture(form); change(); renderWorks(section); };
-  section.querySelector<HTMLSelectElement>("#obra-selector")!.addEventListener("change", (e) => {
-    selected = (e.target as HTMLSelectElement).value;
-    work = null;
-    renderWorks(section);
-  });
+  section.querySelector<HTMLSelectElement>("#obra-selector")!.addEventListener("change", (e) => edit(() => { selected = (e.target as HTMLSelectElement).value; }));
   form.querySelectorAll<HTMLInputElement>('[name="completado"]').forEach((c) => c.addEventListener("change", () => edit(() => {})));
-  form.querySelector("#hito-agregar")!.addEventListener("click", () => edit(() => work!.hitos.push({ nombre: "", completado: false })));
+  form.querySelector("#hito-agregar")!.addEventListener("click", () => edit(() => trabajo[selected].hitos.push({ nombre: "", completado: false })));
   form.querySelectorAll<HTMLButtonElement>("[data-quitar-hito]").forEach((b) => b.addEventListener("click", () =>
-    edit(() => work!.hitos.splice(Number(b.dataset.quitarHito), 1))));
+    edit(() => trabajo[selected].hitos.splice(Number(b.dataset.quitarHito), 1))));
   form.querySelectorAll<HTMLButtonElement>("[data-mover]").forEach((b) => b.addEventListener("click", () => edit(() => {
-    const i = Number(b.dataset.indice), j = i + Number(b.dataset.mover);
-    [work!.hitos[i], work!.hitos[j]] = [work!.hitos[j], work!.hitos[i]];
+    const hitos = trabajo[selected].hitos, i = Number(b.dataset.indice), j = i + Number(b.dataset.mover);
+    [hitos[i], hitos[j]] = [hitos[j], hitos[i]];
   })));
   form.querySelectorAll<HTMLButtonElement>("[data-quitar-foto]").forEach((b) => b.addEventListener("click", () =>
-    edit(() => work!.fotos.splice(Number(b.dataset.quitarFoto), 1))));
+    edit(() => trabajo[selected].fotos.splice(Number(b.dataset.quitarFoto), 1))));
   form.querySelector<HTMLInputElement>("#obra-fotos")!.addEventListener("change", (e) => {
-    const files = [...((e.target as HTMLInputElement).files ?? [])].slice(0, MAX_PHOTOS - work!.fotos.length);
+    const files = [...((e.target as HTMLInputElement).files ?? [])].slice(0, MAX_PHOTOS - trabajo[selected].fotos.length);
     if (!files.length) return;
     capture(form);
-    const slug = work!.slug;
-    // `work` se lee después de cada subida: mientras sube, otra lectura del formulario puede
-    // reemplazar la copia de trabajo, y la foto se añadiría a la lista vieja.
+    const destino = selected;
     void subirFotos(files, (foto) => {
-      if (work?.slug !== slug) {
-        notify("Cambiaste de obra mientras se subían las fotos; vuelve a subirlas en esa obra.", true);
-        return false;
-      }
-      work.fotos.push({ ...foto, pie: "" });
-      renderWorks(section);
+      const abierto = document.querySelector<HTMLFormElement>("#obra-form");
+      if (destino === selected && abierto) capture(abierto);
+      trabajo[destino].fotos.push({ ...foto, pie: "" });
+      if (destino === selected) renderWorks(section);
     }).then((todas) => todas && notify("Fotos subidas. Escribe un pie para cada una y guarda el borrador."));
   });
-  vigilarCambios(form, form.querySelector("button[type=submit]")!, saved(state.draft!.obras.find((w) => w.slug === work!.slug)!), () => {
+  vigilarCambios(form, form.querySelector("button[type=submit]")!, saved(state.draft!.obras.find((w) => w.slug === selected)!), () => {
     capture(form);
-    return saved(work!);
+    return saved(trabajo[selected]);
   });
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     capture(form);
-    if (!work!.nota || work!.hitos.some((h) => !h.nombre) || work!.fotos.some((f) => !f.pie))
+    const slug = selected, work = trabajo[slug];
+    if (!work.nota || work.hitos.some((h) => !h.nombre) || work.fotos.some((f) => !f.pie))
       return avisarVacios(form, "Completa la nota, el nombre de cada hito y el pie de cada foto.");
     void busy(form.querySelector("button[type=submit]"), async () => {
-      await adminApi.saveWork(work!.slug, { nota: work!.nota, hitos: work!.hitos, fotos: work!.fotos.map((f) => ({ idMedio: f.idMedio, pie: f.pie })) },
-        state.draft!.versiones.obras[work!.slug]);
+      await adminApi.saveWork(slug, { nota: work.nota, hitos: work.hitos, fotos: work.fotos.map((f) => ({ idMedio: f.idMedio, pie: f.pie })) },
+        state.draft!.versiones.obras[slug]);
       await Promise.all([reloadDraft(), reloadPending()]);
-      work = null;
+      delete trabajo[slug];
       renderWorks(section);
       confirmarCambio(BORRADOR_GUARDADO);
     });

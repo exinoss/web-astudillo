@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-11-09
+
+### Fixed
+
+- Panel, Propuestas y Obras: al elegir otra propuesta u obra y volver, lo escrito sin guardar sigue ahí, como ya pasaba en Parroquias y en Acerca de Carlos. Si una foto termina de subir después de cambiar de obra, se queda en la obra donde se subió.
+- Chat y alerta ciudadana: si la conexión falla y el envío se repite, ya no cuenta como otro envío para el límite de mensajes.
+- Herramientas de accesibilidad: con «Fondo claro» o «Alto contraste», la cabecera naranja de «Mi cuenta» y del panel de administración pasa a fondo blanco, como en el resto de páginas.
+
 ## [1.4.0] - 2026-11-08
 
 ### Added
@@ -175,7 +183,8 @@ Primera versión numerada: recoge todo lo hecho desde el inicio del proyecto.
 - Las respuestas simuladas de alertas, sugerencias y chat.
 - Dependencia `daisyui`: no se usaba ninguna de sus clases ni su mecanismo de temas; sus tokens de color pasaron a `@theme`.
 
-[Unreleased]: https://github.com/exinoss/web-astudillo/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/exinoss/web-astudillo/compare/v1.4.1...HEAD
+[1.4.1]: https://github.com/exinoss/web-astudillo/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/exinoss/web-astudillo/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/exinoss/web-astudillo/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/exinoss/web-astudillo/compare/v1.1.0...v1.2.0
