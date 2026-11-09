@@ -12,6 +12,7 @@ import { passwordHash } from './limits';
 import { plainText } from '../../validation/texto';
 import { requireAcceptance } from './consent';
 import { TEXTO_ACEPTACION, VERSION_LEGAL } from '../../contracts/legal';
+import { LARGOS } from '../../contracts/limites';
 
 export function createRegistration(sql: SQL, mailer: Mailer, config: Config) {
   return {
@@ -21,8 +22,8 @@ export function createRegistration(sql: SQL, mailer: Mailer, config: Config) {
       requireNewPassword(input.contrasenia);
       requireConfirmation(input.contrasenia, input.confirmarContrasenia);
       const correo = normalizeEmail(input.correo);
-      const name = plainText(input.nombresCompletos, "Nombre completo", 200);
-      const address = input.direccion?.trim() ? plainText(input.direccion, "Dirección", 500) : null;
+      const name = plainText(input.nombresCompletos, "Nombre completo", LARGOS.cuenta.nombre);
+      const address = input.direccion?.trim() ? plainText(input.direccion, "Dirección", LARGOS.cuenta.direccion) : null;
       await callPg(sql, "cleanupTokens");
       const existing = await callPg(sql, "userByEmail", [correo]);
       if (existing.length) return;

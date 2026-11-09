@@ -5,6 +5,8 @@ export const cardVariantFile = (name: string) => `${name}-tarjeta-${CARD_SIZE}.w
 // Formatos que se pueden subir: el panel y las alertas los ofrecen y el backend los comprueba por su contenido.
 export const ACEPTA_FOTOS = 'image/jpeg,image/png,image/webp,image/avif';
 export const FORMATOS_FOTO = 'JPG, PNG, WebP o AVIF';
+export const MAX_MB_FOTO = 8;
+export const MAX_BYTES_FOTO = MAX_MB_FOTO * 1024 * 1024;
 // Tope de píxeles por debajo del de sharp: una imagen «bomba» pequeña en bytes no agota la memoria del servidor
 // ni la del navegador que la muestra (una JPEG de 100 MP puede pesar 4 MB).
 export const MAX_PIXELES = 40_000_000;

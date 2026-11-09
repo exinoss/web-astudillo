@@ -4,6 +4,7 @@ import { requireConfirmation, requireNewPassword } from '../auth/password-policy
 import { callPg } from '../db/call';
 import { assertMigrated } from '../db/migrate';
 import { plainText } from '../validation/texto';
+import { LARGOS } from '../contracts/limites';
 
 type Resultado = { resultado: string; id_usuario: number | null };
 
@@ -61,7 +62,7 @@ async function crear(sql: SQL) {
     if (!correoValido(valor)) throw new Error('Correo no válido');
   });
   const nombre = await hastaQueSeaValido(async () => (await preguntar('Nombre completo:')).trim(),
-    valor => plainText(valor, 'Nombre completo', 200));
+    valor => plainText(valor, 'Nombre completo', LARGOS.cuenta.nombre));
   // Si la confirmación no coincide se piden las dos de nuevo, por si el error estaba en la primera.
   const contrasenia = await hastaQueSeaValido(async () => {
     const primera = await hastaQueSeaValido(() => preguntar('Contraseña:', true), requireNewPassword);

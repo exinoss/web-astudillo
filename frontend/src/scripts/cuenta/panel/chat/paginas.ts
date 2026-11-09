@@ -1,4 +1,5 @@
 import type { Draft } from "../../../../lib/data/http/admin-api";
+import { PAGINAS_CARLOS, SLUGS_CARLOS } from "../../../../../../backend/src/contracts/acerca-de-carlos";
 
 export interface PaginaDelSitio { nombre: string; ruta: string }
 
@@ -19,8 +20,7 @@ export function paginasDelSitio(draft: Draft): { seccion: string; paginas: Pagin
     { seccion: "Acerca de mí", paginas: [
       { nombre: "Acerca de mí", ruta: "/acerca-de-nosotros/" },
       { nombre: "Biografía", ruta: "/acerca-de-nosotros/biografia/" },
-      { nombre: "Por qué quiero ser alcalde", ruta: "/acerca-de-nosotros/por-que-quiero-ser-alcalde/" },
-      { nombre: "Conoce más sobre mí", ruta: "/acerca-de-nosotros/conoce-mas/" },
+      ...SLUGS_CARLOS.map((slug) => ({ nombre: PAGINAS_CARLOS[slug], ruta: `/acerca-de-nosotros/${slug}/` })),
       { nombre: "Mi equipo", ruta: "/mi-equipo/" },
     ] },
     { seccion: "Información legal", paginas: [

@@ -2,6 +2,7 @@ import type { SQL } from 'bun';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
 import { avisoNoInsertable, videoLinkProblem, videoSource } from '../../contracts/video';
+import { LARGOS } from '../../contracts/limites';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { ABOUT_CARLOS_PAGES, type AboutCarlosPage, type AboutCarlosSlug, type AboutCarlosPageStored } from '../types';
@@ -54,7 +55,7 @@ function clean(slug: AboutCarlosSlug, input: AboutCarlosPageInput): AboutCarlosP
     const source = videoSource(input.video.enlace);
     if (!source) throw new ApiError(422, `Video: ${videoLinkProblem(input.video.enlace)}`);
     video = {
-      titulo: plainText(input.video.titulo, 'Video · título', 80),
+      titulo: plainText(input.video.titulo, 'Video · título', LARGOS.acercaDeCarlos.tituloVideo),
       descripcion: optional(input.video.descripcion, 'Video · texto breve', 200, { multiline: true }),
       enlace: source.url, vertical: input.video.vertical, idPortada: input.video.idPortada,
     };
@@ -62,21 +63,21 @@ function clean(slug: AboutCarlosSlug, input: AboutCarlosPageInput): AboutCarlosP
   return {
     tarjetas: input.tarjetas.map((t, i) => ({
       idMedio: t.idMedio,
-      alt: plainText(t.alt, `Tarjeta ${i + 1} · descripción de la foto`, 200),
-      titulo: plainText(t.titulo, `Tarjeta ${i + 1} · título`, 60),
-      texto: plainText(t.texto, `Tarjeta ${i + 1} · texto`, 180, { multiline: true }),
+      alt: plainText(t.alt, `Tarjeta ${i + 1} · descripción de la foto`, LARGOS.descripcionFoto),
+      titulo: plainText(t.titulo, `Tarjeta ${i + 1} · título`, LARGOS.acercaDeCarlos.tituloTarjeta),
+      texto: plainText(t.texto, `Tarjeta ${i + 1} · texto`, LARGOS.acercaDeCarlos.textoTarjeta, { multiline: true }),
       color: t.color, enfoque: { x: t.enfoque.x, y: t.enfoque.y },
     })),
     video,
-    retrato: input.retrato ? { idMedio: input.retrato.idMedio, alt: plainText(input.retrato.alt, 'Retrato · descripción', 200) } : null,
+    retrato: input.retrato ? { idMedio: input.retrato.idMedio, alt: plainText(input.retrato.alt, 'Retrato · descripción', LARGOS.descripcionFoto) } : null,
     entrevista: input.entrevista.map((e, i) => ({
-      pregunta: plainText(e.pregunta, `Pregunta ${i + 1}`, 160),
-      respuesta: plainText(e.respuesta, `Pregunta ${i + 1} · respuesta`, 1000, { multiline: true }),
+      pregunta: plainText(e.pregunta, `Pregunta ${i + 1}`, LARGOS.acercaDeCarlos.pregunta),
+      respuesta: plainText(e.respuesta, `Pregunta ${i + 1} · respuesta`, LARGOS.acercaDeCarlos.respuesta, { multiline: true }),
     })),
     galeria: input.galeria.map((g, i) => ({
       idMedio: g.idMedio,
-      alt: plainText(g.alt, `Foto ${i + 1} · descripción`, 200),
-      pie: plainText(g.pie, `Foto ${i + 1} · pie`, 200),
+      alt: plainText(g.alt, `Foto ${i + 1} · descripción`, LARGOS.descripcionFoto),
+      pie: plainText(g.pie, `Foto ${i + 1} · pie`, LARGOS.acercaDeCarlos.pie),
     })),
   };
 }

@@ -3,7 +3,7 @@ import { marcarError, MENSAJE_CAMPO } from "../../../lib/comun/campos";
 import { bloquearMientras } from "../../../lib/cuenta/panel/cambios";
 import { adminApi } from "../../../lib/data/http/admin-api";
 import { ApiError } from "../../../lib/data/http/api-client";
-import { DANGER, esc, GHOST, HINT, LABEL, state } from "./ui";
+import { DANGER, esc, GHOST, HINT, LABEL, LARGOS, state } from "./ui";
 
 const ESPERA_REENVIO = 60;
 
@@ -26,7 +26,7 @@ export function confirmarIdentidad(o: Confirmacion): Promise<boolean> {
   const campo = conContrasenia
     ? `<label for="confirmar-valor" class="${LABEL}">Tu contraseña</label>
       <div class="relative">
-        <input id="confirmar-valor" type="password" autocomplete="current-password" maxlength="128" required aria-describedby="confirmar-valor-error" class="campo pr-[90px]" />
+        <input id="confirmar-valor" type="password" autocomplete="current-password" maxlength="${LARGOS.cuenta.contrasenia}" required aria-describedby="confirmar-valor-error" class="campo pr-[90px]" />
         <button type="button" class="password-toggle absolute inset-y-0 right-0 min-h-11 min-w-[76px] px-3 text-[0.82rem] font-bold" data-target="confirmar-valor" aria-label="Mostrar tu contraseña" aria-pressed="false">Mostrar</button>
       </div>`
     : `<p class="m-0 mb-3 text-[0.88rem]" data-aviso-codigo>Te enviaremos un código a <strong class="[overflow-wrap:anywhere]">${esc(state.profile!.correo)}</strong>.</p>

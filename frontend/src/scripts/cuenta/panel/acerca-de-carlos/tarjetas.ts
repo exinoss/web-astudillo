@@ -1,6 +1,6 @@
 import { cardMarkup } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/tarjeta";
 import { cardImageUrl } from "../../../../lib/comun/fotos";
-import { esc, field, FORMATOS_FOTO, HINT, LABEL, moveButtons, upload, value } from "../ui";
+import { esc, field, FORMATOS_FOTO, HINT, LABEL, LARGOS, MAX_MB_FOTO, moveButtons, upload, value } from "../ui";
 import { bindListActions, MAX_ITEMS, onFiles, radios, type Editor, type SectionEditor } from "./comun";
 
 let selectedCard = 0;
@@ -20,13 +20,13 @@ export const cards: SectionEditor = {
     const add = list.length < MAX_ITEMS ? `<div class="mt-3">${upload("tarjeta-nueva", "Añadir tarjeta")}</div>` : "";
     const editorHtml = card ? `
       <div class="flex min-w-0 flex-col gap-[18px]">
-        ${field({ id: "tarjeta-titulo", label: "Título", value: card.titulo, max: 60, hint: "Hasta 60 caracteres." , required: true })}
-        ${field({ id: "tarjeta-texto", label: "Texto", value: card.texto, max: 180, area: true, hint: "Hasta 180 caracteres. Se lee al pulsar «Leer más»." , required: true })}
-        ${field({ id: "tarjeta-alt", label: "Descripción de la foto", value: card.alt, max: 200 , required: true })}
+        ${field({ id: "tarjeta-titulo", label: "Título", value: card.titulo, max: LARGOS.acercaDeCarlos.tituloTarjeta, hint: "Hasta 60 caracteres." , required: true })}
+        ${field({ id: "tarjeta-texto", label: "Texto", value: card.texto, max: LARGOS.acercaDeCarlos.textoTarjeta, area: true, hint: "Hasta 180 caracteres. Se lee al pulsar «Leer más»." , required: true })}
+        ${field({ id: "tarjeta-alt", label: "Descripción de la foto", value: card.alt, max: LARGOS.descripcionFoto , required: true })}
         <div>
           <span class="${LABEL}">Foto</span>
           ${upload("tarjeta-foto", "Cambiar foto")}
-          <p class="${HINT}">Medida recomendada: 800 × 1170 px (vertical). ${FORMATOS_FOTO} de hasta 8 MB. Mejor una escena o un detalle que represente la idea.</p>
+          <p class="${HINT}">Medida recomendada: 800 × 1170 px (vertical). ${FORMATOS_FOTO} de hasta ${MAX_MB_FOTO} MB. Mejor una escena o un detalle que represente la idea.</p>
         </div>
         <fieldset class="min-w-0 rounded-[3px] border border-base-300 p-4">
           <legend class="px-1 text-[0.82rem] font-bold">Encuadre</legend>

@@ -1,5 +1,5 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
-import { normalizarWhatsapp, REDES, type Red } from "../../../../lib/comun/contenido/redes";
+import { MAX_ENLACE_RED, normalizarWhatsapp, REDES, type Red } from "../../../../lib/comun/contenido/redes";
 import { adminApi } from "../../../../lib/data/http/admin-api";
 import { BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, field, isPending, reloadDraft, reloadPending, state } from "../ui";
 
@@ -16,9 +16,9 @@ export function renderSocial(container: HTMLElement) {
   container.innerHTML = card("Redes sociales", `
     ${pendiente ? `<p class="-mt-2 mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
     <form id="redes-form" class="flex flex-col gap-4" novalidate>
-      ${field({ id: "red-facebook", label: "Facebook", value: guardado("facebook"), max: 300, hint: "Enlace completo de la página, empezando por https://www.facebook.com/" })}
-      ${field({ id: "red-instagram", label: "Instagram (opcional)", value: guardado("instagram"), max: 300, hint: "Enlace completo del perfil, empezando por https://www.instagram.com/. Si lo dejas vacío, no aparece en el sitio." })}
-      ${field({ id: "red-tiktok", label: "TikTok", value: guardado("tiktok"), max: 300, hint: "Enlace completo del perfil, empezando por https://www.tiktok.com/" })}
+      ${field({ id: "red-facebook", label: "Facebook", value: guardado("facebook"), max: MAX_ENLACE_RED, hint: "Enlace completo de la página, empezando por https://www.facebook.com/" })}
+      ${field({ id: "red-instagram", label: "Instagram (opcional)", value: guardado("instagram"), max: MAX_ENLACE_RED, hint: "Enlace completo del perfil, empezando por https://www.instagram.com/. Si lo dejas vacío, no aparece en el sitio." })}
+      ${field({ id: "red-tiktok", label: "TikTok", value: guardado("tiktok"), max: MAX_ENLACE_RED, hint: "Enlace completo del perfil, empezando por https://www.tiktok.com/" })}
       ${field({ id: "red-whatsapp", label: "Número de WhatsApp", value: `+${guardado("whatsapp")}`, max: 20, hint: "Por ejemplo 0985658595 o +593985658595." })}
       <div class="flex justify-end border-t border-t-base-300 pt-[18px]">
         <button type="submit" class="button max-tablet:w-full">Guardar borrador</button>

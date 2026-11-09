@@ -15,7 +15,3 @@ export const ESTADOS: Record<ParticipationState, { nombre: string; clases: strin
   en_revision: { nombre: "En revisión", clases: "bg-secondary text-primary" },
   atendida: { nombre: "Atendida", clases: "bg-primary text-primary-content" },
 };
-
-export const MAX_FOTO_BYTES = 5 * 1024 * 1024;
-export const MIN_DESCRIPCION = 10;
-export const MIN_SUGERENCIA = 15;

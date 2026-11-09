@@ -1,14 +1,15 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
+import { NOMBRES_ROL, nombreRol, ROLES } from "../../../../../../backend/src/contracts/roles";
 import { adminApi, type AdminUser } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { confirmarIdentidad } from "../confirmacion";
-import { busy, cargar, confirmarCambio, DANGER, esc, GHOST, iconSvg, notify, PILL } from "../ui";
+import { busy, cargar, confirmarCambio, DANGER, esc, GHOST, iconSvg, LARGOS, notify, PILL } from "../ui";
 
-const ROLE_NAMES: Record<string, string> = { admin: "Admin", coadmin: "Coadmin", analista: "Analista", votante: "Votante" };
 const ROLE_CLASSES: Record<string, string> = { admin: "bg-neutral text-neutral-content", coadmin: "bg-accent text-primary", analista: "border border-base-300", votante: "border border-base-300" };
 const filters = { q: "", rol: "", estado: "", pagina: 1 };
 
-const rolePill = (u: AdminUser) => `<span class="${PILL} ${ROLE_CLASSES[u.rol] ?? ""}">${esc(ROLE_NAMES[u.rol] ?? u.rol)}</span>`;
+/** Pastilla con el nombre del rol de la cuenta. */
+const rolePill = (u: AdminUser) => `<span class="${PILL} ${ROLE_CLASSES[u.rol] ?? ""}">${esc(nombreRol(u.rol))}</span>`;
 const statePill = (u: AdminUser) => u.estado === "activo"
   ? `<span class="${PILL} bg-success-soft text-success-ink">Activa</span>`
   : `<span class="${PILL} bg-error-soft text-error">Desactivada</span>`;
@@ -19,8 +20,8 @@ function actions(u: AdminUser) {
   if (!u.puedeCambiarEstado) return `<span class="flex items-center gap-2 text-[0.78rem] text-muted">${iconSvg("lock", 16)} ${esc(u.motivoBloqueo)}</span>`;
   const select = `<select data-rol-de="${u.id}" aria-label="Nuevo rol de ${esc(nombre(u))}"
       class="campo min-w-[140px] px-3 max-tablet:flex-1">
-      ${u.rolesAsignables.includes(u.rol) ? "" : `<option value="" selected disabled>${esc(ROLE_NAMES[u.rol] ?? u.rol)}</option>`}
-      ${u.rolesAsignables.map((r) => `<option value="${esc(r)}" ${r === u.rol ? "selected" : ""}>${esc(ROLE_NAMES[r] ?? r)}</option>`).join("")}
+      ${u.rolesAsignables.includes(u.rol) ? "" : `<option value="" selected disabled>${esc(nombreRol(u.rol))}</option>`}
+      ${u.rolesAsignables.map((r) => `<option value="${esc(r)}" ${r === u.rol ? "selected" : ""}>${esc(nombreRol(r))}</option>`).join("")}
     </select>`;
   return `<span class="flex flex-wrap items-center gap-2.5 max-tablet:w-full">
       <span class="flex gap-2.5 max-tablet:w-full">${select}<button type="button" class="button min-h-11 px-4 py-0" data-guardar-rol="${u.id}" data-rol-actual="${esc(u.rol)}" data-nombre="${esc(nombre(u))}">Guardar</button></span>
@@ -42,10 +43,10 @@ export function renderUsers(section: HTMLElement) {
     <div class="mb-[18px] flex items-end gap-3.5 max-tablet:grid max-tablet:grid-cols-2 max-tablet:gap-2.5">
       <div class="flex flex-1 flex-col gap-1.5 max-tablet:col-span-2">
         <label for="usuarios-buscar" class="text-[0.76rem] font-bold">Buscar</label>
-        <input id="usuarios-buscar" type="search" maxlength="120" value="${esc(filters.q)}" placeholder="Nombre o correo"
+        <input id="usuarios-buscar" type="search" maxlength="${LARGOS.busquedaUsuarios}" value="${esc(filters.q)}" placeholder="Nombre o correo"
           class="campo" />
       </div>
-      ${select("usuarios-rol", "Rol", [["", "Todos"], ["admin", "Admin"], ["coadmin", "Coadmin"], ["votante", "Votante"]], filters.rol)}
+      ${select("usuarios-rol", "Rol", [["", "Todos"], ...ROLES.map((r): [string, string] => [r, NOMBRES_ROL[r]])], filters.rol)}
       ${select("usuarios-estado", "Estado", [["", "Todos"], ["activo", "Activas"], ["bloqueado", "Desactivadas"]], filters.estado)}
       <button type="button" id="usuarios-limpiar" class="${GHOST} max-tablet:col-span-2">Limpiar filtros</button>
     </div>
@@ -112,7 +113,7 @@ function bind(section: HTMLElement, list: HTMLElement) {
     // Se envía el rol que muestra la lista: si otro admin lo cambió mientras tanto, la API responde 409.
     b.addEventListener("click", () => void busy(b, async () => {
       const hecho = await confirmarIdentidad({
-        resumen: `Vas a cambiar el rol de <strong>${esc(b.dataset.nombre!)}</strong> a <strong>${esc(ROLE_NAMES[select.value] ?? select.value)}</strong>.`,
+        resumen: `Vas a cambiar el rol de <strong>${esc(b.dataset.nombre!)}</strong> a <strong>${esc(nombreRol(select.value))}</strong>.`,
         boton: "Cambiar rol",
         enviar: (confirmacion) => adminApi.changeRole(Number(b.dataset.guardarRol), select.value, b.dataset.rolActual!, confirmacion),
       });

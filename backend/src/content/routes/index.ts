@@ -4,6 +4,7 @@ import type { Authorization } from '../../auth/types';
 import { MAX_PRESENTACION, MAX_PUNTO_TRAYECTORIA, MAX_TRAYECTORIA, PUESTOS } from '../../contracts/equipo';
 import { MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_PIEZAS, ORIGINALES } from '../../contracts/inicio';
 import { MAX_FOTOS_PARROQUIA } from '../../contracts/parroquias';
+import { LARGOS } from '../../contracts/limites';
 import { VIDEO_URL_MAX } from '../../contracts/video';
 import { createAboutCarlosPages } from '../services/about-carlos';
 import { createContent } from '../services/content';
@@ -39,16 +40,16 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
       content.saveProposal(access(cookie), params.slug, body, body.version), {
       params: slug,
       body: t.Object({
-        nombre: text(120), categoria: text(80), introduccion: text(400),
-        kpis: t.Array(t.Object({ etiqueta: text(60), valor: text(30) }, strict), { maxItems: 6 }),
+        nombre: text(LARGOS.propuesta.nombre), categoria: text(LARGOS.propuesta.categoria), introduccion: text(LARGOS.propuesta.introduccion),
+        kpis: t.Array(t.Object({ etiqueta: text(LARGOS.propuesta.etiquetaCifra), valor: text(LARGOS.propuesta.valorCifra) }, strict), { maxItems: 6 }),
         version,
       }, strict),
     })
     .put('/contenido/biografia', ({ cookie, body }) => content.saveBiography(access(cookie), body.hitos, body.version), {
       body: t.Object({
         hitos: t.Array(t.Object({
-          anios: text(40), titulo: text(120), texto: text(3000),
-          idMedio: t.Union([t.Integer({ minimum: 1 }), t.Null()]), alt: t.Union([text(200), t.Null()]),
+          anios: text(40), titulo: text(LARGOS.biografia.titulo), texto: text(LARGOS.biografia.texto),
+          idMedio: t.Union([t.Integer({ minimum: 1 }), t.Null()]), alt: t.Union([text(LARGOS.descripcionFoto), t.Null()]),
         }, strict), { maxItems: 30 }),
         version,
       }, strict),
@@ -57,17 +58,17 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
       content.saveWork(access(cookie), params.slug, body, body.version), {
       params: slug,
       body: t.Object({
-        nota: text(600),
-        hitos: t.Array(t.Object({ nombre: text(120), completado: t.Boolean() }, strict), { maxItems: 20 }),
-        fotos: t.Array(t.Object({ idMedio: t.Integer({ minimum: 1 }), pie: text(200) }, strict), { maxItems: 24 }),
+        nota: text(LARGOS.obra.nota),
+        hitos: t.Array(t.Object({ nombre: text(LARGOS.obra.hito), completado: t.Boolean() }, strict), { maxItems: 20 }),
+        fotos: t.Array(t.Object({ idMedio: t.Integer({ minimum: 1 }), pie: text(LARGOS.obra.pie) }, strict), { maxItems: 24 }),
         version,
       }, strict),
     })
     .put('/contenido/chat', ({ cookie, body }) => content.saveChat(access(cookie), body.respuestas, body.version), {
       body: t.Object({
         respuestas: t.Array(t.Object({
-          pregunta: text(160), palabrasClave: text(300), respuesta: text(1000),
-          enlaceTexto: t.Union([text(60), t.Null()]), enlaceRuta: t.Union([text(200), t.Null()]), destacada: t.Boolean(),
+          pregunta: text(LARGOS.chat.pregunta), palabrasClave: text(LARGOS.chat.palabrasClave), respuesta: text(LARGOS.chat.respuesta),
+          enlaceTexto: t.Union([text(LARGOS.chat.textoEnlace), t.Null()]), enlaceRuta: t.Union([text(LARGOS.chat.rutaEnlace), t.Null()]), destacada: t.Boolean(),
         }, strict), { maxItems: 60 }),
         version,
       }, strict),
@@ -77,16 +78,16 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
       params: slug,
       body: t.Object({
         tarjetas: t.Array(t.Object({
-          idMedio: mediaId, alt: text(200), titulo: text(60), texto: text(180),
+          idMedio: mediaId, alt: text(LARGOS.descripcionFoto), titulo: text(LARGOS.acercaDeCarlos.tituloTarjeta), texto: text(LARGOS.acercaDeCarlos.textoTarjeta),
           color: t.Union([t.Literal('rojo'), t.Literal('azul')]), enfoque: t.Object({ x: percent, y: percent }, strict),
         }, strict), { maxItems: 6 }),
         video: t.Union([t.Object({
-          titulo: text(80), descripcion: t.Union([text(200), t.Null()]), enlace: t.String({ maxLength: 500 }),
+          titulo: text(LARGOS.acercaDeCarlos.tituloVideo), descripcion: t.Union([text(LARGOS.acercaDeCarlos.descripcionVideo), t.Null()]), enlace: t.String({ maxLength: VIDEO_URL_MAX }),
           vertical: t.Boolean(), idPortada: t.Union([mediaId, t.Null()]),
         }, strict), t.Null()]),
-        retrato: t.Union([t.Object({ idMedio: mediaId, alt: text(200) }, strict), t.Null()]),
-        entrevista: t.Array(t.Object({ pregunta: text(160), respuesta: text(1000) }, strict), { maxItems: 6 }),
-        galeria: t.Array(t.Object({ idMedio: mediaId, alt: text(200), pie: text(200) }, strict), { maxItems: 6 }),
+        retrato: t.Union([t.Object({ idMedio: mediaId, alt: text(LARGOS.descripcionFoto) }, strict), t.Null()]),
+        entrevista: t.Array(t.Object({ pregunta: text(LARGOS.acercaDeCarlos.pregunta), respuesta: text(LARGOS.acercaDeCarlos.respuesta) }, strict), { maxItems: 6 }),
+        galeria: t.Array(t.Object({ idMedio: mediaId, alt: text(LARGOS.descripcionFoto), pie: text(LARGOS.acercaDeCarlos.pie) }, strict), { maxItems: 6 }),
         version,
       }, strict),
     })
@@ -96,7 +97,7 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
         personas: t.Array(t.Object({
           idMedio: t.Union([mediaId, t.Null()]),
           puesto: t.Union(PUESTOS.map(p => t.Literal(p.clave))),
-          nombre: text(80),
+          nombre: text(LARGOS.equipo.nombre),
           presentacion: text(MAX_PRESENTACION),
           trayectoria: t.Array(text(MAX_PUNTO_TRAYECTORIA), { maxItems: MAX_TRAYECTORIA }),
         }, strict), { maxItems: PUESTOS.length }),
@@ -107,28 +108,28 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
       myTeam.saveParish(access(cookie), params.slug, body, body.version), {
       params: slug,
       body: t.Object({
-        texto: text(3000),
-        fotos: t.Array(t.Object({ idMedio: mediaId, alt: text(200) }, strict), { maxItems: MAX_FOTOS_PARROQUIA }),
+        texto: text(LARGOS.equipo.textoParroquia),
+        fotos: t.Array(t.Object({ idMedio: mediaId, alt: text(LARGOS.descripcionFoto) }, strict), { maxItems: MAX_FOTOS_PARROQUIA }),
         version: t.Union([version, t.Null()]),
       }, strict),
     })
     .put('/contenido/inicio/principal', ({ cookie, body }) => homeCarousels.saveMain(access(cookie), body, body.version), {
       body: t.Object({
-        banners: t.Array(t.Object({ imagen: homeImage, celular: t.Union([mediaId, t.Null()]), alt: text(200) }, strict), { minItems: 1, maxItems: MAX_BANNERS }),
-        retrato: t.Object({ imagen: homeImage, alt: text(200) }, strict),
+        banners: t.Array(t.Object({ imagen: homeImage, celular: t.Union([mediaId, t.Null()]), alt: text(LARGOS.descripcionFoto) }, strict), { minItems: 1, maxItems: MAX_BANNERS }),
+        retrato: t.Object({ imagen: homeImage, alt: text(LARGOS.descripcionFoto) }, strict),
         version: t.Union([version, t.Null()]),
       }, strict),
     })
     .put('/contenido/inicio/piezas', ({ cookie, body }) => homeCarousels.savePieces(access(cookie), body, body.version), {
       body: t.Object({
-        piezas: t.Array(t.Object({ imagen: homeImage, alt: text(200) }, strict), { minItems: 1, maxItems: MAX_PIEZAS }),
+        piezas: t.Array(t.Object({ imagen: homeImage, alt: text(LARGOS.descripcionFoto) }, strict), { minItems: 1, maxItems: MAX_PIEZAS }),
         version: t.Union([version, t.Null()]),
       }, strict),
     })
     // Puede quedar vacío: sin fotos, la portada no muestra este carrusel.
     .put('/contenido/inicio/equipo', ({ cookie, body }) => homeCarousels.saveTeamPhotos(access(cookie), body, body.version), {
       body: t.Object({
-        fotos: t.Array(t.Object({ idMedio: mediaId, alt: text(200) }, strict), { maxItems: MAX_FOTOS_EQUIPO }),
+        fotos: t.Array(t.Object({ idMedio: mediaId, alt: text(LARGOS.descripcionFoto) }, strict), { maxItems: MAX_FOTOS_EQUIPO }),
         version: t.Union([version, t.Null()]),
       }, strict),
     })

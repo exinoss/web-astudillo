@@ -4,7 +4,7 @@ import { suggestionRepository } from "../../lib/data/participation";
 import { borrar, leer } from "../../lib/ciudadania/participacion/borrador";
 import { enviarConSesion, marcarError } from "../../lib/ciudadania/participacion/envio";
 import { prepararAceptacion } from '../../lib/ciudadania/participacion/aceptacion';
-import { MIN_SUGERENCIA } from "../../lib/ciudadania/participacion/tipos";
+import { MIN_MENSAJE_SUGERENCIA } from "../../../../backend/src/contracts/participacion";
 import { cuadroIcono, filaHistorial, historial } from "../../lib/ciudadania/participacion/historial";
 import { esc } from "../../lib/comun/html";
 import type { SentSuggestion } from "../../lib/data/types";
@@ -49,9 +49,9 @@ form.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (enviando) return;
   const sinTema = !temaElegido();
-  const corto = Array.from(mensaje.value.trim()).length < MIN_SUGERENCIA;
+  const corto = Array.from(mensaje.value.trim()).length < MIN_MENSAJE_SUGERENCIA;
   marcarError(temas, sinTema ? "Elige un tema." : null);
-  marcarError(mensaje, corto ? `Escribe tu idea con al menos ${MIN_SUGERENCIA} caracteres.` : null);
+  marcarError(mensaje, corto ? `Escribe tu idea con al menos ${MIN_MENSAJE_SUGERENCIA} caracteres.` : null);
   if (sinTema || corto) {
     showStatus(estado, "Revisa los campos marcados.", true);
     (sinTema ? temas.querySelector("input") : mensaje)?.focus();

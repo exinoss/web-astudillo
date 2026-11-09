@@ -3,6 +3,7 @@ import initial from '../../../database/contenido-inicial.json';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
 import { AVISO_HORIZONTAL, type Carrusel } from '../../contracts/inicio';
+import { LARGOS } from '../../contracts/limites';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { plainText } from '../../validation/texto';
@@ -55,7 +56,8 @@ export async function listHomeCarousels(sql: SQL): Promise<HomeCarousels> {
 
 // Mismo orden de claves siempre: la versión es el md5 del contenido guardado.
 const image = (value: HomeImageStored): HomeImageStored => ('original' in value ? { original: value.original } : { idMedio: value.idMedio });
-const alt = (value: string, field: string) => plainText(value, `${field} · descripción`, 200);
+/** Descripción de una imagen del carrusel, validada como texto plano. */
+const alt = (value: string, field: string) => plainText(value, `${field} · descripción`, LARGOS.descripcionFoto);
 
 export function createHomeCarousels(sql: SQL, authorization: Authorization) {
   async function save(actor: { id_usuario: number }, key: Carrusel, content: Stored, mediaIds: number[], version: string | null, horizontales = false) {

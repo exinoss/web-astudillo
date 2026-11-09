@@ -2,6 +2,7 @@
 import AccountShell from '../../components/cuenta/AccountShell.astro';
 import AccountCard from '../../components/cuenta/AccountCard.astro';
 import AccountField from '../../components/cuenta/AccountField.astro';
+import { LARGOS } from '../../../../backend/src/contracts/limites';
 import AccountStatus from '../../components/cuenta/AccountStatus.astro';
 import LegalAcceptance from '../../components/comun/LegalAcceptance.astro';
 ---
@@ -11,11 +12,11 @@ import LegalAcceptance from '../../components/comun/LegalAcceptance.astro';
     <AccountCard heading="Tus datos" description="Te enviaremos un enlace de verificación. Al confirmarlo podrás iniciar sesión.">
       <AccountStatus />
       <form id="register-form" data-new-password="contrasenia" novalidate>
-        <AccountField id="register-name" name="nombresCompletos" label="Nombre completo" placeholder="Tu nombre completo" autocomplete="name" required maxLength={200} />
-        <AccountField id="register-email" name="correo" label="Correo electrónico" type="email" placeholder="nombre@ejemplo.com" autocomplete="email" hint="Recibirás aquí el enlace de confirmación." required maxLength={320} />
-        <AccountField id="register-password" name="contrasenia" label="Contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" hint="Mínimo 6 caracteres; incluye una letra, un número y un símbolo." required maxLength={128} />
-        <AccountField id="register-confirm" name="confirmarContrasenia" label="Repite la contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" required maxLength={128} />
-        <AccountField id="register-address" name="direccion" label="Dirección (opcional)" placeholder="Barrio o dirección" autocomplete="street-address" maxLength={500} />
+        <AccountField id="register-name" name="nombresCompletos" label="Nombre completo" placeholder="Tu nombre completo" autocomplete="name" required maxLength={LARGOS.cuenta.nombre} />
+        <AccountField id="register-email" name="correo" label="Correo electrónico" type="email" placeholder="nombre@ejemplo.com" autocomplete="email" hint="Recibirás aquí el enlace de confirmación." required maxLength={LARGOS.cuenta.correo} />
+        <AccountField id="register-password" name="contrasenia" label="Contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" hint="Mínimo 6 caracteres; incluye una letra, un número y un símbolo." required maxLength={LARGOS.cuenta.contrasenia} />
+        <AccountField id="register-confirm" name="confirmarContrasenia" label="Repite la contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" required maxLength={LARGOS.cuenta.contrasenia} />
+        <AccountField id="register-address" name="direccion" label="Dirección (opcional)" placeholder="Barrio o dirección" autocomplete="street-address" maxLength={LARGOS.cuenta.direccion} />
         <LegalAcceptance id="register-aceptacion" />
         <button type="submit" class="button mt-[18px] w-full">Enviar enlace de verificación</button>
       </form>

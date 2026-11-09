@@ -3,6 +3,7 @@ import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
 import { MAX_PRESENTACION, MAX_PUNTO_TRAYECTORIA, ordenPuesto, PUESTOS } from '../../contracts/equipo';
 import { PARROQUIAS, type ParroquiaSlug } from '../../contracts/parroquias';
+import { LARGOS } from '../../contracts/limites';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { plainText } from '../../validation/texto';
@@ -57,7 +58,7 @@ export function createMyTeam(sql: SQL, authorization: Authorization) {
         return {
           idMedio: p.idMedio,
           puesto: p.puesto,
-          nombre: plainText(p.nombre, `${campo} · nombre`, 80),
+          nombre: plainText(p.nombre, `${campo} · nombre`, LARGOS.equipo.nombre),
           presentacion: prefecto && p.presentacion.trim() ? plainText(p.presentacion, `${campo} · presentación`, MAX_PRESENTACION) : '',
           trayectoria: prefecto ? p.trayectoria.filter(x => x.trim()).map((x, i) => plainText(x, `${campo} · trayectoria ${i + 1}`, MAX_PUNTO_TRAYECTORIA)) : [],
         };
@@ -69,8 +70,8 @@ export function createMyTeam(sql: SQL, authorization: Authorization) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       if (!isParish(slug)) throw new ApiError(404, 'No encontrado');
       const content: ParishStored = {
-        texto: input.texto.trim() ? plainText(input.texto, 'Texto', 3000, { multiline: true }) : '',
-        fotos: input.fotos.map((f, i) => ({ idMedio: f.idMedio, alt: plainText(f.alt, `Foto ${i + 1} · descripción`, 200) })),
+        texto: input.texto.trim() ? plainText(input.texto, 'Texto', LARGOS.equipo.textoParroquia, { multiline: true }) : '',
+        fotos: input.fotos.map((f, i) => ({ idMedio: f.idMedio, alt: plainText(f.alt, `Foto ${i + 1} · descripción`, LARGOS.descripcionFoto) })),
       };
       return save(actor, slug, content, content.fotos.map(f => f.idMedio), version);
     },

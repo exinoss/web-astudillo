@@ -3,6 +3,8 @@ import type { Animacion } from "../comun/animaciones";
 import type { PUESTOS } from "../../../../backend/src/contracts/equipo";
 import type { Original } from "../../../../backend/src/contracts/inicio";
 import type { ParroquiaSlug } from "../../../../backend/src/contracts/parroquias";
+import type { EstadoParticipacion, TipoAlerta } from "../../../../backend/src/contracts/participacion";
+import type { PaginaCarlos } from "../../../../backend/src/contracts/acerca-de-carlos";
 
 export interface ProposalModel {
   src: string;
@@ -50,8 +52,8 @@ export interface CitizenLink {
   description: string;
 }
 
-export type AlertType = "agua" | "basura" | "alumbrado" | "baches" | "seguridad" | "otro";
-export type ParticipationState = "recibida" | "en_revision" | "atendida";
+export type AlertType = TipoAlerta;
+export type ParticipationState = EstadoParticipacion;
 
 /** `idempotencia`: UUID creado con el borrador; reenviar el mismo formulario no duplica el envío. */
 export interface AlertInput {
@@ -126,7 +128,7 @@ export interface WorkProgress {
   evidence: WorkEvidence[];
 }
 
-export type AboutCarlosSlug = "por-que-quiero-ser-alcalde" | "conoce-mas";
+export type AboutCarlosSlug = PaginaCarlos;
 export type CardColor = "rojo" | "azul";
 
 export interface AboutCarlosCard {

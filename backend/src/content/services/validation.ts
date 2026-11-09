@@ -1,12 +1,13 @@
-import { enlaceRed, REDES_SOCIALES, type RedSocial } from '../../contracts/redes';
+import { enlaceRed, normalizarWhatsapp, REDES_SOCIALES, type RedSocial, whatsappValido } from '../../contracts/redes';
 import { ApiError } from '../../http';
+import { ANIO_BIOGRAFIA } from '../../contracts/limites';
 
 /** Valida un `enlace.*`: redes solo por https a su dominio y WhatsApp normalizado a 593… para wa.me. */
 export function linkValue(key: string, value: string) {
   const text = value.trim();
   if (key === 'enlace.whatsapp') {
-    const digits = text.replace(/[\s().-]/g, '').replace(/^\+/, '').replace(/^0(?=\d{9}$)/, '593');
-    if (!/^\d{10,15}$/.test(digits)) throw new ApiError(422, 'WhatsApp: escribe el número, por ejemplo 0985658595 o +593985658595');
+    const digits = normalizarWhatsapp(text);
+    if (!whatsappValido(digits)) throw new ApiError(422, 'WhatsApp: escribe el número, por ejemplo 0985658595 o +593985658595');
     return digits;
   }
   const red = (Object.keys(REDES_SOCIALES) as RedSocial[]).find((r) => REDES_SOCIALES[r].clave === key);
@@ -29,7 +30,7 @@ export function sitePath(value: string, field: string) {
 export function year(value: string, field: string) {
   const text = value.trim();
   const number = Number(text);
-  if (!/^\d{4}$/.test(text) || number < 1900 || number > new Date().getFullYear() + 1)
+  if (!ANIO_BIOGRAFIA.test(text) || number < 1900 || number > new Date().getFullYear() + 1)
     throw new ApiError(422, `${field}: elige un año de cuatro cifras`);
   return text;
 }

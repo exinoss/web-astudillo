@@ -1,15 +1,15 @@
 import { uploadedUrl } from "../../../../lib/comun/fotos";
-import { DANGER, esc, field, FORMATOS_FOTO, HINT, iconSvg, upload, value } from "../ui";
+import { DANGER, esc, field, FORMATOS_FOTO, HINT, iconSvg, LARGOS, MAX_MB_FOTO, upload, value } from "../ui";
 import { onFiles, type Editor, type SectionEditor } from "./comun";
 
 export const portrait: SectionEditor = {
   html(editor: Editor) {
     const r = editor.page.retrato;
-    if (!r) return `<p class="mt-0 text-[0.9rem]">Sin retrato, la presentación ocupa todo el ancho.</p>${upload("retrato-foto", "Subir retrato")}<p class="${HINT}">Medida recomendada: 800 × 1000 px (vertical), con un fondo distinto al amarillo del sitio. ${FORMATOS_FOTO} de hasta 8 MB.</p>`;
+    if (!r) return `<p class="mt-0 text-[0.9rem]">Sin retrato, la presentación ocupa todo el ancho.</p>${upload("retrato-foto", "Subir retrato")}<p class="${HINT}">Medida recomendada: 800 × 1000 px (vertical), con un fondo distinto al amarillo del sitio. ${FORMATOS_FOTO} de hasta ${MAX_MB_FOTO} MB.</p>`;
     return `<div class="flex flex-wrap items-start gap-6">
       <img src="${esc(uploadedUrl(r.foto, r.foto.anchos[0]))}" alt="" class="aspect-[4/5] w-40 rounded-[12px] object-cover object-top" />
       <div class="flex min-w-[240px] flex-1 flex-col gap-[18px]">
-        ${field({ id: "retrato-alt", label: "Descripción de la foto", value: r.alt, max: 200 , required: true })}
+        ${field({ id: "retrato-alt", label: "Descripción de la foto", value: r.alt, max: LARGOS.descripcionFoto , required: true })}
         <div class="flex flex-wrap gap-2">${upload("retrato-foto", "Cambiar retrato")}<button type="button" data-portrait-remove class="${DANGER}">${iconSvg("trash", 17)} Quitar retrato</button></div>
       </div>
     </div>`;

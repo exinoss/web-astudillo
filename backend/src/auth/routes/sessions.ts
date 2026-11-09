@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { publicAccount } from '../../http';
 import { clearSession, email, ipOf, redirectToAccount, setSession, strict, token, type AuthContext } from './common';
+import { LARGOS } from '../../contracts/limites';
 
 const LINK_SENT = 'Por seguridad te enviamos un enlace a tu correo para terminar de entrar';
 
@@ -13,7 +14,7 @@ export function sessionRoutes(context: AuthContext) {
       if ('link' in result) return { enlace: true, message: LINK_SENT };
       setSession(context, cookie, result.tokens);
       return { user: publicAccount(result.user) };
-    }, { body: t.Object({ correo: email, contrasenia: t.String({ maxLength: 128 }) }, strict) })
+    }, { body: t.Object({ correo: email, contrasenia: t.String({ maxLength: LARGOS.cuenta.contrasenia }) }, strict) })
     .get('/login/confirm', ({ query }) => redirectToAccount(config.origin, '/cuenta/acceso/', query.token),
       { query: t.Object({ token }) })
     .post('/login/confirm', async ({ body, cookie }) => {

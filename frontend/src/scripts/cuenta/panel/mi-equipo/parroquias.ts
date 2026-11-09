@@ -1,7 +1,7 @@
 import { MAX_FOTOS_PARROQUIA, PARROQUIAS } from "../../../../../../backend/src/contracts/parroquias";
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftMyTeam } from "../../../../lib/data/http/admin-api";
-import { avisarVacios, BORRADOR_GUARDADO, busy, confirmarCambio, DRAFT_PILL, esc, field, FORMATOS_FOTO, HINT, isPending, moveButtons, notify, previewButton, reloadDraft, reloadPending, state, subirFotos, thumb, upload, value } from "../ui";
+import { avisarVacios, BORRADOR_GUARDADO, busy, confirmarCambio, DRAFT_PILL, esc, field, FORMATOS_FOTO, HINT, isPending, LARGOS, MAX_MB_FOTO, moveButtons, notify, previewButton, reloadDraft, reloadPending, state, subirFotos, thumb, upload, value } from "../ui";
 
 type Parroquia = DraftMyTeam["parroquias"][number];
 let elegida: string = PARROQUIAS[0].slug;
@@ -22,7 +22,7 @@ export function renderParishes(body: HTMLElement, rerender: () => void) {
   const fotos = p.fotos.map((f, i) => `
     <li class="flex min-w-0 flex-col gap-3 rounded-[3px] border border-base-300 p-3">
       <img src="${esc(thumb(f.foto))}" alt="" class="aspect-[4/3] w-full rounded-[3px] object-cover" />
-      ${field({ id: `parroquia-foto-${i}`, label: "Descripción de la foto", value: f.alt, max: 200, hint: "Se lee debajo de la foto." , required: true })}
+      ${field({ id: `parroquia-foto-${i}`, label: "Descripción de la foto", value: f.alt, max: LARGOS.descripcionFoto, hint: "Se lee debajo de la foto." , required: true })}
       <div class="flex flex-wrap gap-1">${moveButtons("foto", i, p.fotos.length, `foto ${i + 1}`)}</div>
     </li>`).join("");
   body.innerHTML = `
@@ -34,11 +34,11 @@ export function renderParishes(body: HTMLElement, rerender: () => void) {
     </div>
     ${isPending("Mi equipo", nombre(elegida)) ? `<p class="mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
     <form id="parroquia-form" novalidate>
-      ${field({ id: "parroquia-texto", label: "Texto", value: p.texto, max: 3000, area: true, hint: "Deja una línea en blanco entre párrafos. Es opcional." })}
+      ${field({ id: "parroquia-texto", label: "Texto", value: p.texto, max: LARGOS.equipo.textoParroquia, area: true, hint: "Deja una línea en blanco entre párrafos. Es opcional." })}
       <h3 class="mt-6 mb-3 font-sans text-[0.95rem] font-bold">Fotos</h3>
       ${p.fotos.length ? `<ol class="m-0 grid list-none grid-cols-3 gap-4 p-0 max-laptop:grid-cols-2 max-tablet:grid-cols-1">${fotos}</ol>` : `<p class="m-0 text-[0.85rem]">Esta parroquia todavía no tiene fotos.</p>`}
       ${p.fotos.length < MAX_FOTOS_PARROQUIA ? `<div class="mt-4">${upload("parroquia-fotos", "Subir fotos", true)}</div>` : ""}
-      <p class="${HINT}">Hasta ${MAX_FOTOS_PARROQUIA} fotos, en el orden en que se muestran. ${FORMATOS_FOTO} de hasta 8 MB, de 2000 × 1200 px o más (horizontal).</p>
+      <p class="${HINT}">Hasta ${MAX_FOTOS_PARROQUIA} fotos, en el orden en que se muestran. ${FORMATOS_FOTO} de hasta ${MAX_MB_FOTO} MB, de 2000 × 1200 px o más (horizontal).</p>
       <div class="mt-6 flex flex-wrap justify-end gap-2.5 border-t border-t-base-300 pt-[18px] max-tablet:flex-col-reverse">
         ${previewButton("/mi-equipo/")}
         <button type="submit" class="button">Guardar borrador</button>

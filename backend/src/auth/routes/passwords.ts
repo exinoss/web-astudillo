@@ -2,6 +2,7 @@ import { Elysia, t } from 'elysia';
 import { normalizeEmail } from '../../security';
 import { PERMISSIONS } from '../permissions';
 import { clearSession, email, ipOf, password, redirectToAccount, strict, token, type AuthContext } from './common';
+import { LARGOS } from '../../contracts/limites';
 
 export function passwordRoutes(context: AuthContext) {
   const { passwords, limit, authorization, config } = context;
@@ -38,7 +39,7 @@ export function passwordRoutes(context: AuthContext) {
       clearSession(context, cookie);
       return { message: 'Contraseña actualizada. Inicia sesión de nuevo' };
     }, { body: t.Object({
-      contraseniaActual: t.String({ minLength: 1, maxLength: 128 }),
+      contraseniaActual: t.String({ minLength: 1, maxLength: LARGOS.cuenta.contrasenia }),
       contraseniaNueva: password, confirmarContrasenia: password,
     }, strict) });
 }

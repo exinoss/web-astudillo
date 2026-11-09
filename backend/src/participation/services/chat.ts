@@ -10,6 +10,7 @@ import { ApiError } from '../../http';
 import { requireParticipationAcceptance } from '../../auth/services/consent';
 import { VERSION_LEGAL } from '../../contracts/legal';
 import { compartirEnCurso } from './en-curso';
+import { LARGOS_PARTICIPACION } from '../../contracts/participacion';
 
 const MESSAGES_PER_WINDOW = 30;
 const WINDOW_MS = 10 * 60_000;
@@ -47,7 +48,7 @@ export function createChat(sql: SQL, authorization: Authorization, limit: Limite
     async ask(access: string | undefined, message: string, idempotency: string) {
       const user = await authorization.require(access, PERMISSIONS.participationSend);
       await requireParticipationAcceptance(sql, user.id_usuario);
-      const question = plainText(message, 'Consulta', 300);
+      const question = plainText(message, 'Consulta', LARGOS_PARTICIPACION.consulta);
       const hash = createHash('sha256').update(question).digest('hex');
       return sending(`${user.id_usuario}:${idempotency}:${hash}`, async () => {
         const [sent] = await callPg<{ mensaje_hash: string; respuesta: ChatResponse }>(sql, 'chatByKey', [user.id_usuario, idempotency]);
