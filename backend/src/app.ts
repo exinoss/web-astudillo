@@ -26,7 +26,7 @@ export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; secu
     // Rechaza escrituras cuyo Origin no corresponde al sitio configurado.
     .onBeforeHandle(({ request }) => {
       if (["POST", "PATCH", "PUT", "DELETE"].includes(request.method)) {
-        if (request.headers.get("origin") !== config.origin) throw new ApiError(403, "Origen no permitido");
+        if (request.headers.get("origin") !== config.origin) throw new ApiError(403, "No se pudo completar la solicitud");
       }
     })
     .onError(({ error, code, set }) => {

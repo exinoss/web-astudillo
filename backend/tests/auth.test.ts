@@ -350,6 +350,7 @@ test("duplicados simultáneos, vencimiento, vinculación externa y bloqueo", asy
   }, [])).status).toBe(200);
   const noOrigin = await app.handle(new Request(config.origin + "/api/auth/logout", { method: "POST" }));
   expect(noOrigin.status).toBe(403);
+  expect(await noOrigin.json()).toEqual({ error: "No se pudo completar la solicitud" });
 });
 
 test("política de contraseña, confirmación y cambio de contraseña", async () => {

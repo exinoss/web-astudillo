@@ -46,8 +46,11 @@ export class HttpAuthRepository implements AuthRepository {
     await apiRequest('/api/auth/password/change', 'POST', input, true);
   }
 
+  private profile?: Promise<Profile>;
+
+  /** Comparte la petición del perfil entre quienes lo piden a la vez; al responder, la siguiente vuelve a pedirlo. */
   getProfile() {
-    return apiRequest<Profile>('/api/me', 'GET', undefined, true);
+    return (this.profile ??= apiRequest<Profile>('/api/me', 'GET', undefined, true).finally(() => { this.profile = undefined; }));
   }
 
   updateProfile(input: { nombresCompletos: string; direccion?: string; versionPerfil: number }) {

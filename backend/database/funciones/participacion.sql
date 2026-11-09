@@ -60,6 +60,13 @@ BEGIN
 END;
 $$;
 
+-- Consulta del chat ya enviada con esa clave, para responder un reintento sin gastar el límite.
+CREATE OR REPLACE FUNCTION fn_chat_by_key(p_user integer, p_key uuid)
+RETURNS TABLE(mensaje_hash varchar, respuesta jsonb) LANGUAGE sql STABLE AS $$
+  SELECT e.mensaje_hash, e.respuesta FROM tb_chat_envios e
+  WHERE e.id_usuario = p_user AND e.clave_idempotencia = p_key AND fn_has_permission(p_user, 'participacion.enviar');
+$$;
+
 CREATE OR REPLACE FUNCTION fn_chat_unanswered_list(p_actor integer, p_limit integer)
 RETURNS TABLE(texto_normalizado varchar, ejemplo varchar, veces integer, ultima_vez timestamptz)
 LANGUAGE sql STABLE AS $$

@@ -83,6 +83,7 @@ const names = {
   chatList: 'fn_chat_list',
   chatSave: 'fn_chat_save',
   chatSend: 'fn_chat_send',
+  chatByKey: 'fn_chat_by_key',
   chatUnansweredList: 'fn_chat_unanswered_list',
   chatUnansweredDelete: 'fn_chat_unanswered_delete',
   alertCreate: 'fn_alert_create',

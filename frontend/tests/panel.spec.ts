@@ -377,6 +377,53 @@ test('obras: la foto subida se ve al momento y se guarda con su pie', async ({ p
   expect(data.draft.obras[0].fotos.map(f => [f.idMedio, f.pie])).toEqual([[2, 'Tubería instalada'], [90, 'Zanja abierta']]);
 });
 
+test('propuestas y obras: cambiar de elemento y volver conserva lo escrito sin guardar', async ({ page }) => {
+  const data = panelData('coadmin');
+  data.draft.obras.push({ ...structuredClone(data.draft.obras[0]), slug: 'educacion', nota: 'Escuela nueva.' });
+  data.draft.versiones.obras.educacion = 'f'.repeat(32);
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#propuestas');
+  await page.locator('#propuesta-nombre').fill('Agua potable para todos');
+  await page.locator('#kpi-agregar').click();
+  await page.locator('#kpi-etiqueta-3').fill('Hogares');
+  await page.locator('[data-propuesta="educacion"]').click();
+  await expect(page.locator('#propuesta-nombre')).toHaveValue('Educación');
+  await page.locator('[data-propuesta="agua-potable"]').click();
+  await expect(page.locator('#propuesta-nombre')).toHaveValue('Agua potable para todos');
+  await expect(page.locator('#kpi-etiqueta-3')).toHaveValue('Hogares');
+  await expect(page.locator('#seccion-propuestas').getByRole('button', { name: 'Guardar borrador' })).toBeEnabled();
+
+  await page.getByRole('tab', { name: 'Obras' }).click();
+  await page.locator('#obra-nota').fill('Red principal terminada.');
+  await page.getByLabel('Hito 2 completado').check();
+  await page.locator('#obra-selector').selectOption('educacion');
+  await expect(page.locator('#obra-nota')).toHaveValue('Escuela nueva.');
+  await page.locator('#obra-selector').selectOption('agua-potable');
+  await expect(page.locator('#obra-nota')).toHaveValue('Red principal terminada.');
+  await expect(page.getByLabel('Hito 2 completado')).toBeChecked();
+  await page.locator('#seccion-obras').getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
+  expect(data.draft.obras[0].nota).toBe('Red principal terminada.');
+});
+
+test('en fondo claro y alto contraste, los banners de Cuenta y del Panel pierden el naranja como los demás', async ({ page }) => {
+  await mockPanelApi(page, panelData('admin'));
+  for (const path of ['/cuenta/', '/cuenta/panel/']) {
+    await page.goto(path);
+    const fondos = () => page.evaluate(() => [document.body, document.querySelector('section.detail-banner')!]
+      .map((el) => getComputedStyle(el).backgroundColor));
+    const [body, banner] = await fondos();
+    expect(banner).not.toBe(body);
+    for (const setting of ['light-bg', 'high-contrast']) {
+      await page.getByRole('button', { name: 'Herramientas de accesibilidad' }).click();
+      await page.locator(`[data-setting="${setting}"]`).click();
+      await expect.poll(async () => new Set(await fondos()).size).toBe(1);
+      await page.locator(`[data-setting="${setting}"]`).click();
+      await page.keyboard.press('Escape');
+    }
+  }
+});
+
 test('fotos del panel: se rechaza antes de subir una de más de 40 megapíxeles y no se suben dos a la vez', async ({ page }) => {
   const data = panelData('admin');
   await mockPanelApi(page, data);

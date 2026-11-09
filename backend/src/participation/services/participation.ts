@@ -7,6 +7,7 @@ import { plainText } from '../../validation/texto';
 import { ApiError } from '../../http';
 import { requireParticipationAcceptance } from '../../auth/services/consent';
 import { VERSION_LEGAL } from '../../contracts/legal';
+import { compartirEnCurso } from './en-curso';
 
 export const ALERT_TYPES = ['agua', 'basura', 'alumbrado', 'baches', 'seguridad', 'otro'] as const;
 export const STATES = ['recibida', 'en_revision', 'atendida'] as const;
@@ -60,32 +61,35 @@ export function createParticipation(sql: SQL, authorization: Authorization, limi
     if (row.resultado === 'conflicto') throw new ApiError(409, STATE_CONFLICT);
     return { estado: row.estado };
   };
-  const suggestionsInFlight = new Map<string, Promise<SuggestionRow>>();
+  const alertSending = compartirEnCurso<AlertRow>();
+  const suggestionSending = compartirEnCurso<SuggestionRow>();
 
   return {
     /** Crea la alerta; un reintento con la misma `idempotencia` devuelve la ya creada sin procesar otra vez la foto. */
     async createAlert(access: string | undefined, input: AlertInput) {
       const user = await authorization.require(access, PERMISSIONS.participationSend);
       await requireParticipationAcceptance(sql, user.id_usuario);
-      const [existing] = await callPg<AlertRow>(sql, 'alertByKey', [user.id_usuario, input.idempotencia]);
-      if (existing) return toAlert(existing);
-      limit(`alerta:${user.id_usuario}`, SENDS_PER_WINDOW, WINDOW_MS);
-      const sector = plainText(input.sector, 'Sector o barrio', 120);
-      const reference = input.referencia?.trim() ? plainText(input.referencia, 'Referencia', 180) : null;
-      const description = plainText(input.descripcion, '¿Qué está ocurriendo?', 1500, { multiline: true });
-      if (Array.from(description).length < 10) throw new ApiError(422, '¿Qué está ocurriendo?: escribe al menos 10 caracteres');
-      let photo: string | null = null;
-      if (input.foto && input.foto.size) {
-        if (input.foto.size > MAX_ALERT_PHOTO_BYTES) throw new ApiError(413, 'La foto supera los 5 MB');
-        const bytes = Buffer.from(await input.foto.arrayBuffer());
-        photo = `a${sha256(bytes).slice(0, 40)}`;
-        await savePhoto(bytes, photoDir, photo, ALERT_PHOTO_WIDTHS, true);
-      }
-      const [row] = await callPg<AlertRow>(sql, 'alertCreate', [
-        user.id_usuario, input.idempotencia, input.tipo, sector, reference, description, photo, VERSION_LEGAL,
-      ]);
-      if (!row) throw new ApiError(403, 'Permiso insuficiente');
-      return toAlert(row);
+      return toAlert(await alertSending(`${user.id_usuario}:${input.idempotencia}`, async () => {
+        const [existing] = await callPg<AlertRow>(sql, 'alertByKey', [user.id_usuario, input.idempotencia]);
+        if (existing) return existing;
+        limit(`alerta:${user.id_usuario}`, SENDS_PER_WINDOW, WINDOW_MS);
+        const sector = plainText(input.sector, 'Sector o barrio', 120);
+        const reference = input.referencia?.trim() ? plainText(input.referencia, 'Referencia', 180) : null;
+        const description = plainText(input.descripcion, '¿Qué está ocurriendo?', 1500, { multiline: true });
+        if (Array.from(description).length < 10) throw new ApiError(422, '¿Qué está ocurriendo?: escribe al menos 10 caracteres');
+        let photo: string | null = null;
+        if (input.foto && input.foto.size) {
+          if (input.foto.size > MAX_ALERT_PHOTO_BYTES) throw new ApiError(413, 'La foto supera los 5 MB');
+          const bytes = Buffer.from(await input.foto.arrayBuffer());
+          photo = `a${sha256(bytes).slice(0, 40)}`;
+          await savePhoto(bytes, photoDir, photo, ALERT_PHOTO_WIDTHS, true);
+        }
+        const [row] = await callPg<AlertRow>(sql, 'alertCreate', [
+          user.id_usuario, input.idempotencia, input.tipo, sector, reference, description, photo, VERSION_LEGAL,
+        ]);
+        if (!row) throw new ApiError(403, 'Permiso insuficiente');
+        return row;
+      }));
     },
 
     async myAlerts(access: string | undefined) {
@@ -98,21 +102,14 @@ export function createParticipation(sql: SQL, authorization: Authorization, limi
       await requireParticipationAcceptance(sql, user.id_usuario);
       const message = plainText(input.mensaje, '¿Qué te gustaría proponer?', 1500, { multiline: true });
       if (Array.from(message).length < 15) throw new ApiError(422, '¿Qué te gustaría proponer?: escribe al menos 15 caracteres');
-      // Los reintentos simultáneos de una clave comparten el envío: el límite se consume una sola vez.
-      const key = `${user.id_usuario}:${input.idempotencia}`;
-      let sending = suggestionsInFlight.get(key);
-      if (!sending) {
-        sending = (async () => {
-          const [existing] = await callPg<SuggestionRow>(sql, 'suggestionByKey', [user.id_usuario, input.idempotencia]);
-          if (existing) return existing;
-          limit(`sugerencia:${user.id_usuario}`, SENDS_PER_WINDOW, WINDOW_MS);
-          const [row] = await callPg<SuggestionRow>(sql, 'suggestionCreate', [user.id_usuario, input.idempotencia, input.tema, message, VERSION_LEGAL]);
-          if (!row) throw new ApiError(403, 'Permiso insuficiente');
-          return row;
-        })().finally(() => suggestionsInFlight.delete(key));
-        suggestionsInFlight.set(key, sending);
-      }
-      return toSuggestion(await sending);
+      return toSuggestion(await suggestionSending(`${user.id_usuario}:${input.idempotencia}`, async () => {
+        const [existing] = await callPg<SuggestionRow>(sql, 'suggestionByKey', [user.id_usuario, input.idempotencia]);
+        if (existing) return existing;
+        limit(`sugerencia:${user.id_usuario}`, SENDS_PER_WINDOW, WINDOW_MS);
+        const [row] = await callPg<SuggestionRow>(sql, 'suggestionCreate', [user.id_usuario, input.idempotencia, input.tema, message, VERSION_LEGAL]);
+        if (!row) throw new ApiError(403, 'Permiso insuficiente');
+        return row;
+      }));
     },
 
     async mySuggestions(access: string | undefined) {
