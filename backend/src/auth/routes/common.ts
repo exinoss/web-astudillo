@@ -2,10 +2,11 @@ import { t, type Cookie } from 'elysia';
 import { isIP } from 'node:net';
 import { cookieOptions } from '../../http';
 import type { AuthContext as AuthContextType } from '../types';
+import { LARGOS } from '../../contracts/limites';
 export type { AuthContext } from '../types';
 
-export const email = t.String({ format: 'email', maxLength: 320 });
-export const password = t.String({ minLength: 6, maxLength: 128 });
+export const email = t.String({ format: 'email', maxLength: LARGOS.cuenta.correo });
+export const password = t.String({ minLength: 6, maxLength: LARGOS.cuenta.contrasenia });
 export const token = t.String({ pattern: '^[A-Za-z0-9_-]{43}$' });
 export const strict = { additionalProperties: false };
 export const acceptance = t.Object({ version: t.String({ minLength: 1, maxLength: 32 }), aceptada: t.Literal(true) }, strict);

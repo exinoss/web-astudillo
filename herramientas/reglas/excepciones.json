@@ -573,12 +573,6 @@
     {
       "regla": "comentario-de-funcion",
       "archivo": "backend/src/content/services/home-carousels.ts",
-      "texto": "const alt = (value: string, field: string) => plainText(value, `${field} · descripción`, 200);",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/src/content/services/home-carousels.ts",
       "texto": "export function createHomeCarousels(sql: SQL, authorization: Authorization) {",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
@@ -2182,12 +2176,6 @@
       "regla": "funcion-repetida",
       "archivo": "frontend/src/scripts/cuenta/panel/ui.ts",
       "texto": "export const value = (root: ParentNode, selector: string) =>",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "frontend/src/scripts/cuenta/panel/usuarios/index.ts",
-      "texto": "const rolePill = (u: AdminUser) => `<span class=\"${PILL} ${ROLE_CLASSES[u.rol] ?? \"\"}\">${esc(ROLE_NAMES[u.rol] ?? u.rol)}</span>`;",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {

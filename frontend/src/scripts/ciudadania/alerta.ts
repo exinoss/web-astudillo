@@ -8,7 +8,8 @@ import { borrar, leer, leerFoto } from "../../lib/ciudadania/participacion/borra
 import { enviarConSesion, marcarError } from "../../lib/ciudadania/participacion/envio";
 import { prepararAceptacion } from '../../lib/ciudadania/participacion/aceptacion';
 import { cuadroIcono, filaHistorial, historial } from "../../lib/ciudadania/participacion/historial";
-import { MAX_FOTO_BYTES, MIN_DESCRIPCION, TIPOS_ALERTA } from "../../lib/ciudadania/participacion/tipos";
+import { TIPOS_ALERTA } from "../../lib/ciudadania/participacion/tipos";
+import { MAX_BYTES_FOTO_ALERTA, MAX_MB_FOTO_ALERTA, MIN_DESCRIPCION_ALERTA } from "../../../../backend/src/contracts/participacion";
 import { AVISO_HEIC, avisoMegapixeles, FORMATOS_FOTO, MAX_PIXELES } from "../../../../backend/src/contracts/media";
 import { medidasArchivo, miniaturaLocal } from "../../lib/comun/foto-local";
 
@@ -62,7 +63,7 @@ async function problemaFoto(archivo: File) {
   // En Windows el navegador puede no dar tipo a un .heic: también se mira la extensión.
   if (/^image\/hei[cf]$/.test(archivo.type) || /\.hei[cf]$/i.test(archivo.name)) return AVISO_HEIC;
   if (!/^image\/(jpeg|png|webp|avif)$/.test(archivo.type)) return `Elige una foto ${FORMATOS_FOTO}.`;
-  if (archivo.size > MAX_FOTO_BYTES) return "La foto supera los 5 MB. Elige otra o tómala con menos resolución.";
+  if (archivo.size > MAX_BYTES_FOTO_ALERTA) return `La foto supera los ${MAX_MB_FOTO_ALERTA} MB. Elige otra o tómala con menos resolución.`;
   const medidas = await medidasArchivo(archivo);
   return medidas && medidas.ancho * medidas.alto > MAX_PIXELES ? avisoMegapixeles(medidas.ancho * medidas.alto) : null;
 }
@@ -89,8 +90,8 @@ function validar() {
   const errores: [HTMLElement, string | null][] = [
     [tipos, tipoElegido() ? null : "Elige el tipo de problema."],
     [sector, sector.value.trim() ? null : "Indica el sector o barrio."],
-    [descripcion, Array.from(descripcion.value.trim()).length >= MIN_DESCRIPCION
-      ? null : `Describe lo que ocurre con al menos ${MIN_DESCRIPCION} caracteres.`],
+    [descripcion, Array.from(descripcion.value.trim()).length >= MIN_DESCRIPCION_ALERTA
+      ? null : `Describe lo que ocurre con al menos ${MIN_DESCRIPCION_ALERTA} caracteres.`],
   ];
   for (const [campo, mensaje] of errores) marcarError(campo, mensaje);
   return errores.find(([, mensaje]) => mensaje)?.[0];

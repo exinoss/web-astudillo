@@ -6,6 +6,10 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+### Changed
+
+- Panel, Usuarios: el filtro por rol incluye «Analista».
+
 ## [1.4.1] - 2026-11-09
 
 ### Fixed

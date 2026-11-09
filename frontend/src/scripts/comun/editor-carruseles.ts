@@ -1,5 +1,7 @@
 // Lo carga modo-edicion.ts antes de pintar los textos del borrador: `publicado` guarda la portada tal como se publicó.
 import { AVISO_HORIZONTAL, MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_PIEZAS, type Carrusel, type Original } from "../../../../backend/src/contracts/inicio";
+import { LARGOS } from "../../../../backend/src/contracts/limites";
+import { MAX_MB_FOTO } from "../../../../backend/src/contracts/media";
 import { mostrarCarga } from "../../lib/comun/animaciones";
 import { medidasArchivo } from "../../lib/comun/foto-local";
 import { medidasFoto, uploadedSrcset, uploadedUrl } from "../../lib/comun/fotos";
@@ -20,7 +22,7 @@ interface Opciones {
 }
 
 const BUTTON = "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] px-[18px] text-[0.82rem] font-bold whitespace-nowrap";
-const LIMITE = "Máximo 8 MB.";
+const LIMITE = `Máximo ${MAX_MB_FOTO} MB.`;
 // Mismas clases que index.astro: una pieza subida no se ve más grande que su archivo.
 const TOPE = ["m-auto", "max-h-[calc(var(--ancho-foto)/var(--proporcion))]", "max-w-(--ancho-foto)"];
 const NOMBRES: Record<Carrusel, string> = { principal: "Carrusel principal", piezas: "Carrusel de piezas", equipo: "Carrusel del equipo" };
@@ -68,7 +70,7 @@ const tarjetaBanner = (b: Principal["banners"][number], i: number, total: number
             </span>
           </span>
         </div>`}
-        ${field({ id: `banner-alt-${i}`, label: "Descripción de la imagen", value: b.alt, max: 200 })}
+        ${field({ id: `banner-alt-${i}`, label: "Descripción de la imagen", value: b.alt, max: LARGOS.descripcionFoto })}
       </div>
     </div>
   </li>`;
@@ -86,7 +88,7 @@ const htmlPrincipal = (p: Principal) => `
     <div class="flex flex-wrap items-end gap-3 rounded-[3px] border border-base-300 p-3">
       <img src="${miniatura(p.retrato.imagen)}" alt="" class="aspect-square w-[104px] rounded-[3px] bg-base-200 object-cover" />
       <span class="pb-0.5">${upload("retrato-nuevo", "Cambiar retrato")}</span>
-      <div class="basis-full">${field({ id: "retrato-alt", label: "Descripción de la imagen", value: p.retrato.alt, max: 200 })}</div>
+      <div class="basis-full">${field({ id: "retrato-alt", label: "Descripción de la imagen", value: p.retrato.alt, max: LARGOS.descripcionFoto })}</div>
     </div>
   </section>`;
 
@@ -100,7 +102,7 @@ const htmlPiezas = (p: Piezas) => `
           <strong class="text-[0.85rem]">Pieza ${i + 1}</strong>
           <span class="flex">${moveButtons("pieza", i, p.piezas.length, `pieza ${i + 1}`, 1)}</span>
         </div>
-        ${field({ id: `pieza-alt-${i}`, label: "Descripción de la imagen", value: x.alt, max: 200 })}
+        ${field({ id: `pieza-alt-${i}`, label: "Descripción de la imagen", value: x.alt, max: LARGOS.descripcionFoto })}
       </div>
     </li>`).join("")}</ol>
   ${p.piezas.length < MAX_PIEZAS ? `<div class="mt-3">${upload("piezas-nuevas", "Añadir piezas", true)}</div>` : ""}`;
@@ -115,7 +117,7 @@ const htmlEquipo = (e: Equipo) => `
           <strong class="text-[0.85rem]">Imagen ${i + 1}</strong>
           <span class="flex">${moveButtons("imagen", i, e.fotos.length, `imagen ${i + 1}`)}</span>
         </div>
-        ${field({ id: `equipo-alt-${i}`, label: "Descripción de la imagen", value: x.alt, max: 200 })}
+        ${field({ id: `equipo-alt-${i}`, label: "Descripción de la imagen", value: x.alt, max: LARGOS.descripcionFoto })}
       </div>
     </li>`).join("")}</ol>
   ${e.fotos.length < MAX_FOTOS_EQUIPO ? `<div class="mt-3">${upload("equipo-nuevas", "Añadir imágenes", true)}</div>` : ""}`;

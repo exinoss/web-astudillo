@@ -7,10 +7,11 @@ import type { GoogleIdentity } from '../../security/types';
 import { TEXTO_ACEPTACION, VERSION_LEGAL, type AceptacionLegal } from '../../contracts/legal';
 import { requireAcceptance } from './consent';
 import { plainText } from '../../validation/texto';
+import { LARGOS } from '../../contracts/limites';
 
 /** El nombre lo escribe la persona en Google: si no es texto plano válido, la cuenta se crea sin nombre. */
 function safeName(name: string | null) {
-  try { return name ? plainText(name, 'Nombre completo', 200) : null; } catch { return null; }
+  try { return name ? plainText(name, 'Nombre completo', LARGOS.cuenta.nombre) : null; } catch { return null; }
 }
 
 /** Google solo garantiza el correo si es suyo: Gmail o el dominio de Google Workspace de la cuenta. */

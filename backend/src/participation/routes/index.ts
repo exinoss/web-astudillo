@@ -5,7 +5,8 @@ import type { Authorization } from '../../auth/types';
 import { createLimiter } from '../../auth/services/limits';
 import { createContent } from '../../content/services/content';
 import { createChat } from '../services/chat';
-import { ALERT_TYPES, createParticipation, STATES } from '../services/participation';
+import { createParticipation } from '../services/participation';
+import { ESTADOS_PARTICIPACION, LARGOS_PARTICIPACION as LARGOS, TIPOS_DE_ALERTA } from '../../contracts/participacion';
 
 const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;
 const literals = (values: readonly string[]) => t.Union(values.map(value => t.Literal(value)));
@@ -24,28 +25,28 @@ export function participationRoutes(sql: SQL, authorization: Authorization, phot
     .get('/:tipo', ({ cookie, params, query }) =>
       participation.list(access(cookie), params.tipo, query.estado, query.pagina ?? 1), {
       params: kind,
-      query: t.Object({ estado: t.Optional(literals(STATES)), pagina: t.Optional(t.Numeric({ minimum: 1, maximum: 10000 })) }, strict),
+      query: t.Object({ estado: t.Optional(literals(ESTADOS_PARTICIPACION)), pagina: t.Optional(t.Numeric({ minimum: 1, maximum: 10000 })) }, strict),
     })
     // `estadoAnterior`: lo que se veía en la lista; si ya no es así, otra persona lo cambió (409).
     .patch('/:tipo/:id/estado', ({ cookie, params, body }) =>
       participation.changeState(access(cookie), params.tipo, params.id, body.estado, body.estadoAnterior), {
       params: t.Object({ tipo: literals(['alertas', 'sugerencias']), id: t.Numeric({ minimum: 1 }) }),
-      body: t.Object({ estado: literals(STATES), estadoAnterior: literals(STATES) }, strict),
+      body: t.Object({ estado: literals(ESTADOS_PARTICIPACION), estadoAnterior: literals(ESTADOS_PARTICIPACION) }, strict),
     });
   const voter = new Elysia({ prefix: '/api/participacion', normalize: false })
     .post('/alertas', ({ cookie, body }) => participation.createAlert(access(cookie), body), {
       body: t.Object({
-        idempotencia: key, tipo: literals(ALERT_TYPES), sector: text(120),
-        referencia: t.Optional(text(180)), descripcion: text(1500), foto: t.Optional(t.File()),
+        idempotencia: key, tipo: literals(TIPOS_DE_ALERTA), sector: text(LARGOS.sector),
+        referencia: t.Optional(text(LARGOS.referencia)), descripcion: text(LARGOS.descripcion), foto: t.Optional(t.File()),
       }, strict),
     })
     .get('/alertas/mias', ({ cookie }) => participation.myAlerts(access(cookie)))
     .post('/sugerencias', ({ cookie, body }) => participation.createSuggestion(access(cookie), body), {
-      body: t.Object({ idempotencia: key, tema: t.String({ pattern: '^[a-z0-9-]{1,80}$' }), mensaje: text(1500) }, strict),
+      body: t.Object({ idempotencia: key, tema: t.String({ pattern: '^[a-z0-9-]{1,80}$' }), mensaje: text(LARGOS.mensaje) }, strict),
     })
     .get('/sugerencias/mias', ({ cookie }) => participation.mySuggestions(access(cookie)))
     .post('/chat', ({ cookie, body }) => chat.ask(access(cookie), body.mensaje, body.idempotencia), {
-      body: t.Object({ mensaje: text(300), idempotencia: key }, strict),
+      body: t.Object({ mensaje: text(LARGOS.consulta), idempotencia: key }, strict),
     })
     // Fotos privadas de alertas: nginx no las sirve; aquí se comprueba quién las pide.
     .get('/fotos/:archivo', async ({ cookie, params, set }) => {

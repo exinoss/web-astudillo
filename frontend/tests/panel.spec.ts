@@ -43,6 +43,7 @@ test('un admin filtra, pagina y desactiva cuentas confirmando con su contraseña
   await page.goto('/cuenta/panel/#usuarios');
   const section = page.locator('#seccion-usuarios');
   await expect(section.locator('#usuarios-total')).toHaveText('23 cuentas');
+  await expect(section.locator('#usuarios-rol option')).toHaveText(['Todos', 'Admin', 'Coadmin', 'Analista', 'Votante']);
   await section.getByRole('button', { name: 'Página 2' }).click();
   await expect(section.getByText('persona24@example.com').first()).toBeVisible();
   // Las cuentas protegidas solo muestran el motivo genérico.

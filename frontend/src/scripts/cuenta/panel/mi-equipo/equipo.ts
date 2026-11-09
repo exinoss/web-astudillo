@@ -3,7 +3,7 @@ import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type Photo, type TeamMemberBody } from "../../../../lib/data/http/admin-api";
 import { infoPrefecto } from "../../../../lib/mi-equipo/prefecto";
 import { silueta } from "../../../../lib/mi-equipo/silueta";
-import { avisarVacios, BORRADOR_GUARDADO, busy, confirmarCambio, DRAFT_PILL, esc, field, GHOST, HINT, ICON_BUTTON, iconSvg, isPending, LABEL, notify, previewButton, reloadDraft, reloadPending, selectField, state, subirFotos, thumb, upload, value } from "../ui";
+import { avisarVacios, BORRADOR_GUARDADO, busy, confirmarCambio, DRAFT_PILL, esc, field, GHOST, HINT, ICON_BUTTON, iconSvg, isPending, LABEL, LARGOS, MAX_MB_FOTO, notify, previewButton, reloadDraft, reloadPending, selectField, state, subirFotos, thumb, upload, value } from "../ui";
 
 // `clave` sigue a la persona aunque cambie de lugar en la lista mientras sube su foto.
 interface Persona { clave: string; puesto: Puesto | null; nombre: string; presentacion: string; trayectoria: string[]; foto: Photo | null }
@@ -67,7 +67,7 @@ function tarjeta(p: Persona, i: number) {
       ${p.foto ? `<button type="button" class="${GHOST}" data-quitar-foto="${i}">Quitar foto</button>` : ""}
     </div>
   </div>`;
-  const campos = `${tipo}${puesto}${field({ id: `persona-nombre-${i}`, label: "Nombre", value: p.nombre, max: 80 , required: true })}`;
+  const campos = `${tipo}${puesto}${field({ id: `persona-nombre-${i}`, label: "Nombre", value: p.nombre, max: LARGOS.equipo.nombre , required: true })}`;
   if (p.puesto !== "prefecto")
     return `<li class="flex gap-4 rounded-[3px] border border-base-300 p-3 max-mobile:flex-col">${foto}<div class="flex min-w-0 flex-1 flex-col gap-3">${campos}${quitar}</div></li>`;
   const puntos = p.trayectoria.map((punto, j) => `<li class="flex items-center gap-1">
@@ -99,7 +99,7 @@ export function renderTeam(body: HTMLElement, rerender: () => void) {
     <form id="equipo-form" novalidate>
       <ol class="m-0 grid list-none grid-cols-2 gap-4 p-0 max-laptop:grid-cols-1">${personas.map(tarjeta).join("")}</ol>
       ${personas.length < PUESTOS.length ? `<button type="button" id="persona-agregar" class="${GHOST} mt-4">${iconSvg("plus", 17)} Añadir a alguien</button>` : ""}
-      <p class="${HINT}">Hasta ${PUESTOS.length} personas: 1 prefecto, ${cuantos("urbanos")} concejales urbanos y ${cuantos("rurales")} rurales. Foto opcional: PNG o WebP sin fondo, de la cabeza a la cintura, de 700 × 820 px o más y hasta 8 MB.</p>
+      <p class="${HINT}">Hasta ${PUESTOS.length} personas: 1 prefecto, ${cuantos("urbanos")} concejales urbanos y ${cuantos("rurales")} rurales. Foto opcional: PNG o WebP sin fondo, de la cabeza a la cintura, de 700 × 820 px o más y hasta ${MAX_MB_FOTO} MB.</p>
       <div class="mt-6 flex flex-wrap justify-end gap-2.5 border-t border-t-base-300 pt-[18px] max-tablet:flex-col-reverse">
         ${previewButton("/mi-equipo/")}
         <button type="submit" class="button">Guardar borrador</button>

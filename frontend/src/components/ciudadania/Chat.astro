@@ -1,6 +1,7 @@
 ---
 import Icon from "../comun/Icon.astro";
 import LegalAcceptance from '../comun/LegalAcceptance.astro';
+import { LARGOS_PARTICIPACION } from "../../../../backend/src/contracts/participacion";
 
 interface Props {
   quickReplies: string[];
@@ -53,7 +54,7 @@ const { quickReplies } = Astro.props;
     <form id="chat-form" class="group flex flex-col gap-2 px-[15px] pb-[15px]" novalidate>
       <div data-chat-controles class="flex w-full flex-wrap gap-2">
       <label class="sr-only group-data-[aceptacion-pendiente=true]:not-sr-only group-data-[aceptacion-pendiente=true]:block group-data-[aceptacion-pendiente=true]:w-full group-data-[aceptacion-pendiente=true]:text-[0.87rem]" for="chat-input">Escribe tu consulta</label>
-      <input id="chat-input" class="min-w-0 flex-1 placeholder:text-field-placeholder placeholder:opacity-100" placeholder="Escribe tu consulta…" maxlength="300" autocomplete="off" aria-describedby="chat-ayuda" />
+      <input id="chat-input" class="min-w-0 flex-1 placeholder:text-field-placeholder placeholder:opacity-100" placeholder="Escribe tu consulta…" maxlength={LARGOS_PARTICIPACION.consulta} autocomplete="off" aria-describedby="chat-ayuda" />
       <button id="chat-mic" type="button" data-envia aria-label="Preguntar con tu voz" aria-pressed="false" hidden
         class="chat-mic grid w-[50px] min-w-[50px] place-items-center rounded-[3px] border border-primary bg-base-100 text-primary aria-pressed:border-campaign-red aria-pressed:bg-campaign-red aria-pressed:text-primary-content">
         <Icon name="mic" size={22} />

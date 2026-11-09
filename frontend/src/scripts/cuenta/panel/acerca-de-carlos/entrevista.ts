@@ -1,4 +1,4 @@
-import { field, GHOST, HINT, iconSvg, moveButtons, value } from "../ui";
+import { field, GHOST, HINT, iconSvg, LARGOS, moveButtons, value } from "../ui";
 import { bindListActions, MAX_ITEMS, type Editor, type SectionEditor } from "./comun";
 
 export const interview: SectionEditor = {
@@ -7,8 +7,8 @@ export const interview: SectionEditor = {
     const rows = list.map((e, i) => `
       <fieldset class="flex min-w-0 flex-col gap-4 rounded-[3px] border border-base-300 p-4">
         <legend class="px-1 text-sm font-bold">Pregunta ${i + 1}</legend>
-        ${field({ id: `pregunta-${i}`, label: "Pregunta", value: e.pregunta, max: 160 , required: true })}
-        ${field({ id: `respuesta-${i}`, label: "Respuesta", value: e.respuesta, max: 1000, area: true, hint: "Hasta 1000 caracteres." , required: true })}
+        ${field({ id: `pregunta-${i}`, label: "Pregunta", value: e.pregunta, max: LARGOS.acercaDeCarlos.pregunta , required: true })}
+        ${field({ id: `respuesta-${i}`, label: "Respuesta", value: e.respuesta, max: LARGOS.acercaDeCarlos.respuesta, area: true, hint: "Hasta 1000 caracteres." , required: true })}
         <div class="flex flex-wrap gap-1">${moveButtons("pregunta", i, list.length, `pregunta ${i + 1}`)}</div>
       </fieldset>`).join("");
     return `<div class="flex max-w-[760px] flex-col gap-5">${rows || '<p class="m-0 text-[0.9rem]">Aún no hay preguntas.</p>'}

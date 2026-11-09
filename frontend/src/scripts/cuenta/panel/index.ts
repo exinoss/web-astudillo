@@ -16,6 +16,7 @@ import { publish, renderPublications } from "./publicaciones";
 import { renderTexts } from "./textos";
 import { can, cargar, reloadDraft, reloadPending, state } from "./ui";
 import { renderUsers } from "./usuarios";
+import { nombreRol } from "../../../../../backend/src/contracts/roles";
 
 const TABS: Record<string, { title: string; render: (section: HTMLElement) => unknown }> = {
   propuestas: { title: "Propuestas", render: renderProposals },
@@ -29,7 +30,6 @@ const TABS: Record<string, { title: string; render: (section: HTMLElement) => un
   publicaciones: { title: "Publicaciones", render: renderPublications },
   usuarios: { title: "Usuarios", render: renderUsers },
 };
-const ROLE_NAMES: Record<string, string> = { admin: "Admin", coadmin: "Coadmin" };
 desmarcarAlEscribir(document.querySelector<HTMLElement>("#panel-secciones")!);
 
 const loading = document.querySelector<HTMLElement>("#panel-cargando")!;
@@ -121,7 +121,7 @@ async function start() {
   }
   loading.hidden = true;
   const role = document.querySelector<HTMLElement>("#panel-rol")!;
-  role.textContent = ROLE_NAMES[state.profile.rol] ?? state.profile.rol;
+  role.textContent = nombreRol(state.profile.rol);
   role.hidden = false;
   document.querySelector("#panel-quien")!.textContent =
     `${state.profile.nombresCompletos ?? state.profile.correo} · Los cambios se guardan como borrador hasta que publicas.`;

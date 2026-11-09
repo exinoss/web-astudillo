@@ -2,7 +2,7 @@ import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftWork } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
 import { STAGE_NAMES, workProgress } from "../../../../lib/ciudadania/obras";
-import { ACEPTA_FOTOS, avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, notify, previewButton, reloadDraft, reloadPending, state, subirFotos, value } from "../ui";
+import { ACEPTA_FOTOS, avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, LARGOS, MAX_MB_FOTO, notify, previewButton, reloadDraft, reloadPending, state, subirFotos, value } from "../ui";
 
 const MAX_MILESTONES = 20;
 const MAX_PHOTOS = 24;
@@ -37,7 +37,7 @@ export function renderWorks(section: HTMLElement) {
   const hitos = work.hitos.map((h, i) => `
     <div class="obra-hito flex items-center gap-2 border-t border-t-base-300 py-1.5 first:border-t-0">
       <input type="checkbox" name="completado" id="hito-completado-${i}" ${h.completado ? "checked" : ""} class="size-6 shrink-0 accent-neutral" aria-label="Hito ${i + 1} completado" />
-      <div class="min-w-0 flex-1"><input id="hito-nombre-${i}" name="hito" value="${esc(h.nombre)}" maxlength="120" aria-label="Nombre del hito ${i + 1}" required class="campo" /></div>
+      <div class="min-w-0 flex-1"><input id="hito-nombre-${i}" name="hito" value="${esc(h.nombre)}" maxlength="${LARGOS.obra.hito}" aria-label="Nombre del hito ${i + 1}" required class="campo" /></div>
       <button type="button" class="${ICON_BUTTON}" data-mover="-1" data-indice="${i}" aria-label="Subir hito ${i + 1}" ${i === 0 ? "disabled" : ""}>${iconSvg("up", 18)}</button>
       <button type="button" class="${ICON_BUTTON}" data-mover="1" data-indice="${i}" aria-label="Bajar hito ${i + 1}" ${i === work.hitos.length - 1 ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>
       <button type="button" class="${ICON_BUTTON} text-error" data-quitar-hito="${i}" aria-label="Quitar hito ${i + 1}">${iconSvg("trash", 18)}</button>
@@ -48,7 +48,7 @@ export function renderWorks(section: HTMLElement) {
         <img src="${esc(uploadedUrl(f, f.anchos[0]))}" alt="" class="aspect-[4/3] w-full rounded-[4px] object-cover" />
         <button type="button" data-quitar-foto="${i}" aria-label="Quitar foto ${i + 1}" class="absolute top-1.5 right-1.5 grid size-11 place-items-center rounded-[3px] bg-base-100 text-error">${iconSvg("trash", 17)}</button>
       </div>
-      ${field({ id: `foto-pie-${i}`, label: "Pie de foto", value: f.pie, max: 200 , required: true })}
+      ${field({ id: `foto-pie-${i}`, label: "Pie de foto", value: f.pie, max: LARGOS.obra.pie , required: true })}
     </div>`).join("");
   const form = card(nameOf(work.slug), `
     ${isPending("Obra", nameOf(work.slug)) ? `<p class="-mt-2 mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
@@ -62,7 +62,7 @@ export function renderWorks(section: HTMLElement) {
     </div>
     <form id="obra-form" class="grid grid-cols-2 items-start gap-7 max-tablet:grid-cols-1" novalidate>
       <div class="flex flex-col gap-[18px]">
-        ${field({ id: "obra-nota", label: "Nota", value: work.nota, max: 600, area: true , required: true })}
+        ${field({ id: "obra-nota", label: "Nota", value: work.nota, max: LARGOS.obra.nota, area: true , required: true })}
         <div>
           <span class="block text-[0.82rem] font-bold">Hitos</span>
           <p class="m-0 mb-1.5 text-[0.74rem] text-muted">Marca cada fase cuando termine.</p>
@@ -76,7 +76,7 @@ export function renderWorks(section: HTMLElement) {
           ${fotos}
           <label class="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-[4px] border-2 border-dashed border-field-border p-2.5 text-center text-neutral focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral ${work.fotos.length >= MAX_PHOTOS ? "hidden" : ""}">
             ${iconSvg("upload", 26)}<strong class="text-[0.82rem] text-primary">Subir fotos</strong>
-            <span class="text-[0.7rem] text-muted">Varias a la vez · hasta 8 MB cada una · medida recomendada 1260 × 990 px o más</span>
+            <span class="text-[0.7rem] text-muted">Varias a la vez · hasta ${MAX_MB_FOTO} MB cada una · medida recomendada 1260 × 990 px o más</span>
             <input id="obra-fotos" type="file" accept="${ACEPTA_FOTOS}" multiple class="sr-only" />
           </label>
         </div>

@@ -1,13 +1,13 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftBiographyItem } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
-import { ACEPTA_FOTOS, avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DANGER, DRAFT_PILL, esc, field, FORMATOS_FOTO, GHOST, iconSvg, isPending, notify, previewButton, reloadDraft, reloadPending, state, subirFotos, value } from "../ui";
+import { ANIO_BIOGRAFIA } from "../../../../../../backend/src/contracts/limites";
+import { ACEPTA_FOTOS, avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DANGER, DRAFT_PILL, esc, field, FORMATOS_FOTO, GHOST, iconSvg, isPending, LARGOS, MAX_MB_FOTO, notify, previewButton, reloadDraft, reloadPending, state, subirFotos, value } from "../ui";
 
 const MAX_ITEMS = 30;
-const YEAR = /^\d{4}$/;
 const YEARS = Array.from({ length: new Date().getFullYear() + 2 - 1940 }, (_, i) => String(new Date().getFullYear() + 1 - i));
 /** Año guardado si es válido; los provisionales («19XX») se muestran vacíos para elegir uno. */
-const yearOf = (anios: string) => (YEAR.test(anios) ? anios : "");
+const yearOf = (anios: string) => (ANIO_BIOGRAFIA.test(anios) ? anios : "");
 // Copia de trabajo: la línea de tiempo se edita entera y se guarda de una vez (orden incluido).
 // `clave` identifica cada hito mientras se edita (no se guarda): una foto que termina de subir
 // después de reordenar o cambiar de hito va al hito correcto.
@@ -60,9 +60,9 @@ export function renderBiography(section: HTMLElement) {
             autocomplete="off" placeholder="Escribe o elige" class="campo" required />
           <datalist id="hito-anios-lista">${YEARS.map((y) => `<option value="${y}"></option>`).join("")}</datalist>
         </div>
-        ${field({ id: "hito-titulo", label: "Título", value: item.titulo, max: 120 , required: true })}
+        ${field({ id: "hito-titulo", label: "Título", value: item.titulo, max: LARGOS.biografia.titulo , required: true })}
       </div>
-      ${field({ id: "hito-texto", label: "Texto", value: item.texto, max: 3000, area: true, hint: "Deja una línea en blanco para separar párrafos." , required: true })}
+      ${field({ id: "hito-texto", label: "Texto", value: item.texto, max: LARGOS.biografia.texto, area: true, hint: "Deja una línea en blanco para separar párrafos." , required: true })}
       <div>
         <span class="mb-[7px] block text-[0.82rem] font-bold">Foto</span>
         <div class="grid grid-cols-[260px_minmax(0,1fr)] items-center gap-4 max-nav:grid-cols-1">
@@ -70,12 +70,12 @@ export function renderBiography(section: HTMLElement) {
           <div class="flex flex-col gap-2">
             <label class="${GHOST} cursor-pointer self-start border-field-border focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral max-tablet:self-stretch">${iconSvg("upload", 18)} ${item.foto ? "Cambiar foto" : "Subir foto"}
               <input id="hito-foto" type="file" accept="${ACEPTA_FOTOS}" class="sr-only" /></label>
-            <p class="m-0 text-[0.74rem] text-muted">${FORMATOS_FOTO} de hasta 8 MB. Medida recomendada: 880 px o más en su lado más largo, vertical u horizontal. Se muestra completa, sin recortes.</p>
+            <p class="m-0 text-[0.74rem] text-muted">${FORMATOS_FOTO} de hasta ${MAX_MB_FOTO} MB. Medida recomendada: 880 px o más en su lado más largo, vertical u horizontal. Se muestra completa, sin recortes.</p>
             ${item.foto ? `<button type="button" id="hito-quitar-foto" class="${GHOST} self-start">Quitar foto</button>` : ""}
           </div>
         </div>
       </div>
-      ${item.foto ? field({ id: "hito-alt", label: "Descripción de la foto", value: item.alt ?? "", max: 200, hint: "Describe lo que se ve en la foto." , required: true }) : ""}
+      ${item.foto ? field({ id: "hito-alt", label: "Descripción de la foto", value: item.alt ?? "", max: LARGOS.descripcionFoto, hint: "Describe lo que se ve en la foto." , required: true }) : ""}
       <div class="flex flex-wrap justify-between gap-2.5 border-t border-t-base-300 pt-[18px] max-tablet:flex-col-reverse">
         <button type="button" id="hito-eliminar" class="${DANGER}">${iconSvg("trash", 18)} Eliminar hito</button>
         <span class="flex flex-wrap gap-2.5 max-tablet:flex-col-reverse">
@@ -141,7 +141,7 @@ function bind(section: HTMLElement) {
   form.addEventListener("submit", (e) => {
     e.preventDefault();
     capture(form);
-    const incomplete = items!.findIndex((h) => !YEAR.test(h.anios) || !h.titulo || !h.texto || (h.foto && !h.alt));
+    const incomplete = items!.findIndex((h) => !ANIO_BIOGRAFIA.test(h.anios) || !h.titulo || !h.texto || (h.foto && !h.alt));
     if (incomplete >= 0) {
       selected = incomplete;
       renderBiography(section);

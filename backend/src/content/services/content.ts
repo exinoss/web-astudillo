@@ -8,6 +8,8 @@ import { CONTENT_CONFLICT } from '../conflictos';
 import type { BiographyItem, ChatAnswer, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
 import { PARROQUIAS } from '../../contracts/parroquias';
 import { videoSource } from '../../contracts/video';
+import { PAGINAS_CARLOS } from '../../contracts/acerca-de-carlos';
+import { LARGOS } from '../../contracts/limites';
 import { listAboutCarlosPages } from './about-carlos';
 import { emptyMyTeam, listMyTeam } from './my-team';
 import { HOME_CAROUSELS_SEED, listHomeCarousels } from './home-carousels';
@@ -130,12 +132,12 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
     async saveProposal(access: string | undefined, slug: string, input: ProposalInput, version: string) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       const kpis = input.kpis.map((k, i) => ({
-        etiqueta: plainText(k.etiqueta, `Cifra ${i + 1} · etiqueta`, 60),
-        valor: plainText(k.valor, `Cifra ${i + 1} · valor`, 30),
+        etiqueta: plainText(k.etiqueta, `Cifra ${i + 1} · etiqueta`, LARGOS.propuesta.etiquetaCifra),
+        valor: plainText(k.valor, `Cifra ${i + 1} · valor`, LARGOS.propuesta.valorCifra),
       }));
       return saved(await callPg<SaveRow>(sql, 'proposalSave', [
-        actor.id_usuario, slug, plainText(input.nombre, 'Nombre', 120),
-        plainText(input.categoria, 'Categoría', 80), plainText(input.introduccion, 'Introducción', 400, { multiline: true }), kpis, version,
+        actor.id_usuario, slug, plainText(input.nombre, 'Nombre', LARGOS.propuesta.nombre),
+        plainText(input.categoria, 'Categoría', LARGOS.propuesta.categoria), plainText(input.introduccion, 'Introducción', LARGOS.propuesta.introduccion, { multiline: true }), kpis, version,
       ]));
     },
 
@@ -143,10 +145,10 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       const clean = items.map((h, i) => ({
         anios: year(h.anios, `Hito ${i + 1} · año`),
-        titulo: plainText(h.titulo, `Hito ${i + 1} · título`, 120),
-        texto: plainText(h.texto, `Hito ${i + 1} · texto`, 3000, { multiline: true }),
+        titulo: plainText(h.titulo, `Hito ${i + 1} · título`, LARGOS.biografia.titulo),
+        texto: plainText(h.texto, `Hito ${i + 1} · texto`, LARGOS.biografia.texto, { multiline: true }),
         idMedio: h.idMedio,
-        alt: h.idMedio === null ? null : plainText(h.alt ?? '', `Hito ${i + 1} · descripción de la foto`, 200),
+        alt: h.idMedio === null ? null : plainText(h.alt ?? '', `Hito ${i + 1} · descripción de la foto`, LARGOS.descripcionFoto),
       }));
       await requirePhotos(clean.flatMap(h => (h.idMedio === null ? [] : [h.idMedio])));
       return saved(await callPg<SaveRow>(sql, 'biographySave', [actor.id_usuario, clean, version]));
@@ -154,11 +156,11 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
 
     async saveWork(access: string | undefined, slug: string, input: WorkInput, version: string) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
-      const hitos = input.hitos.map((h, i) => ({ nombre: plainText(h.nombre, `Hito ${i + 1}`, 120), completado: h.completado }));
-      const fotos = input.fotos.map((f, i) => ({ idMedio: f.idMedio, pie: plainText(f.pie, `Foto ${i + 1} · pie`, 200) }));
+      const hitos = input.hitos.map((h, i) => ({ nombre: plainText(h.nombre, `Hito ${i + 1}`, LARGOS.obra.hito), completado: h.completado }));
+      const fotos = input.fotos.map((f, i) => ({ idMedio: f.idMedio, pie: plainText(f.pie, `Foto ${i + 1} · pie`, LARGOS.obra.pie) }));
       await requirePhotos(fotos.map(f => f.idMedio));
       return saved(await callPg<SaveRow>(sql, 'workSave', [
-        actor.id_usuario, slug, plainText(input.nota, 'Nota', 600, { multiline: true }),
+        actor.id_usuario, slug, plainText(input.nota, 'Nota', LARGOS.obra.nota, { multiline: true }),
         hitos, fotos, version,
       ]));
     },
@@ -168,13 +170,13 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       const clean = items.map((c, i) => {
         const field = `Pregunta ${i + 1}`;
-        const linkText = c.enlaceTexto?.trim() ? plainText(c.enlaceTexto, `${field} · texto del enlace`, 60) : null;
+        const linkText = c.enlaceTexto?.trim() ? plainText(c.enlaceTexto, `${field} · texto del enlace`, LARGOS.chat.textoEnlace) : null;
         const linkPath = c.enlaceRuta?.trim() ? sitePath(c.enlaceRuta, `${field} · página del sitio`) : null;
         if (!linkText !== !linkPath) throw new ApiError(422, `${field}: el enlace necesita texto y página`);
         return {
-          pregunta: plainText(c.pregunta, `${field} · pregunta`, 160),
-          palabrasClave: plainText(c.palabrasClave, `${field} · palabras clave`, 300),
-          respuesta: plainText(c.respuesta, `${field} · respuesta`, 1000, { multiline: true }),
+          pregunta: plainText(c.pregunta, `${field} · pregunta`, LARGOS.chat.pregunta),
+          palabrasClave: plainText(c.palabrasClave, `${field} · palabras clave`, LARGOS.chat.palabrasClave),
+          respuesta: plainText(c.respuesta, `${field} · respuesta`, LARGOS.chat.respuesta, { multiline: true }),
           enlaceTexto: linkText, enlaceRuta: linkPath, destacada: c.destacada,
         };
       });
@@ -255,9 +257,7 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
 const stable = (value: unknown): string => JSON.stringify(value, (_, v) =>
   v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b))) : v);
 
-export const PAGE_NAMES: Record<string, string> = {
-  'por-que-quiero-ser-alcalde': 'Por qué quiero ser alcalde', 'conoce-mas': 'Conoce más sobre mí',
-};
+export const PAGE_NAMES: Record<string, string> = PAGINAS_CARLOS;
 const EMPTY_PAGE = { tarjetas: [], video: null, retrato: null, entrevista: [], galeria: [] };
 
 /** Cambios entre dos versiones del contenido, descritos para el panel. */

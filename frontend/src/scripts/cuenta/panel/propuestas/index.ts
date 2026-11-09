@@ -1,6 +1,6 @@
 import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
 import { adminApi, type DraftProposal } from "../../../../lib/data/http/admin-api";
-import { avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, LABEL, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
+import { avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, LABEL, LARGOS, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
 
 const MAX_KPIS = 6;
 let selected = "";
@@ -10,8 +10,8 @@ const trabajo: Record<string, DraftProposal> = {};
 /** Fila editable de una cifra, con botones para ordenarla o quitarla. */
 const kpiRow = (k: { etiqueta: string; valor: string }, i: number, total: number) => `
   <div class="kpi grid grid-cols-[repeat(2,minmax(0,1fr))_auto] items-start gap-3 border-t border-t-base-300 py-3 first:border-t-0 contenedor-estrecho:grid-cols-[minmax(0,1fr)_auto] contenedor-estrecho:[&>:first-child]:col-span-full contenedor-minimo:grid-cols-1">
-    ${field({ id: `kpi-etiqueta-${i}`, name: "etiqueta", label: "Etiqueta", value: k.etiqueta, max: 60 , required: true })}
-    ${field({ id: `kpi-valor-${i}`, name: "valor", label: "Cifra", value: k.valor, max: 30 , required: true })}
+    ${field({ id: `kpi-etiqueta-${i}`, name: "etiqueta", label: "Etiqueta", value: k.etiqueta, max: LARGOS.propuesta.etiquetaCifra , required: true })}
+    ${field({ id: `kpi-valor-${i}`, name: "valor", label: "Cifra", value: k.valor, max: LARGOS.propuesta.valorCifra , required: true })}
     <div>
       <span class="${LABEL} invisible contenedor-minimo:hidden" aria-hidden="true">&nbsp;</span>
       <div class="flex min-h-12 items-end contenedor-minimo:min-h-0 contenedor-minimo:justify-end">
@@ -49,10 +49,10 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
     ${isPending("Propuesta", current.nombre) ? `<p class="-mt-2 mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
     <form id="propuesta-form" class="flex flex-col gap-[18px]" novalidate>
       <div class="grid grid-cols-2 gap-4 max-tablet:grid-cols-1">
-        ${field({ id: "propuesta-nombre", label: "Nombre", value: current.nombre, max: 120 , required: true })}
-        ${field({ id: "propuesta-categoria", label: "Categoría", value: current.categoria, max: 80 , required: true })}
+        ${field({ id: "propuesta-nombre", label: "Nombre", value: current.nombre, max: LARGOS.propuesta.nombre , required: true })}
+        ${field({ id: "propuesta-categoria", label: "Categoría", value: current.categoria, max: LARGOS.propuesta.categoria , required: true })}
       </div>
-      ${field({ id: "propuesta-intro", label: "Introducción", value: current.introduccion, max: 400, area: true , required: true })}
+      ${field({ id: "propuesta-intro", label: "Introducción", value: current.introduccion, max: LARGOS.propuesta.introduccion, area: true , required: true })}
       <div>
         <h3 class="m-0 mt-2 mb-1 font-display text-[1.5rem] font-semibold">Cifras (KPI)</h3>
         <p class="m-0 mb-1.5 text-[0.8rem] text-muted">Se muestran bajo la cabecera de la propuesta, en este orden. Máximo ${MAX_KPIS}.</p>

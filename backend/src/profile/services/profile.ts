@@ -7,6 +7,7 @@ import { ApiError, publicAccount } from '../../http';
 import type { ProfileUpdateInput } from '../types';
 import { hasAcceptance } from '../../auth/services/consent';
 import { plainText } from '../../validation/texto';
+import { LARGOS } from '../../contracts/limites';
 
 export function createProfile(sql: SQL, authorization: Authorization) {
   return {
@@ -25,8 +26,8 @@ export function createProfile(sql: SQL, authorization: Authorization) {
     async update(access: string | undefined, input: ProfileUpdateInput) {
       const user = await authorization.require(access, PERMISSIONS.profileEdit);
       if (input.versionPerfil === undefined) throw new ApiError(409, 'Recarga la página antes de guardar tus datos');
-      const name = plainText(input.nombresCompletos, 'Nombre completo', 200);
-      const address = input.direccion?.trim() ? plainText(input.direccion, 'Dirección', 500) : null;
+      const name = plainText(input.nombresCompletos, 'Nombre completo', LARGOS.cuenta.nombre);
+      const address = input.direccion?.trim() ? plainText(input.direccion, 'Dirección', LARGOS.cuenta.direccion) : null;
       const [updated] = await callPg<{ resultado: string; usuario: UserRow; version_perfil: number }>(sql, 'profileUpdate', [
         user.id_usuario, name, address, input.versionPerfil,
       ]);

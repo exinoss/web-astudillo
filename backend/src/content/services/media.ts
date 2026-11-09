@@ -5,14 +5,13 @@ import { createHash, randomBytes } from 'node:crypto';
 import sharp from 'sharp';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
-import { AVISO_HEIC, avisoMegapixeles, CARD_SIZE, cardVariantFile, FORMATOS_FOTO, MAX_PIXELES } from '../../contracts/media';
+import { AVISO_HEIC, avisoMegapixeles, CARD_SIZE, cardVariantFile, FORMATOS_FOTO, MAX_BYTES_FOTO, MAX_MB_FOTO, MAX_PIXELES } from '../../contracts/media';
 import { videoLinkProblem, videoSource } from '../../contracts/video';
 import { fetchVideoCover } from './video-cover';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import type { Photo } from '../types';
 
-export const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 // 2000: los banners de la portada ocupan todo el ancho, hasta 1947 px.
 const WIDTHS = [480, 960, 1600, 2000];
 const FORMATS = new Set(['jpeg', 'png', 'webp']);
@@ -123,7 +122,7 @@ export function createMedia(sql: SQL, authorization: Authorization, mediaDir: st
   return {
     async upload(access: string | undefined, file: File): Promise<Photo> {
       const actor = await authorization.require(access, PERMISSIONS.mediaUpload);
-      if (file.size > MAX_UPLOAD_BYTES) throw new ApiError(413, 'La foto supera los 8 MB');
+      if (file.size > MAX_BYTES_FOTO) throw new ApiError(413, `La foto supera los ${MAX_MB_FOTO} MB`);
       return store(actor.id_usuario, Buffer.from(await file.arrayBuffer()));
     },
 
@@ -131,7 +130,7 @@ export function createMedia(sql: SQL, authorization: Authorization, mediaDir: st
       const actor = await authorization.require(access, PERMISSIONS.mediaUpload);
       const source = videoSource(link);
       if (!source) throw new ApiError(422, `Video: ${videoLinkProblem(link)}`);
-      const image = await fetchCover(source, MAX_UPLOAD_BYTES).catch(() => null);
+      const image = await fetchCover(source, MAX_BYTES_FOTO).catch(() => null);
       if (!image) throw new ApiError(422, 'No se pudo obtener la imagen de este video. Sube una portada.');
       return store(actor.id_usuario, image);
     },

@@ -1,6 +1,7 @@
 import type { Puesto } from '../contracts/equipo';
 import type { Carrusel, Original } from '../contracts/inicio';
 import type { ParroquiaSlug } from '../contracts/parroquias';
+import { SLUGS_CARLOS, type PaginaCarlos } from '../contracts/acerca-de-carlos';
 
 /** Foto subida desde el panel; el sitio arma las URL `/medios/<nombre>-<ancho>.webp`. */
 export interface Photo {
@@ -48,8 +49,8 @@ export interface ChatAnswer {
 }
 
 export type CardColor = 'rojo' | 'azul';
-export const ABOUT_CARLOS_PAGES = ['por-que-quiero-ser-alcalde', 'conoce-mas'] as const;
-export type AboutCarlosSlug = (typeof ABOUT_CARLOS_PAGES)[number];
+export const ABOUT_CARLOS_PAGES = SLUGS_CARLOS;
+export type AboutCarlosSlug = PaginaCarlos;
 
 /** `enlace` llega ya normalizado por contracts/video.ts. */
 export interface AboutCarlosPageStored {

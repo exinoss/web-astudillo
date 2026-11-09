@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { normalizeEmail } from '../../security';
 import { acceptance, email, ipOf, password, redirectToAccount, strict, token, type AuthContext } from './common';
+import { LARGOS } from '../../contracts/limites';
 
 export function registrationRoutes({ config, registration, limit }: AuthContext) {
   return new Elysia({ prefix: '/api/auth', normalize: false })
@@ -11,8 +12,8 @@ export function registrationRoutes({ config, registration, limit }: AuthContext)
       await registration.request(body);
       return { message: 'Si el correo puede registrarse, recibirás instrucciones' };
     }, { body: t.Object({
-      nombresCompletos: t.String({ minLength: 1, maxLength: 200 }),
-      direccion: t.Optional(t.String({ maxLength: 500 })),
+      nombresCompletos: t.String({ minLength: 1, maxLength: LARGOS.cuenta.nombre }),
+      direccion: t.Optional(t.String({ maxLength: LARGOS.cuenta.direccion })),
       correo: email, contrasenia: password, confirmarContrasenia: password,
       aceptacion: acceptance,
     }, strict) })

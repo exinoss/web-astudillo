@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import type { SQL } from "bun";
 import type { Authorization } from "../../auth/types";
 import { createProfile } from "../services/profile";
+import { LARGOS } from "../../contracts/limites";
 
 export function profileRoutes(sql: SQL, authorization: Authorization) {
   const profile = createProfile(sql, authorization);
@@ -10,8 +11,8 @@ export function profileRoutes(sql: SQL, authorization: Authorization) {
     .patch("", ({ body, cookie }) => profile.update(
       cookie.access.value as string | undefined, body,
     ), { body: t.Object({
-      nombresCompletos: t.String({ minLength: 1, maxLength: 200 }),
-      direccion: t.Optional(t.String({ maxLength: 500 })),
+      nombresCompletos: t.String({ minLength: 1, maxLength: LARGOS.cuenta.nombre }),
+      direccion: t.Optional(t.String({ maxLength: LARGOS.cuenta.direccion })),
       versionPerfil: t.Optional(t.Integer({ minimum: 1, maximum: 2147483647 })),
     }, { additionalProperties: false }) });
 }

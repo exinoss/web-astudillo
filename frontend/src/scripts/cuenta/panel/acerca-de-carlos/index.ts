@@ -9,6 +9,7 @@ import { gallery } from "./galeria";
 import { portrait } from "./retrato";
 import { cards } from "./tarjetas";
 import { marcarNoInsertable, video } from "./video";
+import { PAGINAS_CARLOS } from "../../../../../../backend/src/contracts/acerca-de-carlos";
 import { avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, esc, iconSvg, isPending, previewButton, reloadDraft, reloadPending, state } from "../ui";
 
 const SECTIONS: Record<Section, SectionEditor & { name: string }> = {
@@ -20,8 +21,8 @@ const SECTIONS: Record<Section, SectionEditor & { name: string }> = {
 };
 
 const PAGES: Record<AboutCarlosSlug, { name: string; sections: Section[] }> = {
-  "por-que-quiero-ser-alcalde": { name: "Por qué quiero ser alcalde", sections: ["tarjetas", "video"] },
-  "conoce-mas": { name: "Conoce más sobre mí", sections: ["tarjetas", "video", "retrato", "entrevista", "galeria"] },
+  "por-que-quiero-ser-alcalde": { name: PAGINAS_CARLOS["por-que-quiero-ser-alcalde"], sections: ["tarjetas", "video"] },
+  "conoce-mas": { name: PAGINAS_CARLOS["conoce-mas"], sections: ["tarjetas", "video", "retrato", "entrevista", "galeria"] },
 };
 let slug: AboutCarlosSlug = "por-que-quiero-ser-alcalde";
 let section: Section = "tarjetas";

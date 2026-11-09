@@ -6,12 +6,13 @@ import { adminApi, type Draft, type Photo } from "../../../lib/data/http/admin-a
 import { esc } from "../../../lib/comun/html";
 import { iconSvg } from "../../../lib/comun/iconos";
 import { bloquearMientras } from "../../../lib/cuenta/panel/cambios";
-import { ACEPTA_FOTOS, FORMATOS_FOTO } from "../../../../../backend/src/contracts/media";
+import { ACEPTA_FOTOS, FORMATOS_FOTO, MAX_MB_FOTO } from "../../../../../backend/src/contracts/media";
+import { LARGOS } from "../../../../../backend/src/contracts/limites";
 import { GHOST } from "../../../lib/cuenta/panel/campos";
 import { pedirAvisos } from "../../../lib/comun/avisos";
 import { notificar, type Notificacion } from "../../../lib/comun/notificacion";
 
-export { ACEPTA_FOTOS, esc, FORMATOS_FOTO, iconSvg };
+export { ACEPTA_FOTOS, esc, FORMATOS_FOTO, iconSvg, LARGOS, MAX_MB_FOTO };
 export { BORRADOR_GUARDADO } from "../../../lib/comun/notificacion";
 export { field, GHOST, HINT, ICON_BUTTON, LABEL, moveButtons, selectField, thumb, upload } from "../../../lib/cuenta/panel/campos";
 
