@@ -6,14 +6,12 @@ import { LARGOS } from '../../contracts/limites';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { ABOUT_CARLOS_PAGES, type AboutCarlosPage, type AboutCarlosSlug, type AboutCarlosPageStored } from '../types';
-import { CONTENT_CONFLICT } from '../conflictos';
+import { existingPhotos, saved, type SaveRow } from '../guardado';
 import { ensureCardVariant, photosById } from './media';
 import { videoInsertable } from './video-cover';
 import { plainText } from '../../validation/texto';
 
-type SaveRow = { resultado: 'guardado' | 'sin_cambios' | 'conflicto'; version: string | null };
-
-export type AboutCarlosPageInput = AboutCarlosPageStored;
+type AboutCarlosPageInput = AboutCarlosPageStored;
 
 const isSlug = (slug: string): slug is AboutCarlosSlug => (ABOUT_CARLOS_PAGES as readonly string[]).includes(slug);
 const optional = (value: string | null | undefined, field: string, max: number, options?: { multiline?: boolean }) =>
@@ -94,14 +92,10 @@ export function createAboutCarlosPages(sql: SQL, authorization: Authorization, m
       if (source && motivo) throw new ApiError(422, avisoNoInsertable(source.provider, motivo));
       const ids = [...page.tarjetas.map(t => t.idMedio), ...page.galeria.map(g => g.idMedio),
         ...(page.retrato ? [page.retrato.idMedio] : []), ...(page.video?.idPortada ? [page.video.idPortada] : [])];
-      const media = await photosById(sql, ids);
-      if (ids.some(id => !media.has(id))) throw new ApiError(422, 'Alguna foto ya no existe; vuelve a subirla');
+      const media = await existingPhotos(sql, ids);
       // Antes de guardar: una tarjeta publicada nunca apunta a una variante que falta.
       await Promise.all(page.tarjetas.map(t => ensureCardVariant(mediaDir, media.get(t.idMedio)!)));
-      const [row] = await callPg<SaveRow>(sql, 'aboutCarlosSave', [actor.id_usuario, slug, page, version]);
-      if (!row) throw new ApiError(404, 'No encontrado');
-      if (row.resultado === 'conflicto') throw new ApiError(409, CONTENT_CONFLICT);
-      return { version: row.version };
+      return saved(await callPg<SaveRow>(sql, 'aboutCarlosSave', [actor.id_usuario, slug, page, version]));
     },
   };
 }

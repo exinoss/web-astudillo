@@ -70,7 +70,7 @@ Hay **dos momentos** separados:
 Cada texto editable tiene una **clave** y un **valor por defecto** (el del diseño aprobado). Viven en un registro:
 
 ```ts
-// frontend/src/lib/comun/contenido/textos.ts (simplificado)
+// backend/src/contracts/textos.ts (simplificado)
 export const TEXTOS = {
   "pie.nombre": { texto: "CARLOS ASTUDILLO", max: 60 },
   "global.lema": { texto: "Por ti, San Lorenzo.", max: 60 },
@@ -581,7 +581,7 @@ Para ver la foto exacta que se publicó, abre en el navegador:
 
 | Qué | Dónde |
 | --- | --- |
-| Registro de textos editables | [`frontend/src/lib/comun/contenido/textos.ts`](../frontend/src/lib/comun/contenido/textos.ts) |
+| Registro de textos editables | [`backend/src/contracts/textos.ts`](../backend/src/contracts/textos.ts) |
 | Componente `Editable` | [`frontend/src/components/comun/Editable.astro`](../frontend/src/components/comun/Editable.astro) |
 | Modo edición (navegador) | [`frontend/src/scripts/comun/modo-edicion.ts`](../frontend/src/scripts/comun/modo-edicion.ts) |
 | Editor de los carruseles de la portada | [`frontend/src/scripts/inicio/editor-carruseles.ts`](../frontend/src/scripts/inicio/editor-carruseles.ts) y [`backend/src/content/services/home-carousels.ts`](../backend/src/content/services/home-carousels.ts) |

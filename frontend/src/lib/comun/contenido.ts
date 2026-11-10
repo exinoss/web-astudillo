@@ -1,6 +1,6 @@
 import { contentRepository } from "../data";
 import { REDES, type Red, whatsappUrl } from "./contenido/redes";
-import { TEXTOS, type TextKey } from "./contenido/textos";
+import { TEXTOS, type TextKey } from "../../../../backend/src/contracts/textos";
 
 export { TEXTOS, type TextKey };
 

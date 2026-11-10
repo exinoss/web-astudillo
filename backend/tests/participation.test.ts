@@ -7,7 +7,7 @@ import { callPg } from '../src/db/call';
 import { VERSION_LEGAL } from '../src/contracts/legal';
 
 const MEDIA = "medios-pruebas-participacion";
-const { sql, cookies, ids, call, account, resetAccounts } = testApp(MEDIA);
+const { sql, cookies, ids, call, account, resetAccounts, draft } = testApp(MEDIA);
 
 /** JPG con orientación y GPS en EXIF: la copia guardada no debe conservar ninguno de los dos. */
 const photo = (w = 900, h = 600) => sharp({ create: { width: w, height: h, channels: 3, background: "#f47f0e" } })
@@ -294,8 +294,7 @@ test('una cuenta bloqueada no puede recuperar respuestas guardadas ni usar la fu
 });
 
 test("las preguntas frecuentes se guardan con versión y solo enlazan dentro del sitio", async () => {
-  const draft = async () => (await (await call("/api/admin/contenido", "GET", undefined, cookies.admin)).json());
-  const { chat, versiones } = await draft();
+  const { chat, versiones } = await draft('admin');
   expect(chat).toHaveLength(4);
   const save = (respuestas: unknown[], version: string) =>
     call("/api/admin/contenido/chat", "PUT", { respuestas, version }, cookies.admin);
@@ -304,7 +303,7 @@ test("las preguntas frecuentes se guardan con versión y solo enlazan dentro del
   expect((await save(next, versiones.chat)).status).toBe(200);
   expect((await save(next, versiones.chat)).status).toBe(200); // repetir: sin cambios
   expect((await save(chat, versiones.chat)).status).toBe(409); // versión vieja con otro contenido
-  const fresh = (await draft()).versiones.chat;
+  const fresh = (await draft('admin')).versiones.chat;
   const bad = (enlaceRuta: string) => save([{ ...chat[0], enlaceRuta }], fresh);
   expect((await bad("https://malo.example")).status).toBe(422);
   expect((await bad("//malo.example")).status).toBe(422);

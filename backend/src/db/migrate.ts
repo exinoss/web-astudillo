@@ -1,5 +1,5 @@
 import type { SQL } from 'bun';
-import { createHash } from 'node:crypto';
+import { sha256 } from '../security';
 import { getTableColumns, getTableName } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/bun-sql';
 import { migrate as runDrizzleMigrations } from 'drizzle-orm/bun-sql/migrator';
@@ -55,7 +55,7 @@ async function baselineExistingSchema(sql: SQL) {
     throw new Error(`Esquema existente incompleto; faltan tablas o columnas: ${missing.join(', ') || 'tablas del modelo'}`);
 
   const migrationPath = new URL(`../../drizzle/${initial.tag}.sql`, import.meta.url);
-  const hash = createHash('sha256').update(await Bun.file(migrationPath).text()).digest('hex');
+  const hash = sha256(await Bun.file(migrationPath).text());
   await sql.begin(async tx => {
     await tx`SELECT pg_advisory_xact_lock(120509, 20260923)`;
     await tx`CREATE SCHEMA IF NOT EXISTS drizzle`;

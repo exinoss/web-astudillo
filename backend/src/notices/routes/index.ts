@@ -1,7 +1,7 @@
 import { Elysia } from 'elysia';
 import type { SQL } from 'bun';
 import type { Authorization } from '../../auth/types';
-import { access } from '../../content/routes';
+import { access } from '../../http';
 import { createNotices } from '../services/notices';
 
 /** Avisos de la campana del panel. */

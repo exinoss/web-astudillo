@@ -2,7 +2,7 @@ import { getImage } from "astro:assets";
 import portadaHorizontal from "../../../assets/portada.jpg";
 import portadaVertical from "../../../assets/pieza-respeto-vertical.png";
 import { texto } from "../../comun/contenido";
-import type { TextKey } from "../../comun/contenido/textos";
+import type { TextKey } from "../../../../../backend/src/contracts/textos";
 import { contentRepository } from "../../data";
 import type { AboutCarlosSlug } from "../../data/types";
 import { cardImageUrl, imageView, type ImageView } from "../../comun/fotos";

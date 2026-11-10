@@ -1,5 +1,5 @@
 import type { SQL } from 'bun';
-import { createHash } from 'node:crypto';
+import { sha256 } from '../../security';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization, Limiter } from '../../auth/types';
 import type { Content } from '../../content/services/content';
@@ -26,7 +26,7 @@ export const normalize = (text: string) => text.normalize('NFD').replace(/\p{M}/
   .replace(/[^a-z0-9]+/g, ' ').trim();
 
 /** Respuesta cuyas palabras clave más aparecen en la pregunta; gana la que coincide con el texto de un botón rápido. */
-export function bestAnswer(question: string, answers: ChatAnswer[]) {
+function bestAnswer(question: string, answers: ChatAnswer[]) {
   const text = normalize(question);
   const words = text.split(' ');
   const exact = answers.find(a => normalize(a.pregunta) === text);
@@ -49,7 +49,7 @@ export function createChat(sql: SQL, authorization: Authorization, limit: Limite
       const user = await authorization.require(access, PERMISSIONS.participationSend);
       await requireParticipationAcceptance(sql, user.id_usuario);
       const question = plainText(message, 'Consulta', LARGOS_PARTICIPACION.consulta);
-      const hash = createHash('sha256').update(question).digest('hex');
+      const hash = sha256(question);
       return sending(`${user.id_usuario}:${idempotency}:${hash}`, async () => {
         const [sent] = await callPg<{ mensaje_hash: string; respuesta: ChatResponse }>(sql, 'chatByKey', [user.id_usuario, idempotency]);
         if (sent && sent.mensaje_hash !== hash) throw new ApiError(409, CONFLICT);

@@ -8,6 +8,7 @@ import { MENSAJES } from "../../mail/plantilla";
 import { normalizeEmail, randomToken, tokenHash } from "../../security";
 import type { Attempts, Sessions } from "../types";
 import { passwordVerify } from "./limits";
+import { accountLink, sendTokenMail, usableToken } from "./tokens";
 
 const dummyHash = Bun.password.hash("contraseña-de-comparación-no-válida", "argon2id");
 const LINK_SECONDS = 900;
@@ -19,12 +20,8 @@ export function createLogin(sql: SQL, sessions: Sessions, attempts: Attempts, ma
     const [created] = await callPg<{ id_token_autenticacion: number }>(sql, "authTokenCreate",
       [user.id_usuario, correo, "acceso_correo", tokenHash(token), LINK_SECONDS]);
     if (!created) return;
-    try {
-      await mailer.send(correo, MENSAJES.acceso(`${config.origin}/cuenta/acceso/?token=${encodeURIComponent(token)}`));
-    } catch (error) {
-      await callPg(sql, "authTokenDelete", [created.id_token_autenticacion]);
-      throw error;
-    }
+    await sendTokenMail(sql, mailer, created.id_token_autenticacion, correo,
+      MENSAJES.acceso(accountLink(config, "/cuenta/acceso/", token)));
   }
 
   return {
@@ -38,7 +35,8 @@ export function createLogin(sql: SQL, sessions: Sessions, attempts: Attempts, ma
       const ok = !!user && valid && user.estado === "activo";
       if (emailLink) {
         // Sin esperar el envío: la respuesta tarda lo mismo con contraseña buena o mala.
-        if (ok) void sendLink(user, correo).catch(error => console.error("No se pudo enviar el enlace de acceso", error?.code ?? error));
+        // sendTokenMail ya deja el fallo en el registro.
+        if (ok) void sendLink(user, correo).catch(() => {});
         else await attempts.fail(keys);
         return { link: true as const };
       }
@@ -51,7 +49,7 @@ export function createLogin(sql: SQL, sessions: Sessions, attempts: Attempts, ma
     async confirm(token: string) {
       const user = await sql.begin(async tx => {
         const [row] = await callPg<AuthTokenRow>(tx, "authTokenGet", [tokenHash(token), "acceso_correo"]);
-        if (!row || row.consumido_en || new Date(row.expira_en) <= new Date() || row.id_usuario === null)
+        if (!usableToken(row) || row.id_usuario === null)
           throw new ApiError(400, "Enlace inválido o vencido");
         const [account] = await callPg<UserRow>(tx, "activeUser", [row.id_usuario]);
         if (!account) throw new ApiError(400, "Enlace inválido o vencido");

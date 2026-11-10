@@ -56,7 +56,6 @@ const names = {
   worksList: 'fn_works_list',
   workSave: 'fn_work_save',
   mediaCreate: 'fn_media_create',
-  mediaByIds: 'fn_media_by_ids',
   mediaByHash: 'fn_media_by_hash',
   mediaDetails: 'fn_media_details',
   aboutCarlosList: 'fn_about_carlos_list',
@@ -102,13 +101,15 @@ const names = {
   masterTransfer: 'fn_master_transfer',
 } as const;
 
-export type PgFunction = keyof typeof names;
+type PgFunction = keyof typeof names;
 
 // El compilador no ve las firmas SQL: aquí van las de parámetros posicionales fáciles de desordenar.
 interface Params {
   alertByKey: [user: number, key: string];
   alertCreate: [user: number, key: string, type: string, sector: string, reference: string | null,
     description: string, photo: string | null, legalVersion: string];
+  pendingCreate: [email: string, tokenHash: string, name: string, address: string | null, passwordHash: string,
+    legalVersion: string, legalText: string, seconds: number];
   suggestionByKey: [user: number, key: string];
   suggestionCreate: [user: number, key: string, topic: string, message: string, legalVersion: string];
 }
@@ -117,6 +118,8 @@ type Row = Record<string, unknown>;
 /** Ejecuta una función PostgreSQL del catálogo con parámetros enlazados; las listas de números van como texto «1,2,3». */
 export function callPg<T extends object = Row>(db: SQL, functionName: 'alertByKey', values: Params['alertByKey']): Promise<T[]>;
 export function callPg<T extends object = Row>(db: SQL, functionName: 'alertCreate', values: Params['alertCreate']): Promise<T[]>;
+/** Firma de `fn_pending_create`, que recibe ocho valores en orden. */
+export function callPg<T extends object = Row>(db: SQL, functionName: 'pendingCreate', values: Params['pendingCreate']): Promise<T[]>;
 export function callPg<T extends object = Row>(db: SQL, functionName: 'suggestionByKey', values: Params['suggestionByKey']): Promise<T[]>;
 export function callPg<T extends object = Row>(db: SQL, functionName: 'suggestionCreate', values: Params['suggestionCreate']): Promise<T[]>;
 export function callPg<T extends object = Row>(db: SQL, functionName: Exclude<PgFunction, keyof Params>, values?: unknown[]): Promise<T[]>;

@@ -1,14 +1,16 @@
 import { t, type Cookie } from 'elysia';
 import { isIP } from 'node:net';
-import { cookieOptions } from '../../http';
+import { clearCookie, cookieOptions } from '../../http';
 import type { AuthContext as AuthContextType } from '../types';
 import { LARGOS } from '../../contracts/limites';
+import { strict } from '../../validation/esquemas';
 export type { AuthContext } from '../types';
+export { strict };
 
 export const email = t.String({ format: 'email', maxLength: LARGOS.cuenta.correo });
 export const password = t.String({ minLength: 6, maxLength: LARGOS.cuenta.contrasenia });
 export const token = t.String({ pattern: '^[A-Za-z0-9_-]{43}$' });
-export const strict = { additionalProperties: false };
+export const googleCredential = t.String({ minLength: 100 });
 export const acceptance = t.Object({ version: t.String({ minLength: 1, maxLength: 32 }), aceptada: t.Literal(true) }, strict);
 
 /** Usa X-Real-IP solo cuando un proxy privado y confiable lo sobrescribe. */
@@ -29,10 +31,6 @@ export function redirectToAccount(origin: string, path: string, tokenValue: stri
   return new Response(null, { status: 303, headers: {
     location: url.toString(), 'referrer-policy': 'no-referrer', 'cache-control': 'no-store',
   } });
-}
-
-export function clearCookie(cookie: Cookie<unknown>, config: AuthContextType['config'], path: string) {
-  cookie.set({ value: '', ...cookieOptions(config, 0, path), expires: new Date(0) });
 }
 
 export function clearSession(context: AuthContextType, cookie: Record<string, Cookie<unknown>>) {

@@ -8,20 +8,14 @@ import { migrate } from '../src/db/migrate';
 import { testApp } from './helpers';
 
 const MEDIA = 'medios-pruebas-paginas';
-const { sql, cookies, call, account, resetAccounts } = testApp(MEDIA);
+const { sql, cookies, call, account, resetAccounts, draft, uploadPhoto } = testApp(MEDIA);
 const ALCALDE = '/api/admin/contenido/acerca-de-carlos/por-que-quiero-ser-alcalde';
 const CONOCE = '/api/admin/contenido/acerca-de-carlos/conoce-mas';
 const REEL = 'https://www.facebook.com/reel/28327883403549284/';
 
-const draft = async () => (await call('/api/admin/contenido', 'GET', undefined, cookies.coadmin)).json();
 const version = async (slug: string) => (await draft()).versiones.acercaDeCarlos[slug] as string;
-
-async function photo(color: string, width = 1200, height = 800) {
-  const form = new FormData();
-  const buffer = await sharp({ create: { width, height, channels: 3, background: color } }).png().toBuffer();
-  form.append('foto', new File([new Uint8Array(buffer)], 'foto.png'));
-  return (await call('/api/admin/medios', 'POST', form, cookies.coadmin)).json() as Promise<{ idMedio: number; nombre: string }>;
-}
+/** Foto horizontal para las tarjetas y la galería. */
+const photo = (color: string, width = 1200, height = 800) => uploadPhoto(color, width, height);
 
 const card = (idMedio: number, titulo = 'Escuchar a su gente') =>
   ({ idMedio, alt: 'Vecinos en una calle', titulo, texto: 'Conocer las necesidades de los barrios.', color: 'rojo', enfoque: { x: 50, y: 40 } });

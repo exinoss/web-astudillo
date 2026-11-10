@@ -11,16 +11,15 @@ import { createContent } from '../services/content';
 import { createHomeCarousels } from '../services/home-carousels';
 import { createMedia } from '../services/media';
 import { createMyTeam } from '../services/my-team';
+import { access } from '../../http';
+import { literals, pagina, slugText, strict, text } from '../../validation/esquemas';
 
-export const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;
-const text = (max: number) => t.String({ maxLength: max * 4 });
-const slug = t.Object({ slug: t.String({ pattern: '^[a-z0-9-]{1,80}$' }) });
-const strict = { additionalProperties: false };
+const slug = t.Object({ slug: slugText });
 // Versión que el panel cargó (md5); con ella se detecta si otra persona guardó antes.
 const version = t.String({ pattern: '^[a-f0-9]{32}$' });
 const mediaId = t.Integer({ minimum: 1 });
 const percent = t.Integer({ minimum: 0, maximum: 100 });
-const homeImage = t.Union([t.Object({ original: t.Union(ORIGINALES.map(o => t.Literal(o))) }, strict), t.Object({ idMedio: mediaId }, strict)]);
+const homeImage = t.Union([t.Object({ original: literals(ORIGINALES) }, strict), t.Object({ idMedio: mediaId }, strict)]);
 
 export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: string) {
   const content = createContent(sql, authorization);
@@ -79,7 +78,7 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
       body: t.Object({
         tarjetas: t.Array(t.Object({
           idMedio: mediaId, alt: text(LARGOS.descripcionFoto), titulo: text(LARGOS.acercaDeCarlos.tituloTarjeta), texto: text(LARGOS.acercaDeCarlos.textoTarjeta),
-          color: t.Union([t.Literal('rojo'), t.Literal('azul')]), enfoque: t.Object({ x: percent, y: percent }, strict),
+          color: literals(['rojo', 'azul']), enfoque: t.Object({ x: percent, y: percent }, strict),
         }, strict), { maxItems: 6 }),
         video: t.Union([t.Object({
           titulo: text(LARGOS.acercaDeCarlos.tituloVideo), descripcion: t.Union([text(LARGOS.acercaDeCarlos.descripcionVideo), t.Null()]), enlace: t.String({ maxLength: VIDEO_URL_MAX }),
@@ -96,7 +95,7 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
       body: t.Object({
         personas: t.Array(t.Object({
           idMedio: t.Union([mediaId, t.Null()]),
-          puesto: t.Union(PUESTOS.map(p => t.Literal(p.clave))),
+          puesto: literals(PUESTOS.map(p => p.clave)),
           nombre: text(LARGOS.equipo.nombre),
           presentacion: text(MAX_PRESENTACION),
           trayectoria: t.Array(text(MAX_PUNTO_TRAYECTORIA), { maxItems: MAX_TRAYECTORIA }),
@@ -145,7 +144,7 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
     })
     .get('/publicaciones/pendientes', ({ cookie }) => content.pending(access(cookie)))
     .get('/publicaciones', ({ cookie, query }) => content.publications(access(cookie), query.pagina ?? 1), {
-      query: t.Object({ pagina: t.Optional(t.Numeric({ minimum: 1, maximum: 10000 })) }, strict),
+      query: t.Object({ pagina }, strict),
     })
     .post('/publicaciones', ({ cookie }) => content.publish(access(cookie)));
   // Lectura pública del contenido publicado: la usa el frontend al compilar y en desarrollo.

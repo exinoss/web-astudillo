@@ -7,6 +7,7 @@ import { MENSAJES } from "../../mail/plantilla";
 import { randomToken, tokenHash } from "../../security";
 import type { Attempts } from "../types";
 import { passwordVerify } from "./limits";
+import { sendTokenMail } from "./tokens";
 
 const VIGENCIA_CODIGO = 600;
 
@@ -41,12 +42,7 @@ export function createConfirmation(sql: SQL, attempts: Attempts, mailer: Mailer)
         sql, "authTokenCreate", [userId, correo, "confirmar_accion", cifrar(codigo), VIGENCIA_CODIGO],
       );
       if (!creado) return;
-      try {
-        await mailer.send(correo, MENSAJES.codigo(codigo));
-      } catch {
-        await callPg(sql, "authTokenDelete", [creado.id_token_autenticacion]);
-        throw new ApiError(503, "No se pudo enviar el correo");
-      }
+      await sendTokenMail(sql, mailer, creado.id_token_autenticacion, correo, MENSAJES.codigo(codigo));
     },
 
     /** Exige la contraseña o, sin ella, el código vigente; los fallos comparten el contador del cambio de contraseña. */

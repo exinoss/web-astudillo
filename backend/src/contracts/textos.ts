@@ -1,5 +1,5 @@
-// Botones y destinos de enlaces no están aquí a propósito (salvo las redes, en redes.ts).
-// Sin dependencias: también lo usa el panel en el navegador.
+// Botones y destinos de enlaces no están aquí a propósito (salvo las redes, en frontend/src/lib/comun/contenido/redes.ts).
+// Sin dependencias: también lo usa el panel en el navegador. El backend exige cada `max` al guardar.
 interface TextDefinition {
   lugar: string;
   campo: string;
@@ -15,6 +15,7 @@ const RUTAS: Record<string, string> = {
   "Conoce más sobre mí": "/acerca-de-nosotros/conoce-mas/", "Obras en ejecución": "/ciudadania/obras-en-ejecucion/",
   "Mi equipo": "/mi-equipo/",
 };
+/** Definición de un texto editable, con la página donde aparece. */
 const t = (lugar: string, campo: string, max = 120): TextDefinition =>
   ({ lugar, campo, max, ruta: RUTAS[lugar] ?? "/" });
 

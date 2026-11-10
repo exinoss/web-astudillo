@@ -1,6 +1,6 @@
 // Modo edición sobre el sitio: solo lo descarga quien tiene `contenido.editar` (lo importa layout.ts).
 // Edita los textos marcados con data-editable; los botones y destinos de enlaces nunca lo llevan.
-import { TEXTOS, type TextKey } from "../../lib/comun/contenido/textos";
+import { TEXTOS, type TextKey } from "../../../../backend/src/contracts/textos";
 import type { Profile } from "../../lib/data/auth-repository";
 import { adminApi } from "../../lib/data/http/admin-api";
 import { escLines } from "../../lib/comun/html";

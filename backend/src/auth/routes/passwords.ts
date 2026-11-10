@@ -1,7 +1,8 @@
 import { Elysia, t } from 'elysia';
 import { normalizeEmail } from '../../security';
 import { PERMISSIONS } from '../permissions';
-import { clearSession, email, ipOf, password, redirectToAccount, strict, token, type AuthContext } from './common';
+import { access } from '../../http';
+import { clearSession, email, googleCredential, ipOf, password, redirectToAccount, strict, token, type AuthContext } from './common';
 import { LARGOS } from '../../contracts/limites';
 
 export function passwordRoutes(context: AuthContext) {
@@ -24,14 +25,14 @@ export function passwordRoutes(context: AuthContext) {
     }, { body: t.Object({ token, contrasenia: password }, strict) })
     .post('/password', async ({ body, cookie }) => {
       const user = await authorization.require(
-        cookie.access.value as string | undefined, PERMISSIONS.passwordAdd,
+        access(cookie), PERMISSIONS.passwordAdd,
       );
       await passwords.addToGoogle(user.id_usuario, user.correo, body.credential, body.contrasenia);
       return { ok: true };
-    }, { body: t.Object({ credential: t.String({ minLength: 100 }), contrasenia: password }, strict) })
+    }, { body: t.Object({ credential: googleCredential, contrasenia: password }, strict) })
     .post('/password/change', async ({ body, cookie, request, server }) => {
       const user = await authorization.require(
-        cookie.access.value as string | undefined, PERMISSIONS.passwordChange,
+        access(cookie), PERMISSIONS.passwordChange,
       );
       // Una contraseña actual incorrecta suma fallos con sanción progresiva (createAttempts).
       await passwords.change(user.id_usuario, body.contraseniaActual,

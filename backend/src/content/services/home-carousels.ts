@@ -7,16 +7,15 @@ import { LARGOS } from '../../contracts/limites';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { plainText } from '../../validation/texto';
-import { CONTENT_CONFLICT } from '../conflictos';
+import { existingPhotos, saved, type SaveRow } from '../guardado';
 import type { HomeCarousels, HomeCarouselsStored, HomeImage, HomeImageStored, Photo } from '../types';
 import { photosById } from './media';
 
-type SaveRow = { resultado: 'guardado' | 'sin_cambios' | 'conflicto'; version: string | null };
 type Stored = HomeCarouselsStored[Carrusel];
 
-export type HomeMainInput = HomeCarouselsStored['principal'];
-export type HomePiecesInput = HomeCarouselsStored['piezas'];
-export type HomeTeamInput = HomeCarouselsStored['equipo'];
+type HomeMainInput = HomeCarouselsStored['principal'];
+type HomePiecesInput = HomeCarouselsStored['piezas'];
+type HomeTeamInput = HomeCarouselsStored['equipo'];
 
 /** Solo trae imágenes que vienen con el sitio: vale tal cual como contenido guardado y como publicado. */
 export const HOME_CAROUSELS_SEED = initial.inicio as Pick<HomeCarousels & HomeCarouselsStored, 'principal' | 'piezas'>;
@@ -61,13 +60,9 @@ const alt = (value: string, field: string) => plainText(value, `${field} · desc
 
 export function createHomeCarousels(sql: SQL, authorization: Authorization) {
   async function save(actor: { id_usuario: number }, key: Carrusel, content: Stored, mediaIds: number[], version: string | null, horizontales = false) {
-    const media = await photosById(sql, mediaIds);
-    if (mediaIds.some(id => !media.has(id))) throw new ApiError(422, 'Alguna foto ya no existe; vuelve a subirla');
+    const media = await existingPhotos(sql, mediaIds);
     if (horizontales && [...media.values()].some(f => f.ancho <= f.alto)) throw new ApiError(422, AVISO_HORIZONTAL);
-    const [row] = await callPg<SaveRow>(sql, 'homeCarouselsSave', [actor.id_usuario, key, content, version]);
-    if (!row) throw new ApiError(404, 'No encontrado');
-    if (row.resultado === 'conflicto') throw new ApiError(409, CONTENT_CONFLICT);
-    return { version: row.version };
+    return saved(await callPg<SaveRow>(sql, 'homeCarouselsSave', [actor.id_usuario, key, content, version]));
   }
 
   return {

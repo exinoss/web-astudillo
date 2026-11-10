@@ -1,7 +1,7 @@
 import type { SQL } from 'bun';
 import { link, mkdir, rm } from 'node:fs/promises';
 import { join } from 'node:path';
-import { createHash, randomBytes } from 'node:crypto';
+import { randomBytes } from 'node:crypto';
 import sharp from 'sharp';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
@@ -10,6 +10,7 @@ import { videoLinkProblem, videoSource } from '../../contracts/video';
 import { fetchVideoCover } from './video-cover';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
+import { sha256 } from '../../security';
 import type { Photo } from '../types';
 
 // 2000: los banners de la portada ocupan todo el ancho, hasta 1947 px.
@@ -31,12 +32,24 @@ export async function photosById(sql: SQL, ids: number[]) {
   return new Map(rows.map(row => [row.id_medio, toPhoto(row)]));
 }
 
-export const sha256 = (input: Buffer) => createHash('sha256').update(input).digest('hex');
-
 /** Null si la foto se puede guardar; si no, el aviso. HEIC y AVIF comparten contenedor (`heif`) y se distinguen por el códec. */
 export function formatProblem({ format, compression }: { format?: string; compression?: string }) {
   if (format === 'heif') return compression === 'av1' ? null : compression === 'hevc' ? AVISO_HEIC : WRONG_FORMAT;
   return format && FORMATS.has(format) ? null : WRONG_FORMAT;
+}
+
+/** Escribe `target` desde un temporal, una sola vez: si ya existe, lo deja como está. */
+async function writeOnce(target: string, write: (temporary: string) => Promise<unknown>) {
+  const temporary = `${target}.${randomBytes(4).toString('hex')}.tmp`;
+  try {
+    await write(temporary);
+    // Windows no reemplaza un archivo que otro envío está leyendo.
+    await link(temporary, target).catch((error: NodeJS.ErrnoException) => {
+      if (error.code !== 'EEXIST') throw error;
+    });
+  } finally {
+    await rm(temporary, { force: true });
+  }
 }
 
 /** Valida la foto por su contenido y la guarda sin metadatos como `<nombre>-<ancho>.webp` en cada ancho que cabe (todos con `allSizes`). */
@@ -59,17 +72,8 @@ export async function savePhoto(input: Buffer, dir: string, name: string, sizes:
   // Una versión detrás de otra: abierta, la foto completa ocupa ancho × alto × canales en memoria, y abrirla
   // para todas a la vez multiplicaría ese pico. Reducir desde una versión ya reducida cambiaría el resultado.
   for (const w of widths) {
-    const target = join(dir, `${name}-${w}.webp`);
-    const temporary = `${target}.${randomBytes(4).toString('hex')}.tmp`;
-    try {
-      await base.clone().resize({ width: w, withoutEnlargement: true }).webp({ quality: 80 }).toFile(temporary);
-      // El destino completo se crea una sola vez: Windows no reemplaza un archivo que otro envío lee.
-      await link(temporary, target).catch((error: NodeJS.ErrnoException) => {
-        if (error.code !== 'EEXIST') throw error;
-      });
-    } finally {
-      await rm(temporary, { force: true });
-    }
+    await writeOnce(join(dir, `${name}-${w}.webp`),
+      temporary => base.clone().resize({ width: w, withoutEnlargement: true }).webp({ quality: 80 }).toFile(temporary));
   }
   return { width, height, widths };
 }
@@ -87,15 +91,8 @@ export async function ensureCardVariant(dir: string, photo: { nombre: string; an
     .resize({ width: CARD_SIZE, height: CARD_SIZE, fit: 'outside', withoutEnlargement: true })
     .toColourspace('b-w').normalise({ lower: 5, upper: 95 }).raw().toBuffer({ resolveWithObject: true });
   for (let i = 0; i < data.length; i++) data[i] = CARD_CURVE[data[i]];
-  const temporary = `${target}.${randomBytes(4).toString('hex')}.tmp`;
-  try {
-    await sharp(data, { raw: { width: info.width, height: info.height, channels: info.channels } }).webp({ quality: 80 }).toFile(temporary);
-    await link(temporary, target).catch((error: NodeJS.ErrnoException) => {
-      if (error.code !== 'EEXIST') throw error;
-    });
-  } finally {
-    await rm(temporary, { force: true });
-  }
+  await writeOnce(target, temporary =>
+    sharp(data, { raw: { width: info.width, height: info.height, channels: info.channels } }).webp({ quality: 80 }).toFile(temporary));
 }
 
 export function createMedia(sql: SQL, authorization: Authorization, mediaDir: string, fetchCover = fetchVideoCover) {

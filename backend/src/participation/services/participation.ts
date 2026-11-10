@@ -2,7 +2,8 @@ import type { SQL } from 'bun';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization, Limiter } from '../../auth/types';
 import { callPg } from '../../db/call';
-import { savePhoto, sha256 } from '../../content/services/media';
+import { savePhoto } from '../../content/services/media';
+import { sha256 } from '../../security';
 import { plainText } from '../../validation/texto';
 import { ApiError } from '../../http';
 import { requireParticipationAcceptance } from '../../auth/services/consent';
@@ -14,7 +15,7 @@ import {
 } from '../../contracts/participacion';
 
 /** Anchos fijos de las fotos de alertas: miniatura del historial y vista ampliada del panel. */
-export const ALERT_PHOTO_WIDTHS = [480, 1280];
+const ALERT_PHOTO_WIDTHS = [480, 1280];
 export const PAGE_SIZE = 20;
 const HISTORY = 20;
 /** Envíos por usuario cada 10 minutos (alertas y sugerencias por separado). */
@@ -148,5 +149,3 @@ export function createParticipation(sql: SQL, authorization: Authorization, limi
     },
   };
 }
-
-export type Participation = ReturnType<typeof createParticipation>;

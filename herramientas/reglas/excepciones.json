@@ -75,12 +75,6 @@
     {
       "regla": "comentario-de-funcion",
       "archivo": "backend/database/funciones/auth.sql",
-      "texto": "CREATE OR REPLACE FUNCTION fn_session_rotate(p_old_hash text, p_new_hash text)",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/database/funciones/auth.sql",
       "texto": "CREATE OR REPLACE FUNCTION fn_session_revoke(p_hash text)",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
@@ -303,25 +297,7 @@
     {
       "regla": "comentario-de-funcion",
       "archivo": "backend/src/admin/routes/index.ts",
-      "texto": "const literals = (values: readonly string[]) => t.Union(values.map(value => t.Literal(value)));",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/src/admin/routes/index.ts",
-      "texto": "const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/src/admin/routes/index.ts",
       "texto": "export function adminRoutes(sql: SQL, authorization: Authorization, confirmation: Confirmation, trustProxyIp: boolean) {",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "funcion-repetida",
-      "archivo": "backend/src/admin/routes/index.ts",
-      "texto": "const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
@@ -346,12 +322,6 @@
       "regla": "comentario-de-funcion",
       "archivo": "backend/src/auth/password-policy.ts",
       "texto": "export function requireConfirmation(password: string, confirmation: string) {",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/src/auth/routes/common.ts",
-      "texto": "export function clearCookie(cookie: Cookie<unknown>, config: AuthContextType['config'], path: string) {",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
@@ -501,18 +471,6 @@
     {
       "regla": "comentario-de-funcion",
       "archivo": "backend/src/content/routes/index.ts",
-      "texto": "export const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/src/content/routes/index.ts",
-      "texto": "const text = (max: number) => t.String({ maxLength: max * 4 });",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/src/content/routes/index.ts",
       "texto": "export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: string) {",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
@@ -580,12 +538,6 @@
       "regla": "comentario-de-funcion",
       "archivo": "backend/src/content/services/media.ts",
       "texto": "export const toPhoto = (row: MediaRow): Photo => ({",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/src/content/services/media.ts",
-      "texto": "export const sha256 = (input: Buffer) => createHash('sha256').update(input).digest('hex');",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
@@ -711,31 +663,7 @@
     {
       "regla": "comentario-de-funcion",
       "archivo": "backend/src/participation/routes/index.ts",
-      "texto": "const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/src/participation/routes/index.ts",
-      "texto": "const literals = (values: readonly string[]) => t.Union(values.map(value => t.Literal(value)));",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/src/participation/routes/index.ts",
-      "texto": "const text = (max: number) => t.String({ maxLength: max * 4 });",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/src/participation/routes/index.ts",
       "texto": "export function participationRoutes(sql: SQL, authorization: Authorization, photoDir: string) {",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "funcion-repetida",
-      "archivo": "backend/src/participation/routes/index.ts",
-      "texto": "const access = (cookie: Record<string, { value?: unknown }>) => cookie.access.value as string | undefined;",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
@@ -814,12 +742,6 @@
       "regla": "comentario-de-funcion",
       "archivo": "backend/src/security.ts",
       "texto": "export const randomToken = () => randomBytes(32).toString(\"base64url\");",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/src/security.ts",
-      "texto": "export const tokenHash = (value: string) => createHash(\"sha256\").update(value).digest(\"hex\");",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
@@ -1134,12 +1056,6 @@
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/lib/comun/contenido.ts",
       "texto": "export async function enlaceRed(red: Red) {",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "frontend/src/lib/comun/contenido/textos.ts",
-      "texto": "const t = (lugar: string, campo: string, max = 120): TextDefinition =>",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
