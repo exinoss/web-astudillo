@@ -88,7 +88,7 @@ test('un video publicado que su plataforma ya no deja mostrar es un aviso; se re
   expect(consultas).toBe(0);
 
   // Con el video bloqueado en el borrador no se publica ningún otro cambio, y repetir tampoco crea publicaciones.
-  expect((await call('/api/admin/contenido/textos/pie.lema', 'PUT', { valor: 'Por ti, San Lorenzo.', version: null }, cookies.admin)).status).toBe(200);
+  expect((await call('/api/admin/contenido/textos/pie.linea-1', 'PUT', { valor: 'Por ti, San Lorenzo.', version: null }, cookies.admin)).status).toBe(200);
   const antes = await publicaciones();
   const rechazos = await Promise.all([1, 2].map(() => call('/api/admin/publicaciones', 'POST', undefined, cookies.admin)));
   for (const r of rechazos) {

@@ -11,7 +11,7 @@ export const PAGE_SIZE = 20;
 type AdminUserRow = Pick<UserRow, 'id_usuario' | 'correo' | 'nombres_completos' | 'rol' | 'es_maestro' | 'estado'>
   & { total: string };
 
-export interface UserFilters {
+interface UserFilters {
   q?: string;
   rol?: string;
   estado?: AccountState;

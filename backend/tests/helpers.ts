@@ -1,5 +1,6 @@
 import { expect } from "bun:test";
 import { SQL } from "bun";
+import sharp from "sharp";
 import { createApp } from "../src/app";
 import type { Config } from "../src/config";
 import type { Mailer } from "../src/mailer";
@@ -59,5 +60,16 @@ export function testApp(mediaDir = "medios-pruebas", trustProxyIp = false, priva
   const resetAccounts = () => sql`TRUNCATE tb_auditoria, tb_sesiones, tb_registros_pendientes,
     tb_token_autenticacion, tb_identidades_autenticacion, tb_usuarios, tb_limites_intentos RESTART IDENTITY CASCADE`;
 
-  return { sql, config, app, ids, cookies, sent, call, account, resetAccounts };
+  /** Borrador del panel tal como lo carga esa cuenta. */
+  const draft = async (who = "coadmin") => (await call("/api/admin/contenido", "GET", undefined, cookies[who])).json();
+
+  /** Sube desde el panel una foto lisa de ese color y medidas. */
+  async function uploadPhoto(color: string, width: number, height: number) {
+    const form = new FormData();
+    const buffer = await sharp({ create: { width, height, channels: 3, background: color } }).png().toBuffer();
+    form.append("foto", new File([new Uint8Array(buffer)], "foto.png"));
+    return (await call("/api/admin/medios", "POST", form, cookies.coadmin)).json() as Promise<{ idMedio: number; nombre: string; anchos: number[] }>;
+  }
+
+  return { sql, config, app, ids, cookies, sent, call, account, resetAccounts, draft, uploadPhoto };
 }

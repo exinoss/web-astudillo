@@ -1,4 +1,4 @@
-import { TEXTOS, type TextKey } from "../../../../lib/comun/contenido/textos";
+import { TEXTOS, type TextKey } from "../../../../../../backend/src/contracts/textos";
 import { adminApi } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { renderSocial } from "../redes";

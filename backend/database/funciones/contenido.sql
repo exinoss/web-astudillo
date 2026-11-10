@@ -1,9 +1,3 @@
--- Indica si la cuenta activa tiene un permiso; las funciones de escritura lo repiten aunque la API ya lo comprobara.
-CREATE OR REPLACE FUNCTION fn_has_permission(p_user integer, p_permission text)
-RETURNS boolean LANGUAGE sql STABLE AS $$
-  SELECT EXISTS (SELECT 1 FROM fn_authorized_user(p_user, p_permission));
-$$;
-
 CREATE OR REPLACE FUNCTION fn_texts_list()
 RETURNS TABLE(clave varchar, valor text, actualizado_en timestamptz) LANGUAGE sql STABLE AS $$
   SELECT COALESCE(t.clave, i.clave), COALESCE(t.valor, i.valor), t.actualizado_en
@@ -321,13 +315,6 @@ CREATE OR REPLACE FUNCTION fn_media_by_hash(p_hash text)
 RETURNS TABLE(id_medio integer, nombre varchar, ancho integer, alto integer, anchos jsonb)
 LANGUAGE sql STABLE AS $$
   SELECT m.id_medio, m.nombre, m.ancho, m.alto, to_jsonb(m.anchos) FROM tb_medios m WHERE m.hash_contenido = p_hash;
-$$;
-
--- Ids de las fotos que existen, para validar las que llegan en un guardado.
-CREATE OR REPLACE FUNCTION fn_media_by_ids(p_ids text)
-RETURNS TABLE(id_medio integer) LANGUAGE sql STABLE AS $$
-  SELECT m.id_medio FROM tb_medios m
-  WHERE m.id_medio = ANY(string_to_array(p_ids, ',')::integer[]);
 $$;
 
 CREATE OR REPLACE FUNCTION fn_media_details(p_ids text)

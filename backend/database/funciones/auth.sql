@@ -28,6 +28,12 @@ RETURNS SETOF tb_usuarios LANGUAGE sql STABLE AS $$
   WHERE u.id_usuario = p_user AND u.estado = 'activo' AND p.codigo = p_permission;
 $$;
 
+-- Indica si la cuenta activa tiene un permiso; las funciones de escritura lo repiten aunque la API ya lo comprobara.
+CREATE OR REPLACE FUNCTION fn_has_permission(p_user integer, p_permission text)
+RETURNS boolean LANGUAGE sql STABLE AS $$
+  SELECT EXISTS (SELECT 1 FROM fn_authorized_user(p_user, p_permission));
+$$;
+
 -- Indica si la cuenta tiene identidad por contraseña, Google o ambas.
 CREATE OR REPLACE FUNCTION fn_account_methods(p_user integer)
 RETURNS TABLE(tiene_contrasenia boolean, tiene_google boolean)
@@ -70,8 +76,10 @@ $$;
 -- El enlace de registro vale en cualquier navegador: no hay verificador de navegador.
 DROP FUNCTION IF EXISTS fn_pending_create(text, text, text, text, text, text);
 DROP FUNCTION IF EXISTS fn_pending_create(text, text, text, text, text);
+DROP FUNCTION IF EXISTS fn_pending_create(text, text, text, text, text, text, text);
 CREATE OR REPLACE FUNCTION fn_pending_create(
-  p_email text, p_token_hash text, p_name text, p_address text, p_password_hash text, p_version text, p_text text
+  p_email text, p_token_hash text, p_name text, p_address text, p_password_hash text, p_version text, p_text text,
+  p_seconds integer
 ) RETURNS TABLE(id_token_autenticacion integer) LANGUAGE plpgsql AS $$
 -- Una sola solicitud válida por correo. Si hay una de hace menos de un minuto (doble envío,
 -- reintento de red, dos pestañas) no crea otra ni hace enviar otro correo: devuelve vacío.
@@ -89,7 +97,7 @@ BEGIN
   DELETE FROM tb_token_autenticacion t
   WHERE lower(t.correo) = lower(p_email) AND t.proposito = 'registro_correo' AND t.consumido_en IS NULL;
   INSERT INTO tb_token_autenticacion (correo, proposito, token_hash, expira_en)
-  VALUES (p_email, 'registro_correo', p_token_hash, now() + interval '30 minutes')
+  VALUES (p_email, 'registro_correo', p_token_hash, now() + make_interval(secs => p_seconds))
   RETURNING tb_token_autenticacion.id_token_autenticacion INTO v_id;
   INSERT INTO tb_registros_pendientes (id_token_autenticacion, nombres_completos, direccion, contrasenia_hash,
     version_legal, texto_aceptacion, aceptado_en)
@@ -302,14 +310,9 @@ DECLARE v_id integer;
 BEGIN
   INSERT INTO tb_identidades_autenticacion (id_usuario, proveedor, contrasenia_hash)
   SELECT p_user, 'correo', p_hash WHERE EXISTS (
-    SELECT 1 FROM tb_usuarios u JOIN tb_identidades_autenticacion g
-      ON g.id_usuario = u.id_usuario AND g.proveedor = 'google'
-      AND g.sujeto_externo = p_sub
-    JOIN tb_roles r ON r.rol = u.rol
-    JOIN tb_rol_permisos rp ON rp.id_rol = r.id_rol
-    JOIN tb_permisos p ON p.id_permiso = rp.id_permiso
-    WHERE u.id_usuario = p_user AND u.estado = 'activo'
-      AND p.codigo = 'cuenta.contrasenia.agregar'
+    SELECT 1 FROM tb_identidades_autenticacion g
+    WHERE g.id_usuario = p_user AND g.proveedor = 'google' AND g.sujeto_externo = p_sub
+      AND fn_has_permission(p_user, 'cuenta.contrasenia.agregar')
   ) ON CONFLICT (id_usuario, proveedor) DO NOTHING
   RETURNING tb_identidades_autenticacion.id_identidad INTO v_id;
   IF v_id IS NOT NULL THEN
@@ -325,11 +328,8 @@ CREATE OR REPLACE FUNCTION fn_password_change_target(p_user integer)
 RETURNS TABLE(contrasenia_hash text) LANGUAGE sql VOLATILE AS $$
   SELECT i.contrasenia_hash FROM tb_identidades_autenticacion i
   JOIN tb_usuarios u ON u.id_usuario = i.id_usuario
-  JOIN tb_roles r ON r.rol = u.rol
-  JOIN tb_rol_permisos rp ON rp.id_rol = r.id_rol
-  JOIN tb_permisos p ON p.id_permiso = rp.id_permiso
-  WHERE u.id_usuario = p_user AND u.estado = 'activo'
-    AND i.proveedor = 'correo' AND p.codigo = 'cuenta.contrasenia.cambiar'
+  WHERE u.id_usuario = p_user AND i.proveedor = 'correo'
+    AND fn_has_permission(p_user, 'cuenta.contrasenia.cambiar')
   FOR UPDATE OF i, u;
 $$;
 
@@ -341,7 +341,7 @@ BEGIN
   UPDATE tb_identidades_autenticacion i
   SET contrasenia_hash = p_hash, actualizado_en = now()
   WHERE i.id_usuario = p_user AND i.proveedor = 'correo'
-    AND EXISTS (SELECT 1 FROM fn_authorized_user(p_user, 'cuenta.contrasenia.cambiar'))
+    AND fn_has_permission(p_user, 'cuenta.contrasenia.cambiar')
   RETURNING i.id_identidad INTO v_id;
   IF v_id IS NULL THEN RETURN; END IF;
   UPDATE tb_sesiones SET revocado_en = now()
@@ -352,14 +352,17 @@ BEGIN
 END;
 $$;
 
--- Crea una sesión de renovación con vencimiento de siete días.
-CREATE OR REPLACE FUNCTION fn_session_create(p_user integer, p_hash text)
+-- Crea una sesión de renovación que vence a los `p_seconds` segundos.
+DROP FUNCTION IF EXISTS fn_session_create(integer, text);
+CREATE OR REPLACE FUNCTION fn_session_create(p_user integer, p_hash text, p_seconds integer)
 RETURNS void LANGUAGE sql AS $$
   INSERT INTO tb_sesiones (id_usuario, token_hash, expira_en)
-  VALUES (p_user, p_hash, now() + interval '7 days');
+  VALUES (p_user, p_hash, now() + make_interval(secs => p_seconds));
 $$;
 
-CREATE OR REPLACE FUNCTION fn_session_rotate(p_old_hash text, p_new_hash text)
+-- Cambia el refresh de una sesión vigente por uno nuevo y le da otros `p_seconds` segundos de vida.
+DROP FUNCTION IF EXISTS fn_session_rotate(text, text);
+CREATE OR REPLACE FUNCTION fn_session_rotate(p_old_hash text, p_new_hash text, p_seconds integer)
 RETURNS SETOF tb_usuarios LANGUAGE plpgsql AS $$
 DECLARE v_user tb_usuarios%ROWTYPE;
 BEGIN
@@ -369,7 +372,7 @@ BEGIN
     AND s.expira_en > now() AND u.estado = 'activo' FOR UPDATE OF s;
   IF NOT FOUND THEN RETURN; END IF;
   UPDATE tb_sesiones SET token_hash = p_new_hash, token_hash_anterior = p_old_hash, rotado_en = now(),
-    expira_en = now() + interval '7 days', ultimo_uso_en = now()
+    expira_en = now() + make_interval(secs => p_seconds), ultimo_uso_en = now()
   WHERE token_hash = p_old_hash;
   RETURN NEXT v_user;
 END;

@@ -8,6 +8,7 @@ import { testApp } from "./helpers";
 import initial from '../database/contenido-inicial.json';
 import { seedContent } from '../src/db/seed';
 import { AVISO_HEIC } from '../src/contracts/media';
+import { TEXTOS } from '../src/contracts/textos';
 import { formatProblem, savePhoto } from '../src/content/services/media';
 import { readdir } from 'node:fs/promises';
 import { createAuthorization } from '../src/auth/services/authorization';
@@ -15,7 +16,7 @@ import { createContent } from '../src/content/services/content';
 import { createSecurity } from '../src/security';
 
 const MEDIA = "medios-pruebas-contenido";
-const { sql, config, cookies, call, account, resetAccounts } = testApp(MEDIA);
+const { sql, config, cookies, call, account, resetAccounts, draft } = testApp(MEDIA);
 
 const png = (w = 1200, h = 800) =>
   sharp({ create: { width: w, height: h, channels: 3, background: "#063176" } }).png().toBuffer();
@@ -63,14 +64,14 @@ test("el contenido inicial viene de la semilla y solo lo leen quienes editan", a
 test("los textos se guardan como texto plano y vuelven al valor por defecto con null", async () => {
   const put = async (clave: string, valor: string | null, who = "coadmin") =>
     call(`/api/admin/contenido/textos/${clave}`, "PUT", { valor, version: (await versiones()).textos[clave] ?? null }, cookies[who]);
-  expect((await put("inicio.cita", "«Por ti, San Lorenzo»")).status).toBe(200);
-  expect((await put("inicio.cita", "<img src=x onerror=alert(1)>")).status).toBe(422);
-  expect((await put("inicio.cita", "texto\u0007oculto")).status).toBe(422);
+  expect((await put("inicio.conoce.cita", "«Por ti, San Lorenzo»")).status).toBe(200);
+  expect((await put("inicio.conoce.cita", "<img src=x onerror=alert(1)>")).status).toBe(422);
+  expect((await put("inicio.conoce.cita", "texto\u0007oculto")).status).toBe(422);
   expect((await put("Inicio Cita", "x")).status).toBe(422);
-  expect((await put("inicio.cita", "x", "votante")).status).toBe(403);
+  expect((await put("inicio.conoce.cita", "x", "votante")).status).toBe(403);
   let c = await (await call("/api/admin/contenido", "GET", undefined, cookies.coadmin)).json();
-  expect(c.textos["inicio.cita"]).toBe("«Por ti, San Lorenzo»");
-  expect((await put("inicio.cita", null)).status).toBe(200);
+  expect(c.textos["inicio.conoce.cita"]).toBe("«Por ti, San Lorenzo»");
+  expect((await put("inicio.conoce.cita", null)).status).toBe(200);
   c = await (await call("/api/admin/contenido", "GET", undefined, cookies.coadmin)).json();
   expect(c.textos).toEqual(initial.textos);
 });
@@ -106,6 +107,16 @@ test('repetir la semilla conserva originales, borradores y publicaciones', async
   const restored=await (await call('/api/admin/contenido','GET',undefined,cookies.coadmin)).json();
   expect(restored.textos[key]).toBe(original);
   expect(restored.versiones.textos[key]).toBeUndefined();
+});
+
+test('cada texto del sitio acepta hasta su máximo y la API rechaza claves que el sitio no muestra', async () => {
+  const save = async (clave: string, valor: string | null) =>
+    call(`/api/admin/contenido/textos/${clave}`, 'PUT', { valor, version: (await versiones()).textos[clave] ?? null }, cookies.coadmin);
+  const max = TEXTOS['global.lista'].max;
+  expect((await save('global.lista', 'x'.repeat(max + 1))).status).toBe(422);
+  expect((await save('global.lista', 'x'.repeat(max))).status).toBe(200);
+  expect((await save('no.existe', 'Hola')).status).toBe(422);
+  expect((await save('global.lista', null)).status).toBe(200);
 });
 
 test('subidas simultáneas de una misma foto dejan variantes completas y sin temporales', async () => {
@@ -211,8 +222,8 @@ test("publicar congela el contenido, calcula lo pendiente y agrupa la cola", asy
   await callPg(sql, "publicationFinish", [tomada.id_publicacion, true, null]);
   expect(await pendientes()).toEqual([]);
   expect((await call("/api/admin/publicaciones", "POST", undefined, cookies.coadmin)).status).toBe(409);
-  await call("/api/admin/contenido/textos/contacto.texto", "PUT", { valor: "Escríbenos.", version: null }, cookies.coadmin);
-  expect(await pendientes()).toEqual([{ tipo: "Texto", descripcion: "contacto.texto" }]);
+  await call("/api/admin/contenido/textos/inicio.contacto.texto", "PUT", { valor: "Escríbenos.", version: null }, cookies.coadmin);
+  expect(await pendientes()).toEqual([{ tipo: "Texto", descripcion: "inicio.contacto.texto" }]);
   // Una publicación fallida no reemplaza a la vigente, y el borrador nunca es público.
   const fallida = await (await call("/api/admin/publicaciones", "POST", undefined, cookies.coadmin)).json();
   await callPg(sql, "publicationClaim");
@@ -267,7 +278,6 @@ test("dos personas editando lo mismo: gana la primera y la segunda recibe 409; r
 });
 
 test('lo que se publica no mezcla dos guardados hechos mientras se lee el borrador', async () => {
-  const draft = async () => (await call("/api/admin/contenido", "GET", undefined, cookies.coadmin)).json();
   const saveText = async (clave: string, valor: string) => expect((await call(`/api/admin/contenido/textos/${clave}`, "PUT",
     { valor, version: (await draft()).versiones.textos[clave] ?? null }, cookies.coadmin)).status).toBe(200);
   await saveText("global.lema", `Cambio previo ${crypto.randomUUID()}`);

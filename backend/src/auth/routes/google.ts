@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia';
 import { publicAccount } from '../../http';
-import { acceptance, ipOf, setSession, strict, type AuthContext } from './common';
+import { acceptance, googleCredential, ipOf, setSession, strict, type AuthContext } from './common';
 
 export function googleRoutes(context: AuthContext) {
   const { config, google, limit } = context;
@@ -12,5 +12,5 @@ export function googleRoutes(context: AuthContext) {
       if ('requiereAceptacion' in result) return result;
       setSession(context, cookie, result.tokens);
       return { user: publicAccount(result.user) };
-    }, { body: t.Object({ credential: t.String({ minLength: 100 }), aceptacion: t.Optional(acceptance) }, strict) });
+    }, { body: t.Object({ credential: googleCredential, aceptacion: t.Optional(acceptance) }, strict) });
 }

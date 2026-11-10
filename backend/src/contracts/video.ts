@@ -1,6 +1,6 @@
 // Lo usan el backend para validar y normalizar el enlace, y el frontend para montar el reproductor.
 
-export type VideoProvider = 'youtube' | 'facebook' | 'tiktok' | 'vimeo' | 'mp4';
+type VideoProvider = 'youtube' | 'facebook' | 'tiktok' | 'vimeo' | 'mp4';
 
 export interface VideoSource {
   provider: VideoProvider;

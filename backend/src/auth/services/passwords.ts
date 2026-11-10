@@ -10,6 +10,7 @@ import { normalizeEmail, randomToken, tokenHash } from "../../security";
 import type { Attempts } from "../types";
 import { requireConfirmation, requireNewPassword } from '../password-policy';
 import { passwordHash, passwordVerify } from './limits';
+import { accountLink, sendTokenMail, usableToken } from './tokens';
 
 export function createPasswords(sql: SQL, security: Security, attempts: Attempts, mailer: Mailer, config: Config) {
   /** Indica si `password` ya es la contraseña de la cuenta; permite repetir una operación sin error. */
@@ -30,13 +31,8 @@ export function createPasswords(sql: SQL, security: Security, attempts: Attempts
       );
       // Ya se envió un enlace hace un momento (doble envío): no se manda otro.
       if (!created) return;
-      const id = created.id_token_autenticacion;
-      try {
-        await mailer.send(correo, MENSAJES.recuperar(`${config.origin}/cuenta/restablecer/?token=${encodeURIComponent(token)}`));
-      } catch {
-        await callPg(sql, "authTokenDelete", [id]);
-        throw new ApiError(503, "No se pudo enviar el correo");
-      }
+      await sendTokenMail(sql, mailer, created.id_token_autenticacion, correo,
+        MENSAJES.recuperar(accountLink(config, "/cuenta/restablecer/", token)));
     },
     /** Cambia la contraseña y consume el token de recuperación; el dueño demostró controlar el correo. */
     async reset(token: string, password: string) {
@@ -46,8 +42,7 @@ export function createPasswords(sql: SQL, security: Security, attempts: Attempts
         const [row] = await callPg<AuthTokenRow>(tx, "authTokenGet", [tokenHash(token), "recuperar_contrasenia"]);
         // Idempotente: el mismo enlace y la misma contraseña otra vez (doble envío) es un éxito sin cambios.
         if (row?.consumido_en && new Date(row.expira_en) > new Date() && await isCurrentPassword(row.correo, password)) return row.correo;
-        if (!row || row.consumido_en || new Date(row.expira_en) <= new Date())
-          throw new ApiError(400, "Enlace inválido o vencido");
+        if (!usableToken(row)) throw new ApiError(400, "Enlace inválido o vencido");
         const updated = await callPg(tx, "passwordReset", [row.id_usuario, hash]);
         if (!updated.length) throw new ApiError(400, "Enlace inválido o vencido");
         await callPg(tx, "authTokenConsume", [row.id_token_autenticacion]);

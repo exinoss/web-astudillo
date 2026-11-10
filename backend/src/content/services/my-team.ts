@@ -7,14 +7,12 @@ import { LARGOS } from '../../contracts/limites';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { plainText } from '../../validation/texto';
-import { CONTENT_CONFLICT } from '../conflictos';
+import { existingPhotos, saved, type SaveRow } from '../guardado';
 import type { MyTeam, ParishStored, TeamMemberStored, TeamStored } from '../types';
 import { photosById } from './media';
 
-type SaveRow = { resultado: 'guardado' | 'sin_cambios' | 'conflicto'; version: string | null };
-
-export interface TeamInput { personas: TeamMemberStored[] }
-export interface ParishInput { texto: string; fotos: { idMedio: number; alt: string }[] }
+interface TeamInput { personas: TeamMemberStored[] }
+interface ParishInput { texto: string; fotos: { idMedio: number; alt: string }[] }
 
 const isParish = (slug: string): slug is ParroquiaSlug => PARROQUIAS.some(p => p.slug === slug);
 const EMPTY_PARISH: ParishStored = { texto: '', fotos: [] };
@@ -39,12 +37,8 @@ export async function listMyTeam(sql: SQL): Promise<MyTeam> {
 
 export function createMyTeam(sql: SQL, authorization: Authorization) {
   async function save(actor: { id_usuario: number }, key: string, content: TeamStored | ParishStored, ids: number[], version: string | null) {
-    const media = await photosById(sql, ids);
-    if (ids.some(id => !media.has(id))) throw new ApiError(422, 'Alguna foto ya no existe; vuelve a subirla');
-    const [row] = await callPg<SaveRow>(sql, 'myTeamSave', [actor.id_usuario, key, content, version]);
-    if (!row) throw new ApiError(404, 'No encontrado');
-    if (row.resultado === 'conflicto') throw new ApiError(409, CONTENT_CONFLICT);
-    return { version: row.version };
+    await existingPhotos(sql, ids);
+    return saved(await callPg<SaveRow>(sql, 'myTeamSave', [actor.id_usuario, key, content, version]));
   }
 
   return {

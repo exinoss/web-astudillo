@@ -1,6 +1,5 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { rm } from 'node:fs/promises';
-import sharp from 'sharp';
 import { diff } from '../src/content/services/content';
 import { HOME_CAROUSELS_SEED } from '../src/content/services/home-carousels';
 import { AVISO_HORIZONTAL } from '../src/contracts/inicio';
@@ -8,21 +7,16 @@ import { migrate } from '../src/db/migrate';
 import { testApp } from './helpers';
 
 const MEDIA = 'medios-pruebas-inicio';
-const { sql, cookies, call, account, resetAccounts } = testApp(MEDIA);
+const { sql, cookies, call, account, resetAccounts, draft, uploadPhoto } = testApp(MEDIA);
 const PRINCIPAL = '/api/admin/contenido/inicio/principal';
 const PIEZAS = '/api/admin/contenido/inicio/piezas';
 const EQUIPO = '/api/admin/contenido/inicio/equipo';
 const SIN_EQUIPO = { fotos: [] };
 
-const draft = async () => (await call('/api/admin/contenido', 'GET', undefined, cookies.coadmin)).json();
 const version = async (clave: 'principal' | 'piezas' | 'equipo') => ((await draft()).versiones.inicio[clave] ?? null) as string | null;
 
-async function photo(color: string, width = 2400, height = 914) {
-  const form = new FormData();
-  const buffer = await sharp({ create: { width, height, channels: 3, background: color } }).png().toBuffer();
-  form.append('foto', new File([new Uint8Array(buffer)], 'foto.png'));
-  return (await call('/api/admin/medios', 'POST', form, cookies.coadmin)).json() as Promise<{ idMedio: number; anchos: number[] }>;
-}
+/** Foto con la proporción de los banners de la portada. */
+const photo = (color: string, width = 2400, height = 914) => uploadPhoto(color, width, height);
 
 const retrato = { imagen: { original: 'pieza-respeto' }, alt: 'Retrato de Carlos Astudillo' };
 type BannerGuardado = { imagen: { original?: string; foto?: { idMedio: number } }; celular: { idMedio: number } | null; alt: string };

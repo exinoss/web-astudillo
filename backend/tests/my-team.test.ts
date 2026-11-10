@@ -1,25 +1,19 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { rm } from 'node:fs/promises';
-import sharp from 'sharp';
 import { PARROQUIAS } from '../src/contracts/parroquias';
 import { diff } from '../src/content/services/content';
 import { migrate } from '../src/db/migrate';
 import { testApp } from './helpers';
 
 const MEDIA = 'medios-pruebas-mi-equipo';
-const { sql, cookies, call, account, resetAccounts } = testApp(MEDIA);
+const { sql, cookies, call, account, resetAccounts, draft, uploadPhoto } = testApp(MEDIA);
 const EQUIPO = '/api/admin/contenido/mi-equipo/equipo';
 const parroquia = (slug: string) => `/api/admin/contenido/mi-equipo/parroquias/${slug}`;
 
-const draft = async () => (await call('/api/admin/contenido', 'GET', undefined, cookies.coadmin)).json();
 const version = async (clave: string) => ((await draft()).versiones.miEquipo[clave] ?? null) as string | null;
 
-async function photo(color: string) {
-  const form = new FormData();
-  const buffer = await sharp({ create: { width: 900, height: 1200, channels: 3, background: color } }).png().toBuffer();
-  form.append('foto', new File([new Uint8Array(buffer)], 'foto.png'));
-  return (await call('/api/admin/medios', 'POST', form, cookies.coadmin)).json() as Promise<{ idMedio: number }>;
-}
+/** Foto vertical, como la de una persona del equipo. */
+const photo = (color: string) => uploadPhoto(color, 900, 1200);
 
 const persona = (nombre: string, idMedio: number | null = null, puesto = 'urbano-1', extra: object = {}) => ({ idMedio, puesto, nombre, presentacion: '', trayectoria: [], ...extra });
 const sinExtras = { presentacion: '', trayectoria: [] };

@@ -27,10 +27,10 @@ const IP_FREE = 20;
 /** Bloqueo mortal (3 días): el tope de la escalada. Quien llega ahí se trata como atacante. */
 const MORTAL = 259_200;
 /** IPs con bloqueo mortal sobre un mismo correo a partir de las cuales el dueño entra por enlace. */
-export const ATTACKERS_FOR_LINK = 2;
+const ATTACKERS_FOR_LINK = 2;
 
 /** Claves de un intento: la pareja correo+IP (o usuario+IP), la IP y, en el acceso, el correo. */
-export type AttemptKeys = { pair: string; ip: string; email?: string };
+type AttemptKeys = { pair: string; ip: string; email?: string };
 type Row = { clave: string; espera: number; fallos: number };
 
 /** 429 genérico con la cuenta atrás; en el primer bloqueo del acceso sugiere restablecer la contraseña. */

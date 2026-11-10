@@ -15,7 +15,7 @@ type ConCodigo = Comun & { codigo: string };
 /** Con enlace lleva un botón; con `codigo`, el código ocupa su lugar. */
 export type Mensaje = ConEnlace | ConCodigo;
 
-export interface Imagenes { logo: string; cabecera: string; hashtag: string }
+interface Imagenes { logo: string; cabecera: string; hashtag: string }
 
 /** Imágenes incrustadas: `cid` es como las cita el HTML y `archivo`, de dónde las adjunta el mailer. */
 export const IMAGENES = {

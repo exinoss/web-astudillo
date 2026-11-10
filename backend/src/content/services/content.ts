@@ -4,12 +4,13 @@ import type { Authorization } from '../../auth/types';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { plainText } from '../../validation/texto';
-import { CONTENT_CONFLICT } from '../conflictos';
+import { existingPhotos, saved, type SaveRow } from '../guardado';
 import type { BiographyItem, ChatAnswer, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
 import { PARROQUIAS } from '../../contracts/parroquias';
 import { videoSource } from '../../contracts/video';
 import { PAGINAS_CARLOS } from '../../contracts/acerca-de-carlos';
 import { LARGOS } from '../../contracts/limites';
+import { TEXTOS, type TextKey } from '../../contracts/textos';
 import { listAboutCarlosPages } from './about-carlos';
 import { emptyMyTeam, listMyTeam } from './my-team';
 import { HOME_CAROUSELS_SEED, listHomeCarousels } from './home-carousels';
@@ -17,7 +18,7 @@ import { toPhoto } from './media';
 import { linkValue, sitePath, year } from './validation';
 import { videoInsertable } from './video-cover';
 
-export const PUBLICATIONS_PAGE_SIZE = 10;
+const PUBLICATIONS_PAGE_SIZE = 10;
 const KEY = /^[a-z0-9]+([.-][a-z0-9]+)*$/;
 
 type ProposalRow = { slug: string; nombre: string; categoria: string; introduccion: string; kpis: Kpi[] };
@@ -35,9 +36,9 @@ type ChatRow = {
   enlace_texto: string | null; enlace_ruta: string | null; destacada: boolean;
 };
 
-export interface ProposalInput { nombre: string; categoria: string; introduccion: string; kpis: Kpi[] }
-export interface BiographyInput { anios: string; titulo: string; texto: string; idMedio: number | null; alt: string | null }
-export interface WorkInput {
+interface ProposalInput { nombre: string; categoria: string; introduccion: string; kpis: Kpi[] }
+interface BiographyInput { anios: string; titulo: string; texto: string; idMedio: number | null; alt: string | null }
+interface WorkInput {
   nota: string;
   hitos: { nombre: string; completado: boolean }[];
   fotos: { idMedio: number; pie: string }[];
@@ -84,33 +85,27 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
     };
   }
 
-  async function requirePhotos(ids: number[]) {
-    const unique = [...new Set(ids)];
-    if (!unique.length) return;
-    const found = await callPg<{ id_medio: number }>(sql, 'mediaByIds', [unique.join(',')]);
-    if (found.length !== unique.length) throw new ApiError(422, 'Alguna foto ya no existe; vuelve a subirla');
-  }
-
-  type SaveRow = { resultado: 'guardado' | 'sin_cambios' | 'conflicto'; version: string | null };
-  /** Traduce el resultado de un guardado con versión: 404 si no existe, 409 si otro guardó antes. */
-  const saved = (rows: SaveRow[]) => {
-    const [row] = rows;
-    if (!row) throw new ApiError(404, 'No encontrado');
-    if (row.resultado === 'conflicto') throw new ApiError(409, CONTENT_CONFLICT);
-    return { version: row.version };
-  };
   type Latest = { id_publicacion: number; estado: string; contenido: Snapshot };
   const initialTexts = async () => Object.fromEntries(
     (await callPg<{ clave: string; valor: string }>(sql, 'textsInitial')).map(t => [t.clave, t.valor]));
+
+  /** Completa los textos con el original de los que nadie cambió y adjunta los originales. */
+  async function withOriginals(contenido: Snapshot): Promise<Snapshot> {
+    const originales = await initialTexts();
+    return { ...contenido, textos: { ...originales, ...contenido.textos }, originales };
+  }
+
+  /** Lo último enviado a publicar, el borrador y lo que cambió entre los dos. */
+  async function pendingChanges() {
+    const [[last], current] = await Promise.all([callPg<Latest>(sql, 'publicationLatest'), snapshot()]);
+    return { last, current, cambios: diff(last ? await withOriginals(last.contenido) : null, current) };
+  }
 
   return {
     snapshot,
 
     /** El borrador con la misma forma que `current()`: es lo que compila la vista previa. */
-    async draftSite(): Promise<Snapshot> {
-      const [draft, originales] = await Promise.all([snapshot(), initialTexts()]);
-      return { ...draft, textos: { ...originales, ...draft.textos }, originales };
-    },
+    draftSite: async () => withOriginals(await snapshot()),
 
     /** Borrador con sus versiones, leídas antes que el contenido para que un guardado intermedio dé conflicto. */
     async get(access: string | undefined) {
@@ -122,10 +117,12 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
     /** `null` recupera el original conservado en la base. */
     async saveText(access: string | undefined, key: string, value: string | null, version: string | null) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
-      if (!KEY.test(key) || key.length > 120) throw new ApiError(422, 'Clave de texto no válida');
+      const link = key.startsWith('enlace.');
+      if (!KEY.test(key) || key.length > 120 || (!link && !Object.hasOwn(TEXTOS, key)))
+        throw new ApiError(422, 'Clave de texto no válida');
       // Los enlaces de redes van a un href: se validan aparte para que no entre nada que no sea su red.
       const text = value === null ? null
-        : key.startsWith('enlace.') ? linkValue(key, value) : plainText(value, 'Texto', 1000, { multiline: true });
+        : link ? linkValue(key, value) : plainText(value, 'Texto', TEXTOS[key as TextKey].max, { multiline: true });
       return saved(await callPg<SaveRow>(sql, 'textSave', [actor.id_usuario, key, text, version]));
     },
 
@@ -150,7 +147,7 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
         idMedio: h.idMedio,
         alt: h.idMedio === null ? null : plainText(h.alt ?? '', `Hito ${i + 1} · descripción de la foto`, LARGOS.descripcionFoto),
       }));
-      await requirePhotos(clean.flatMap(h => (h.idMedio === null ? [] : [h.idMedio])));
+      await existingPhotos(sql, clean.flatMap(h => (h.idMedio === null ? [] : [h.idMedio])));
       return saved(await callPg<SaveRow>(sql, 'biographySave', [actor.id_usuario, clean, version]));
     },
 
@@ -158,7 +155,7 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       const hitos = input.hitos.map((h, i) => ({ nombre: plainText(h.nombre, `Hito ${i + 1}`, LARGOS.obra.hito), completado: h.completado }));
       const fotos = input.fotos.map((f, i) => ({ idMedio: f.idMedio, pie: plainText(f.pie, `Foto ${i + 1} · pie`, LARGOS.obra.pie) }));
-      await requirePhotos(fotos.map(f => f.idMedio));
+      await existingPhotos(sql, fotos.map(f => f.idMedio));
       return saved(await callPg<SaveRow>(sql, 'workSave', [
         actor.id_usuario, slug, plainText(input.nota, 'Nota', LARGOS.obra.nota, { multiline: true }),
         hitos, fotos, version,
@@ -199,17 +196,14 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
     /** Lista lo que cambió respecto de lo último enviado a publicar (en cola, compilándose o publicado). */
     async pending(access: string | undefined) {
       await authorization.require(access, PERMISSIONS.contentPublish);
-      const [[last], current] = await Promise.all([callPg<Latest>(sql, 'publicationLatest'), snapshot()]);
-      const originales=await initialTexts();
-      return { cambios: diff(last ? { ...last.contenido,textos:{...originales,...last.contenido.textos} } : null, current) };
+      return { cambios: (await pendingChanges()).cambios };
     },
 
     /** Publica el borrador; es idempotente y la base lo repite con un bloqueo por si dos personas publican a la vez. */
     async publish(access: string | undefined) {
       const actor = await authorization.require(access, PERMISSIONS.contentPublish);
-      const [[last], current] = await Promise.all([callPg<Latest>(sql, 'publicationLatest'), snapshot()]);
-      const originales=await initialTexts();
-      if (last && !diff({ ...last.contenido,textos:{...originales,...last.contenido.textos} }, current).length) {
+      const { last, current, cambios } = await pendingChanges();
+      if (last && !cambios.length) {
         if (last.estado === 'publicada') throw new ApiError(409, 'No hay cambios para publicar');
         return { id: last.id_publicacion, estado: last.estado };
       }
@@ -230,8 +224,7 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
     async current(): Promise<Snapshot> {
       const [row] = await callPg<{ contenido: Snapshot }>(sql, 'publicationCurrent');
       if (!row) throw new ApiError(404, 'Aún no hay contenido publicado');
-      const originales = await initialTexts();
-      return { ...row.contenido, textos: { ...originales, ...row.contenido.textos }, originales };
+      return withOriginals(row.contenido);
     },
 
     async publications(access: string | undefined, page: number) {
