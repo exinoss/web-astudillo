@@ -1,7 +1,7 @@
 import { MAX_FOTOS_PARROQUIA, PARROQUIAS } from "../../../../../../backend/src/contracts/parroquias";
-import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
+import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type DraftMyTeam } from "../../../../lib/data/http/admin-api";
-import { avisarVacios, BORRADOR_GUARDADO, busy, confirmarCambio, DRAFT_PILL, esc, field, FORMATOS_FOTO, HINT, isPending, LARGOS, MAX_MB_FOTO, moveButtons, notify, previewButton, reloadDraft, reloadPending, state, subirFotos, thumb, upload, value } from "../ui";
+import { avisarVacios, avisoBorrador, busy, esc, field, FORMATOS_FOTO, enlazarLista, guardarYRecargar, HINT, isPending, LARGOS, MAX_MB_FOTO, moveButtons, notify, previewButton, state, subirFotos, thumb, upload, value } from "../ui";
 
 type Parroquia = DraftMyTeam["parroquias"][number];
 let elegida: string = PARROQUIAS[0].slug;
@@ -32,7 +32,7 @@ export function renderParishes(body: HTMLElement, rerender: () => void) {
         ${PARROQUIAS.map((x) => `<option value="${x.slug}" ${x.slug === elegida ? "selected" : ""}>${esc(x.nombre)}</option>`).join("")}
       </select>
     </div>
-    ${isPending("Mi equipo", nombre(elegida)) ? `<p class="mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
+    ${avisoBorrador(isPending("Mi equipo", nombre(elegida)), "mb-5")}
     <form id="parroquia-form" novalidate>
       ${field({ id: "parroquia-texto", label: "Texto", value: p.texto, max: LARGOS.equipo.textoParroquia, area: true, hint: "Deja una línea en blanco entre párrafos. Es opcional." })}
       <h3 class="mt-6 mb-3 font-sans text-[0.95rem] font-bold">Fotos</h3>
@@ -47,11 +47,7 @@ export function renderParishes(body: HTMLElement, rerender: () => void) {
   const form = body.querySelector<HTMLFormElement>("#parroquia-form")!;
   const editar = (cambio: () => void) => { capturar(form); cambio(); rerender(); };
   body.querySelector<HTMLSelectElement>("#parroquia-selector")!.addEventListener("change", (e) => editar(() => { elegida = (e.target as HTMLSelectElement).value; }));
-  form.querySelectorAll<HTMLButtonElement>("[data-move]").forEach((b) => b.addEventListener("click", () => editar(() => {
-    const lista = trabajo[elegida].fotos, i = Number(b.dataset.index), j = i + Number(b.dataset.step);
-    [lista[i], lista[j]] = [lista[j], lista[i]];
-  })));
-  form.querySelectorAll<HTMLButtonElement>("[data-remove]").forEach((b) => b.addEventListener("click", () => editar(() => trabajo[elegida].fotos.splice(Number(b.dataset.index), 1))));
+  enlazarLista(form, () => trabajo[elegida].fotos, editar);
   form.querySelector<HTMLInputElement>("#parroquia-fotos")?.addEventListener("change", (e) => {
     const archivos = [...((e.target as HTMLInputElement).files ?? [])].slice(0, MAX_FOTOS_PARROQUIA - trabajo[elegida].fotos.length);
     if (!archivos.length) return;
@@ -73,13 +69,11 @@ export function renderParishes(body: HTMLElement, rerender: () => void) {
     capturar(form);
     if (trabajo[elegida].fotos.some((f) => !f.alt)) return avisarVacios(form, "Describe cada foto antes de guardar.");
     const slug = elegida;
-    void busy(form.querySelector("button[type=submit]"), async () => {
-      await adminApi.saveParish(slug, paraGuardar(trabajo[slug]), state.draft!.versiones.miEquipo[slug] ?? null);
-      await Promise.all([reloadDraft(), reloadPending()]);
-      delete trabajo[slug];
-      rerender();
-      confirmarCambio(BORRADOR_GUARDADO);
-    });
+    void busy(form.querySelector("button[type=submit]"), () => guardarYRecargar(
+      () => adminApi.saveParish(slug, paraGuardar(trabajo[slug]), state.draft!.versiones.miEquipo[slug] ?? null), () => {
+        delete trabajo[slug];
+        rerender();
+      }));
   });
   return () => capturar(form);
 }

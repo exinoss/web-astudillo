@@ -1,4 +1,4 @@
-const quieto = () => document.documentElement.classList.contains("reduce-motion");
+import { autoavance, deslizar } from "../../lib/comun/carrusel";
 
 for (const carrusel of document.querySelectorAll<HTMLElement>("[data-carrusel]")) {
   // Se leen en cada paso: el modo edición de la portada vuelve a pintar las diapositivas y los puntos.
@@ -6,7 +6,6 @@ for (const carrusel of document.querySelectorAll<HTMLElement>("[data-carrusel]")
   const puntos = () => [...carrusel.querySelectorAll<HTMLButtonElement>("[data-punto]")];
   const posicion = carrusel.querySelector("[data-posicion]");
   let actual = 0;
-  let reloj: ReturnType<typeof setInterval> | undefined;
 
   // El cambio automático no se anuncia: un lector de pantalla lo leería cada pocos segundos.
   const mostrar = (siguiente: number, anunciar = true) => {
@@ -24,14 +23,10 @@ for (const carrusel of document.querySelectorAll<HTMLElement>("[data-carrusel]")
 
   // Como el carrusel de la portada: quieto con «Reducir movimiento» o con la pestaña oculta. Tampoco avanza
   // mientras no se ve, con el puntero o el foco del teclado encima, o con un visor abierto.
-  const sincronizar = () => {
-    clearInterval(reloj);
-    if (carrusel.hasAttribute("data-automatico") && diapositivas().length > 1 && !quieto() && !document.hidden)
-      reloj = setInterval(() => {
-        if (carrusel.getClientRects().length > 0 && !carrusel.matches(":hover") && !carrusel.querySelector(":focus-visible") && !document.querySelector("dialog[open]"))
-          mostrar(actual + 1, false);
-      }, 5000);
-  };
+  const sincronizar = carrusel.hasAttribute("data-automatico") ? autoavance(() => {
+    if (carrusel.getClientRects().length > 0 && !carrusel.matches(":hover") && !carrusel.querySelector(":focus-visible") && !document.querySelector("dialog[open]"))
+      mostrar(actual + 1, false);
+  }, 5000, () => diapositivas().length > 1) : () => {};
   const paso = (cuanto: number) => {
     mostrar(actual + cuanto);
     sincronizar();
@@ -44,35 +39,10 @@ for (const carrusel of document.querySelectorAll<HTMLElement>("[data-carrusel]")
     else paso(puntos().indexOf(boton as HTMLButtonElement) - actual);
   });
 
-  // Deslizar en horizontal cambia de foto; el gesto vertical sigue desplazando la página.
-  let inicioX = 0;
-  let inicioY = 0;
-  carrusel.addEventListener(
-    "touchstart",
-    (e) => {
-      inicioX = e.changedTouches[0].clientX;
-      inicioY = e.changedTouches[0].clientY;
-    },
-    { passive: true },
-  );
-  carrusel.addEventListener(
-    "touchend",
-    (e) => {
-      const dx = e.changedTouches[0].clientX - inicioX;
-      const dy = e.changedTouches[0].clientY - inicioY;
-      if ((e.target as Element).closest("dialog")) return;
-      if (diapositivas().length > 1 && Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) paso(dx < 0 ? 1 : -1);
-    },
-    { passive: true },
-  );
+  deslizar(carrusel, (cuanto) => { if (diapositivas().length > 1) paso(cuanto); });
 
   document.addEventListener("carruseles:cambiados", () => {
     actual = 0;
     sincronizar();
   });
-  if (carrusel.hasAttribute("data-automatico")) {
-    document.addEventListener("visibilitychange", sincronizar);
-    new MutationObserver(sincronizar).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-    sincronizar();
-  }
 }

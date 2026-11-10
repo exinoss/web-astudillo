@@ -2,7 +2,7 @@ import posterCentroAltoRendimiento from '../../assets/models/centro-de-alto-rend
 import posterEducacion from '../../assets/models/educacion-coliseo.png';
 import posterTecnologias from '../../assets/models/tecnologias-emergentes.png';
 import logoMercadoLocal from '../../assets/logo-mercado-local.svg';
-import type { ProposalModel, ProposalSite } from './types';
+import type { ProposalModel, ProposalSite } from '../data/types';
 
 export const proposalIcons: Record<string, string> = {
   'agua-potable': 'water', 'centro-de-alto-rendimiento': 'sport', 'mercado-municipal': 'market',

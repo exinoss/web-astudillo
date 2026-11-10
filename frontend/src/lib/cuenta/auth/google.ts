@@ -1,3 +1,5 @@
+import { cargarScript, reintentable } from '../../comun/carga-scripts';
+
 type CredentialResponse = { credential?: string };
 
 type GoogleSdk = {
@@ -15,26 +17,14 @@ declare global {
   interface Window { google?: GoogleSdk }
 }
 
-let loading: Promise<void> | undefined;
 let initialized = false;
 let receiveCredential: ((credential: string) => void) | undefined;
 const observers = new WeakMap<HTMLElement, ResizeObserver>();
 
 /** Carga GIS una sola vez y permite reintentar si falla la descarga. */
-function loadGoogle() {
-  loading ??= new Promise<void>((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
-    script.async = true;
-    script.onload = () => resolve();
-    script.onerror = () => {
-      script.remove();
-      reject(new Error('No se pudo cargar el acceso con Google.'));
-    };
-    document.head.append(script);
-  }).catch(error => { loading = undefined; throw error; });
-  return loading;
-}
+const loadGoogle = reintentable(() => cargarScript('https://accounts.google.com/gsi/client').catch(() => {
+  throw new Error('No se pudo cargar el acceso con Google.');
+}));
 
 /** Monta el botón oficial GIS y ajusta su ancho al contenedor disponible. */
 export async function showGoogleButton(

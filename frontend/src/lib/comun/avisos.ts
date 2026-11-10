@@ -1,19 +1,10 @@
 import type { Aviso } from "../../../../backend/src/contracts/avisos";
+import { guardarClave, leerClave } from "./almacen";
 
 export type { Aviso };
 
 const PUBLICANDO = "astudillo:publicando";
 let actuales: Aviso[] = [];
-
-/** Lee o escribe en `sessionStorage`; sin almacenamiento solo se pierde recordar entre páginas. */
-function sesion(clave: string, valor?: string | null) {
-  try {
-    if (valor === undefined) return sessionStorage.getItem(clave);
-    if (valor === null) sessionStorage.removeItem(clave);
-    else sessionStorage.setItem(clave, valor);
-  } catch { /* sin almacenamiento */ }
-  return null;
-}
 
 /** Los últimos avisos que leyó la campana. */
 export const avisosActuales = () => actuales;
@@ -33,12 +24,12 @@ export const pedirAvisos = () => document.dispatchEvent(new Event("avisos:pedir"
 
 /** Recuerda la publicación en curso para avisar cuando termine, aunque se cambie de página. */
 export function seguirPublicacion(id: number) {
-  sesion(PUBLICANDO, String(id));
+  guardarClave("sesion", PUBLICANDO, String(id));
   document.dispatchEvent(new Event("avisos:publicando"));
 }
 
 /** La publicación que se está siguiendo, o null si no hay ninguna (`terminar` la olvida). */
 export function publicacionSeguida(terminar = false) {
-  if (terminar) sesion(PUBLICANDO, null);
-  return Number(sesion(PUBLICANDO)) || null;
+  if (terminar) guardarClave("sesion", PUBLICANDO, null);
+  return Number(leerClave("sesion", PUBLICANDO)) || null;
 }

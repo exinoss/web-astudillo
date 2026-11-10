@@ -1,6 +1,7 @@
 import "./cifras";
 import "../comun/carrusel-fotos";
 import { montarVisor } from "../../lib/comun/visor-fotos";
+import { autoavance, deslizar } from "../../lib/comun/carrusel";
 
 const equipo = document.querySelector<HTMLElement>('[data-carrusel-editable="equipo"] [data-carrusel]');
 if (equipo?.querySelector("[data-visor]")) montarVisor(equipo);
@@ -19,22 +20,8 @@ const showSlide = (next: number) => {
     dot.setAttribute("aria-current", String(i === index));
   });
 };
-let timer: ReturnType<typeof setInterval> | undefined;
-/** Pausa o inicia el carrusel según visibilidad y modo reduce-motion. */
-function syncAutoplay() {
-  clearInterval(timer);
-  const motionOff =
-    document.documentElement.classList.contains("reduce-motion");
-  if (!motionOff && !document.hidden)
-    // No avanza mientras el puntero está sobre el candidato del banner 1, para no cortar su zoom.
-    timer = setInterval(() => { if (!document.querySelector(".silueta-portada polygon:hover")) showSlide(index + 1); }, 6000);
-}
-document.addEventListener("visibilitychange", syncAutoplay);
-new MutationObserver(syncAutoplay).observe(document.documentElement, {
-  attributes: true,
-  attributeFilter: ["class"],
-});
-syncAutoplay();
+// No avanza mientras el puntero está sobre el candidato del banner 1, para no cortar su zoom.
+const syncAutoplay = autoavance(() => { if (!document.querySelector(".silueta-portada polygon:hover")) showSlide(index + 1); }, 6000);
 const carousel = document.querySelector<HTMLElement>(".hero-slides")!;
 // El fondo sin el candidato solo sirve para el zoom con ratón: se descarga al entrar el puntero, no en celular.
 carousel.addEventListener("pointerenter", (e) => {
@@ -51,28 +38,10 @@ carousel.addEventListener("click", (e) => {
   showSlide(dot ? slideDots().indexOf(dot) : index + step);
   syncAutoplay();
 });
-let startX = 0;
-let startY = 0;
-carousel.addEventListener(
-  "touchstart",
-  (e) => {
-    startX = e.changedTouches[0].clientX;
-    startY = e.changedTouches[0].clientY;
-  },
-  { passive: true },
-);
-carousel.addEventListener(
-  "touchend",
-  (e) => {
-    const dx = e.changedTouches[0].clientX - startX;
-    const dy = e.changedTouches[0].clientY - startY;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
-      showSlide(index + (dx < 0 ? 1 : -1));
-      syncAutoplay();
-    }
-  },
-  { passive: true },
-);
+deslizar(carousel, (cuanto) => {
+  showSlide(index + cuanto);
+  syncAutoplay();
+});
 const profileImages = () => [...document.querySelectorAll<HTMLElement>("[data-profile-image]")];
 const profileDots = () => [...document.querySelectorAll<HTMLButtonElement>(".profile-dot")];
 let profileIndex = 0;
@@ -97,43 +66,11 @@ profileCarousel.addEventListener("click", (e) => {
   showProfileSlide(profileDots().indexOf(dot));
   syncProfileAutoplay();
 });
-let profileStartX = 0;
-let profileStartY = 0;
-profileCarousel.addEventListener(
-  "touchstart",
-  (e) => {
-    profileStartX = e.changedTouches[0].clientX;
-    profileStartY = e.changedTouches[0].clientY;
-  },
-  { passive: true },
-);
-profileCarousel.addEventListener(
-  "touchend",
-  (e) => {
-    const dx = e.changedTouches[0].clientX - profileStartX;
-    const dy = e.changedTouches[0].clientY - profileStartY;
-    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
-      showProfileSlide(profileIndex + (dx < 0 ? 1 : -1));
-      syncProfileAutoplay();
-    }
-  },
-  { passive: true },
-);
-let profileTimer: ReturnType<typeof setInterval> | undefined;
-/** Sincroniza la rotación del carrusel del perfil con accesibilidad y pestaña. */
-function syncProfileAutoplay() {
-  clearInterval(profileTimer);
-  const motionOff =
-    document.documentElement.classList.contains("reduce-motion");
-  if (!motionOff && !document.hidden && profileImages().length > 1)
-    profileTimer = setInterval(() => showProfileSlide(profileIndex + 1), 5000);
-}
-document.addEventListener("visibilitychange", syncProfileAutoplay);
-new MutationObserver(syncProfileAutoplay).observe(document.documentElement, {
-  attributes: true,
-  attributeFilter: ["class"],
+deslizar(profileCarousel, (cuanto) => {
+  showProfileSlide(profileIndex + cuanto);
+  syncProfileAutoplay();
 });
-syncProfileAutoplay();
+const syncProfileAutoplay = autoavance(() => showProfileSlide(profileIndex + 1), 5000, () => profileImages().length > 1);
 document.addEventListener("carruseles:cambiados", () => {
   index = 0;
   profileIndex = 0;

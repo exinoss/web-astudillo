@@ -1,4 +1,4 @@
-import { mostrarCarga } from "../../lib/comun/animaciones";
+import { enviarConCarga } from "../../lib/comun/cambios";
 import { errorText, showStatus } from "../../lib/cuenta/auth/page";
 import { suggestionRepository } from "../../lib/data/participation";
 import { borrar, leer } from "../../lib/ciudadania/participacion/borrador";
@@ -25,7 +25,6 @@ const cargarHistorial = historial(document.querySelector<HTMLElement>("#historia
     return filaHistorial({ miniatura: cuadroIcono(tema.icono), titulo: esc(tema.nombre), estado: s.estado, texto: s.mensaje, creadoEn: s.creadoEn });
   },
 });
-let enviando = false;
 let idempotencia = "";
 
 const marcarTema = (valor: string | null | undefined) =>
@@ -45,9 +44,8 @@ if (borrador) {
 temas.addEventListener("change", () => marcarError(temas, null));
 mensaje.addEventListener("input", () => mensaje.hasAttribute("aria-invalid") && marcarError(mensaje, null));
 
-form.addEventListener("submit", async (e) => {
+form.addEventListener("submit", (e) => {
   e.preventDefault();
-  if (enviando) return;
   const sinTema = !temaElegido();
   const corto = Array.from(mensaje.value.trim()).length < MIN_MENSAJE_SUGERENCIA;
   marcarError(temas, sinTema ? "Elige un tema." : null);
@@ -57,30 +55,24 @@ form.addEventListener("submit", async (e) => {
     (sinTema ? temas.querySelector("input") : mensaje)?.focus();
     return;
   }
-  const boton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-  enviando = true;
-  boton.disabled = true;
-  estado.hidden = true;
-  idempotencia ||= crypto.randomUUID();
-  const campos = { tema: temaElegido()!, mensaje: mensaje.value.trim() };
-  const terminarCarga = mostrarCarga(form);
-  try {
-    const enviada = await enviarConSesion({
-      form, formulario: "sugerencia", campos, idempotencia,
-      enviar: () => suggestionRepository.submit({ ...campos, idempotencia }),
-    });
-    if (!enviada) return;
-    borrar();
-    idempotencia = "";
-    form.reset();
-    form.querySelector<HTMLElement>("#sugerencia-recuperada")!.hidden = true;
-    showStatus(estado, "Gracias por compartir tu idea; sigue su estado en «Tus sugerencias».");
-    void cargarHistorial();
-  } catch (error) {
-    showStatus(estado, errorText(error), true);
-  } finally {
-    terminarCarga();
-    enviando = false;
-    boton.disabled = false;
-  }
+  void enviarConCarga(form.querySelector<HTMLButtonElement>('button[type="submit"]')!, form, async () => {
+    estado.hidden = true;
+    idempotencia ||= crypto.randomUUID();
+    const campos = { tema: temaElegido()!, mensaje: mensaje.value.trim() };
+    try {
+      const enviada = await enviarConSesion({
+        form, formulario: "sugerencia", campos, idempotencia,
+        enviar: () => suggestionRepository.submit({ ...campos, idempotencia }),
+      });
+      if (!enviada) return;
+      borrar();
+      idempotencia = "";
+      form.reset();
+      form.querySelector<HTMLElement>("#sugerencia-recuperada")!.hidden = true;
+      showStatus(estado, "Gracias por compartir tu idea; sigue su estado en «Tus sugerencias».");
+      void cargarHistorial();
+    } catch (error) {
+      showStatus(estado, errorText(error), true);
+    }
+  });
 });

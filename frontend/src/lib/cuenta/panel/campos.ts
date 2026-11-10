@@ -12,15 +12,17 @@ export const GHOST =
 export const ICON_BUTTON =
   "grid size-11 shrink-0 place-items-center rounded-[3px] text-primary hover:bg-base-200 disabled:opacity-40 disabled:hover:bg-transparent";
 
-const UPLOAD = `${GHOST} cursor-pointer focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral`;
+const UPLOAD = `${GHOST} relative cursor-pointer focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral`;
 
 export const thumb = (foto: Photo) => uploadedUrl(foto, foto.anchos[0]);
 export const upload = (id: string, label: string, multiple = false) =>
   `<label class="${UPLOAD}">${iconSvg("upload", 17)} ${esc(label)}<input id="${id}" type="file" accept="${ACEPTA_FOTOS}" ${multiple ? "multiple" : ""} class="sr-only" /></label>`;
-/** Con `minimo`, quitar se desactiva si la lista no puede acortarse; los `fijos` primeros no se mueven ni se quitan. */
-export const moveButtons = (kind: string, i: number, total: number, name: string, minimo = 0, fijos = 0) => `
+/** Botones para subir y bajar el elemento `i` de una lista; los `fijos` primeros no se mueven. */
+export const subirBajar = (kind: string, i: number, total: number, name: string, fijos = 0) => `
   <button type="button" class="${ICON_BUTTON}" data-move="${kind}" data-index="${i}" data-step="-1" aria-label="Subir ${name}" ${i <= fijos ? "disabled" : ""}>${iconSvg("up", 18)}</button>
-  <button type="button" class="${ICON_BUTTON}" data-move="${kind}" data-index="${i}" data-step="1" aria-label="Bajar ${name}" ${i === total - 1 || i < fijos ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>
+  <button type="button" class="${ICON_BUTTON}" data-move="${kind}" data-index="${i}" data-step="1" aria-label="Bajar ${name}" ${i === total - 1 || i < fijos ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>`;
+/** Con `minimo`, quitar se desactiva si la lista no puede acortarse; los `fijos` primeros no se mueven ni se quitan. */
+export const moveButtons = (kind: string, i: number, total: number, name: string, minimo = 0, fijos = 0) => `${subirBajar(kind, i, total, name, fijos)}
   ${i < fijos ? "" : `<button type="button" class="${ICON_BUTTON} text-error" data-remove="${kind}" data-index="${i}" aria-label="Quitar ${name}" ${total <= minimo ? "disabled" : ""}>${iconSvg("trash", 18)}</button>`}`;
 
 /** Campo de texto con etiqueta; `area` lo convierte en textarea. Todos los valores se escapan. */
@@ -43,4 +45,17 @@ export function selectField(o: { id: string; label: string; value: string; optio
     </select>
     ${o.error ? `<p id="${esc(o.id)}-error" class="${MENSAJE_CAMPO}">${esc(o.error)}</p>` : ""}
   </div>`;
+}
+
+/** Enlaza subir, bajar y quitar: `cambio` aplica la mutación (con `movido` si fue un movimiento) y vuelve a dibujar. */
+export function enlazarLista(raiz: ParentNode, lista: (tipo: string) => unknown[], cambio: (mutar: () => void, movido?: { indice: number; paso: string }) => void) {
+  raiz.querySelectorAll<HTMLButtonElement>("[data-move]").forEach((b) => b.addEventListener("click", () => {
+    const i = Number(b.dataset.index), j = i + Number(b.dataset.step);
+    cambio(() => {
+      const l = lista(b.dataset.move!);
+      [l[i], l[j]] = [l[j], l[i]];
+    }, { indice: j, paso: b.dataset.step! });
+  }));
+  raiz.querySelectorAll<HTMLButtonElement>("[data-remove]").forEach((b) => b.addEventListener("click", () =>
+    cambio(() => void lista(b.dataset.remove!).splice(Number(b.dataset.index), 1))));
 }

@@ -1,6 +1,6 @@
-import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
+import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { alCambiarAvisos, avisosActuales } from "../../../../lib/comun/avisos";
-import { sinMovimiento } from "../../../../lib/comun/animaciones";
+import { sinMovimiento } from "../../../../lib/comun/movimiento";
 import { avisoNoInsertable, videoLinkProblem, videoSource } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
 import { adminApi, type AboutCarlosPageBody, type AboutCarlosSlug, type DraftAboutCarlosPage } from "../../../../lib/data/http/admin-api";
 import type { Editor, Section, SectionEditor } from "./comun";
@@ -10,7 +10,7 @@ import { portrait } from "./retrato";
 import { cards } from "./tarjetas";
 import { marcarNoInsertable, video } from "./video";
 import { PAGINAS_CARLOS } from "../../../../../../backend/src/contracts/acerca-de-carlos";
-import { avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, esc, iconSvg, isPending, previewButton, reloadDraft, reloadPending, state } from "../ui";
+import { avisarVacios, avisoBorrador, busy, card, esc, guardarYRecargar, iconSvg, isPending, previewButton, state } from "../ui";
 
 const SECTIONS: Record<Section, SectionEditor & { name: string }> = {
   tarjetas: { name: "Tarjetas", ...cards },
@@ -90,7 +90,7 @@ export function renderAboutCarlos(root: HTMLElement) {
       </select>
     </div>
     ${card(info.name, `
-      ${isPending("Página", info.name) ? `<p class="-mt-2 mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
+      ${avisoBorrador(isPending("Página", info.name))}
       <nav aria-label="Contenido de la página" class="mb-6 flex flex-wrap gap-2">${tabs}</nav>
       <form id="acerca-form" novalidate>
         ${SECTIONS[section].html(editor)}
@@ -142,7 +142,7 @@ function bind(root: HTMLElement, editor: Editor) {
       return avisarVacios(root, message);
     }
     const saving = slug;
-    void busy(submit, async () => {
+    void busy(submit, () => guardarYRecargar(async () => {
       try {
         await adminApi.saveAboutCarlosPage(saving, toBody(editor.page), state.draft!.versiones.acercaDeCarlos[saving]);
       } catch (error) {
@@ -154,10 +154,9 @@ function bind(root: HTMLElement, editor: Editor) {
         marcarNoInsertable(root, aviso);
         throw new Error("Revisa el enlace del video.");
       }
-      await Promise.all([reloadDraft(), reloadPending()]);
+    }, () => {
       delete working[saving];
       renderAboutCarlos(root);
-      confirmarCambio(BORRADOR_GUARDADO);
-    });
+    }));
   });
 }

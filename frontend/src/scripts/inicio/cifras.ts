@@ -1,13 +1,14 @@
 import { statsRepository } from "../../lib/data/stats";
 import type { SiteStats } from "../../lib/data/stats-repository";
 import { inDraftPreview } from "../../lib/comun/vista-previa";
+import { sinMovimiento } from "../../lib/comun/movimiento";
 
 const formato = new Intl.NumberFormat("es-EC");
 const banda = document.querySelector<HTMLElement>("[data-cifras]");
 const cifras = [...document.querySelectorAll<HTMLElement>("[data-cifra]")];
 
 function contar(el: HTMLElement, final: number) {
-  if (document.documentElement.classList.contains("reduce-motion")) {
+  if (sinMovimiento()) {
     el.textContent = formato.format(final);
     return;
   }

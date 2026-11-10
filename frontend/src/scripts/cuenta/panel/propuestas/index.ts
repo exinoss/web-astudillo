@@ -1,6 +1,6 @@
-import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
+import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type DraftProposal } from "../../../../lib/data/http/admin-api";
-import { avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, LABEL, LARGOS, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
+import { avisarVacios, avisoBorrador, busy, card, DRAFT_PILL, enlazarLista, esc, field, GHOST, guardarYRecargar, iconSvg, isPending, LABEL, LARGOS, moveButtons, previewButton, state, value } from "../ui";
 
 const MAX_KPIS = 6;
 let selected = "";
@@ -15,9 +15,7 @@ const kpiRow = (k: { etiqueta: string; valor: string }, i: number, total: number
     <div>
       <span class="${LABEL} invisible contenedor-minimo:hidden" aria-hidden="true">&nbsp;</span>
       <div class="flex min-h-12 items-end contenedor-minimo:min-h-0 contenedor-minimo:justify-end">
-        <button type="button" class="${ICON_BUTTON}" data-mover="-1" data-indice="${i}" aria-label="Subir cifra ${i + 1}" ${i === 0 ? "disabled" : ""}>${iconSvg("up", 18)}</button>
-        <button type="button" class="${ICON_BUTTON}" data-mover="1" data-indice="${i}" aria-label="Bajar cifra ${i + 1}" ${i === total - 1 ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>
-        <button type="button" class="${ICON_BUTTON} text-error" data-quitar="${i}" aria-label="Quitar cifra ${i + 1}">${iconSvg("trash", 18)}</button>
+        ${moveButtons("cifra", i, total, `cifra ${i + 1}`)}
       </div>
     </div>
   </div>`;
@@ -46,7 +44,7 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
       ${proposals.map((p) => `<option value="${esc(p.slug)}" ${p.slug === current.slug ? "selected" : ""}>${esc(p.nombre)}</option>`).join("")}
     </select>`;
   const form = card(current.nombre, `
-    ${isPending("Propuesta", current.nombre) ? `<p class="-mt-2 mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
+    ${avisoBorrador(isPending("Propuesta", current.nombre))}
     <form id="propuesta-form" class="flex flex-col gap-[18px]" novalidate>
       <div class="grid grid-cols-2 gap-4 max-tablet:grid-cols-1">
         ${field({ id: "propuesta-nombre", label: "Nombre", value: current.nombre, max: LARGOS.propuesta.nombre , required: true })}
@@ -85,14 +83,12 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
     draw(section, proposals, current);
   };
   formEl.querySelector("#kpi-agregar")!.addEventListener("click", () => redraw([...readKpis(formEl), { etiqueta: "", valor: "" }]));
-  formEl.querySelectorAll<HTMLButtonElement>("[data-quitar]").forEach((b) => b.addEventListener("click", () =>
-    redraw(readKpis(formEl).filter((_, i) => i !== Number(b.dataset.quitar)))));
-  formEl.querySelectorAll<HTMLButtonElement>("[data-mover]").forEach((b) => b.addEventListener("click", () => {
-    const list = readKpis(formEl);
-    const i = Number(b.dataset.indice), j = i + Number(b.dataset.mover);
-    [list[i], list[j]] = [list[j], list[i]];
-    redraw(list);
-  }));
+  let filas: ReturnType<typeof readKpis> = [];
+  enlazarLista(formEl, () => filas, (mutar) => {
+    filas = readKpis(formEl);
+    mutar();
+    redraw(filas);
+  });
   const saved = proposals.find((p) => p.slug === current.slug)!;
   vigilarCambios(formEl, formEl.querySelector("button[type=submit]")!,
     { nombre: saved.nombre, categoria: saved.categoria, introduccion: saved.introduccion, kpis: saved.kpis }, read);
@@ -101,12 +97,10 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
     const body = read();
     if (!body.nombre || !body.categoria || !body.introduccion || body.kpis.some((k) => !k.etiqueta || !k.valor))
       return avisarVacios(formEl, "Completa todos los campos, también etiqueta y cifra de cada KPI.");
-    void busy(formEl.querySelector("button[type=submit]"), async () => {
-      await adminApi.saveProposal(current.slug, body, state.draft!.versiones.propuestas[current.slug]);
-      await Promise.all([reloadDraft(), reloadPending()]);
-      delete trabajo[current.slug];
-      renderProposals(section);
-      confirmarCambio(BORRADOR_GUARDADO);
-    });
+    void busy(formEl.querySelector("button[type=submit]"), () => guardarYRecargar(
+      () => adminApi.saveProposal(current.slug, body, state.draft!.versiones.propuestas[current.slug]), () => {
+        delete trabajo[current.slug];
+        renderProposals(section);
+      }));
   });
 }

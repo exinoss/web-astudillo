@@ -105,7 +105,7 @@ export interface BiographyMilestone {
   alt: string;
 }
 
-export interface WorkMilestone {
+interface WorkMilestone {
   name: string;
   done: boolean;
 }
@@ -131,7 +131,7 @@ export interface WorkProgress {
 export type AboutCarlosSlug = PaginaCarlos;
 export type CardColor = "rojo" | "azul";
 
-export interface AboutCarlosCard {
+interface AboutCarlosCard {
   title: string;
   text: string;
   image: UploadedPicture;
@@ -141,7 +141,7 @@ export interface AboutCarlosCard {
   focus: { x: number; y: number };
 }
 
-export interface AboutCarlosVideo {
+interface AboutCarlosVideo {
   title: string;
   description: string | null;
   url: string;
@@ -180,7 +180,7 @@ export interface MyTeam {
 }
 
 export type HomeImage = { original: Original } | { photo: UploadedPicture };
-export interface HomeSlideImage { image: HomeImage; alt: string }
+interface HomeSlideImage { image: HomeImage; alt: string }
 
 /** Siempre trae al menos un banner y una pieza; el del equipo puede venir vacío. */
 export interface HomeCarousels {

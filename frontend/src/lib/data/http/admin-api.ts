@@ -2,8 +2,8 @@ import type { Puesto } from '../../../../../backend/src/contracts/equipo';
 import type { Carrusel, Original } from '../../../../../backend/src/contracts/inicio';
 import type { Aviso } from '../../../../../backend/src/contracts/avisos';
 import type { ApiAboutCarlosPage } from '../acerca-de-carlos';
-import type { AboutCarlosSlug, AlertType, ParticipationState, SentAlert, SentSuggestion, UploadedPicture } from '../types';
-import { apiRequest } from './api-client';
+import type { AboutCarlosSlug, ParticipationState, SentAlert, SentSuggestion, UploadedPicture } from '../types';
+import { sessionRequest as call } from './api-client';
 import { MAX_PIXELES, avisoMegapixeles } from '../../../../../backend/src/contracts/media';
 import { medidasArchivo } from '../../comun/foto-local';
 
@@ -41,17 +41,17 @@ export interface DraftHomeCarousels {
   equipo: { fotos: { foto: Photo; alt: string }[] };
 }
 export type TeamMemberBody = Omit<DraftMyTeam['equipo'][number], 'foto'> & { idMedio: number | null };
-export interface HomeTeamBody { fotos: { idMedio: number; alt: string }[] }
-export interface HomeMainBody {
+interface HomeTeamBody { fotos: { idMedio: number; alt: string }[] }
+interface HomeMainBody {
   banners: { imagen: HomeImageBody; celular: number | null; alt: string }[];
   retrato: { imagen: HomeImageBody; alt: string };
 }
-export interface HomePiecesBody { piezas: { imagen: HomeImageBody; alt: string }[] }
+interface HomePiecesBody { piezas: { imagen: HomeImageBody; alt: string }[] }
 /**
  * Versión de cada parte del borrador al cargarlo. Se envía al guardar: si otra persona guardó
  * antes, la API responde 409 y no se pisa su cambio. Un texto nunca cambiado no tiene versión.
  */
-export interface DraftVersions {
+interface DraftVersions {
   textos: Record<string, string>;
   propuestas: Record<string, string>;
   biografia: string;
@@ -89,13 +89,13 @@ export interface ParticipationPage<T> extends Omit<Page, 'total'> {
   items: T[];
   conteo: Record<ParticipationKind, Record<ParticipationState, number>>;
 }
-export type { AlertType, ParticipationState };
+export type { ParticipationState };
 export interface Publication {
   id: number; estado: 'en_cola' | 'publicando' | 'publicada' | 'fallida';
   creadoEn: string; iniciadoEn: string | null; terminadoEn: string | null; autor: string | null; detalle: string | null;
 }
 
-const call = <T>(path: string, method = 'GET', body?: object | FormData) => apiRequest<T>(path, method, body, true);
+export const PREVIEW_EXIT = '/api/vista-previa/salir';
 
 /** Llamadas del panel y del modo edición. La autorización real la decide el backend. */
 export const adminApi = {
@@ -138,6 +138,8 @@ export const adminApi = {
   requestPreview: () => call<{ estado: PreviewState }>('/api/admin/vista-previa', 'POST'),
   previewState: () => call<{ estado: PreviewState | null }>('/api/admin/vista-previa'),
   enterPreview: () => call<object>('/api/admin/vista-previa/entrar', 'POST'),
+  // Sin seguir la redirección: la pestaña la sigue después con `location.assign`.
+  leavePreview: () => fetch(PREVIEW_EXIT, { redirect: 'manual', credentials: 'same-origin' }).catch(() => {}),
   pending: () => call<{ cambios: { tipo: string; descripcion: string }[] }>('/api/admin/publicaciones/pendientes'),
   /** Idempotente: si lo mismo ya está en cola o compilándose, devuelve esa publicación. */
   publish: () => call<{ id: number; estado: Publication['estado'] }>('/api/admin/publicaciones', 'POST'),

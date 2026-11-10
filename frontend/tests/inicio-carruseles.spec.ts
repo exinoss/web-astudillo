@@ -55,11 +55,15 @@ test('añade un banner con imagen para celular, lo guarda una sola vez y la port
   await expect(dialogo.getByRole('button', { name: 'Quitar banner 2' })).toBeEnabled();
   await dialogo.locator('#banner-celular-1').setInputFiles(await archivo('celular.png', 1520, 1140));
   await expect(dialogo.locator('[data-quitar-celular="1"]')).toBeVisible();
-  // Sin descripción no se guarda: el foco va al campo que falta.
+  // Sin descripción no se guarda: el campo que falta se marca como en el panel y recibe el foco.
   await guardar.click();
   await expect(page.getByRole('alert').filter({ hasText: 'Describe cada imagen antes de guardar.' })).toBeVisible();
   await expect(dialogo.locator('#banner-alt-1')).toBeFocused();
+  await expect(dialogo.locator('#banner-alt-1')).toHaveAttribute('aria-invalid', 'true');
+  await expect(dialogo.locator('#banner-alt-1-error')).toHaveText('Completa este campo.');
+  await expect(dialogo.locator('#banner-alt-0')).not.toHaveAttribute('aria-invalid');
   await dialogo.locator('#banner-alt-1').fill('Carlos con vecinos en el malecón');
+  await expect(dialogo.locator('#banner-alt-1-error')).toBeHidden();
   await guardar.dblclick();
   await expect(dialogo).toBeHidden();
   expect(data.savedHome).toEqual([{
@@ -128,12 +132,14 @@ test('subir y guardar muestran la animación de carga dentro del editor', async 
   await page.route('**/api/admin/{medios,contenido/inicio/piezas}', async route => { await new Promise(r => setTimeout(r, 800)); await route.fallback(); });
   await page.getByRole('button', { name: 'Cambiar las imágenes del carrusel de piezas' }).click();
   const dialogo = page.getByRole('dialog', { name: 'Carrusel de piezas' });
-  const carga = dialogo.locator('[role="status"]');
+  const carga = dialogo.locator('[role="status"]:not([data-notificacion])');
   await dialogo.locator('#piezas-nuevas').setInputFiles(await archivo('pieza.png', 1080, 1350));
   await expect(carga).toContainText('Subiendo…');
   await expect(dialogo.locator('li')).toHaveCount(4);
   await expect(carga).toHaveCount(0);
   await dialogo.locator('#pieza-alt-3').fill('Pieza nueva');
+  // Tras la carga, nada de la lista desborda la ventana: si lo hiciera, el pie con «Guardar borrador» se desplazaría.
+  expect(await dialogo.evaluate(el => el.firstElementChild!.scrollHeight - el.firstElementChild!.clientHeight)).toBe(0);
   await dialogo.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(carga).toContainText('Guardando…');
   await expect(dialogo).toBeHidden();
@@ -146,7 +152,11 @@ test('si otra persona guardó antes, avisa sin cerrar el editor y no pisa su cam
   const dialogo = page.getByRole('dialog', { name: 'Carrusel de piezas' });
   await dialogo.getByRole('button', { name: 'Bajar pieza 1' }).click();
   await dialogo.getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(page.getByRole('alert').filter({ hasText: 'Otra persona guardó cambios' })).toBeVisible();
+  const aviso = page.getByRole('alert').filter({ hasText: 'Otra persona guardó cambios' });
+  await expect(aviso).toBeVisible();
+  // El aviso queda encima de la ventana abierta y se puede cerrar.
+  await aviso.getByRole('button', { name: 'Cerrar aviso' }).click();
+  await expect(aviso).toHaveCount(0);
   await expect(dialogo).toBeVisible();
   expect(data.savedHome).toEqual([]);
 });

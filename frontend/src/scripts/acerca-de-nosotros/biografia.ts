@@ -1,4 +1,4 @@
-import { sinMovimiento } from "../../lib/comun/animaciones";
+import { alCambiarMovimiento, sinMovimiento } from "../../lib/comun/movimiento";
 
 const linea = document.querySelector<HTMLElement>(".linea-tiempo");
 if (linea) {
@@ -15,10 +15,7 @@ if (linea) {
   // Con «Reducir movimiento» los hitos no esperan a entrar en pantalla.
   if (sinMovimiento()) mostrarTodos();
   linea.classList.add("linea-animada");
-  new MutationObserver(() => sinMovimiento() && mostrarTodos()).observe(
-    document.documentElement,
-    { attributes: true, attributeFilter: ["class"] },
-  );
+  alCambiarMovimiento(() => sinMovimiento() && mostrarTodos());
 
   // rootMargin en vez de un umbral: en móvil hay hitos más altos que la pantalla.
   const alEntrar = new IntersectionObserver(

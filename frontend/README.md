@@ -36,7 +36,7 @@ El navegador usa `/api` en el mismo origen; Astro lo envía al backend de `127.0
 
 Para probar Google, configurar `PUBLIC_GOOGLE_CLIENT_ID` con el mismo cliente OAuth web usado en `GOOGLE_CLIENT_ID` del backend y autorizar `http://localhost:4321` en Google Cloud. El ID es público; no publicar secretos ni credenciales SMTP. Los flujos de correo pueden probarse con Mailpit siguiendo `backend/README.md`.
 
-No se gestionan desde el panel, y siguen en el código cruzados por slug: los iconos de la franja de ciudadanía (sus nombres y descripciones sí son textos editables) y los modelos 3D de las propuestas (`public/models/` y `proposalModels` en `src/lib/data/presentation.ts`). Los modelos pendientes y cómo añadirlos están en [plan-modelos-3d.md](../docs/plan-modelos-3d.md).
+No se gestionan desde el panel, y siguen en el código cruzados por slug: los iconos de la franja de ciudadanía (sus nombres y descripciones sí son textos editables) y los modelos 3D de las propuestas (`public/models/` y `proposalModels` en `src/lib/comun/presentacion.ts`). Los modelos pendientes y cómo añadirlos están en [plan-modelos-3d.md](../docs/plan-modelos-3d.md).
 
 ## Límite de intentos en los formularios
 

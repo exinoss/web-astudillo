@@ -4,6 +4,8 @@ import { TEXTOS, type TextKey } from "../../lib/comun/contenido/textos";
 import type { Profile } from "../../lib/data/auth-repository";
 import { adminApi } from "../../lib/data/http/admin-api";
 import { escLines } from "../../lib/comun/html";
+import { guardarClave, leerClave } from "../../lib/comun/almacen";
+import { sinMovimiento } from "../../lib/comun/movimiento";
 import { iconSvg } from "../../lib/comun/iconos";
 import { seguirPublicacion } from "../../lib/comun/avisos";
 import { BORRADOR_GUARDADO, notificar } from "../../lib/comun/notificacion";
@@ -26,10 +28,8 @@ let on = false;
 let editing: { el: HTMLElement; before: string } | null = null;
 let canPublish = false;
 let canUpload = false;
-let carruseles: typeof import("./editor-carruseles") | null = null;
+let carruseles: typeof import("../inicio/editor-carruseles") | null = null;
 
-const read = () => { try { return localStorage.getItem(STORAGE) === "1"; } catch { return false; } };
-const remember = (value: boolean) => { try { localStorage.setItem(STORAGE, value ? "1" : "0"); } catch { /* sin almacenamiento */ } };
 const definition = (el: HTMLElement) => TEXTOS[el.dataset.editable as TextKey];
 const current = (key: string) => texts[key] ?? "";
 
@@ -156,12 +156,11 @@ function finishInline(keep: boolean) {
 }
 
 
-const sheet = document.createElement("div");
-sheet.className = "fixed inset-0 z-[945] flex items-end bg-[#06317640]";
-sheet.hidden = true;
+const sheet = document.createElement("dialog");
+sheet.className = "fixed inset-0 m-0 size-auto max-h-none max-w-none items-end bg-base-300 p-0 backdrop:bg-transparent open:flex";
+sheet.setAttribute("aria-labelledby", "edicion-hoja-titulo");
 sheet.innerHTML = `
-  <div role="dialog" aria-modal="true" aria-labelledby="edicion-hoja-titulo"
-    class="flex w-full flex-col gap-3.5 rounded-t-[12px] border-t-4 border-t-secondary bg-base-100 px-5 pt-[18px] pb-[calc(22px+env(safe-area-inset-bottom,0px))] text-primary [box-shadow:0_-12px_30px_var(--color-card-border)]">
+  <div class="flex w-full flex-col gap-3.5 rounded-t-[12px] border-t-4 border-t-secondary bg-base-100 px-5 pt-[18px] pb-[calc(22px+env(safe-area-inset-bottom,0px))] text-primary [box-shadow:0_-12px_30px_var(--color-card-border)]">
     <div class="flex items-center justify-between">
       <strong id="edicion-hoja-titulo" class="flex items-center gap-2 text-[0.95rem]">${iconSvg("edit", 18)} Editar texto</strong>
       <button type="button" data-cerrar class="grid size-11 place-items-center" aria-label="Cerrar">${iconSvg("close", 20)}</button>
@@ -189,28 +188,20 @@ function openSheet(el: HTMLElement) {
   sheetField.value = current(el.dataset.editable!);
   sheetField.maxLength = def.max;
   syncSheet();
-  sheet.hidden = false;
+  sheet.showModal();
   sheetField.focus();
 }
 
 function closeSheet() {
-  sheet.hidden = true;
-  sheetTarget?.focus();
-  sheetTarget = null;
+  sheet.close();
 }
 
+sheet.addEventListener("close", () => {
+  sheetTarget?.focus();
+  sheetTarget = null;
+});
 sheet.addEventListener("click", (e) => {
   if (e.target === sheet || (e.target as Element).closest("[data-cerrar]")) closeSheet();
-});
-sheet.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") closeSheet();
-  // Foco atrapado dentro de la hoja mientras está abierta.
-  if (e.key === "Tab") {
-    const items = [...sheet.querySelectorAll<HTMLElement>("button, textarea")];
-    const [first, last] = [items[0], items[items.length - 1]];
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
-  }
 });
 sheetSave.addEventListener("click", async () => {
   const el = sheetTarget!;
@@ -233,7 +224,7 @@ function decorar(raiz: ParentNode) {
 }
 
 /** Si falla la descarga, el modo edición sigue funcionando con los textos. */
-const cargarCarruseles = () => import("./editor-carruseles")
+const cargarCarruseles = () => import("../inicio/editor-carruseles")
   .then((m) => { m.iniciarCarruseles({ avisar: notify, alGuardar: refreshPending, decorar }); return m; })
   .catch(() => null);
 
@@ -260,7 +251,7 @@ async function setMode(value: boolean) {
     published.clear();
   }
   on = value;
-  remember(value);
+  guardarClave("local", STORAGE, value ? "1" : "0");
   drawBar();
 }
 
@@ -311,12 +302,12 @@ export async function startEditMode(profile: Profile) {
 
   const requested = new URLSearchParams(location.search).get("editar");
   await refreshPending();
-  if (read() || requested) await setMode(true);
+  if (leerClave("local", STORAGE) === "1" || requested) await setMode(true);
   if (requested) {
     history.replaceState(null, "", location.pathname + location.hash);
     const target = elements().find((el) => el.dataset.editable === requested && el.getClientRects().length);
     if (target) {
-      target.scrollIntoView({ block: "center", behavior: document.documentElement.classList.contains("reduce-motion") ? "auto" : "smooth" });
+      target.scrollIntoView({ block: "center", behavior: sinMovimiento() ? "auto" : "smooth" });
       edit(target);
     }
   }

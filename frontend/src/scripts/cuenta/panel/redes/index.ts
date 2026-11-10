@@ -1,7 +1,7 @@
-import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
+import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { MAX_ENLACE_RED, normalizarWhatsapp, REDES, type Red } from "../../../../lib/comun/contenido/redes";
 import { adminApi } from "../../../../lib/data/http/admin-api";
-import { BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, field, isPending, reloadDraft, reloadPending, state } from "../ui";
+import { avisoBorrador, busy, card, field, guardarYRecargar, isPending, state } from "../ui";
 
 const RED_LIST = Object.keys(REDES) as Red[];
 const guardado = (red: Red) => state.draft!.textos[REDES[red].clave] ?? "";
@@ -14,7 +14,7 @@ const leer = (form: HTMLElement) => Object.fromEntries(RED_LIST.map((red) => {
 export function renderSocial(container: HTMLElement) {
   const pendiente = RED_LIST.some((red) => isPending("Texto", REDES[red].clave));
   container.innerHTML = card("Redes sociales", `
-    ${pendiente ? `<p class="-mt-2 mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
+    ${avisoBorrador(pendiente)}
     <form id="redes-form" class="flex flex-col gap-4" novalidate>
       ${field({ id: "red-facebook", label: "Facebook", value: guardado("facebook"), max: MAX_ENLACE_RED, hint: "Enlace completo de la página, empezando por https://www.facebook.com/" })}
       ${field({ id: "red-instagram", label: "Instagram (opcional)", value: guardado("instagram"), max: MAX_ENLACE_RED, hint: "Enlace completo del perfil, empezando por https://www.instagram.com/. Si lo dejas vacío, no aparece en el sitio." })}
@@ -34,13 +34,10 @@ export function renderSocial(container: HTMLElement) {
     const valores = leer(form);
     // Solo se guardan las redes que cambiaron, cada una con su versión (409 si otra persona la cambió).
     const cambios = RED_LIST.filter((red) => valores[red] !== guardado(red));
-    void busy(boton, async () => {
+    void busy(boton, () => guardarYRecargar(async () => {
       for (const red of cambios)
         // Vacío vuelve al valor de la semilla; Instagram no tiene, así que se queda sin enlace.
         await adminApi.saveText(REDES[red].clave, valores[red] || null, state.draft!.versiones.textos[REDES[red].clave] ?? null);
-      await Promise.all([reloadDraft(), reloadPending()]);
-      renderSocial(container);
-      confirmarCambio(BORRADOR_GUARDADO);
-    });
+    }, () => renderSocial(container)));
   });
 }

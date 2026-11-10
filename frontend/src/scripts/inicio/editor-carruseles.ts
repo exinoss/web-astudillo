@@ -6,8 +6,9 @@ import { mostrarCarga } from "../../lib/comun/animaciones";
 import { medidasArchivo } from "../../lib/comun/foto-local";
 import { medidasFoto, uploadedSrcset, uploadedUrl } from "../../lib/comun/fotos";
 import { iconSvg } from "../../lib/comun/iconos";
-import { bloquearMientras, vigilarCambios } from "../../lib/cuenta/panel/cambios";
-import { field, GHOST, HINT, ICON_BUTTON, moveButtons, thumb, upload } from "../../lib/cuenta/panel/campos";
+import { bloquearMientras, vigilarCambios } from "../../lib/comun/cambios";
+import { desmarcarAlEscribir, marcarVacios } from "../../lib/comun/campos";
+import { enlazarLista, field, GHOST, HINT, ICON_BUTTON, moveButtons, thumb, upload } from "../../lib/cuenta/panel/campos";
 import { adminApi, type Draft, type DraftHomeCarousels, type DraftHomeImage, type HomeImageBody } from "../../lib/data/http/admin-api";
 
 type Principal = DraftHomeCarousels["principal"];
@@ -46,9 +47,12 @@ let opciones: Opciones;
 let borrador: DraftHomeCarousels;
 let versiones: Draft["versiones"]["inicio"] = {};
 
+/** Miniatura de una imagen del borrador: la foto subida o la original del sitio. */
 const miniatura = (imagen: DraftHomeImage) => ("foto" in imagen ? thumb(imagen.foto) : originales[imagen.original].miniatura);
+/** Lo que se envía a la API por cada imagen: el id de la foto subida o el nombre de la original. */
 const cuerpoImagen = (imagen: DraftHomeImage): HomeImageBody => ("foto" in imagen ? { idMedio: imagen.foto.idMedio } : { original: imagen.original });
 
+/** Tarjeta de un banner en el editor, con su imagen, la de celular y sus botones. */
 const tarjetaBanner = (b: Principal["banners"][number], i: number, total: number) => `
   <li class="flex flex-col gap-3 rounded-[3px] border border-base-300 p-3">
     <div class="flex items-center justify-between gap-2">
@@ -70,11 +74,12 @@ const tarjetaBanner = (b: Principal["banners"][number], i: number, total: number
             </span>
           </span>
         </div>`}
-        ${field({ id: `banner-alt-${i}`, label: "Descripción de la imagen", value: b.alt, max: LARGOS.descripcionFoto })}
+        ${field({ id: `banner-alt-${i}`, label: "Descripción de la imagen", value: b.alt, max: LARGOS.descripcionFoto, required: true })}
       </div>
     </div>
   </li>`;
 
+/** Contenido del editor del carrusel principal: banners y retrato. */
 const htmlPrincipal = (p: Principal) => `
   <section aria-labelledby="carrusel-banners">
     <h3 id="carrusel-banners" class="m-0 mb-1 font-sans text-[1rem] font-bold">Banners</h3>
@@ -88,10 +93,11 @@ const htmlPrincipal = (p: Principal) => `
     <div class="flex flex-wrap items-end gap-3 rounded-[3px] border border-base-300 p-3">
       <img src="${miniatura(p.retrato.imagen)}" alt="" class="aspect-square w-[104px] rounded-[3px] bg-base-200 object-cover" />
       <span class="pb-0.5">${upload("retrato-nuevo", "Cambiar retrato")}</span>
-      <div class="basis-full">${field({ id: "retrato-alt", label: "Descripción de la imagen", value: p.retrato.alt, max: LARGOS.descripcionFoto })}</div>
+      <div class="basis-full">${field({ id: "retrato-alt", label: "Descripción de la imagen", value: p.retrato.alt, max: LARGOS.descripcionFoto, required: true })}</div>
     </div>
   </section>`;
 
+/** Contenido del editor del carrusel de piezas. */
 const htmlPiezas = (p: Piezas) => `
   <p class="${HINT} mt-0 mb-3">Hasta ${MAX_PIEZAS} · 1080 × 1350 px · ${LIMITE}</p>
   <ol class="m-0 flex list-none flex-col gap-3 p-0">${p.piezas.map((x, i) => `
@@ -102,11 +108,12 @@ const htmlPiezas = (p: Piezas) => `
           <strong class="text-[0.85rem]">Pieza ${i + 1}</strong>
           <span class="flex">${moveButtons("pieza", i, p.piezas.length, `pieza ${i + 1}`, 1)}</span>
         </div>
-        ${field({ id: `pieza-alt-${i}`, label: "Descripción de la imagen", value: x.alt, max: LARGOS.descripcionFoto })}
+        ${field({ id: `pieza-alt-${i}`, label: "Descripción de la imagen", value: x.alt, max: LARGOS.descripcionFoto, required: true })}
       </div>
     </li>`).join("")}</ol>
   ${p.piezas.length < MAX_PIEZAS ? `<div class="mt-3">${upload("piezas-nuevas", "Añadir piezas", true)}</div>` : ""}`;
 
+/** Contenido del editor del carrusel del equipo. */
 const htmlEquipo = (e: Equipo) => `
   <p class="${HINT} mt-0 mb-3">Hasta ${MAX_FOTOS_EQUIPO} · imágenes horizontales · 2000 × 761 px · ${LIMITE}</p>
   <ol class="m-0 flex list-none flex-col gap-3 p-0">${e.fotos.map((x, i) => `
@@ -117,17 +124,16 @@ const htmlEquipo = (e: Equipo) => `
           <strong class="text-[0.85rem]">Imagen ${i + 1}</strong>
           <span class="flex">${moveButtons("imagen", i, e.fotos.length, `imagen ${i + 1}`)}</span>
         </div>
-        ${field({ id: `equipo-alt-${i}`, label: "Descripción de la imagen", value: x.alt, max: LARGOS.descripcionFoto })}
+        ${field({ id: `equipo-alt-${i}`, label: "Descripción de la imagen", value: x.alt, max: LARGOS.descripcionFoto, required: true })}
       </div>
     </li>`).join("")}</ol>
   ${e.fotos.length < MAX_FOTOS_EQUIPO ? `<div class="mt-3">${upload("equipo-nuevas", "Añadir imágenes", true)}</div>` : ""}`;
 
-const dialogo = document.createElement("div");
-dialogo.className = "fixed inset-0 z-[950] flex items-center justify-center bg-[#06317659] p-4 max-tablet:items-end max-tablet:p-0";
-dialogo.hidden = true;
+const dialogo = document.createElement("dialog");
+dialogo.className = "fixed inset-0 m-0 size-auto max-h-none max-w-none items-center justify-center bg-velo p-4 backdrop:bg-transparent open:flex max-tablet:items-end max-tablet:p-0";
+dialogo.setAttribute("aria-labelledby", "carrusel-titulo");
 dialogo.innerHTML = `
-  <div role="dialog" aria-modal="true" aria-labelledby="carrusel-titulo"
-    class="flex max-h-[min(92dvh,900px)] w-full max-w-[720px] flex-col overflow-hidden rounded-[12px] border-t-4 border-t-secondary bg-base-100 text-primary [box-shadow:0_20px_50px_#06317640] max-tablet:max-w-none max-tablet:rounded-b-none">
+  <div class="flex max-h-[min(92dvh,900px)] w-full max-w-[720px] flex-col overflow-hidden rounded-[12px] border-t-4 border-t-secondary bg-base-100 text-primary [box-shadow:0_20px_50px_#06317640] max-tablet:max-w-none max-tablet:rounded-b-none">
     <div class="flex items-center justify-between gap-3 border-b border-b-base-300 px-6 py-3 max-tablet:px-4">
       <strong id="carrusel-titulo" class="flex items-center gap-2 text-[1rem]"></strong>
       <button type="button" data-cerrar class="${ICON_BUTTON}" aria-label="Cerrar">${iconSvg("close", 20)}</button>
@@ -139,7 +145,7 @@ dialogo.innerHTML = `
     </div>
   </div>`;
 const guardar = dialogo.querySelector<HTMLButtonElement>("[data-guardar]")!;
-const ventana = dialogo.querySelector<HTMLElement>("[role=dialog]")!;
+const ventana = dialogo.firstElementChild as HTMLElement;
 
 let abierto: { cual: Carrusel; trabajo: Principal | Piezas | Equipo; origen: HTMLElement; cuerpo: HTMLElement; comprobar: () => void } | null = null;
 let subiendo = false;
@@ -157,7 +163,7 @@ function capturar() {
 }
 
 /** Una por una; se detiene en la primera que no se puede subir. Ninguna se muestra antes de que el backend la procese. */
-async function subirFotos(archivos: File[], horizontales = false) {
+async function subirAlEditor(archivos: File[], horizontales = false) {
   const subidas = [];
   subiendo = true;
   guardar.disabled = true;
@@ -179,33 +185,28 @@ async function subirFotos(archivos: File[], horizontales = false) {
   return subidas;
 }
 
+/** Vuelve a dibujar el editor abierto y enlaza sus botones. */
 function pintar() {
   const a = abierto!;
   const lista: unknown[] = a.cual === "principal" ? (a.trabajo as Principal).banners : a.cual === "piezas" ? (a.trabajo as Piezas).piezas : (a.trabajo as Equipo).fotos;
   a.cuerpo.innerHTML = a.cual === "principal" ? htmlPrincipal(a.trabajo as Principal) : a.cual === "piezas" ? htmlPiezas(a.trabajo as Piezas) : htmlEquipo(a.trabajo as Equipo);
-  a.cuerpo.querySelectorAll<HTMLButtonElement>("[data-move]").forEach((b) => b.addEventListener("click", () => {
+  enlazarLista(a.cuerpo, () => lista, (mutar, movido) => {
     capturar();
-    const i = Number(b.dataset.index), j = i + Number(b.dataset.step);
-    [lista[i], lista[j]] = [lista[j], lista[i]];
+    mutar();
     pintar();
-    a.cuerpo.querySelector<HTMLButtonElement>(`[data-move][data-index="${j}"][data-step="${b.dataset.step}"]:not(:disabled)`)?.focus();
-  }));
-  a.cuerpo.querySelectorAll<HTMLButtonElement>("[data-remove]").forEach((b) => b.addEventListener("click", () => {
-    capturar();
-    lista.splice(Number(b.dataset.index), 1);
-    pintar();
-  }));
+    if (movido) a.cuerpo.querySelector<HTMLButtonElement>(`[data-move][data-index="${movido.indice}"][data-step="${movido.paso}"]:not(:disabled)`)?.focus();
+  });
   a.cuerpo.querySelectorAll<HTMLButtonElement>("[data-quitar-celular]").forEach((b) => b.addEventListener("click", () => {
     capturar();
     (a.trabajo as Principal).banners[Number(b.dataset.quitarCelular)].celular = null;
     pintar();
   }));
-  const alElegir = (id: string, maximo: number, poner: (fotos: Awaited<ReturnType<typeof subirFotos>>) => void, horizontales = false) =>
+  const alElegir = (id: string, maximo: number, poner: (fotos: Awaited<ReturnType<typeof subirAlEditor>>) => void, horizontales = false) =>
     a.cuerpo.querySelector<HTMLInputElement>(`#${id}`)?.addEventListener("change", async (e) => {
       const archivos = [...((e.target as HTMLInputElement).files ?? [])].slice(0, maximo);
       if (!archivos.length || subiendo) return;
       capturar();
-      const fotos = await subirFotos(archivos, horizontales);
+      const fotos = await subirAlEditor(archivos, horizontales);
       if (abierto !== a) return;
       // Lo escrito mientras se subía se conserva al volver a pintar.
       capturar();
@@ -229,53 +230,43 @@ function pintar() {
   a.comprobar();
 }
 
+/** Abre el editor de un carrusel con una copia de su borrador. */
 function abrir(cual: Carrusel, origen: HTMLElement) {
   const trabajo = structuredClone(borrador[cual]);
   const cuerpo = document.createElement("div");
   cuerpo.className = "overflow-y-auto overscroll-contain px-6 py-5 max-tablet:px-4";
   dialogo.querySelector("[data-cuerpo]")!.replaceWith(cuerpo);
   cuerpo.dataset.cuerpo = "";
+  desmarcarAlEscribir(cuerpo);
   abierto = { cual, trabajo, origen, cuerpo, comprobar: () => {} };
   abierto.comprobar = vigilarCambios(cuerpo, guardar, borrador[cual], () => { capturar(); return trabajo; });
   dialogo.querySelector("#carrusel-titulo")!.innerHTML = `${iconSvg("image", 20)} ${NOMBRES[cual]}`;
   pintar();
-  dialogo.hidden = false;
+  dialogo.showModal();
   document.documentElement.style.overflow = "hidden";
   dialogo.querySelector<HTMLElement>("[data-cerrar]")!.focus();
 }
 
+/** Cierra el editor; el evento `close` (también con Esc) devuelve el foco al botón que lo abrió. */
 function cerrar() {
-  const origen = abierto?.origen;
-  abierto = null;
-  dialogo.hidden = true;
-  document.documentElement.style.overflow = "";
-  origen?.focus();
+  dialogo.close();
 }
 
+dialogo.addEventListener("close", () => {
+  const origen = abierto?.origen;
+  abierto = null;
+  document.documentElement.style.overflow = "";
+  origen?.focus();
+});
 dialogo.addEventListener("click", (e) => {
   if (e.target === dialogo || (e.target as Element).closest("[data-cerrar]")) cerrar();
-});
-dialogo.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") cerrar();
-  if (e.key === "Tab") {
-    const items = [...dialogo.querySelectorAll<HTMLElement>("button:not(:disabled), input:not(:disabled)")]
-      .filter((x) => x.checkVisibility() || (x as HTMLInputElement).type === "file");
-    const [primero, ultimo] = [items[0], items[items.length - 1]];
-    if (e.shiftKey && document.activeElement === primero) { e.preventDefault(); ultimo.focus(); }
-    else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primero.focus(); }
-  }
 });
 guardar.addEventListener("click", () => void bloquearMientras(guardar, async () => {
   capturar();
   const a = abierto!;
-  const faltan = a.cual === "principal"
-    ? [...(a.trabajo as Principal).banners.map((b, i) => [`banner-alt-${i}`, b.alt]), ["retrato-alt", (a.trabajo as Principal).retrato.alt]]
-    : a.cual === "piezas" ? (a.trabajo as Piezas).piezas.map((x, i) => [`pieza-alt-${i}`, x.alt])
-    : (a.trabajo as Equipo).fotos.map((x, i) => [`equipo-alt-${i}`, x.alt]);
-  const vacia = faltan.find(([, alt]) => !alt);
-  if (vacia) {
+  marcarVacios(a.cuerpo);
+  if (a.cuerpo.querySelector('[aria-invalid="true"]')) {
     opciones.avisar("Describe cada imagen antes de guardar.", true);
-    a.cuerpo.querySelector<HTMLInputElement>(`#${vacia[0]}`)?.focus();
     return;
   }
   const terminarCarga = mostrarCarga(ventana, "Guardando…");
@@ -306,6 +297,7 @@ guardar.addEventListener("click", () => void bloquearMientras(guardar, async () 
   opciones.avisar("Guardado como borrador. Publica para que se vea en el sitio.");
 }));
 
+/** Muestra en `img` una imagen del borrador con su srcset; con `tope`, no más grande que su archivo. */
 function ponerImagen(img: HTMLImageElement, imagen: DraftHomeImage, alt: string, sizes: string, tope = false) {
   const version = "foto" in imagen ? { src: uploadedUrl(imagen.foto, imagen.foto.anchos.at(-1)!), srcset: uploadedSrcset(imagen.foto) } : originales[imagen.original];
   img.srcset = version.srcset;
@@ -321,6 +313,7 @@ function ponerImagen(img: HTMLImageElement, imagen: DraftHomeImage, alt: string,
   else img.removeAttribute("style");
 }
 
+/** Deja en `grupo` un punto por diapositiva, copiando el primero. */
 function puntos(grupo: HTMLElement, selector: string, total: number, nombre: string) {
   const actuales = [...grupo.querySelectorAll<HTMLElement>(selector)];
   actuales.slice(1).forEach((x) => x.remove());
@@ -334,6 +327,7 @@ function puntos(grupo: HTMLElement, selector: string, total: number, nombre: str
   actuales[0].after(...lista.slice(1));
 }
 
+/** Pinta en la portada los tres carruseles tal como están en el borrador. */
 function pintarBorrador() {
   const { banners, retrato } = borrador.principal;
   const segunda = [...hero.querySelectorAll<HTMLElement>("[data-slide]")].at(-1)!;
@@ -425,11 +419,13 @@ const botones = (["principal", "piezas", "equipo"] as const).map((cual) => {
   return boton;
 });
 
+/** Guarda las opciones del modo edición y añade el diálogo del editor a la página. */
 export function iniciarCarruseles(o: Opciones) {
   opciones = o;
   document.body.append(dialogo);
 }
 
+/** Muestra el borrador en la portada y los botones «Cambiar imágenes». */
 export function mostrarCarruseles(draft: Pick<Draft, "inicio" | "versiones">) {
   borrador = draft.inicio;
   versiones = draft.versiones.inicio;
@@ -438,6 +434,7 @@ export function mostrarCarruseles(draft: Pick<Draft, "inicio" | "versiones">) {
   perfil.append(botones[1]);
 }
 
+/** Devuelve la portada a lo publicado y quita los botones del editor. */
 export function ocultarCarruseles() {
   if (abierto) cerrar();
   hero.innerHTML = publicado.hero;

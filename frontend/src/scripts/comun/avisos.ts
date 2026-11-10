@@ -1,5 +1,5 @@
 // Campana de avisos de la cabecera: solo la descarga quien puede editar el contenido (la importa layout.ts).
-import { sinMovimiento } from "../../lib/comun/animaciones";
+import { sinMovimiento } from "../../lib/comun/movimiento";
 import { publicacionSeguida, publicarAvisos, type Aviso } from "../../lib/comun/avisos";
 import { avisoVisto } from "../../lib/cuenta/auth/navigation";
 import { esc } from "../../lib/comun/html";

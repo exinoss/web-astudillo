@@ -8,16 +8,11 @@ const LOCK = `<svg class="candado" viewBox="0 0 24 24" aria-hidden="true">
 </svg>`;
 
 /** Texto corto del botón: «0:59» bajo una hora, «5 h 59 min» bajo un día y «2 d 23 h» después. */
-export function countdownLabel(seconds: number) {
+function countdownLabel(seconds: number) {
   if (seconds < 3600) return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
   if (seconds < DAY) return `${Math.floor(seconds / 3600)} h ${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')} min`;
   return `${Math.floor(seconds / DAY)} d ${Math.floor((seconds % DAY) / 3600)} h`;
 }
-
-export const isLocked = (button: HTMLButtonElement) => button.dataset.bloqueo !== undefined;
-
-/** Reactiva el botón al terminar un envío, salvo que el límite de intentos lo haya bloqueado. */
-export const releaseButton = (button: HTMLButtonElement) => { button.disabled = isLocked(button); };
 
 /** Pone el botón en gris con el candado y la cuenta atrás; al llegar a cero lo devuelve como estaba. */
 function lockButton(button: HTMLButtonElement, seconds: number, onEnd: () => void) {

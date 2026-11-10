@@ -1,14 +1,13 @@
-import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
+import { vigilarCambios } from "../../../../lib/comun/cambios";
 import {
   adminApi, type ParticipationKind, type ParticipationPage, type ParticipationState, type ReviewedAlert, type ReviewedSuggestion,
 } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { ESTADOS, TIPOS_ALERTA } from "../../../../lib/ciudadania/participacion/tipos";
-import { busy, can, card, cargar, confirmarCambio, esc, iconSvg, PILL, state } from "../ui";
+import { busy, can, card, cargar, confirmarCambio, esc, fechaHora, iconSvg, PILL, state } from "../ui";
 
 const view = { tipo: "alertas" as ParticipationKind, estado: "" as ParticipationState | "", pagina: 1 };
 const STATES = Object.keys(ESTADOS) as ParticipationState[];
-const date = new Intl.DateTimeFormat("es-EC", { dateStyle: "medium", timeStyle: "short" });
 const TAB = "relative min-h-11 py-3 text-[0.85rem] font-bold text-neutral aria-selected:text-primary aria-selected:after:absolute aria-selected:after:inset-x-0 aria-selected:after:-bottom-px aria-selected:after:h-[3px] aria-selected:after:bg-secondary aria-selected:after:content-['']";
 const CHIP = "min-h-11 rounded-full border border-base-300 bg-base-100 px-3.5 text-[0.78rem] font-bold aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-content";
 
@@ -33,7 +32,7 @@ function alertItem(a: ReviewedAlert) {
     <div class="min-w-0">
       <strong class="flex items-center gap-1.5 text-[0.92rem]">${iconSvg(tipo.icono, 18)} ${esc(tipo.nombre)} · ${esc(a.sector)}</strong>
       <p class="mt-1 mb-0 text-[0.84rem] leading-normal [overflow-wrap:anywhere]">${esc(a.descripcion)}</p>
-      <small class="text-[0.72rem] text-muted">${esc(a.autor ?? a.correo)} · ${date.format(new Date(a.creadoEn))}${a.referencia ? ` · Ref.: ${esc(a.referencia)}` : ""}</small>
+      <small class="text-[0.72rem] text-muted">${esc(a.autor ?? a.correo)} · ${fechaHora.format(new Date(a.creadoEn))}${a.referencia ? ` · Ref.: ${esc(a.referencia)}` : ""}</small>
     </div>
     <div class="max-tablet:col-span-2">${stateControl(a.id, a.estado)}</div>
   </li>`;
@@ -44,7 +43,7 @@ function suggestionItem(s: ReviewedSuggestion) {
     <div class="min-w-0">
       <strong class="text-[0.92rem]">${esc(topicName(s.tema))}</strong>
       <p class="mt-1 mb-0 text-[0.84rem] leading-normal whitespace-pre-line [overflow-wrap:anywhere]">${esc(s.mensaje)}</p>
-      <small class="text-[0.72rem] text-muted">${esc(s.autor ?? s.correo)} · ${date.format(new Date(s.creadoEn))}</small>
+      <small class="text-[0.72rem] text-muted">${esc(s.autor ?? s.correo)} · ${fechaHora.format(new Date(s.creadoEn))}</small>
     </div>
     <div>${stateControl(s.id, s.estado)}</div>
   </li>`;

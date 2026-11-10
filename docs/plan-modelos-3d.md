@@ -6,7 +6,7 @@
 
 1. Copiar el `.glb` del proveedor a `frontend/modelos-fuente/<nombre>.glb` (el original, sin tocar). El nombre dice qué es el modelo: `educacion-coliseo.glb`.
 2. `bun run modelos` (desde `frontend/`) → genera `public/models/<nombre>.glb` optimizado y su póster en `src/assets/models/<nombre>.png`, con el mismo encuadre que el visor.
-3. Añadir `{ src, poster, alt }` al catálogo `proposalModels` de `frontend/src/lib/data/presentation.ts`, bajo el slug de la propuesta.
+3. Añadir `{ src, poster, alt }` al catálogo `proposalModels` de `frontend/src/lib/comun/presentacion.ts`, bajo el slug de la propuesta.
 
 Un modelo de millones de triángulos no pasa por `modelos-fuente/` ni por `bun run modelos`: se prepara con `node --max-old-space-size=14000 scripts/preparar-modelo-pesado.ts entrada.glb public/models/<nombre>.glb`, se limpia de caras superpuestas y triángulos sin área (scripts y pasos en `design/propuestas/modelo-centro-alto-rendimiento/README.md`, fuera de Git) y después se genera el póster con `node scripts/generar-posters.ts` (ver «Lo que enseñó el estadio»).
 
@@ -35,7 +35,7 @@ El primer `.glb` real (`tecnologias-emergentes`) contradijo varias suposiciones 
   - **Piezas de 5 M de triángulos como máximo.** Firefox no dibuja más de 30 M índices por llamada (`webgl.max-vert-ids-per-draw`) y corta el resto sin error visible: el estadio, de 45,7 M, salía roto.
   - **16 bits de posición** en vez de 14: en un predio de 378 m, las líneas pintadas parpadeaban.
 - **nginx no comprimía los modelos.** No conoce la extensión `.glb` (la servía como `application/octet-stream`) y Cloudflare no comprime ese tipo: el estadio bajaba entero, 35 MB. `server-produccion/nginx/default.conf` declara `model/gltf-binary` y activa gzip en `/models/`: 15 MB en la red. Con gzip no hay `Content-Length`, así que la barra de progreso usa el tamaño del archivo que `Model3D.astro` lee al compilar.
-- **Pesa demasiado para cargarse solo.** `Model3D.astro` muestra el botón «Ver el modelo 3D · 30 MB» en los modelos de 5 MB o más, enseña el progreso de la descarga y guarda el modelo en Cache Storage, porque un celular puede descartar decenas de MB de su caché normal. El archivo lleva una huella de su contenido (`?v=`), y una versión nueva reemplaza a la guardada.
+- **Pesa demasiado para cargarse solo.** `Model3D.astro` (con su script, `scripts/propuestas/modelo-3d.ts`) muestra el botón «Ver el modelo 3D · 30 MB» en los modelos de 5 MB o más, enseña el progreso de la descarga y guarda el modelo en Cache Storage, porque un celular puede descartar decenas de MB de su caché normal. El archivo lleva una huella de su contenido (`?v=`), y una versión nueva reemplaza a la guardada.
 - **Cloudflare no guardaba el modelo** (`cf-cache-status: DYNAMIC`): cada primera visita lo descargaba del VPS. Con la huella, el archivo de una URL no cambia nunca, así que nginx lo sirve como `immutable` y una regla de caché de Cloudflare lo guarda en su red (`server-produccion/README.md`, «Modelos 3D en la caché de Cloudflare»). Los modelos livianos, sin huella, siguen en `no-cache`.
 - **La animación de carga se congelaba.** Preparar 15 M de triángulos bloquea la página unos 3-4 s, y el Lottie normal se dibuja en ese mismo hilo. Se usa `reproducirEnHilo()` (`lib/comun/animaciones.ts`), que dibuja el mismo `.json` en un worker con OffscreenCanvas. Medido con trazas de Edge y vídeo de Firefox con la página bloqueada: el Lottie normal, un vídeo y una imagen animada se congelan en algún navegador; el Lottie en worker sigue en los dos. Una versión anterior con los fotogramas en imágenes se descartó porque se veía pixelada y temblaba.
 - **Parpadeaba al girarlo, y no por la optimización** (diagnóstico del 2026-11-03, con capturas, mediciones y scripts en `design/propuestas/modelo-centro-alto-rendimiento/`, fuera de Git). Había dos causas:
@@ -57,7 +57,7 @@ El primer `.glb` real (`tecnologias-emergentes`) contradijo varias suposiciones 
 
 ## Contexto
 
-> Las cifras y la carga diferida de esta sección y de «Decisiones técnicas» son del planteamiento inicial, anterior al primer modelo. No describen la compilación actual: el sitio ya usa más JavaScript (por ejemplo, Lottie y el panel) y el modelo se carga al abrir la página (ver «Lo que enseñó el primer modelo»). Medición de la compilación del 22 de octubre de 2026 ([auditoría de arquitectura](auditoria-arquitectura.md), §3.3): el chunk de `model-viewer` ocupa 1.068.903 bytes, unos 292 KB con gzip, y solo se descarga en las páginas con modelo. Cada modelo nuevo se vuelve a medir.
+> Las cifras y la carga diferida de esta sección y de «Decisiones técnicas» son del planteamiento inicial, anterior al primer modelo. No describen la compilación actual: el sitio ya usa más JavaScript (por ejemplo, Lottie y el panel) y el modelo se carga al abrir la página (ver «Lo que enseñó el primer modelo»). Medición de la compilación del 22 de octubre de 2026: el chunk de `model-viewer` ocupa 1.068.903 bytes, unos 292 KB con gzip, y solo se descarga en las páginas con modelo. Cada modelo nuevo se vuelve a medir.
 
 El equipo de diseño ya tiene **un modelo 3D animado por cada una de las 7 propuestas**. Se quieren mostrar en la página de detalle de cada propuesta, y el visitante debe poder **girarlos y hacer zoom** (no solo verlos reproducirse).
 
@@ -192,7 +192,7 @@ Medir antes y después, y dejar la cifra registrada en el CHANGELOG.
   model?: { src: string; poster: string; alt: string };
   ```
   Opcional, para que las propuestas sin modelo sigan funcionando.
-- `frontend/src/lib/data/presentation.ts` — catálogo `proposalModels` por slug; los datos de negocio vienen de la publicación de la base.
+- `frontend/src/lib/comun/presentacion.ts` — catálogo `proposalModels` por slug; los datos de negocio vienen de la publicación de la base.
 - `frontend/src/lib/data/http/http-content-repository.ts` — mapear el campo cuando venga de la API.
 - `backend/README.md` — documentar el campo en la entidad `Proposal`.
 

@@ -1,8 +1,8 @@
-import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
+import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type DraftWork } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
 import { STAGE_NAMES, workProgress } from "../../../../lib/ciudadania/obras";
-import { ACEPTA_FOTOS, avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, LARGOS, MAX_MB_FOTO, notify, previewButton, reloadDraft, reloadPending, state, subirFotos, value } from "../ui";
+import { ACEPTA_FOTOS, avisarVacios, avisoBorrador, busy, card, enlazarLista, esc, field, GHOST, guardarYRecargar, iconSvg, isPending, LARGOS, MAX_MB_FOTO, moveButtons, notify, previewButton, state, subirFotos, value } from "../ui";
 
 const MAX_MILESTONES = 20;
 const MAX_PHOTOS = 24;
@@ -38,9 +38,7 @@ export function renderWorks(section: HTMLElement) {
     <div class="obra-hito flex items-center gap-2 border-t border-t-base-300 py-1.5 first:border-t-0">
       <input type="checkbox" name="completado" id="hito-completado-${i}" ${h.completado ? "checked" : ""} class="size-6 shrink-0 accent-neutral" aria-label="Hito ${i + 1} completado" />
       <div class="min-w-0 flex-1"><input id="hito-nombre-${i}" name="hito" value="${esc(h.nombre)}" maxlength="${LARGOS.obra.hito}" aria-label="Nombre del hito ${i + 1}" required class="campo" /></div>
-      <button type="button" class="${ICON_BUTTON}" data-mover="-1" data-indice="${i}" aria-label="Subir hito ${i + 1}" ${i === 0 ? "disabled" : ""}>${iconSvg("up", 18)}</button>
-      <button type="button" class="${ICON_BUTTON}" data-mover="1" data-indice="${i}" aria-label="Bajar hito ${i + 1}" ${i === work.hitos.length - 1 ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>
-      <button type="button" class="${ICON_BUTTON} text-error" data-quitar-hito="${i}" aria-label="Quitar hito ${i + 1}">${iconSvg("trash", 18)}</button>
+      ${moveButtons("hito", i, work.hitos.length, `hito ${i + 1}`)}
     </div>`).join("");
   const fotos = work.fotos.map((f, i) => `
     <div class="flex flex-col gap-2">
@@ -51,7 +49,7 @@ export function renderWorks(section: HTMLElement) {
       ${field({ id: `foto-pie-${i}`, label: "Pie de foto", value: f.pie, max: LARGOS.obra.pie , required: true })}
     </div>`).join("");
   const form = card(nameOf(work.slug), `
-    ${isPending("Obra", nameOf(work.slug)) ? `<p class="-mt-2 mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
+    ${avisoBorrador(isPending("Obra", nameOf(work.slug)))}
     <div class="mb-6 flex items-center gap-4 border-l-4 border-l-neutral bg-primary-soft px-4 py-4 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-2">
       <span class="font-display text-[2.4rem] leading-none font-bold">${percent} %</span>
       <div class="flex flex-1 flex-col gap-2">
@@ -103,12 +101,7 @@ function bind(section: HTMLElement) {
   section.querySelector<HTMLSelectElement>("#obra-selector")!.addEventListener("change", (e) => edit(() => { selected = (e.target as HTMLSelectElement).value; }));
   form.querySelectorAll<HTMLInputElement>('[name="completado"]').forEach((c) => c.addEventListener("change", () => edit(() => {})));
   form.querySelector("#hito-agregar")!.addEventListener("click", () => edit(() => trabajo[selected].hitos.push({ nombre: "", completado: false })));
-  form.querySelectorAll<HTMLButtonElement>("[data-quitar-hito]").forEach((b) => b.addEventListener("click", () =>
-    edit(() => trabajo[selected].hitos.splice(Number(b.dataset.quitarHito), 1))));
-  form.querySelectorAll<HTMLButtonElement>("[data-mover]").forEach((b) => b.addEventListener("click", () => edit(() => {
-    const hitos = trabajo[selected].hitos, i = Number(b.dataset.indice), j = i + Number(b.dataset.mover);
-    [hitos[i], hitos[j]] = [hitos[j], hitos[i]];
-  })));
+  enlazarLista(form, () => trabajo[selected].hitos, edit);
   form.querySelectorAll<HTMLButtonElement>("[data-quitar-foto]").forEach((b) => b.addEventListener("click", () =>
     edit(() => trabajo[selected].fotos.splice(Number(b.dataset.quitarFoto), 1))));
   form.querySelector<HTMLInputElement>("#obra-fotos")!.addEventListener("change", (e) => {
@@ -133,13 +126,11 @@ function bind(section: HTMLElement) {
     const slug = selected, work = trabajo[slug];
     if (!work.nota || work.hitos.some((h) => !h.nombre) || work.fotos.some((f) => !f.pie))
       return avisarVacios(form, "Completa la nota, el nombre de cada hito y el pie de cada foto.");
-    void busy(form.querySelector("button[type=submit]"), async () => {
-      await adminApi.saveWork(slug, { nota: work.nota, hitos: work.hitos, fotos: work.fotos.map((f) => ({ idMedio: f.idMedio, pie: f.pie })) },
-        state.draft!.versiones.obras[slug]);
-      await Promise.all([reloadDraft(), reloadPending()]);
-      delete trabajo[slug];
-      renderWorks(section);
-      confirmarCambio(BORRADOR_GUARDADO);
-    });
+    void busy(form.querySelector("button[type=submit]"), () => guardarYRecargar(
+      () => adminApi.saveWork(slug, { nota: work.nota, hitos: work.hitos, fotos: work.fotos.map((f) => ({ idMedio: f.idMedio, pie: f.pie })) },
+        state.draft!.versiones.obras[slug]), () => {
+        delete trabajo[slug];
+        renderWorks(section);
+      }));
   });
 }
