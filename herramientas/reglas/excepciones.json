@@ -494,18 +494,6 @@
     },
     {
       "regla": "comentario-de-funcion",
-      "archivo": "backend/src/content/services/about-carlos.ts",
-      "texto": "export function createAboutCarlosPages(sql: SQL, authorization: Authorization, mediaDir: string) {",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "backend/src/content/services/content.ts",
-      "texto": "export function createContent(sql: SQL, authorization: Authorization) {",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "comentario-de-funcion",
       "archivo": "backend/src/content/services/home-carousels.ts",
       "texto": "const ids = (image: HomeImageStored) => ('idMedio' in image ? [image.idMedio] : []);",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
@@ -877,18 +865,6 @@
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
-      "regla": "color-a-mano",
-      "archivo": "frontend/src/components/ciudadania/Chat.astro",
-      "texto": "class=\"inline-flex min-h-11 items-center gap-2 rounded-full border border-[#ffffff55] bg-transparent px-3.5 text-[0.74rem] font-bold aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-primary\">",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "color-a-mano",
-      "archivo": "frontend/src/components/ciudadania/ObraProgreso.astro",
-      "texto": "class=\"h-2.5 overflow-hidden rounded-full bg-[#06317618]\"",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
       "regla": "fetch-fuera-de-datos",
       "archivo": "frontend/src/scripts/propuestas/modelo-3d.ts",
       "texto": "const respuesta = await fetch(decodificadorUrl);",
@@ -1131,12 +1107,6 @@
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
-      "regla": "fetch-fuera-de-datos",
-      "archivo": "frontend/src/lib/comun/vista-previa.ts",
-      "texto": "await fetch(EXIT, { redirect: \"manual\", credentials: \"same-origin\" }).catch(() => {});",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/lib/cuenta/auth/acceptance.ts",
       "texto": "export function acceptanceOf(form: HTMLFormElement): AceptacionLegal | undefined {",
@@ -1241,39 +1211,9 @@
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
-      "regla": "clases-repetidas",
-      "archivo": "frontend/src/pages/404.astro",
-      "texto": "max-tablet:pb-10 max-tablet:pt-6 pb-14 pt-8 site-container",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "clases-repetidas",
-      "archivo": "frontend/src/pages/ciudadania/obras-en-ejecucion.astro",
-      "texto": "max-tablet:pb-10 max-tablet:pt-6 pb-14 pt-8 site-container",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "clases-repetidas",
-      "archivo": "frontend/src/pages/cuenta/acceso.astro",
-      "texto": "inline-flex items-center min-h-11 mt-5 text-[0.82rem] underline",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
       "regla": "color-a-mano",
       "archivo": "frontend/src/pages/cuenta/index.astro",
       "texto": "<p class=\"m-0 mt-[18px] border border-[#d9e0ea] bg-[#f8f9fc] px-4 py-3 text-[0.82rem] leading-normal\">Al cambiarla, se cerrarán tus sesiones y tendrás que ingresar otra vez.</p>",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "clases-repetidas",
-      "archivo": "frontend/src/pages/cuenta/restablecer.astro",
-      "texto": "inline-flex items-center min-h-11 mt-5 text-[0.82rem] underline",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "clases-repetidas",
-      "archivo": "frontend/src/pages/cuenta/verificar.astro",
-      "texto": "inline-flex items-center min-h-11 mt-5 text-[0.82rem] underline",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
@@ -1298,18 +1238,6 @@
       "regla": "color-a-mano",
       "archivo": "frontend/src/pages/index.astro",
       "texto": "fondo: \"bg-[#25d366]\", clave: \"inicio.contacto.whatsapp.texto\" as TextKey, etiqueta: \"Escribir por WhatsApp a Carlos Astudillo (abre en otra pestaña)\",",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "color-a-mano",
-      "archivo": "frontend/src/pages/index.astro",
-      "texto": "tone === \"rojo\" && \"rounded-[4px] bg-campaign-red p-[18px] text-primary-content hover:bg-[#b80e18] max-tablet:mb-2.5\",",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "clases-repetidas",
-      "archivo": "frontend/src/pages/propuestas/[slug].astro",
-      "texto": "max-tablet:pb-10 max-tablet:pt-6 pb-14 pt-8 site-container",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
@@ -1382,25 +1310,7 @@
     {
       "regla": "color-a-mano",
       "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
-      "texto": "<a href=\"/cuenta/panel/#publicaciones\" class=\"${BUTTON} border border-[#ffffff55] text-primary-content max-nav:hidden\">Ver pendientes</a>",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "color-a-mano",
-      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
       "texto": "track.classList.toggle(\"bg-[#ffffff40]\", !on);",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "color-a-mano",
-      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
-      "texto": "sheet.className = \"fixed inset-0 z-[945] flex items-end bg-[#06317640]\";",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "color-a-mano",
-      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
-      "texto": "<button type=\"button\" data-cerrar class=\"${BUTTON} flex-1 border border-[#06317640] text-primary\">Cancelar</button>",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
@@ -1532,18 +1442,6 @@
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
-      "regla": "clases-repetidas",
-      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/index.ts",
-      "texto": "flex gap-3.5 items-center max-tablet:flex-col max-tablet:gap-1.5 max-tablet:items-stretch mb-5",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "clases-repetidas",
-      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/index.ts",
-      "texto": "border-t border-t-base-300 flex flex-wrap gap-2.5 justify-end max-tablet:flex-col-reverse mt-6 pt-[18px]",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/index.ts",
       "texto": "const toBody = (p: DraftAboutCarlosPage): AboutCarlosPageBody => ({",
@@ -1565,18 +1463,6 @@
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/index.ts",
       "texto": "function bind(root: HTMLElement, editor: Editor) {",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "color-a-mano",
-      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/tarjetas.ts",
-      "texto": "[\"rojo\", \"Rojo\", '<span aria-hidden=\"true\" class=\"size-6 rounded-full bg-[#d81919]\"></span>'],",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "color-a-mano",
-      "archivo": "frontend/src/scripts/cuenta/panel/acerca-de-carlos/tarjetas.ts",
-      "texto": "[\"azul\", \"Azul\", '<span aria-hidden=\"true\" class=\"size-6 rounded-full bg-[#284e9c]\"></span>'],",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
@@ -1652,12 +1538,6 @@
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
-      "regla": "clases-repetidas",
-      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/equipo.ts",
-      "texto": "border-t border-t-base-300 flex flex-wrap gap-2.5 justify-end max-tablet:flex-col-reverse mt-6 pt-[18px]",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/equipo.ts",
       "texto": "const grupoDe = (puesto: Puesto | null) => PUESTOS.find((p) => p.clave === puesto)?.grupo;",
@@ -1712,18 +1592,6 @@
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {
-      "regla": "clases-repetidas",
-      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/parroquias.ts",
-      "texto": "flex gap-3.5 items-center max-tablet:flex-col max-tablet:gap-1.5 max-tablet:items-stretch mb-5",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "clases-repetidas",
-      "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/parroquias.ts",
-      "texto": "border-t border-t-base-300 flex flex-wrap gap-2.5 justify-end max-tablet:flex-col-reverse mt-6 pt-[18px]",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/parroquias.ts",
       "texto": "const nombre = (slug: string) => PARROQUIAS.find((p) => p.slug === slug)!.nombre;",
@@ -1751,18 +1619,6 @@
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/scripts/cuenta/panel/mi-equipo/parroquias.ts",
       "texto": "export function renderParishes(body: HTMLElement, rerender: () => void) {",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "clases-repetidas",
-      "archivo": "frontend/src/scripts/cuenta/panel/obras/index.ts",
-      "texto": "flex gap-3.5 items-center max-tablet:flex-col max-tablet:gap-1.5 max-tablet:items-stretch mb-5",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "color-a-mano",
-      "archivo": "frontend/src/scripts/cuenta/panel/obras/index.ts",
-      "texto": "<div class=\"h-2.5 overflow-hidden rounded-full bg-[#06317618]\"><div class=\"h-full rounded-full bg-neutral\" style=\"width: ${percent}%\"></div></div>",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
     {

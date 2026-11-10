@@ -15,13 +15,13 @@ const lista = document.createElement("div");
 lista.id = "avisos-lista";
 lista.setAttribute("role", "region");
 lista.setAttribute("aria-label", "Avisos");
-lista.className = "absolute z-[70] w-[380px] rounded-[4px] border border-t-[3px] border-base-300 border-t-secondary bg-base-100 px-2 pt-3 pb-2 text-primary [box-shadow:0_12px_30px_#0631762e] max-tablet:w-auto";
+lista.className = "absolute z-[70] w-[380px] rounded-card border border-t-[3px] border-base-300 border-t-secondary bg-base-100 px-2 pt-3 pb-2 text-primary [box-shadow:0_12px_30px_#0631762e] max-tablet:w-auto";
 lista.hidden = true;
 let avisos: Aviso[] = [];
 
 /** Fila de la lista: todo el aviso es el enlace, con las clases de los enlaces de DropdownLink.astro. */
 const fila = (a: Aviso) => `
-  <a href="${esc(a.ruta)}" class="flex items-center gap-3 rounded-[3px] px-3 py-3.5 text-[0.82rem] hover:bg-base-200">
+  <a href="${esc(a.ruta)}" class="flex items-center gap-3 rounded-control px-3 py-3.5 text-[0.82rem] hover:bg-base-200">
     <span class="grid size-[34px] shrink-0 place-items-center rounded-full ${a.tipo === "error" ? "bg-error-soft text-error" : "bg-primary-soft text-primary"}">${iconSvg(a.icono, 18)}</span>
     <span class="min-w-0 flex-1 leading-[1.4]"><span class="block">${esc(a.texto)}</span><strong class="mt-0.5 block text-[0.78rem]">${esc(a.accion)}</strong></span>
     ${iconSvg("chevronRight", 18)}

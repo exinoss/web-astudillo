@@ -5,8 +5,8 @@ export const gallery: SectionEditor = {
   html(editor: Editor) {
     const list = editor.page.galeria;
     const items = list.map((g, i) => `
-      <div class="flex min-w-0 flex-col gap-3 rounded-[3px] border border-base-300 p-3">
-        <img src="${esc(thumb(g.foto))}" alt="" class="aspect-[4/3] w-full rounded-[3px] object-cover" />
+      <div class="flex min-w-0 flex-col gap-3 rounded-control border border-base-300 p-3">
+        <img src="${esc(thumb(g.foto))}" alt="" class="aspect-[4/3] w-full rounded-control object-cover" />
         ${field({ id: `galeria-alt-${i}`, label: "Descripción de la foto", value: g.alt, max: LARGOS.descripcionFoto , required: true })}
         ${field({ id: `galeria-pie-${i}`, label: "Pie de foto", value: g.pie, max: LARGOS.acercaDeCarlos.pie , required: true })}
         <div class="flex flex-wrap gap-1">${moveButtons("foto", i, list.length, `foto ${i + 1}`)}</div>

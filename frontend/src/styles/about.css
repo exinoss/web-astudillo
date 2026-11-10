@@ -1,35 +1,6 @@
-.portrait-wrap {
+.profile-carousel {
   position: relative;
-  padding-right: 22px;
-  padding-bottom: 22px;
-}
-
-.portrait-wrap:before {
-  content: "";
-  position: absolute;
-  inset: 35px 0 0 35px;
-  border: 2px solid var(--color-primary);
-  z-index: 0;
-}
-
-.portrait-wrap img {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-}
-
-@media (max-width: 760px) {
-  .portrait-wrap {
-    max-width: 470px;
-    width: 100%;
-    margin: auto;
-  }
-}
-
-.portrait-wrap.profile-carousel {
   isolation: isolate;
-  padding: 0;
   overflow: hidden;
   border: 1px solid #feffff85;
   border-radius: 22px;
@@ -40,11 +11,15 @@
   aspect-ratio: 4 / 5;
 }
 
-.portrait-wrap.profile-carousel:before {
-  display: none;
+@media (max-width: 760px) {
+  .profile-carousel {
+    max-width: 470px;
+    width: 100%;
+    margin: auto;
+  }
 }
 
-.portrait-wrap.profile-carousel img {
+.profile-carousel img {
   position: absolute;
   inset: 0;
   width: 100%;

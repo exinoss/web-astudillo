@@ -1,6 +1,6 @@
 import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type ChatAnswer } from "../../../../lib/data/http/admin-api";
-import { avisarVacios, avisoBorrador, busy, card, DANGER, enlazarLista, esc, field, GHOST, guardarYRecargar, iconSvg, isPending, LABEL, LARGOS, previewButton, state, subirBajar, value } from "../ui";
+import { avisarVacios, avisoBorrador, botonesGuardar, busy, card, DANGER, enlazarLista, esc, field, GHOST, GRUPO, guardarYRecargar, iconSvg, isPending, LABEL, LARGOS, LEYENDA, state, subirBajar, value } from "../ui";
 import { paginasDelSitio } from "./paginas";
 
 const MAX_ITEMS = 60;
@@ -41,8 +41,8 @@ const row = (c: ChatAnswer, i: number, total: number) => `
       ${field({ id: `faq-pregunta-${i}`, label: "Pregunta", value: c.pregunta, max: LARGOS.chat.pregunta, hint: "Si se marca como botón, es el texto del botón." , required: true })}
       ${field({ id: `faq-claves-${i}`, label: "Palabras clave", value: c.palabrasClave, max: LARGOS.chat.palabrasClave, hint: "Separadas por comas." , required: true })}
       ${field({ id: `faq-respuesta-${i}`, label: "Respuesta", value: c.respuesta, max: LARGOS.chat.respuesta, area: true , required: true })}
-      <fieldset class="m-0 flex min-w-0 flex-col gap-3.5 rounded-[3px] border border-base-300 p-4">
-        <legend class="px-1 text-[0.82rem] font-bold">Enlace bajo la respuesta (opcional)</legend>
+      <fieldset class="${GRUPO} m-0 flex flex-col gap-3.5">
+        <legend class="${LEYENDA}">Enlace bajo la respuesta (opcional)</legend>
         <div>
           <label for="faq-enlace-ruta-${i}" class="${LABEL}">¿A qué página lleva?</label>
           <select id="faq-enlace-ruta-${i}" class="campo" ${c.enlaceTexto ? "required" : ""}>${opcionesDePagina(c.enlaceRuta)}</select>
@@ -50,7 +50,7 @@ const row = (c: ChatAnswer, i: number, total: number) => `
         ${field({ id: `faq-enlace-texto-${i}`, label: "Texto del enlace", value: c.enlaceTexto ?? "", max: LARGOS.chat.textoEnlace, hint: "Hasta 60 caracteres. Por ejemplo «Ver propuestas» o «Reportar un problema»." , required: !!c.enlaceRuta })}
         <a data-probar class="${GHOST} self-start" href="${esc(c.enlaceRuta ?? "/")}" target="_blank" rel="noopener" ${c.enlaceRuta ? "" : "hidden"}>Probar el enlace ${iconSvg("external", 17)}</a>
       </fieldset>
-      <div class="rounded-[3px] bg-base-200 p-4">
+      <div class="rounded-control bg-base-200 p-4">
         <span class="mb-2 block text-[0.72rem] font-bold tracking-[0.08em] text-muted uppercase">Así se verá en el chat</span>
         <div data-vista-chat class="chat-message">${vistaChat(c)}</div>
       </div>
@@ -73,9 +73,7 @@ export async function renderChat(section: HTMLElement) {
       <div id="faqs">${items.map((c, i) => row(c, i, items!.length)).join("")}</div>
       <div class="mt-4 flex flex-wrap justify-between gap-2.5 border-t border-t-base-300 pt-[18px] max-tablet:flex-col">
         <button type="button" id="faq-agregar" class="${GHOST}" ${items.length >= MAX_ITEMS ? "disabled" : ""}>${iconSvg("plus", 18)} Añadir pregunta</button>
-        <span class="flex flex-wrap gap-2.5 max-tablet:flex-col-reverse">
-          ${previewButton("/ciudadania/chat/")}
-          <button type="submit" class="button">Guardar borrador</button>
+        <span class="flex flex-wrap gap-2.5 max-tablet:flex-col-reverse">${botonesGuardar("/ciudadania/chat/")}
         </span>
       </div>
     </form>`)}
@@ -133,7 +131,7 @@ async function drawUnanswered(section: HTMLElement) {
     <p class="m-0 mb-2 text-[0.8rem]">Lo que la gente preguntó y el chat no supo responder, de más a menos repetido.</p>
     <ul class="m-0 list-none p-0">${preguntas.map((p) => `
       <li class="flex flex-wrap items-center justify-between gap-2.5 border-t border-t-base-300 py-3 first:border-t-0">
-        <span class="min-w-0 flex-1 text-[0.86rem] [overflow-wrap:anywhere]">${esc(p.ejemplo)} <small class="text-muted">· ${p.veces} ${p.veces === 1 ? "vez" : "veces"}</small></span>
+        <span class="min-w-0 flex-1 text-[0.86rem] wrap-anywhere">${esc(p.ejemplo)} <small class="text-muted">· ${p.veces} ${p.veces === 1 ? "vez" : "veces"}</small></span>
         <span class="flex flex-wrap gap-2">
           <button type="button" class="${GHOST}" data-crear="${esc(p.ejemplo)}">${iconSvg("plus", 16)} Crear respuesta</button>
           <button type="button" class="${GHOST}" data-descartar="${esc(p.clave)}">Descartar</button>

@@ -31,11 +31,7 @@ async function baselineExistingSchema(sql: SQL) {
   const initial = journal.entries[0];
   if (!initial) throw new Error('No hay migración inicial en drizzle/meta/_journal.json');
 
-  const [history] = await sql`SELECT to_regclass('drizzle.__drizzle_migrations') IS NOT NULL AS present`;
-  if (history.present) {
-    const [count] = await sql`SELECT count(*)::int AS total FROM drizzle.__drizzle_migrations`;
-    if (count.total > 0) return;
-  }
+  if (await appliedMigrations(sql) > 0) return;
 
   let found = 0;
   const missing: string[] = [];
@@ -69,14 +65,24 @@ async function baselineExistingSchema(sql: SQL) {
   });
 }
 
-/** Aplica migraciones Drizzle y luego funciones y datos iniciales de PostgreSQL. */
+/** Migraciones de Drizzle ya registradas en la base. */
+async function appliedMigrations(sql: SQL) {
+  const [history] = await sql`SELECT to_regclass('drizzle.__drizzle_migrations') IS NOT NULL AS present`;
+  if (!history.present) return 0;
+  const [count] = await sql`SELECT count(*)::int AS total FROM drizzle.__drizzle_migrations`;
+  return count.total as number;
+}
+
+/** Aplica migraciones Drizzle y luego funciones y datos iniciales de PostgreSQL; devuelve cuántas migraciones eran nuevas. */
 export async function migrate(sql: SQL) {
   await baselineExistingSchema(sql);
+  const before = await appliedMigrations(sql);
   await runDrizzleMigrations(drizzle({ client: sql }), { migrationsFolder });
   await sql.begin(async tx => {
     for (const path of scripts) await tx.unsafe(await Bun.file(path).text());
     await seedContent(tx);
   });
+  return (await appliedMigrations(sql)) - before;
 }
 
 /** Falla al iniciar si faltan migraciones, tablas o funciones requeridas. */

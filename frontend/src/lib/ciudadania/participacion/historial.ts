@@ -5,7 +5,7 @@ import type { ParticipationState } from "../../data/types";
 import { ESTADOS } from "./tipos";
 
 const fecha = new Intl.DateTimeFormat("es-EC", { dateStyle: "medium" });
-const CAJA = "flex flex-col items-center gap-2.5 rounded-[4px] border border-dashed border-base-300 px-4 py-7 text-center text-[0.84rem]";
+const CAJA = "flex flex-col items-center gap-2.5 rounded-card border border-dashed border-base-300 px-4 py-7 text-center text-[0.84rem]";
 
 /** Fila común de «Tus alertas» y «Tus sugerencias»; `miniatura` es el HTML del cuadro de la izquierda. */
 export const filaHistorial = (o: { miniatura: string; titulo: string; estado: ParticipationState; texto: string; creadoEn: string }) => {
@@ -17,14 +17,14 @@ export const filaHistorial = (o: { miniatura: string; titulo: string; estado: Pa
         <strong class="flex items-center gap-1.5 text-[0.88rem]">${o.titulo}</strong>
         <span class="rounded-full px-2.5 py-[3px] text-[0.62rem] font-bold tracking-[0.08em] whitespace-nowrap uppercase ${est.clases}">${est.nombre}</span>
       </div>
-      <p class="mt-1 mb-0 text-[0.78rem] leading-normal [overflow-wrap:anywhere]">${esc(o.texto)}</p>
+      <p class="mt-1 mb-0 text-[0.78rem] leading-normal wrap-anywhere">${esc(o.texto)}</p>
       <time class="mt-1 block text-[0.72rem] text-base-content" datetime="${esc(o.creadoEn)}">${fecha.format(new Date(o.creadoEn))}</time>
     </div>
   </li>`;
 };
 
 export const cuadroIcono = (icono: string) =>
-  `<span class="grid size-14 place-items-center rounded-[4px] bg-neutral-soft text-neutral">${iconSvg(icono, 26)}</span>`;
+  `<span class="grid size-14 place-items-center rounded-card bg-neutral-soft text-neutral">${iconSvg(icono, 26)}</span>`;
 
 /** Pinta el historial del votante en `contenedor`; devuelve la función para volver a cargarlo tras un envío. */
 export function historial<T>(contenedor: HTMLElement, o: {

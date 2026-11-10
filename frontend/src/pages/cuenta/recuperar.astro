@@ -4,6 +4,7 @@ import AccountCard from '../../components/cuenta/AccountCard.astro';
 import AccountField from '../../components/cuenta/AccountField.astro';
 import { LARGOS } from '../../../../backend/src/contracts/limites';
 import AccountStatus from '../../components/cuenta/AccountStatus.astro';
+import EnlaceCuenta from '../../components/cuenta/EnlaceCuenta.astro';
 ---
 
 <AccountShell title="Recupera el acceso" lead="Te enviaremos un enlace para elegir una nueva contraseña.">
@@ -14,7 +15,7 @@ import AccountStatus from '../../components/cuenta/AccountStatus.astro';
         <AccountField id="recovery-email" name="correo" label="Correo electrónico" type="email" placeholder="nombre@ejemplo.com" autocomplete="email" required maxLength={LARGOS.cuenta.correo} />
         <button type="submit" class="button w-full">Enviar instrucciones</button>
       </form>
-      <p class="m-0 mt-5 text-center text-sm text-muted">¿La recordaste? <a class="inline-flex min-h-11 items-center font-bold text-primary underline" href="/cuenta/">Inicia sesión</a></p>
+      <p class="m-0 mt-5 text-center text-sm text-muted">¿La recordaste? <EnlaceCuenta href="/cuenta/" class="font-bold text-primary">Inicia sesión</EnlaceCuenta></p>
     </AccountCard>
   </div>
   <script src="../../scripts/cuenta/recuperar.ts"></script>

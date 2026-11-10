@@ -20,7 +20,7 @@ const { eyebrow, title, icon, iconSize, lead, claves } = Astro.props;
       <h1 class="mt-0 mr-0 mb-5 ml-0 max-w-[950px] max-tablet:text-[3.1rem]" data-editable={claves?.title}>
         {title}
       </h1>
-      <Icon name={icon} size={iconSize} />
+      <Icon name={icon} size={iconSize} class="max-tablet:size-[45px]" />
     </div>
     <p class="lead m-0 whitespace-pre-line text-primary max-tablet:text-[1.05rem]" data-editable={claves?.lead}>{lead}</p>
   </div>

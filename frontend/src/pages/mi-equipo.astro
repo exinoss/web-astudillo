@@ -12,7 +12,7 @@ import { contentRepository } from "../lib/data";
 const { members, parishes } = await contentRepository.getMyTeam();
 const ICONOS: Record<Grupo, string> = { prefecto: "shield", urbanos: "obras", rurales: "leaf" };
 const grupos = GRUPOS.map((g) => ({ ...g, members: members.filter((m) => m.post.grupo === g.clave) })).filter((g) => g.members.length);
-const FRANJA = "flex min-h-[68px] items-center gap-4 rounded-[4px] bg-primary px-6 py-3 text-primary-content max-tablet:gap-3 max-tablet:px-4";
+const FRANJA = "flex min-h-[68px] items-center gap-4 rounded-card bg-primary px-6 py-3 text-primary-content max-tablet:gap-3 max-tablet:px-4";
 const TITULO = "m-0 text-[2rem] max-tablet:text-[1.6rem]";
 ---
 
@@ -47,7 +47,7 @@ const TITULO = "m-0 text-[2rem] max-tablet:text-[1.6rem]";
             <span class="rounded-full bg-accent px-3 py-1 text-[0.8rem] font-bold text-primary">{parishes.length}</span>
             <span aria-hidden="true" class="group-open/parroquias:rotate-180"><Icon name="chevron" size={20} /></span>
           </summary>
-          <ol class="m-0 list-none rounded-b-[4px] border border-t-0 border-base-300 p-0">
+          <ol class="m-0 list-none rounded-b-card border border-t-0 border-base-300 p-0">
             {parishes.map((parish, i) => (
               <li class="border-b border-base-300 last:border-b-0"><Parroquia parish={parish} number={i + 1} /></li>
             ))}

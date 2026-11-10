@@ -8,9 +8,16 @@ import type { Photo } from "../../data/http/admin-api";
 export const LABEL = "mb-[7px] block text-[0.82rem] font-bold";
 export const HINT = "m-0 mt-1.5 text-[0.72rem] leading-normal text-muted";
 export const GHOST =
-  "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] border border-base-300 bg-transparent px-[18px] text-[0.82rem] font-bold text-primary hover:bg-base-200";
+  "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-control border border-base-300 bg-transparent px-[18px] text-[0.82rem] font-bold text-primary hover:bg-base-200";
 export const ICON_BUTTON =
-  "grid size-11 shrink-0 place-items-center rounded-[3px] text-primary hover:bg-base-200 disabled:opacity-40 disabled:hover:bg-transparent";
+  "grid size-11 shrink-0 place-items-center rounded-control text-primary hover:bg-base-200 disabled:opacity-40 disabled:hover:bg-transparent";
+export const BOTON = "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-control px-[18px] text-[0.82rem] font-bold whitespace-nowrap";
+export const PRINCIPAL = `${BOTON} bg-primary text-primary-content disabled:bg-disabled disabled:text-muted`;
+// El color del borde va aparte (`PESTANA_NORMAL`) para que una variante lo cambie sin competir con él.
+export const PESTANA = "min-h-11 rounded-control border bg-base-100 px-4 text-[0.82rem] font-bold aria-pressed:text-white";
+export const PESTANA_NORMAL = "border-base-300 aria-pressed:border-primary aria-pressed:bg-primary";
+export const GRUPO = "min-w-0 rounded-control border border-base-300 p-4";
+export const LEYENDA = "px-1 text-[0.82rem] font-bold";
 
 const UPLOAD = `${GHOST} relative cursor-pointer focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral`;
 
@@ -46,6 +53,24 @@ export function selectField(o: { id: string; label: string; value: string; optio
     ${o.error ? `<p id="${esc(o.id)}-error" class="${MENSAJE_CAMPO}">${esc(o.error)}</p>` : ""}
   </div>`;
 }
+
+/** Fila «etiqueta + lista» que elige qué elemento se edita; `opciones` llega ya escapado. */
+export const selector = (id: string, label: string, opciones: string) => `
+    <div class="mb-5 flex items-center gap-3.5 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-1.5">
+      <label for="${id}" class="text-[0.82rem] font-bold">${label}</label>
+      <select id="${id}" class="campo min-w-[320px] max-tablet:min-w-0">
+        ${opciones}
+      </select>
+    </div>`;
+
+/** Lista desplegable de una barra de filtros; `ancho` es su ancho mínimo en escritorio. */
+export const filtro = (id: string, label: string, options: [string, string][], current: string, ancho: string) => `
+    <div class="flex ${ancho} flex-col gap-1.5 max-tablet:min-w-0">
+      <label for="${id}" class="text-[0.76rem] font-bold">${label}</label>
+      <select id="${id}" class="campo">
+        ${options.map(([v, t]) => `<option value="${esc(v)}" ${v === current ? "selected" : ""}>${esc(t)}</option>`).join("")}
+      </select>
+    </div>`;
 
 /** Enlaza subir, bajar y quitar: `cambio` aplica la mutación (con `movido` si fue un movimiento) y vuelve a dibujar. */
 export function enlazarLista(raiz: ParentNode, lista: (tipo: string) => unknown[], cambio: (mutar: () => void, movido?: { indice: number; paso: string }) => void) {

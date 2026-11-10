@@ -2,6 +2,7 @@
 import AccountShell from '../../components/cuenta/AccountShell.astro';
 import AccountCard from '../../components/cuenta/AccountCard.astro';
 import AccountStatus from '../../components/cuenta/AccountStatus.astro';
+import EnlaceCuenta from '../../components/cuenta/EnlaceCuenta.astro';
 ---
 
 <AccountShell title="Vista previa del borrador" lead="Así quedará el sitio al publicar.">
@@ -10,7 +11,7 @@ import AccountStatus from '../../components/cuenta/AccountStatus.astro';
       <AccountStatus />
       <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
         <button id="vista-previa-reintentar" type="button" class="button" hidden>Reintentar</button>
-        <a class="inline-flex min-h-11 items-center text-[0.82rem] underline" href="/cuenta/panel/">Volver al panel</a>
+        <EnlaceCuenta href="/cuenta/panel/" class="text-[0.82rem]">Volver al panel</EnlaceCuenta>
       </div>
     </AccountCard>
   </div>

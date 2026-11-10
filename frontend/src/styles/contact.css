@@ -1,14 +1,4 @@
-/* Reglas que apuntan a <svg> (`Icon.astro` no reenvía `class`) y el
-   pseudo-elemento que inserta un espacio al ocultar el <br> del titular. */
-
-.network-card-top > svg {
-  color: var(--color-primary);
-}
-
-.network-icon svg {
-  width: 27px;
-  height: 27px;
-}
+/* Pseudo-elemento que inserta un espacio al ocultar el <br> del titular. */
 
 @media (max-width: 1100px) {
   .contact-intro h2 span:before {

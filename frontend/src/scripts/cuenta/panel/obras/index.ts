@@ -1,12 +1,11 @@
 import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type DraftWork } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
-import { STAGE_NAMES, workProgress } from "../../../../lib/ciudadania/obras";
-import { ACEPTA_FOTOS, avisarVacios, avisoBorrador, busy, card, enlazarLista, esc, field, GHOST, guardarYRecargar, iconSvg, isPending, LARGOS, MAX_MB_FOTO, moveButtons, notify, previewButton, state, subirFotos, value } from "../ui";
+import { BARRA_AVANCE, RELLENO_AVANCE, STAGE_CLASSES, STAGE_NAMES, workProgress } from "../../../../lib/ciudadania/obras";
+import { acciones, ACEPTA_FOTOS, avisarVacios, avisoBorrador, busy, card, enlazarLista, esc, field, GHOST, guardarYRecargar, iconSvg, isPending, LARGOS, MAX_MB_FOTO, moveButtons, notify, selector, state, subirFotos, value } from "../ui";
 
 const MAX_MILESTONES = 20;
 const MAX_PHOTOS = 24;
-const STAGE_CLASSES = { "por-iniciar": "border border-base-300 text-primary", "en-ejecucion": "bg-secondary text-primary", terminada: "bg-primary text-primary-content" };
 let selected = "";
 // Una copia por obra: cambiar de obra no pierde lo escrito.
 const trabajo: Record<string, DraftWork> = {};
@@ -43,8 +42,8 @@ export function renderWorks(section: HTMLElement) {
   const fotos = work.fotos.map((f, i) => `
     <div class="flex flex-col gap-2">
       <div class="relative">
-        <img src="${esc(uploadedUrl(f, f.anchos[0]))}" alt="" class="aspect-[4/3] w-full rounded-[4px] object-cover" />
-        <button type="button" data-quitar-foto="${i}" aria-label="Quitar foto ${i + 1}" class="absolute top-1.5 right-1.5 grid size-11 place-items-center rounded-[3px] bg-base-100 text-error">${iconSvg("trash", 17)}</button>
+        <img src="${esc(uploadedUrl(f, f.anchos[0]))}" alt="" class="aspect-[4/3] w-full rounded-card object-cover" />
+        <button type="button" data-quitar-foto="${i}" aria-label="Quitar foto ${i + 1}" class="absolute top-1.5 right-1.5 grid size-11 place-items-center rounded-control bg-base-100 text-error">${iconSvg("trash", 17)}</button>
       </div>
       ${field({ id: `foto-pie-${i}`, label: "Pie de foto", value: f.pie, max: LARGOS.obra.pie , required: true })}
     </div>`).join("");
@@ -55,7 +54,7 @@ export function renderWorks(section: HTMLElement) {
       <div class="flex flex-1 flex-col gap-2">
         <span class="flex items-center justify-between gap-3 text-[0.78rem]"><strong>Avance</strong>
         <span class="rounded-full px-3 py-1 text-[0.66rem] font-bold tracking-[0.08em] uppercase ${STAGE_CLASSES[stage]}">${STAGE_NAMES[stage]}</span></span>
-        <div class="h-2.5 overflow-hidden rounded-full bg-[#06317618]"><div class="h-full rounded-full bg-neutral" style="width: ${percent}%"></div></div>
+        <div class="${BARRA_AVANCE}"><div class="${RELLENO_AVANCE}" style="width: ${percent}%"></div></div>
       </div>
     </div>
     <form id="obra-form" class="grid grid-cols-2 items-start gap-7 max-tablet:grid-cols-1" novalidate>
@@ -72,25 +71,17 @@ export function renderWorks(section: HTMLElement) {
         <span class="mb-2.5 block text-[0.82rem] font-bold">Fotos de evidencia</span>
         <div class="grid grid-cols-2 gap-4 max-tablet:gap-2.5">
           ${fotos}
-          <label class="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-[4px] border-2 border-dashed border-field-border p-2.5 text-center text-neutral focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral ${work.fotos.length >= MAX_PHOTOS ? "hidden" : ""}">
+          <label class="flex aspect-[4/3] cursor-pointer flex-col items-center justify-center gap-2 rounded-card border-2 border-dashed border-field-border p-2.5 text-center text-neutral focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral ${work.fotos.length >= MAX_PHOTOS ? "hidden" : ""}">
             ${iconSvg("upload", 26)}<strong class="text-[0.82rem] text-primary">Subir fotos</strong>
             <span class="text-[0.7rem] text-muted">Varias a la vez · hasta ${MAX_MB_FOTO} MB cada una · medida recomendada 1260 × 990 px o más</span>
             <input id="obra-fotos" type="file" accept="${ACEPTA_FOTOS}" multiple class="sr-only" />
           </label>
         </div>
       </div>
-      <div class="col-span-2 flex flex-wrap justify-end gap-2.5 border-t border-t-base-300 pt-[18px] max-tablet:col-span-1 max-tablet:flex-col-reverse">
-        ${previewButton("/ciudadania/obras-en-ejecucion/")}
-        <button type="submit" class="button">Guardar borrador</button>
-      </div>
+      ${acciones("/ciudadania/obras-en-ejecucion/", "col-span-2 max-tablet:col-span-1")}
     </form>`);
   section.innerHTML = `
-    <div class="mb-5 flex items-center gap-3.5 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-1.5">
-      <label for="obra-selector" class="text-[0.82rem] font-bold">Obra</label>
-      <select id="obra-selector" class="campo min-w-[320px] max-tablet:min-w-0">
-        ${state.draft!.obras.map((w) => `<option value="${esc(w.slug)}" ${w.slug === selected ? "selected" : ""}>${esc(nameOf(w.slug))}</option>`).join("")}
-      </select>
-    </div>
+    ${selector("obra-selector", "Obra", state.draft!.obras.map((w) => `<option value="${esc(w.slug)}" ${w.slug === selected ? "selected" : ""}>${esc(nameOf(w.slug))}</option>`).join(""))}
     ${form}`;
   bind(section);
 }

@@ -10,7 +10,7 @@ import { portrait } from "./retrato";
 import { cards } from "./tarjetas";
 import { marcarNoInsertable, video } from "./video";
 import { PAGINAS_CARLOS } from "../../../../../../backend/src/contracts/acerca-de-carlos";
-import { avisarVacios, avisoBorrador, busy, card, esc, guardarYRecargar, iconSvg, isPending, previewButton, state } from "../ui";
+import { acciones, avisarVacios, avisoBorrador, busy, card, esc, guardarYRecargar, iconSvg, isPending, PESTANA, PESTANA_NORMAL, selector, state } from "../ui";
 
 const SECTIONS: Record<Section, SectionEditor & { name: string }> = {
   tarjetas: { name: "Tarjetas", ...cards },
@@ -28,8 +28,6 @@ let slug: AboutCarlosSlug = "por-que-quiero-ser-alcalde";
 let section: Section = "tarjetas";
 // Una copia por página: cambiar de página o de sección no pierde lo escrito.
 const working: Partial<Record<AboutCarlosSlug, DraftAboutCarlosPage>> = {};
-const TAB = "min-h-11 rounded-[3px] border bg-base-100 px-4 text-[0.82rem] font-bold aria-pressed:text-white";
-const TAB_NORMAL = "border-base-300 aria-pressed:border-primary aria-pressed:bg-primary";
 const TAB_AVISO = "inline-flex items-center gap-1.5 border-error text-error aria-pressed:border-error aria-pressed:bg-error";
 let enfocarEnlace = false;
 let marcados = "";
@@ -80,24 +78,16 @@ export function renderAboutCarlos(root: HTMLElement) {
   const aviso = avisoDe(slug);
   const tabs = info.sections.map((id) => {
     const marcada = id === "video" && aviso;
-    return `<button type="button" data-acerca-seccion="${id}" aria-pressed="${id === section}" class="${TAB} ${marcada ? TAB_AVISO : TAB_NORMAL}"${marcada ? ` aria-label="${SECTIONS[id].name}, tiene un aviso"` : ""}>${SECTIONS[id].name}${marcada ? iconSvg("alert", 16) : ""}</button>`;
+    return `<button type="button" data-acerca-seccion="${id}" aria-pressed="${id === section}" class="${PESTANA} ${marcada ? TAB_AVISO : PESTANA_NORMAL}"${marcada ? ` aria-label="${SECTIONS[id].name}, tiene un aviso"` : ""}>${SECTIONS[id].name}${marcada ? iconSvg("alert", 16) : ""}</button>`;
   }).join("");
   root.innerHTML = `
-    <div class="mb-5 flex items-center gap-3.5 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-1.5">
-      <label for="acerca-pagina" class="text-[0.82rem] font-bold">Página</label>
-      <select id="acerca-pagina" class="campo min-w-[320px] max-tablet:min-w-0">
-        ${Object.entries(PAGES).map(([id, p]) => `<option value="${id}" ${id === slug ? "selected" : ""}>${esc(p.name)}${avisoDe(id as AboutCarlosSlug) ? " · Revisar el video" : ""}</option>`).join("")}
-      </select>
-    </div>
+    ${selector("acerca-pagina", "Página", Object.entries(PAGES).map(([id, p]) => `<option value="${id}" ${id === slug ? "selected" : ""}>${esc(p.name)}${avisoDe(id as AboutCarlosSlug) ? " · Revisar el video" : ""}</option>`).join(""))}
     ${card(info.name, `
       ${avisoBorrador(isPending("Página", info.name))}
       <nav aria-label="Contenido de la página" class="mb-6 flex flex-wrap gap-2">${tabs}</nav>
       <form id="acerca-form" novalidate>
         ${SECTIONS[section].html(editor)}
-        <div class="mt-6 flex flex-wrap justify-end gap-2.5 border-t border-t-base-300 pt-[18px] max-tablet:flex-col-reverse">
-          ${previewButton(`/acerca-de-nosotros/${slug}/`)}
-          <button type="submit" class="button">Guardar borrador</button>
-        </div>
+      ${acciones(`/acerca-de-nosotros/${slug}/`, "mt-6")}
       </form>`)}`;
   bind(root, editor);
   if (section !== "video") return;

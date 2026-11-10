@@ -1,8 +1,9 @@
 import { mountPlayer, videoLinkProblem, videoSource } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
+import { verVideo } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/video";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
 import { adminApi } from "../../../../lib/data/http/admin-api";
 import { VIDEO_URL_MAX } from "../../../../../../backend/src/contracts/video";
-import { busy, DANGER, esc, field, GHOST, HINT, iconSvg, LABEL, LARGOS, notify, thumb, upload, value } from "../ui";
+import { busy, DANGER, esc, field, GHOST, GRUPO, HINT, iconSvg, LABEL, LARGOS, LEYENDA, notify, thumb, upload, value } from "../ui";
 import { onFiles, radios, type Editor, type SectionEditor } from "./comun";
 
 const PROVIDERS = { youtube: "YouTube", facebook: "Facebook", tiktok: "TikTok", vimeo: "Vimeo", mp4: "Archivo MP4" };
@@ -23,7 +24,7 @@ export const video: SectionEditor = {
     const v = editor.page.video ?? EMPTY_VIDEO;
     const fromVideo = `<button type="button" data-video-cover-auto class="${GHOST}" hidden>${iconSvg("image", 17)} Usar la imagen del video</button>`;
     const cover = v.portada
-      ? `<div class="flex flex-wrap items-center gap-3"><img src="${esc(thumb(v.portada))}" alt="" class="h-20 w-14 rounded-[3px] object-cover" />${upload("video-portada", "Cambiar portada")}${fromVideo}<button type="button" data-video-cover-remove class="${GHOST}">Quitar portada</button></div>`
+      ? `<div class="flex flex-wrap items-center gap-3"><img src="${esc(thumb(v.portada))}" alt="" class="h-20 w-14 rounded-control object-cover" />${upload("video-portada", "Cambiar portada")}${fromVideo}<button type="button" data-video-cover-remove class="${GHOST}">Quitar portada</button></div>`
       : `<div class="flex flex-wrap items-center gap-3">${upload("video-portada", "Subir portada")}${fromVideo}</div>`;
     return `<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,0.8fr)] gap-8 max-tablet:grid-cols-1">
       <div class="flex min-w-0 flex-col gap-[18px]">
@@ -34,8 +35,8 @@ export const video: SectionEditor = {
           <p id="video-detectado" role="status" class="m-0 mt-2 flex min-h-7 items-center gap-2 text-[0.85rem] font-bold"></p>
           <p id="video-nota" class="${HINT}" hidden>Si usa música con derechos, en el sitio puede verse sin sonido.</p>
         </div>
-        <fieldset class="min-w-0 rounded-[3px] border border-base-300 p-4">
-          <legend class="px-1 text-[0.82rem] font-bold">Formato</legend>
+        <fieldset class="${GRUPO}">
+          <legend class="${LEYENDA}">Formato</legend>
           <div class="flex flex-wrap gap-3">${radios("video-formato", [
             ["horizontal", "Horizontal", '<span aria-hidden="true" class="h-3 w-5 rounded-[2px] border-2 border-current"></span>'],
             ["vertical", "Vertical", '<span aria-hidden="true" class="h-5 w-3 rounded-[2px] border-2 border-current"></span>'],
@@ -50,10 +51,7 @@ export const video: SectionEditor = {
         <div id="video-escenario" class="relative mx-auto w-full overflow-hidden rounded-[12px] bg-primary ${v.vertical ? "aspect-[9/16] max-w-[300px]" : "aspect-video"}">
           ${v.portada ? `<img src="${esc(uploadedUrl(v.portada, v.portada.anchos.at(-1)!))}" alt="" class="absolute inset-0 h-full w-full object-cover object-[50%_25%]" />` : ""}
           <button data-video-test type="button" class="group absolute inset-0 z-10 flex items-end p-4 text-left text-white [background:linear-gradient(to_top,#063176e6_0%,transparent_45%)]">
-            <span class="flex items-center gap-2.5 text-[0.9rem] font-bold">
-              <span class="grid size-10 shrink-0 place-items-center rounded-full bg-accent text-primary transition-transform group-hover:scale-105"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8 5 11 7-11 7Z" /></svg></span>
-              Ver video
-            </span>
+            ${verVideo("Ver video")}
           </button>
         </div>
         <p class="mt-3 mb-0 text-center text-[0.75rem]">Comprueba que el video se reproduce aquí antes de guardar.</p>

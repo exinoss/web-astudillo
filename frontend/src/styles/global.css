@@ -3,9 +3,7 @@
 @import "./base.css";
 @import "./header.css";
 @import "./hero.css";
-@import "./citizen-strip.css";
 @import "./about.css";
-@import "./proposals.css";
 @import "./detail.css";
 @import "./bloqueo.css";
 @import "./chat.css";
@@ -49,10 +47,20 @@
   @apply grid size-11 place-items-center rounded-full;
 }
 
+@utility py-pagina {
+  @apply pt-8 pb-14 max-tablet:pt-6 max-tablet:pb-10;
+}
+
+@utility tarjeta-acento {
+  @apply rounded-card bg-base-100 shadow-card;
+  border: 1px solid var(--color-card-border);
+  border-top: 4px solid var(--color-secondary);
+}
+
 /* El foco, el valor válido y el error engrosan el borde con una sombra interior, para que el campo no cambie de tamaño.
    El orden importa: el verde y el rojo siguen visibles con el foco. */
 @utility campo {
-  @apply min-h-12 w-full rounded-[3px] border border-field-border bg-base-100 px-3.5 py-3 text-sm text-primary;
+  @apply min-h-12 w-full rounded-control border border-field-border bg-base-100 px-3.5 py-3 text-sm text-primary;
 
   &::placeholder {
     color: var(--color-field-placeholder);
@@ -92,6 +100,7 @@
   --color-base-content: #063176;
   --color-error: #a50913;
   --color-campaign-red: #e0121f;
+  --color-campaign-red-hover: #b80e18;
   --color-field-border: #6b7c93;
   --color-field-placeholder: #52647c;
   --color-footer-muted: #d5e0f2;
@@ -109,7 +118,13 @@
   --color-disabled: #d5dbe3;
   --color-neutral-soft: #eef2f8;
   --color-divider: #cbd5e1;
+  --color-progress-track: #06317618;
+  --color-line-on-dark: #ffffff55;
+  --color-primary-line: #06317640;
   --shadow-card: 0 4px 14px #06317608;
+  /* En px: el ajuste de tamaño de texto cambia el `font-size` de <html> y no debe agrandar las esquinas. */
+  --radius-control: 3px;
+  --radius-card: 4px;
 
   --animate-rebote: rebote 2s ease-in-out infinite;
   @keyframes rebote {

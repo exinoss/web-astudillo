@@ -1,6 +1,6 @@
 import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type DraftProposal } from "../../../../lib/data/http/admin-api";
-import { avisarVacios, avisoBorrador, busy, card, DRAFT_PILL, enlazarLista, esc, field, GHOST, guardarYRecargar, iconSvg, isPending, LABEL, LARGOS, moveButtons, previewButton, state, value } from "../ui";
+import { acciones, avisarVacios, avisoBorrador, busy, card, DRAFT_PILL, enlazarLista, esc, field, GHOST, guardarYRecargar, iconSvg, isPending, LABEL, LARGOS, moveButtons, state, value } from "../ui";
 
 const MAX_KPIS = 6;
 let selected = "";
@@ -57,15 +57,12 @@ function draw(section: HTMLElement, proposals: DraftProposal[], current: DraftPr
         <div id="kpis" class="@container">${kpis.map((k, i) => kpiRow(k, i, kpis.length)).join("")}</div>
         <button type="button" id="kpi-agregar" class="${GHOST} mt-3" ${kpis.length >= MAX_KPIS ? "disabled" : ""}>${iconSvg("plus", 18)} Añadir cifra</button>
       </div>
-      <div class="flex flex-wrap justify-end gap-2.5 border-t border-t-base-300 pt-[18px] max-tablet:flex-col-reverse">
-        ${previewButton(`/propuestas/${current.slug}/`)}
-        <button type="submit" class="button">Guardar borrador</button>
-      </div>
+      ${acciones(`/propuestas/${current.slug}/`)}
     </form>`);
   section.innerHTML = `
     <div class="hidden max-tablet:mb-4 max-tablet:block">${select}</div>
     <div class="grid grid-cols-[300px_minmax(0,1fr)] items-start gap-6 max-tablet:grid-cols-1">
-      <nav class="flex flex-col overflow-hidden rounded-[3px] border border-base-300 max-tablet:hidden" aria-label="Propuestas">${list}</nav>
+      <nav class="flex flex-col overflow-hidden rounded-control border border-base-300 max-tablet:hidden" aria-label="Propuestas">${list}</nav>
       ${form}
     </div>`;
 

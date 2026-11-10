@@ -4,6 +4,7 @@ import Icon from "../components/comun/Icon.astro";
 import Editable from "../components/comun/Editable.astro";
 import Foto from "../components/comun/Foto.astro";
 import BannerPortada from "../components/inicio/BannerPortada.astro";
+import TextosBanner from "../components/inicio/TextosBanner.astro";
 import { getImage, Image } from "astro:assets";
 import { imageView, medidasFoto } from "../lib/comun/fotos";
 import { visorFotos } from "../lib/comun/visor-fotos";
@@ -23,7 +24,6 @@ const MARCO = "relative aspect-[1947/741] w-full max-h-[680px] overflow-hidden m
 const SLIDE = `${MARCO} max-tablet:aspect-[4/3] max-tablet:max-h-none`;
 const BANNER = "h-full w-full object-cover max-tablet:absolute max-tablet:object-[100%_center]";
 const PORTRAIT = "h-full w-[47%] object-cover object-center max-tablet:w-[49%]";
-const OVERLAY = "hidden max-tablet:absolute max-tablet:inset-y-0 max-tablet:right-auto max-tablet:left-0 max-tablet:flex max-tablet:w-[48%] max-tablet:flex-col max-tablet:justify-center max-tablet:bg-accent max-tablet:pt-6 max-tablet:pr-0 max-tablet:pb-5 max-tablet:pl-5";
 const DOT = "relative grid h-[11px] before:absolute before:-inset-x-[7px] before:-inset-y-[18px] before:content-[''] min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5";
 const CONTROLES = "pointer-events-none absolute inset-0 flex items-end justify-center pb-4 max-tablet:pb-2.5";
 const PASTILLA = "pointer-events-auto flex items-center gap-2.5 rounded-full bg-base-100/85 px-3 py-2 max-tablet:gap-3 max-tablet:px-2 max-tablet:py-1";
@@ -107,11 +107,7 @@ const contactos = [
             <Foto class={BANNER} picture={banner.image.photo} mobile={banner.mobile} alt={banner.alt} sizes="100vw" loading={i ? "lazy" : "eager"} fetchpriority={i ? undefined : "high"} />
           )}
           {(!banner.mobile || esPortada(banner)) && (
-            <div class={OVERLAY}>
-              <Editable clave="inicio.carrusel.antetitulo" class="max-tablet:text-[0.56rem] max-tablet:font-bold max-tablet:tracking-[0.08em]" />
-              <Editable as="h2" clave="inicio.carrusel.titulo" class="max-tablet:mx-0 max-tablet:mt-[15px] max-tablet:mb-[18px] max-tablet:text-[clamp(2rem,8vw,3.6rem)]" />
-              <Editable as="p" clave="inicio.carrusel.texto" class="max-tablet:m-0 max-tablet:text-[0.67rem] max-tablet:leading-[1.6] max-tablet:text-primary" />
-            </div>
+            <TextosBanner />
           )}
         </div>
       ))}
@@ -135,7 +131,7 @@ const contactos = [
               href="/acerca-de-nosotros/"
               class="button button-light max-tablet:min-h-10 max-tablet:gap-2.5 max-tablet:p-2.5 max-tablet:text-[0.62rem]"
             >
-              Conoce a Carlos <Icon name="arrow" size={18} />
+              Conoce a Carlos <Icon name="arrow" size={18} class="max-tablet:w-[14px]" />
             </a>
           </div>
           {"original" in portrait.image ? (
@@ -149,11 +145,7 @@ const contactos = [
       <template data-plantilla-banner>
         <div class={SLIDE} role="group" aria-roledescription="diapositiva">
           <img class={BANNER} alt="" decoding="async" />
-          <div class={OVERLAY}>
-            <Editable clave="inicio.carrusel.antetitulo" class="max-tablet:text-[0.56rem] max-tablet:font-bold max-tablet:tracking-[0.08em]" />
-            <Editable as="h2" clave="inicio.carrusel.titulo" class="max-tablet:mx-0 max-tablet:mt-[15px] max-tablet:mb-[18px] max-tablet:text-[clamp(2rem,8vw,3.6rem)]" />
-            <Editable as="p" clave="inicio.carrusel.texto" class="max-tablet:m-0 max-tablet:text-[0.67rem] max-tablet:leading-[1.6] max-tablet:text-primary" />
-          </div>
+          <TextosBanner />
         </div>
       </template>
       {/* En escritorio las flechas quedan a los lados; en móvil se unen a los puntos para no tapar el texto. */}
@@ -202,9 +194,9 @@ const contactos = [
             <a
               class:list={[
                 "citizen-link flex min-h-[70px] items-center gap-[15px] [transition:color_0.18s] max-desktop-sm:gap-2.5 max-tablet:min-h-[80px] max-tablet:gap-[18px]",
-                tone === "rojo" && "rounded-[4px] bg-campaign-red p-[18px] text-primary-content hover:bg-[#b80e18] max-tablet:mb-2.5",
-                tone === "amarillo" && "rounded-[4px] bg-accent p-[18px] text-primary hover:bg-base-100 hover:text-primary max-tablet:mb-2.5",
-                !tone && "rounded-[4px] border border-transparent p-[18px] [background:linear-gradient(var(--color-primary),var(--color-primary))_padding-box,linear-gradient(90deg,var(--color-accent),color-mix(in_srgb,var(--color-accent)_12%,transparent))_border-box] hover:text-accent",
+                tone === "rojo" && "rounded-card bg-campaign-red p-[18px] text-primary-content hover:bg-campaign-red-hover max-tablet:mb-2.5",
+                tone === "amarillo" && "rounded-card bg-accent p-[18px] text-primary hover:bg-base-100 hover:text-primary max-tablet:mb-2.5",
+                !tone && "rounded-card border border-transparent p-[18px] [background:linear-gradient(var(--color-primary),var(--color-primary))_padding-box,linear-gradient(90deg,var(--color-accent),color-mix(in_srgb,var(--color-accent)_12%,transparent))_border-box] hover:text-accent",
               ]}
               href={`/ciudadania/${p.slug}/`}
             >
@@ -214,7 +206,7 @@ const contactos = [
                   tone === "rojo" ? "text-primary-content" : tone ? "text-primary" : "text-accent",
                 ]}
               >
-                <Icon name={p.icon} size={26} />
+                <Icon name={p.icon} size={26} class="max-desktop-sm:w-[23px] max-tablet:w-[27px]" />
               </span>
               <span>
                 <strong class="block text-base">{p.name}</strong>
@@ -227,7 +219,7 @@ const contactos = [
                   {p.description}
                 </small>
               </span>
-              <Icon name="arrow" size={19} />
+              <Icon name="arrow" size={19} class="ml-auto w-[16px] max-tablet:w-[19px]" />
             </a>
           );
         })}
@@ -236,7 +228,7 @@ const contactos = [
   <section class="about-section bg-secondary py-section">
     <div class="site-container grid max-w-[1120px] grid-cols-2 items-center gap-[100px] max-nav:gap-10 max-tablet:grid-cols-1 max-tablet:gap-[42px]">
       <div
-        class="portrait-wrap profile-carousel"
+        class="profile-carousel"
         data-carrusel-editable="piezas"
         aria-roledescription="carrusel"
         aria-label="Carlos Astudillo"
@@ -332,7 +324,7 @@ const contactos = [
           <button type="button" class="relative block cursor-zoom-in" data-visor-abrir={i} aria-label={`Ampliar: ${foto.alt}`}>
             <Foto class={FOTO_EQUIPO} picture={foto.image} alt={foto.alt} sizes="100vw" />
             {/* En pantallas táctiles no hay cursor de lupa: el botón avisa que se puede ampliar. */}
-            <span aria-hidden="true" class="absolute top-2 right-2 hidden size-11 place-items-center rounded-[4px] border border-base-300 bg-base-100/90 text-primary max-tablet:grid"><Icon name="expand" size={20} /></span>
+            <span aria-hidden="true" class="absolute top-2 right-2 hidden size-11 place-items-center rounded-card border border-base-300 bg-base-100/90 text-primary max-tablet:grid"><Icon name="expand" size={20} /></span>
           </button>
         </div>
       ))}
@@ -376,14 +368,14 @@ const contactos = [
       <div class="grid grid-cols-[repeat(4,1fr)] gap-[18px] max-nav:grid-cols-[repeat(2,1fr)] max-tablet:gap-3 max-mobile-xs:grid-cols-[1fr]">
         {proposals.map((p) => (
           <a
-            class="proposal-card flex min-h-[242px] flex-col rounded-[4px] bg-base-100 p-7 text-primary [border-right:1px_solid_var(--color-card-border)] [border-bottom:1px_solid_var(--color-card-border)] [border-left:1px_solid_var(--color-card-border)] [border-top:4px_solid_var(--color-secondary)] shadow-card [transition:transform_0.2s,border-color_0.2s,box-shadow_0.2s] hover:-translate-y-1 hover:border-neutral hover:bg-base-100 hover:[box-shadow:0_8px_20px_#06317618] max-nav:min-h-[220px] max-desktop-sm:p-[23px] max-tablet:min-h-[225px] max-tablet:px-4 max-tablet:py-5 max-mobile-xs:min-h-[210px]"
+            class="proposal-card flex min-h-[242px] flex-col tarjeta-acento p-7 text-primary [transition:transform_0.2s,border-color_0.2s,box-shadow_0.2s] hover:-translate-y-1 hover:border-neutral hover:bg-base-100 hover:[box-shadow:0_8px_20px_#06317618] max-nav:min-h-[220px] max-desktop-sm:p-[23px] max-tablet:min-h-[225px] max-tablet:px-4 max-tablet:py-5 max-mobile-xs:min-h-[210px]"
             href={`/propuestas/${p.slug}/`}
           >
             <div class="card-top mb-7 flex items-center justify-between max-tablet:mb-6">
               <span class="proposal-icon text-neutral">
-                <Icon name={p.icon} size={34} />
+                <Icon name={p.icon} size={34} class="max-tablet:w-[30px]" />
               </span>
-              <Icon name="arrow" size={20} />
+              <Icon name="arrow" size={20} class="-rotate-40 text-primary max-tablet:w-[17px]" />
             </div>
             <span class="mb-2 text-[0.7rem] font-bold tracking-[0.06em] text-primary uppercase max-tablet:leading-[1.4]">
               {p.label}
@@ -397,7 +389,7 @@ const contactos = [
           </a>
         ))}
         <a
-          class="group col-span-full flex items-center gap-6 rounded-[4px] bg-campaign-red px-8 py-6 text-primary-content [transition:transform_0.2s] hover:-translate-y-1 max-tablet:gap-4 max-tablet:px-4 max-tablet:py-5 max-mobile:flex-wrap"
+          class="group col-span-full flex items-center gap-6 rounded-card bg-campaign-red px-8 py-6 text-primary-content [transition:transform_0.2s] hover:-translate-y-1 max-tablet:gap-4 max-tablet:px-4 max-tablet:py-5 max-mobile:flex-wrap"
           href="/ciudadania/sugerencias/"
         >
           <span class="shrink-0"><Icon name="idea" size={34} /></span>
@@ -442,14 +434,14 @@ const contactos = [
             >
               <div class="network-card-top mb-[26px] flex items-center justify-between max-tablet:mb-5 max-mobile:mb-[18px]">
                 <span class:list={["network-icon grid h-[52px] w-[52px] place-items-center rounded-[50%] text-primary-content", s.fondo]}>
-                  <Icon name={s.red} size={32} />
+                  <Icon name={s.red} size={32} class="size-[27px]" />
                 </span>
-                <Icon name="external" size={22} />
+                <Icon name="external" size={22} class="text-primary" />
               </div>
               <h3 class="mb-2 font-sans text-[1.65rem] leading-[1.3] font-bold tracking-[-0.025em] max-tablet:text-[1.6rem]">
                 {s.nombre}
               </h3>
-              {s.usuario && <span class="text-[0.95rem] font-medium text-neutral [overflow-wrap:anywhere]">{s.usuario}</span>}
+              {s.usuario && <span class="text-[0.95rem] font-medium text-neutral wrap-anywhere">{s.usuario}</span>}
               <Editable as="p" clave={s.clave} class="mx-0 mt-[18px] mb-0 text-[1rem] leading-[1.75] text-primary max-tablet:mt-3.5" />
             </a>
           ))}

@@ -8,7 +8,7 @@ interface FotoDelVisor { image: ImageView; alt: string; caption: string }
 
 const REDONDO = "grid size-12 shrink-0 place-items-center rounded-full bg-white/12 text-white transition-colors hover:bg-white/25 disabled:opacity-30 disabled:hover:bg-white/12 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent";
 // La plantilla de cada foto trae las clases de la vista del móvil de la galería; el visor pone las suyas.
-const IMAGEN_AMPLIADA = "max-h-[calc(100dvh-230px)] max-w-full rounded-[4px] object-contain transition-opacity duration-200 max-tablet:max-h-[calc(100dvh-250px)] max-tablet:rounded-none";
+const IMAGEN_AMPLIADA = "max-h-[calc(100dvh-230px)] max-w-full rounded-card object-contain transition-opacity duration-200 max-tablet:max-h-[calc(100dvh-250px)] max-tablet:rounded-none";
 const PIE_AMPLIADO = "mt-3 max-w-[720px] px-4 text-center text-[1rem] leading-normal text-white/90";
 
 /** Diálogo a pantalla completa y una plantilla por foto. Lo abren los botones `data-visor-abrir` del mismo contenedor. */

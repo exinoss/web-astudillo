@@ -1,4 +1,4 @@
-import { adminApi, type AboutCarlosSlug, type DraftAboutCarlosPage, type Photo } from "../../../../lib/data/http/admin-api";
+import { type AboutCarlosSlug, type DraftAboutCarlosPage, type Photo } from "../../../../lib/data/http/admin-api";
 import { enlazarLista, notify, subirFotos } from "../ui";
 
 export type Section = "tarjetas" | "video" | "retrato" | "entrevista" | "galeria";
@@ -12,7 +12,7 @@ export interface SectionEditor {
 }
 
 export const MAX_ITEMS = 6;
-const RADIO = "flex min-h-11 cursor-pointer items-center gap-2 rounded-[3px] border border-base-300 px-3 text-[0.82rem] font-bold has-checked:border-primary has-checked:bg-primary-soft focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral";
+const RADIO = "flex min-h-11 cursor-pointer items-center gap-2 rounded-control border border-base-300 px-3 text-[0.82rem] font-bold has-checked:border-primary has-checked:bg-primary-soft focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral";
 
 export const radios = (name: string, options: [string, string, string][], checked: string) => options.map(([val, label, mark]) => `
   <label class="${RADIO}"><input type="radio" name="${name}" value="${val}" ${val === checked ? "checked" : ""} class="sr-only" />${mark}${label}</label>`).join("");

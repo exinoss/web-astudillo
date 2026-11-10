@@ -1,11 +1,11 @@
 /* Botón desactivado: sin cambios que guardar o publicar, petición en curso, o bloqueado por el límite
-   de intentos (con candado y cuenta atrás, nodos que crea lib/auth/bloqueo.ts). Fuera de las capas
+   de intentos (con candado y cuenta atrás, nodos que crea lib/cuenta/auth/bloqueo.ts). Fuera de las capas
    para ganar al :hover de .button. Con «Reducir movimiento» el candado queda cerrado. */
 
 .button:disabled,
 .button[data-bloqueo] {
   background: var(--color-disabled);
-  color: #50617d;
+  color: var(--color-muted);
   cursor: not-allowed;
   transform: none;
 }

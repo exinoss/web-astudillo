@@ -108,7 +108,7 @@ const cargarHistorial = historial(document.querySelector<HTMLElement>("#historia
     const tipo = TIPOS_ALERTA.find((t) => t.valor === a.tipo)!;
     return filaHistorial({
       miniatura: a.foto
-        ? `<img class="size-14 rounded-[4px] object-cover" src="${esc(a.foto.miniatura)}" alt="Foto de la alerta" loading="lazy" />`
+        ? `<img class="size-14 rounded-card object-cover" src="${esc(a.foto.miniatura)}" alt="Foto de la alerta" loading="lazy" />`
         : cuadroIcono(tipo.icono),
       titulo: `${iconSvg(tipo.icono, 18)} ${esc(tipo.nombre)}`,
       estado: a.estado, texto: `${a.sector} · ${a.descripcion}`, creadoEn: a.creadoEn,

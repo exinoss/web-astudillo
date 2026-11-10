@@ -1,5 +1,5 @@
 import "../campos";
-import { marcarError, MENSAJE_CAMPO } from "../../../lib/comun/campos";
+import { BOTON_MOSTRAR, marcarError, MENSAJE_CAMPO } from "../../../lib/comun/campos";
 import { bloquearMientras } from "../../../lib/comun/cambios";
 import { adminApi } from "../../../lib/data/http/admin-api";
 import { ApiError } from "../../../lib/data/http/api-client";
@@ -22,14 +22,14 @@ export function confirmarIdentidad(o: Confirmacion): Promise<boolean> {
   dialogo.setAttribute("aria-labelledby", "confirmar-titulo");
   dialogo.dataset.confirmacion = "";
   dialogo.className =
-    "m-auto w-[min(460px,calc(100%-32px))] rounded-[3px] border-t-[5px] border-t-accent bg-base-100 p-0 text-primary [box-shadow:0_20px_60px_#06317640] backdrop:bg-primary/55";
+    "m-auto w-[min(460px,calc(100%-32px))] rounded-control border-t-[5px] border-t-accent bg-base-100 p-0 text-primary [box-shadow:0_20px_60px_#06317640] backdrop:bg-primary/55";
   const campo = conContrasenia
     ? `<label for="confirmar-valor" class="${LABEL}">Tu contraseña</label>
       <div class="relative">
         <input id="confirmar-valor" type="password" autocomplete="current-password" maxlength="${LARGOS.cuenta.contrasenia}" required aria-describedby="confirmar-valor-error" class="campo pr-[90px]" />
-        <button type="button" class="password-toggle absolute inset-y-0 right-0 min-h-11 min-w-[76px] px-3 text-[0.82rem] font-bold" data-target="confirmar-valor" aria-label="Mostrar tu contraseña" aria-pressed="false">Mostrar</button>
+        <button type="button" class="${BOTON_MOSTRAR}" data-target="confirmar-valor" aria-label="Mostrar tu contraseña" aria-pressed="false">Mostrar</button>
       </div>`
-    : `<p class="m-0 mb-3 text-[0.88rem]" data-aviso-codigo>Te enviaremos un código a <strong class="[overflow-wrap:anywhere]">${esc(state.profile!.correo)}</strong>.</p>
+    : `<p class="m-0 mb-3 text-[0.88rem]" data-aviso-codigo>Te enviaremos un código a <strong class="wrap-anywhere">${esc(state.profile!.correo)}</strong>.</p>
       <button type="button" class="${GHOST} w-full disabled:cursor-not-allowed disabled:opacity-60" data-enviar-codigo>Enviar código</button>
       <div data-con-codigo hidden>
         <label for="confirmar-valor" class="${LABEL} mt-4">Código</label>

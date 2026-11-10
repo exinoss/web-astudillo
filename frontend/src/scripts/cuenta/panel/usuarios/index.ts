@@ -3,7 +3,7 @@ import { NOMBRES_ROL, nombreRol, ROLES } from "../../../../../../backend/src/con
 import { adminApi, type AdminUser } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { confirmarIdentidad } from "../confirmacion";
-import { busy, cargar, confirmarCambio, DANGER, esc, GHOST, iconSvg, LARGOS, notify, PILL } from "../ui";
+import { busy, cargar, confirmarCambio, DANGER, esc, filtro, GHOST, iconSvg, LARGOS, notify, PILL } from "../ui";
 
 const ROLE_CLASSES: Record<string, string> = { admin: "bg-neutral text-neutral-content", coadmin: "bg-accent text-primary", analista: "border border-base-300", votante: "border border-base-300" };
 const filters = { q: "", rol: "", estado: "", pagina: 1 };
@@ -32,13 +32,6 @@ function actions(u: AdminUser) {
 }
 
 export function renderUsers(section: HTMLElement) {
-  const select = (id: string, label: string, options: [string, string][], current: string) => `
-    <div class="flex min-w-[180px] flex-col gap-1.5 max-tablet:min-w-0">
-      <label for="${id}" class="text-[0.76rem] font-bold">${label}</label>
-      <select id="${id}" class="campo">
-        ${options.map(([v, t]) => `<option value="${v}" ${v === current ? "selected" : ""}>${t}</option>`).join("")}
-      </select>
-    </div>`;
   section.innerHTML = `
     <div class="mb-[18px] flex items-end gap-3.5 max-tablet:grid max-tablet:grid-cols-2 max-tablet:gap-2.5">
       <div class="flex flex-1 flex-col gap-1.5 max-tablet:col-span-2">
@@ -46,8 +39,8 @@ export function renderUsers(section: HTMLElement) {
         <input id="usuarios-buscar" type="search" maxlength="${LARGOS.busquedaUsuarios}" value="${esc(filters.q)}" placeholder="Nombre o correo"
           class="campo" />
       </div>
-      ${select("usuarios-rol", "Rol", [["", "Todos"], ...ROLES.map((r): [string, string] => [r, NOMBRES_ROL[r]])], filters.rol)}
-      ${select("usuarios-estado", "Estado", [["", "Todos"], ["activo", "Activas"], ["bloqueado", "Desactivadas"]], filters.estado)}
+      ${filtro("usuarios-rol", "Rol", [["", "Todos"], ...ROLES.map((r): [string, string] => [r, NOMBRES_ROL[r]])], filters.rol, "min-w-[180px]")}
+      ${filtro("usuarios-estado", "Estado", [["", "Todos"], ["activo", "Activas"], ["bloqueado", "Desactivadas"]], filters.estado, "min-w-[180px]")}
       <button type="button" id="usuarios-limpiar" class="${GHOST} max-tablet:col-span-2">Limpiar filtros</button>
     </div>
     <p id="usuarios-total" class="m-0 mb-2.5 text-[0.76rem] text-muted"></p>
@@ -79,22 +72,22 @@ async function load(section: HTMLElement) {
   section.querySelector("#usuarios-total")!.textContent = `${data.total} ${data.total === 1 ? "cuenta" : "cuentas"}`;
   const name = (u: AdminUser) => esc(u.nombresCompletos ?? "Sin nombre");
   const table = `
-    <div class="overflow-hidden rounded-[3px] border border-base-300 bg-base-100 max-tablet:hidden">
+    <div class="overflow-hidden rounded-control border border-base-300 bg-base-100 max-tablet:hidden">
       <div class="grid grid-cols-[1.25fr_1fr_110px_120px_2.1fr] gap-3.5 bg-primary-soft px-5 py-3 text-[0.7rem] font-bold tracking-[0.1em] uppercase">
         <span>Nombre</span><span>Correo</span><span>Rol</span><span>Estado</span><span>Acciones</span>
       </div>
       ${data.usuarios.map((u) => `
         <div class="grid min-h-16 grid-cols-[1.25fr_1fr_110px_120px_2.1fr] items-center gap-3.5 border-t border-t-base-300 px-5 py-2.5 text-[0.88rem]">
-          <strong class="[overflow-wrap:anywhere]">${name(u)}</strong><span class="text-muted [overflow-wrap:anywhere]">${esc(u.correo)}</span>
+          <strong class="wrap-anywhere">${name(u)}</strong><span class="text-muted wrap-anywhere">${esc(u.correo)}</span>
           <span>${rolePill(u)}</span><span>${statePill(u)}</span>${actions(u)}
         </div>`).join("")}
     </div>`;
   const cards = `
     <div class="hidden flex-col gap-3 max-tablet:flex">
       ${data.usuarios.map((u) => `
-        <div class="flex flex-col gap-2.5 rounded-[3px] border border-base-300 bg-base-100 p-3.5">
+        <div class="flex flex-col gap-2.5 rounded-control border border-base-300 bg-base-100 p-3.5">
           <div class="flex justify-between gap-2.5">
-            <span class="flex min-w-0 flex-col gap-0.5"><strong class="text-[0.92rem]">${name(u)}</strong><span class="text-[0.78rem] text-muted [overflow-wrap:anywhere]">${esc(u.correo)}</span></span>
+            <span class="flex min-w-0 flex-col gap-0.5"><strong class="text-[0.92rem]">${name(u)}</strong><span class="text-[0.78rem] text-muted wrap-anywhere">${esc(u.correo)}</span></span>
             <span class="flex flex-col items-end gap-1.5">${rolePill(u)}${u.estado === "activo" ? "" : statePill(u)}</span>
           </div>
           ${actions(u)}

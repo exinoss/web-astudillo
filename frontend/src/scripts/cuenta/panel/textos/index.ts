@@ -2,7 +2,7 @@ import { TEXTOS, type TextKey } from "../../../../../../backend/src/contracts/te
 import { adminApi } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { renderSocial } from "../redes";
-import { busy, DRAFT_PILL, esc, GHOST, guardarYRecargar, iconSvg, isPending, PILL, state } from "../ui";
+import { busy, DRAFT_PILL, esc, filtro, GHOST, guardarYRecargar, iconSvg, isPending, PILL, state } from "../ui";
 
 const PAGE_SIZE = 20;
 const filters = { q: "", lugar: "", estado: "", pagina: 1 };
@@ -10,13 +10,6 @@ const places = [...new Set(Object.values(TEXTOS).map((t) => t.lugar))];
 const normalize = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
 export function renderTexts(section: HTMLElement) {
-  const select = (id: string, label: string, options: [string, string][], current: string) => `
-    <div class="flex min-w-[200px] flex-col gap-1.5 max-tablet:min-w-0">
-      <label for="${id}" class="text-[0.76rem] font-bold">${label}</label>
-      <select id="${id}" class="campo">
-        ${options.map(([v, t]) => `<option value="${esc(v)}" ${v === current ? "selected" : ""}>${esc(t)}</option>`).join("")}
-      </select>
-    </div>`;
   section.innerHTML = `
     <div id="panel-redes" class="mb-7"></div>
     <h2 class="m-0 mb-4 text-[2rem] leading-[1.05] max-tablet:text-[1.8rem]">Textos del sitio</h2>
@@ -26,10 +19,10 @@ export function renderTexts(section: HTMLElement) {
         <input id="textos-buscar" type="search" value="${esc(filters.q)}" placeholder="Texto o página"
           class="campo" />
       </div>
-      ${select("textos-lugar", "Página", [["", "Todas"], ...places.map((p): [string, string] => [p, p])], filters.lugar)}
-      ${select("textos-estado", "Estado", [["", "Todos"], ["borrador", "Borrador"], ["cambiado", "Cambiado"], ["original", "Original"]], filters.estado)}
+      ${filtro("textos-lugar", "Página", [["", "Todas"], ...places.map((p): [string, string] => [p, p])], filters.lugar, "min-w-[200px]")}
+      ${filtro("textos-estado", "Estado", [["", "Todos"], ["borrador", "Borrador"], ["cambiado", "Cambiado"], ["original", "Original"]], filters.estado, "min-w-[200px]")}
     </div>
-    <div id="textos-lista" class="rounded-[3px] border border-base-300 bg-base-100"></div>
+    <div id="textos-lista" class="rounded-control border border-base-300 bg-base-100"></div>
     <div id="textos-paginas"></div>`;
   const input = section.querySelector<HTMLInputElement>("#textos-buscar")!;
   let timer = 0;
