@@ -2,7 +2,7 @@ import { TEXTOS, type TextKey } from "../../../../lib/comun/contenido/textos";
 import { adminApi } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { renderSocial } from "../redes";
-import { BORRADOR_GUARDADO, busy, confirmarCambio, DRAFT_PILL, esc, GHOST, iconSvg, isPending, PILL, reloadDraft, reloadPending, state } from "../ui";
+import { busy, DRAFT_PILL, esc, GHOST, guardarYRecargar, iconSvg, isPending, PILL, state } from "../ui";
 
 const PAGE_SIZE = 20;
 const filters = { q: "", lugar: "", estado: "", pagina: 1 };
@@ -69,12 +69,9 @@ function drawList(section: HTMLElement) {
       </span>
     </div>`).join("") : `<p class="m-0 px-5 py-6 text-[0.86rem]">Ningún texto coincide con la búsqueda.</p>`;
   list.querySelectorAll<HTMLButtonElement>("[data-original]").forEach((b) => b.addEventListener("click", () =>
-    busy(b, async () => {
-      await adminApi.saveText(b.dataset.original!, null, state.draft!.versiones.textos[b.dataset.original!] ?? null);
-      await Promise.all([reloadDraft(), reloadPending()]);
-      drawList(section);
-      confirmarCambio(BORRADOR_GUARDADO);
-    })));
+    busy(b, () => guardarYRecargar(
+      () => adminApi.saveText(b.dataset.original!, null, state.draft!.versiones.textos[b.dataset.original!] ?? null),
+      () => drawList(section)))));
   renderPagination(section.querySelector("#textos-paginas")!, { total: rows.length, pagina: filters.pagina, porPagina: PAGE_SIZE }, (p) => {
     filters.pagina = p;
     drawList(section);

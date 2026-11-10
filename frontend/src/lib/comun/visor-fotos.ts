@@ -1,8 +1,10 @@
+import { deslizar } from "./carrusel";
+import { sinMovimiento } from "./movimiento";
 import type { ImageView } from "./fotos";
 import { esc, img } from "./html";
 import { iconSvg } from "./iconos";
 
-export interface FotoDelVisor { image: ImageView; alt: string; caption: string }
+interface FotoDelVisor { image: ImageView; alt: string; caption: string }
 
 const REDONDO = "grid size-12 shrink-0 place-items-center rounded-full bg-white/12 text-white transition-colors hover:bg-white/25 disabled:opacity-30 disabled:hover:bg-white/12 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent";
 // La plantilla de cada foto trae las clases de la vista del móvil de la galería; el visor pone las suyas.
@@ -48,7 +50,6 @@ export function montarVisor(root: HTMLElement, alCambiar?: (actual: number, foto
   const miniaturas = [...dialogo.querySelectorAll<HTMLButtonElement>("[data-visor-miniatura]")];
   let actual = 0;
   let origen: HTMLElement | null = null;
-  const quieto = () => document.documentElement.classList.contains("reduce-motion");
   const foto = () => plantillas[actual].content.cloneNode(true) as DocumentFragment;
   const ampliada = () => {
     const figura = document.createElement("figure");
@@ -57,7 +58,7 @@ export function montarVisor(root: HTMLElement, alCambiar?: (actual: number, foto
     const imagen = figura.querySelector("img")!;
     imagen.className = IMAGEN_AMPLIADA;
     figura.querySelector("figcaption")!.className = PIE_AMPLIADO;
-    if (!quieto()) {
+    if (!sinMovimiento()) {
       imagen.style.opacity = "0";
       requestAnimationFrame(() => requestAnimationFrame(() => { imagen.style.opacity = "1"; }));
     }
@@ -94,14 +95,4 @@ export function montarVisor(root: HTMLElement, alCambiar?: (actual: number, foto
   deslizar(escena, (cuanto) => ir(actual + cuanto));
   pintar();
   return { abrir, ir, get actual() { return actual; } };
-}
-
-/** Deslizar en horizontal llama a `paso` con -1 o 1. */
-export function deslizar(zona: HTMLElement, paso: (cuanto: -1 | 1) => void) {
-  let inicio = 0;
-  zona.addEventListener("touchstart", (e) => { inicio = e.touches[0].clientX; }, { passive: true });
-  zona.addEventListener("touchend", (e) => {
-    const distancia = e.changedTouches[0].clientX - inicio;
-    if (Math.abs(distancia) > 45) paso(distancia < 0 ? 1 : -1);
-  }, { passive: true });
 }

@@ -1,6 +1,6 @@
-import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
+import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type ChatAnswer } from "../../../../lib/data/http/admin-api";
-import { avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DANGER, DRAFT_PILL, esc, field, GHOST, ICON_BUTTON, iconSvg, isPending, LABEL, LARGOS, previewButton, reloadDraft, reloadPending, state, value } from "../ui";
+import { avisarVacios, avisoBorrador, busy, card, DANGER, enlazarLista, esc, field, GHOST, guardarYRecargar, iconSvg, isPending, LABEL, LARGOS, previewButton, state, subirBajar, value } from "../ui";
 import { paginasDelSitio } from "./paginas";
 
 const MAX_ITEMS = 60;
@@ -58,9 +58,8 @@ const row = (c: ChatAnswer, i: number, total: number) => `
         <input type="checkbox" id="faq-destacada-${i}" class="size-5 accent-neutral" ${c.destacada ? "checked" : ""} /> Mostrar como botón de respuesta rápida
       </label>
       <div class="flex flex-wrap gap-1">
-        <button type="button" class="${ICON_BUTTON}" data-mover="-1" data-indice="${i}" aria-label="Subir pregunta ${i + 1}" ${i === 0 ? "disabled" : ""}>${iconSvg("up", 18)}</button>
-        <button type="button" class="${ICON_BUTTON}" data-mover="1" data-indice="${i}" aria-label="Bajar pregunta ${i + 1}" ${i === total - 1 ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>
-        <button type="button" class="${DANGER}" data-quitar="${i}">${iconSvg("trash", 18)} Quitar pregunta</button>
+        ${subirBajar("pregunta", i, total, `pregunta ${i + 1}`)}
+        <button type="button" class="${DANGER}" data-remove="pregunta" data-index="${i}">${iconSvg("trash", 18)} Quitar pregunta</button>
       </div>
     </div>
   </details>`;
@@ -68,7 +67,7 @@ const row = (c: ChatAnswer, i: number, total: number) => `
 export async function renderChat(section: HTMLElement) {
   items ??= structuredClone(state.draft!.chat);
   section.innerHTML = `${card("Preguntas frecuentes", `
-    ${isPending("Chat", "Preguntas frecuentes") ? `<p class="-mt-2 mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
+    ${avisoBorrador(isPending("Chat", "Preguntas frecuentes"))}
     <p class="m-0 mb-3 text-[0.85rem]">Cada respuesta se muestra cuando la pregunta de la persona contiene sus palabras clave.</p>
     <form id="chat-form-panel" novalidate>
       <div id="faqs">${items.map((c, i) => row(c, i, items!.length)).join("")}</div>
@@ -103,14 +102,10 @@ function bind(section: HTMLElement) {
   };
   form.addEventListener("input", actualizarVista);
   form.addEventListener("change", actualizarVista);
-  form.querySelectorAll<HTMLButtonElement>("[data-mover]").forEach((b) => b.addEventListener("click", () => edit(() => {
-    const i = Number(b.dataset.indice), j = i + Number(b.dataset.mover);
-    [items![i], items![j]] = [items![j], items![i]];
-    open = j;
-  })));
-  form.querySelectorAll<HTMLButtonElement>("[data-quitar]").forEach((b) => b.addEventListener("click", () => edit(() => {
-    items!.splice(Number(b.dataset.quitar), 1);
-  })));
+  enlazarLista(form, () => items!, (mutar, movido) => edit(() => {
+    mutar();
+    if (movido) open = movido.indice;
+  }));
   form.querySelector("#faq-agregar")!.addEventListener("click", () => edit(() => {
     items!.push({ pregunta: "", palabrasClave: "", respuesta: "", enlaceTexto: null, enlaceRuta: null, destacada: false });
     open = items!.length - 1;
@@ -124,13 +119,10 @@ function bind(section: HTMLElement) {
       return void renderChat(section).then(() =>
         avisarVacios(section, "Completa pregunta, palabras clave y respuesta; si eliges una página, escribe también el texto del enlace."));
     }
-    void busy(form.querySelector("button[type=submit]"), async () => {
-      await adminApi.saveChat(items!, state.draft!.versiones.chat);
-      await Promise.all([reloadDraft(), reloadPending()]);
+    void busy(form.querySelector("button[type=submit]"), () => guardarYRecargar(() => adminApi.saveChat(items!, state.draft!.versiones.chat), () => {
       items = null;
-      await renderChat(section);
-      confirmarCambio(BORRADOR_GUARDADO);
-    });
+      return renderChat(section);
+    }));
   });
 }
 

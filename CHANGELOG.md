@@ -6,9 +6,17 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+## [1.4.2] - 2026-11-10
+
 ### Changed
 
 - Panel, Usuarios: el filtro por rol incluye «Analista».
+- Galería de fotos de «Conoce más» y «Por qué quiero ser alcalde» y visor de fotos: cambian de foto al deslizar el dedo en horizontal, como los carruseles. Al desplazar la página hacia arriba o hacia abajo ya no cambian de foto sin querer.
+
+### Fixed
+
+- Modo edición, carruseles de la portada: después de subir imágenes, los botones «Cancelar» y «Guardar borrador» ya no se desplazan hacia arriba ni desaparecen al escribir las descripciones.
+- Modo edición, carruseles de la portada: al guardar sin describir una imagen, cada descripción que falta se marca en rojo con «Completa este campo.», como en el panel.
 
 ## [1.4.1] - 2026-11-09
 
@@ -187,7 +195,8 @@ Primera versión numerada: recoge todo lo hecho desde el inicio del proyecto.
 - Las respuestas simuladas de alertas, sugerencias y chat.
 - Dependencia `daisyui`: no se usaba ninguna de sus clases ni su mecanismo de temas; sus tokens de color pasaron a `@theme`.
 
-[Unreleased]: https://github.com/exinoss/web-astudillo/compare/v1.4.1...HEAD
+[Unreleased]: https://github.com/exinoss/web-astudillo/compare/v1.4.2...HEAD
+[1.4.2]: https://github.com/exinoss/web-astudillo/compare/v1.4.1...v1.4.2
 [1.4.1]: https://github.com/exinoss/web-astudillo/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/exinoss/web-astudillo/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/exinoss/web-astudillo/compare/v1.2.0...v1.3.0

@@ -1,6 +1,6 @@
 // Botones y destinos de enlaces no están aquí a propósito (salvo las redes, en redes.ts).
 // Sin dependencias: también lo usa el panel en el navegador.
-export interface TextDefinition {
+interface TextDefinition {
   lugar: string;
   campo: string;
   max: number;

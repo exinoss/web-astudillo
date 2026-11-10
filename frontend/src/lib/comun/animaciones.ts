@@ -5,6 +5,8 @@ import reproductorEnHiloUrl from "lottie-web/build/player/lottie_canvas_worker.m
 import loaderUrl from "../../assets/animated/loader-vota6.min.json?url";
 import marcaUrl from "../../assets/animated/marca-vota6.min.json?url";
 import mercadoLocalUrl from "../../assets/animated/logo-mercado-local.min.json?url";
+import { cargarScript, reintentable } from "./carga-scripts";
+import { alCambiarMovimiento, sinMovimiento } from "./movimiento";
 
 interface Ficha {
   url: string;
@@ -20,29 +22,14 @@ const ANIMACIONES = {
 export type Animacion = keyof typeof ANIMACIONES;
 type Activa = { item: AnimationItem; quieto: number; bucle?: AnimationSegment };
 
-const html = document.documentElement;
-export const sinMovimiento = () => html.classList.contains("reduce-motion");
 export const ahorroDatos = (navigator as any).connection?.saveData === true;
 
-let reproductor: Promise<LottiePlayer> | undefined;
-let intentos = 0;
 const datos = new Map<Animacion, Promise<unknown>>();
 const activas = new Set<Activa>();
 
 /** Carga lottie_light como script clásico; si falla, la próxima llamada lo reintenta. */
-function cargarReproductor() {
-  return (reproductor ??= new Promise<LottiePlayer>((resolver, rechazar) => {
-    const script = document.createElement("script");
-    script.src = intentos ? `${reproductorUrl}?reintento=${intentos}` : reproductorUrl;
-    script.onload = () => resolver((window as any).lottie);
-    script.onerror = rechazar;
-    document.head.append(script);
-  }).catch((error) => {
-    reproductor = undefined;
-    intentos++;
-    throw error;
-  }));
-}
+const cargarReproductor = reintentable((conReintento) =>
+  cargarScript(conReintento(reproductorUrl)).then(() => (window as any).lottie as LottiePlayer));
 
 function cargarDatos(animacion: Animacion) {
   let promesa = datos.get(animacion);
@@ -102,35 +89,20 @@ export async function reproducir(
   }
 }
 
-let reproductorEnHilo: Promise<LottiePlayer> | undefined;
-let intentosEnHilo = 0;
-
 /** La versión que dibuja en un worker con OffscreenCanvas; sin él, dibuja en la página. */
-function cargarReproductorEnHilo() {
-  return (reproductorEnHilo ??= (async () => {
-    const url = intentosEnHilo ? `${reproductorEnHiloUrl}?reintento=${intentosEnHilo}` : reproductorEnHiloUrl;
-    const respuesta = await fetch(url);
-    if (!respuesta.ok) throw new Error(`lottie en worker: ${respuesta.status}`);
-    // Es UMD: con un `module` propio no pisa la global `lottie` de lottie_light.
-    const envuelto = `(() => { const module = { exports: {} };\n${await respuesta.text()}\n;self.__lottieEnHilo = module.exports; })();`;
-    const blob = URL.createObjectURL(new Blob([envuelto], { type: "text/javascript" }));
-    await new Promise((resolver, rechazar) => {
-      const script = document.createElement("script");
-      script.src = blob;
-      script.onload = resolver;
-      script.onerror = rechazar;
-      document.head.append(script);
-    });
-    URL.revokeObjectURL(blob);
-    const lottie = (window as any).__lottieEnHilo as LottiePlayer;
-    delete (window as any).__lottieEnHilo;
-    return lottie;
-  })().catch((error) => {
-    reproductorEnHilo = undefined;
-    intentosEnHilo++;
-    throw error;
-  }));
-}
+const cargarReproductorEnHilo = reintentable(async (conReintento) => {
+  const url = conReintento(reproductorEnHiloUrl);
+  const respuesta = await fetch(url);
+  if (!respuesta.ok) throw new Error(`lottie en worker: ${respuesta.status}`);
+  // Es UMD: con un `module` propio no pisa la global `lottie` de lottie_light.
+  const envuelto = `(() => { const module = { exports: {} };\n${await respuesta.text()}\n;self.__lottieEnHilo = module.exports; })();`;
+  const blob = URL.createObjectURL(new Blob([envuelto], { type: "text/javascript" }));
+  await cargarScript(blob);
+  URL.revokeObjectURL(blob);
+  const lottie = (window as any).__lottieEnHilo as LottiePlayer;
+  delete (window as any).__lottieEnHilo;
+  return lottie;
+});
 
 /** Como reproducir(), pero en un worker: sigue moviéndose aunque la página esté bloqueada. Resuelve cuando ya se ve. */
 export async function reproducirEnHilo(contenedor: HTMLElement, animacion: Animacion) {
@@ -180,10 +152,7 @@ function aplicarMovimiento({ item, quieto, bucle }: Activa) {
   else item.play();
 }
 
-new MutationObserver(() => activas.forEach(aplicarMovimiento)).observe(html, {
-  attributes: true,
-  attributeFilter: ["class"],
-});
+alCambiarMovimiento(() => activas.forEach(aplicarMovimiento));
 
 // Quien empieza a rellenar un formulario probablemente lo enviará: el loader queda listo antes.
 document.addEventListener("focusin", function alEnfocar(evento) {

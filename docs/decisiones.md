@@ -13,7 +13,7 @@ Por qué: decidido por el responsable del proyecto; no se reabre salvo que él l
 Por qué: ya pasó por la aprobación del cliente. Las propuestas visuales se muestran con capturas en `design/` antes de implementarse (regla en `AGENTS.md`).
 
 **D-003 · 2026-10-22 · Se mantiene el monolito modular (rutas → servicios → funciones PostgreSQL); sin capas formales, microservicios ni Redis.**
-Por qué: sirve al alcance actual. Detalle: `docs/auditoria-arquitectura.md`.
+Por qué: sirve al alcance actual.
 
 **D-004 · 2026-10-22 · Las funciones SQL se dividen por módulo en `backend/database/funciones/`, cargadas en orden por `src/db/migrate.ts`.**
 Por qué: un único `fn.sql` de 1.300 líneas mezclaba todos los dominios. Las definiciones resultantes son idénticas.
@@ -23,7 +23,7 @@ Por qué: un único `fn.sql` de 1.300 líneas mezclaba todos los dominios. Las d
 **D-005 · 2026-10-01 · El chat responde con preguntas frecuentes editables desde el panel, sin IA; la voz usa la Web Speech API del navegador.**
 
 **D-006 · 2026-10-06 · El video de las páginas de Carlos va solo por enlace (Facebook, TikTok, YouTube, Vimeo o MP4 enlazado); no se suben archivos de video.**
-Por qué: evita FFmpeg, procesos aparte y almacenamiento de video en el servidor. Detalle: `docs/plan-paginas-carlos.md`.
+Por qué: evita FFmpeg, procesos aparte y almacenamiento de video en el servidor.
 
 **D-007 · 2026-10-24 · La portada del video se toma de su plataforma al pegar el enlace y se guarda como una foto subida; nunca se enlaza. La portada manual se mantiene.**
 Por qué: enlazarla enviaría la visita a la plataforma antes de pulsar el video, y los enlaces de Facebook y TikTok caducan. Facebook y TikTok solo la entregan a su rastreador, así que puede dejar de funcionar; entonces se sube a mano.
@@ -52,7 +52,7 @@ Por qué: tapaba textos y la línea de tiempo, y es una descarga que no aporta e
 Por qué: la portada debía verse idéntica hasta que alguien la cambie, sin subir las imágenes del cliente a mano en producción, y la semilla es el camino del contenido inicial. Detalle: [cómo funciona la publicación](como-funciona-la-publicacion.md), §3.2, y `backend/src/contracts/inicio.ts`.
 
 **D-019 · 2026-10-31 · Una propuesta nueva se añade al final de `propuestas` y `obras` de la semilla, completa, y el código de la semilla no cambia. En una base con datos, el despliegue crea la propuesta y su obra, pero sus cifras y etapas quedan vacías y se llenan desde el panel antes de publicar.**
-Por qué: la semilla añade lo que falta por clave (propuestas, obras, textos) y solo carga las listas (cifras, etapas, biografía, chat) en una tabla vacía; cambiar eso arriesgaría sobrescribir o resucitar lo que editan los administradores. El panel no crea propuestas, así que la semilla es su único camino. Si la propuesta enlaza un sitio propio, su tarjeta va en `proposalSites` de `frontend/src/lib/data/presentation.ts`, como los modelos 3D en `proposalModels`.
+Por qué: la semilla añade lo que falta por clave (propuestas, obras, textos) y solo carga las listas (cifras, etapas, biografía, chat) en una tabla vacía; cambiar eso arriesgaría sobrescribir o resucitar lo que editan los administradores. El panel no crea propuestas, así que la semilla es su único camino. Si la propuesta enlaza un sitio propio, su tarjeta va en `proposalSites` de `frontend/src/lib/comun/presentacion.ts`, como los modelos 3D en `proposalModels`.
 
 **D-021 · 2026-11-04 · El modelo del estadio se sirve con las caras superpuestas resueltas y sin triángulos sin área (30 MB, 9,6 M de triángulos), y no se simplifica más. La versión ligera mientras se gira queda registrada para cuando haga falta.**
 Por qué: quita las rayas del borde de la pista sin cambiar nada más de lo que se ve y da casi toda la fluidez que faltaba. Simplificar con meshoptimizer estropeó las gradas, no cumplió su tope de error y no redujo el parpadeo. La versión ligera exige una segunda descarga y código propio en el visor: solo se hará si en equipos reales sigue habiendo tirones. Detalle: `docs/plan-modelos-3d.md` («Lo que enseñó el estadio»).

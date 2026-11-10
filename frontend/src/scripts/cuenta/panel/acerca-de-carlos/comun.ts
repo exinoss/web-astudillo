@@ -1,5 +1,5 @@
 import { adminApi, type AboutCarlosSlug, type DraftAboutCarlosPage, type Photo } from "../../../../lib/data/http/admin-api";
-import { notify, subirFotos } from "../ui";
+import { enlazarLista, notify, subirFotos } from "../ui";
 
 export type Section = "tarjetas" | "video" | "retrato" | "entrevista" | "galeria";
 
@@ -41,16 +41,10 @@ export function onFiles(input: HTMLInputElement | null, limit: number, use: (fot
 /** `onMove` recibe la nueva posición del elemento movido. */
 export function bindListActions(form: HTMLElement, editor: Editor, capture: () => void, onMove?: (index: number) => void) {
   const lists = { tarjeta: editor.page.tarjetas, pregunta: editor.page.entrevista, foto: editor.page.galeria } as Record<string, unknown[]>;
-  form.querySelectorAll<HTMLButtonElement>("[data-move]").forEach((b) => b.addEventListener("click", () => {
+  enlazarLista(form, (tipo) => lists[tipo], (mutar, movido) => {
     capture();
-    const list = lists[b.dataset.move!], i = Number(b.dataset.index), j = i + Number(b.dataset.step);
-    [list[i], list[j]] = [list[j], list[i]];
-    onMove?.(j);
+    mutar();
+    if (movido) onMove?.(movido.indice);
     editor.rerender();
-  }));
-  form.querySelectorAll<HTMLButtonElement>("[data-remove]").forEach((b) => b.addEventListener("click", () => {
-    capture();
-    lists[b.dataset.remove!].splice(Number(b.dataset.index), 1);
-    editor.rerender();
-  }));
+  });
 }

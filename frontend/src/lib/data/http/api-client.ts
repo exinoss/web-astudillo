@@ -50,3 +50,6 @@ export async function apiRequest<T>(
   }
   return response.json() as Promise<T>;
 }
+
+/** Solicitud con sesión: si caducó, la renueva y reintenta una vez. */
+export const sessionRequest = <T>(path: string, method = 'GET', body?: object | FormData) => apiRequest<T>(path, method, body, true);

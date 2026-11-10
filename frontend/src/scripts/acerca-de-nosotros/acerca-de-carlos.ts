@@ -1,6 +1,9 @@
-import { deslizar, montarVisor } from "../../comun/visor-fotos";
-import { mountPlayer, type VideoSource } from "./reproductor";
+import { sinMovimiento } from "../../lib/comun/movimiento";
+import { deslizar } from "../../lib/comun/carrusel";
+import { montarVisor } from "../../lib/comun/visor-fotos";
+import { mountPlayer, type VideoSource } from "../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
 
+/** Tira de tarjetas con flechas y teclado; las flechas se ocultan si todas caben. */
 function cardStrip(root: HTMLElement) {
   const strip = root.querySelector<HTMLElement>("[data-card-scroll]")!;
   const navigation = root.querySelector<HTMLElement>("[data-card-navigation]")!;
@@ -14,7 +17,7 @@ function cardStrip(root: HTMLElement) {
   };
   const move = (direction: number) => strip.scrollBy({
     left: direction * (strip.querySelector<HTMLElement>("article")!.offsetWidth + 16),
-    behavior: document.documentElement.classList.contains("reduce-motion") ? "instant" : "smooth",
+    behavior: sinMovimiento() ? "instant" : "smooth",
   });
   previous.addEventListener("click", () => move(-1));
   next.addEventListener("click", () => move(1));
@@ -28,6 +31,7 @@ function cardStrip(root: HTMLElement) {
   update();
 }
 
+/** Galería con visor de fotos; en celular se ve una foto y se pasa con flechas o deslizando. */
 function gallery(root: HTMLElement) {
   const mobile = root.querySelector<HTMLElement>("[data-mobile-stage]")!;
   const total = root.querySelectorAll("[data-visor-foto]").length;
@@ -44,6 +48,7 @@ function gallery(root: HTMLElement) {
   deslizar(mobile, (paso) => visor.ir(visor.actual + paso));
 }
 
+/** Portada del video que, al pulsarla, monta el reproductor de su plataforma. */
 function video(root: HTMLElement) {
   const stage = root.querySelector<HTMLElement>("[data-video-stage]")!;
   const play = root.querySelector<HTMLButtonElement>("[data-video-play]")!;
@@ -59,6 +64,7 @@ function video(root: HTMLElement) {
   root.querySelector("[data-video-retry]")!.addEventListener("click", start);
 }
 
+/** Activa tarjetas, galería y video de una página «Por qué quiero ser alcalde» o «Conoce más». */
 export function initAboutCarlosPage(root: ParentNode) {
   root.querySelectorAll<HTMLElement>("[data-card-strip]").forEach(cardStrip);
   root.querySelectorAll<HTMLElement>("[data-gallery]").forEach(gallery);

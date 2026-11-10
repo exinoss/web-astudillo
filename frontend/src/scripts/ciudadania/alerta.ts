@@ -1,4 +1,4 @@
-import { mostrarCarga } from "../../lib/comun/animaciones";
+import { enviarConCarga } from "../../lib/comun/cambios";
 import { errorText, showStatus } from "../../lib/cuenta/auth/page";
 import { alertRepository } from "../../lib/data/participation";
 import type { AlertType, SentAlert } from "../../lib/data/types";
@@ -146,33 +146,27 @@ form.addEventListener("submit", async (e) => {
     (primero === tipos ? tipos.querySelector("input") : primero)?.focus();
     return;
   }
-  const boton = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-  enviando = true;
-  boton.disabled = true;
-  estado.hidden = true;
-  idempotencia ||= crypto.randomUUID();
-  const campos = { tipo: tipoElegido()!, sector: sector.value.trim(), referencia: referencia.value.trim(), descripcion: descripcion.value.trim() };
-  const terminarCarga = mostrarCarga(form);
-  try {
-    const enviada = await enviarConSesion({
-      form, formulario: "alerta", campos, idempotencia, foto: foto ?? undefined,
-      enviar: () => alertRepository.submit({ ...campos, tipo: campos.tipo as AlertType, idempotencia, foto: foto ?? undefined }),
-    });
-    if (!enviada) return;
-    borrar();
-    idempotencia = "";
-    form.reset();
-    ponerFoto(null);
-    form.querySelector<HTMLElement>("#alerta-recuperada")!.hidden = true;
-    showStatus(estado, "Gracias. Recibimos tu alerta; sigue su estado en «Tus alertas».");
-    void cargarHistorial();
-  } catch (error) {
-    showStatus(estado, errorText(error), true);
-  } finally {
-    terminarCarga();
-    enviando = false;
-    boton.disabled = false;
-  }
+  void enviarConCarga(form.querySelector<HTMLButtonElement>('button[type="submit"]')!, form, async () => {
+    estado.hidden = true;
+    idempotencia ||= crypto.randomUUID();
+    const campos = { tipo: tipoElegido()!, sector: sector.value.trim(), referencia: referencia.value.trim(), descripcion: descripcion.value.trim() };
+    try {
+      const enviada = await enviarConSesion({
+        form, formulario: "alerta", campos, idempotencia, foto: foto ?? undefined,
+        enviar: () => alertRepository.submit({ ...campos, tipo: campos.tipo as AlertType, idempotencia, foto: foto ?? undefined }),
+      });
+      if (!enviada) return;
+      borrar();
+      idempotencia = "";
+      form.reset();
+      ponerFoto(null);
+      form.querySelector<HTMLElement>("#alerta-recuperada")!.hidden = true;
+      showStatus(estado, "Gracias. Recibimos tu alerta; sigue su estado en «Tus alertas».");
+      void cargarHistorial();
+    } catch (error) {
+      showStatus(estado, errorText(error), true);
+    }
+  });
 });
 
 void recuperarBorrador();

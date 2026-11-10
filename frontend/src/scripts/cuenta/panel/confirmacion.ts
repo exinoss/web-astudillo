@@ -1,6 +1,6 @@
 import "../campos";
 import { marcarError, MENSAJE_CAMPO } from "../../../lib/comun/campos";
-import { bloquearMientras } from "../../../lib/cuenta/panel/cambios";
+import { bloquearMientras } from "../../../lib/comun/cambios";
 import { adminApi } from "../../../lib/data/http/admin-api";
 import { ApiError } from "../../../lib/data/http/api-client";
 import { DANGER, esc, GHOST, HINT, LABEL, LARGOS, state } from "./ui";

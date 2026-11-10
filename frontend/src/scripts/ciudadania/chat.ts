@@ -1,6 +1,7 @@
 import { errorText } from "../../lib/cuenta/auth/page";
 import { chatRepository } from "../../lib/data/participation";
 import { borrar, leer } from "../../lib/ciudadania/participacion/borrador";
+import { guardarClave, leerClave } from "../../lib/comun/almacen";
 import { enviarConSesion } from "../../lib/ciudadania/participacion/envio";
 import { prepararAceptacion } from '../../lib/ciudadania/participacion/aceptacion';
 
@@ -96,14 +97,13 @@ if (borrador) {
 
 
 const sintesis = "speechSynthesis" in window ? window.speechSynthesis : null;
-const leerPreferencia = () => { try { return localStorage.getItem(PREFERENCIA); } catch { return null; } };
 
 function activarVoz(activa: boolean, recordar = true) {
   voz.setAttribute("aria-pressed", String(activa));
   voz.querySelector<HTMLElement>(".voz-activa")!.hidden = !activa;
   voz.querySelector<HTMLElement>(".voz-silencio")!.hidden = activa;
   if (!activa) sintesis?.cancel();
-  if (recordar) try { localStorage.setItem(PREFERENCIA, String(activa)); } catch { /* solo se pierde la preferencia */ }
+  if (recordar) guardarClave("local", PREFERENCIA, String(activa));
 }
 
 function leerEnVozAlta(texto: string) {
@@ -116,7 +116,7 @@ function leerEnVozAlta(texto: string) {
 
 if (sintesis) {
   voz.hidden = false;
-  activarVoz(leerPreferencia() === "true", false);
+  activarVoz(leerClave("local", PREFERENCIA) === "true", false);
   voz.addEventListener("click", () => activarVoz(voz.getAttribute("aria-pressed") !== "true"));
 }
 
@@ -144,7 +144,7 @@ if (Motor) {
     if (reconocimiento) return reconocimiento.stop();
     sintesis?.cancel();
     // Quien pregunta por voz la primera vez seguramente quiere oír la respuesta.
-    if (sintesis && leerPreferencia() === null) activarVoz(true);
+    if (sintesis && leerClave("local", PREFERENCIA) === null) activarVoz(true);
     final = "";
     reconocimiento = new Motor();
     reconocimiento.lang = "es-EC";

@@ -4,6 +4,8 @@ import { ApiError } from '../../lib/data/http/api-client';
 import type { Profile } from '../../lib/data/auth-repository';
 import { inDraftPreview } from '../../lib/comun/vista-previa';
 import { registrarVisita } from '../../lib/comun/visitas';
+import { guardarClave, leerClave } from '../../lib/comun/almacen';
+import { sinMovimiento } from '../../lib/comun/movimiento';
 
 registrarVisita();
 
@@ -166,7 +168,7 @@ if (backToTop) {
   window.addEventListener("resize", syncBackToTop, { passive: true });
   syncBackToTop();
   backToTop.addEventListener("click", () => {
-    const suave = !document.documentElement.classList.contains("reduce-motion");
+    const suave = !sinMovimiento();
     window.scrollTo({ top: 0, behavior: suave ? "smooth" : "auto" });
   });
 }
@@ -177,18 +179,14 @@ const settings = [
 
 settings.forEach((button) => {
   const key = button.dataset.setting!;
-  try {
-    if (localStorage.getItem(key) === "true") {
-      document.documentElement.classList.add(key);
-      button.setAttribute("aria-pressed", "true");
-    }
-  } catch {}
+  if (leerClave("local", key) === "true") {
+    document.documentElement.classList.add(key);
+    button.setAttribute("aria-pressed", "true");
+  }
   button.addEventListener("click", () => {
     const active = document.documentElement.classList.toggle(key);
     button.setAttribute("aria-pressed", String(active));
-    try {
-      localStorage.setItem(key, String(active));
-    } catch {}
+    guardarClave("local", key, String(active));
   });
 });
 
@@ -196,10 +194,7 @@ const TEXT_MIN = 87.5,
   TEXT_MAX = 125,
   TEXT_STEP = 12.5,
   TEXT_LARGE_AT = 112.5;
-let textScale = 100;
-try {
-  textScale = Number(localStorage.getItem("text-scale")) || 100;
-} catch {}
+let textScale = Number(leerClave("local", "text-scale")) || 100;
 
 /** Aplica el tamaño tipográfico elegido y activa sus ajustes de layout. */
 function applyTextScale() {
@@ -224,9 +219,7 @@ document
         ),
       );
       applyTextScale();
-      try {
-        localStorage.setItem("text-scale", String(textScale));
-      } catch {}
+      guardarClave("local", "text-scale", String(textScale));
     });
   });
 
@@ -234,15 +227,11 @@ document.querySelector(".access-reset")!.addEventListener("click", () => {
   settings.forEach((button) => {
     document.documentElement.classList.remove(button.dataset.setting!);
     button.setAttribute("aria-pressed", "false");
-    try {
-      localStorage.removeItem(button.dataset.setting!);
-    } catch {}
+    guardarClave("local", button.dataset.setting!, null);
   });
   textScale = 100;
   applyTextScale();
-  try {
-    localStorage.removeItem("text-scale");
-  } catch {}
+  guardarClave("local", "text-scale", null);
 });
 
 document.addEventListener("keydown", (e) => {

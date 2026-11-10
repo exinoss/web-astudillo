@@ -1,4 +1,4 @@
-import { sinMovimiento } from "./animaciones";
+import { sinMovimiento } from "./movimiento";
 import { esc } from "./html";
 import { iconSvg } from "./iconos";
 
@@ -38,7 +38,10 @@ export function notificar(n: Notificacion) {
     </div>
     <button type="button" class="-mt-2 grid size-11 place-items-center" aria-label="Cerrar aviso">${iconSvg("close", 20)}</button>
     <span aria-hidden="true" class="absolute inset-x-0 bottom-0 h-[3px] origin-left ${estilo.barra} ${sinMovimiento() ? "invisible" : ""}"></span>`;
-  document.body.append(caja);
+  // Un <dialog> modal deja inerte lo que queda fuera: dentro de él se ve y se cierra, y al cerrarse vuelve a la página.
+  const ventana = document.querySelector<HTMLDialogElement>("dialog:modal");
+  (ventana ?? document.body).append(caja);
+  ventana?.addEventListener("close", () => { if (caja.isConnected) document.body.append(caja); }, { once: true });
   const cerrar = () => { caja.remove(); if (actual === caja) actual = null; };
   caja.querySelector("button")!.addEventListener("click", cerrar);
   if (!sinMovimiento()) caja.animate([{ opacity: 0, translate: "0 8px" }, { opacity: 1, translate: "0 0" }], { duration: 180, easing: "ease-out" });

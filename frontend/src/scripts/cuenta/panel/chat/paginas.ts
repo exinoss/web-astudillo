@@ -1,7 +1,7 @@
 import type { Draft } from "../../../../lib/data/http/admin-api";
 import { PAGINAS_CARLOS, SLUGS_CARLOS } from "../../../../../../backend/src/contracts/acerca-de-carlos";
 
-export interface PaginaDelSitio { nombre: string; ruta: string }
+interface PaginaDelSitio { nombre: string; ruta: string }
 
 /** Páginas a las que puede llevar una respuesta, por sección. Las propuestas y los nombres editables salen del borrador. */
 export function paginasDelSitio(draft: Draft): { seccion: string; paginas: PaginaDelSitio[] }[] {

@@ -1,6 +1,6 @@
 import { esc } from "../../comun/html";
 
-export interface PageInfo {
+interface PageInfo {
   total: number;
   pagina: number;
   porPagina: number;

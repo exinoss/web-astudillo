@@ -123,7 +123,7 @@ async function save(el, nuevoTexto) {
 }
 ```
 
-En la portada, quien además puede subir fotos (`medios.subir`) ve el botón «Cambiar imágenes» en cada carrusel. Abre un editor ([`editor-carruseles.ts`](../frontend/src/scripts/comun/editor-carruseles.ts)) para los banners (de 1 a 5, cada uno con una imagen opcional para celular), el retrato de la segunda diapositiva y las piezas (de 1 a 8).
+En la portada, quien además puede subir fotos (`medios.subir`) ve el botón «Cambiar imágenes» en cada carrusel. Abre un editor ([`editor-carruseles.ts`](../frontend/src/scripts/inicio/editor-carruseles.ts)) para los banners (de 1 a 5, cada uno con una imagen opcional para celular), el retrato de la segunda diapositiva y las piezas (de 1 a 8).
 
 - Cada foto se sube como cualquier otra (`POST /api/admin/medios`) y luego se guarda el carrusel con su versión (`PUT /api/admin/contenido/inicio/principal` o `/piezas`, tabla `tb_inicio_carruseles`).
 - Antes de subir, el navegador lee las medidas de la cabecera y rechaza lo que pase de 40 megapíxeles. El editor y la portada solo muestran las versiones WebP que devuelve el backend, nunca el archivo original.
@@ -323,8 +323,6 @@ El mismo publicador compila también una copia del sitio con el **borrador**, pa
 2. El publicador lee el borrador de la base, lo escribe en un archivo temporal y compila con `CONTENIDO_ARCHIVO` (§6.1) en `dist-vista-previa/`, con el mismo cambio de carpetas que `dist`. Sus archivos van en `/_astro-vista-previa/`.
 3. Al entrar (`POST /api/admin/vista-previa/entrar`), el backend da la cookie `vista_previa`, un pase firmado de 2 horas. nginx (en local, `frontend/vista-previa-local.mjs`) sirve las páginas desde `dist-vista-previa/` solo si `GET /api/vista-previa/acceso` confirma que la cuenta sigue activa y puede editar.
 4. En la vista previa no se crean datos reales ni se edita; «Salir de la vista previa» (`GET /api/vista-previa/salir`) borra el pase.
-
-El diseño completo y sus decisiones están en [plan-vista-previa.md](plan-vista-previa.md).
 
 ---
 
@@ -586,7 +584,7 @@ Para ver la foto exacta que se publicó, abre en el navegador:
 | Registro de textos editables | [`frontend/src/lib/comun/contenido/textos.ts`](../frontend/src/lib/comun/contenido/textos.ts) |
 | Componente `Editable` | [`frontend/src/components/comun/Editable.astro`](../frontend/src/components/comun/Editable.astro) |
 | Modo edición (navegador) | [`frontend/src/scripts/comun/modo-edicion.ts`](../frontend/src/scripts/comun/modo-edicion.ts) |
-| Editor de los carruseles de la portada | [`frontend/src/scripts/comun/editor-carruseles.ts`](../frontend/src/scripts/comun/editor-carruseles.ts) y [`backend/src/content/services/home-carousels.ts`](../backend/src/content/services/home-carousels.ts) |
+| Editor de los carruseles de la portada | [`frontend/src/scripts/inicio/editor-carruseles.ts`](../frontend/src/scripts/inicio/editor-carruseles.ts) y [`backend/src/content/services/home-carousels.ts`](../backend/src/content/services/home-carousels.ts) |
 | Panel de administración | [`frontend/src/scripts/cuenta/panel/`](../frontend/src/scripts/cuenta/panel/) |
 | Selección del repositorio | [`frontend/src/lib/data/index.ts`](../frontend/src/lib/data/index.ts) |
 | Repositorio que lee lo publicado | [`frontend/src/lib/data/http/http-content-repository.ts`](../frontend/src/lib/data/http/http-content-repository.ts) |

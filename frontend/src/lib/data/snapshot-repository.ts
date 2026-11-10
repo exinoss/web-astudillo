@@ -3,8 +3,9 @@ import type { Original } from '../../../../backend/src/contracts/inicio';
 import { PUESTOS } from '../../../../backend/src/contracts/equipo';
 import { PARROQUIAS } from '../../../../backend/src/contracts/parroquias';
 import type { ContentRepository } from './content-repository';
-import { citizenIcons, proposalIcons, proposalModels, proposalSites } from './presentation';
+import { citizenIcons, proposalIcons, proposalModels, proposalSites } from '../comun/presentacion';
 import { type ApiAboutCarlosPage, toAboutCarlosPage } from './acerca-de-carlos';
+import { parrafos } from '../comun/html';
 import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, HomeCarousels, HomeImage, MyTeam, Proposal, UploadedPicture, WorkProgress } from './types';
 
 type ApiHomeImage = { original: Original } | { foto: UploadedPicture };
@@ -34,8 +35,6 @@ export interface Snapshot {
 
 const homeImage = (image: ApiHomeImage): HomeImage => ('foto' in image ? { photo: image.foto } : { original: image.original });
 
-const paragraphs = (text: string) => text.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
-
 export abstract class SnapshotRepository implements ContentRepository {
   protected abstract load(): Promise<Snapshot>;
   async getProposals(): Promise<Proposal[]> {
@@ -54,7 +53,7 @@ export abstract class SnapshotRepository implements ContentRepository {
   }
   async getBiography(): Promise<BiographyMilestone[]> {
     return (await this.load()).biografia.map(h => ({
-      years: h.anios, title: h.titulo, text: paragraphs(h.texto),
+      years: h.anios, title: h.titulo, text: parrafos(h.texto),
       image: h.foto, alt: h.alt ?? h.titulo,
     }));
   }
@@ -81,7 +80,7 @@ export abstract class SnapshotRepository implements ContentRepository {
       }),
       parishes: PARROQUIAS.map(({ slug, nombre }) => {
         const parish = team?.parroquias.find(p => p.slug === slug);
-        return { slug, name: nombre, paragraphs: paragraphs(parish?.texto ?? ''), photos: (parish?.fotos ?? []).map(f => ({ image: f.foto, alt: f.alt })) };
+        return { slug, name: nombre, paragraphs: parrafos(parish?.texto ?? ''), photos: (parish?.fotos ?? []).map(f => ({ image: f.foto, alt: f.alt })) };
       }),
     };
   }

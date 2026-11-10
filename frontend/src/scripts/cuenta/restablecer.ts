@@ -1,6 +1,6 @@
 import { authRepository } from '../../lib/data/auth';
 import { errorText, readToken, showStatus, validateFields, value } from '../../lib/cuenta/auth/page';
-import { mostrarCarga } from '../../lib/comun/animaciones';
+import { enviarConCarga } from '../../lib/comun/cambios';
 
 const form = document.querySelector<HTMLFormElement>('#reset-form')!;
 const status = document.querySelector<HTMLElement>('#account-status')!;
@@ -12,26 +12,22 @@ if (!token) {
   showStatus(status, 'El enlace para restablecer la contraseña no es válido.', true);
 }
 
-form.addEventListener('submit', async event => {
+form.addEventListener('submit', event => {
   event.preventDefault();
   if (!token) return;
-  const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-  submit.disabled = true;
-  const terminarCarga = mostrarCarga(form);
-  try {
-    if (!validateFields(form)) {
-      showStatus(status, 'Revisa los campos marcados.', true);
-      return;
+  void enviarConCarga(form.querySelector<HTMLButtonElement>('button[type="submit"]')!, form, async () => {
+    try {
+      if (!validateFields(form)) {
+        showStatus(status, 'Revisa los campos marcados.', true);
+        return;
+      }
+      const contrasenia = value(form, 'contrasenia');
+      await authRepository.resetPassword(token, contrasenia);
+      form.hidden = true;
+      done.hidden = false;
+      showStatus(status, 'Contraseña actualizada. Inicia sesión de nuevo.');
+    } catch (error) {
+      showStatus(status, errorText(error), true);
     }
-    const contrasenia = value(form, 'contrasenia');
-    await authRepository.resetPassword(token, contrasenia);
-    form.hidden = true;
-    done.hidden = false;
-    showStatus(status, 'Contraseña actualizada. Inicia sesión de nuevo.');
-  } catch (error) {
-    showStatus(status, errorText(error), true);
-  } finally {
-    terminarCarga();
-    submit.disabled = false;
-  }
+  });
 });

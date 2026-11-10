@@ -1,5 +1,5 @@
 import { clearGoogleSelection, showGoogleButton } from '../../lib/cuenta/auth/google';
-import { releaseButton, showFormError } from '../../lib/cuenta/auth/bloqueo';
+import { showFormError } from '../../lib/cuenta/auth/bloqueo';
 import { setAccountNav } from '../../lib/cuenta/auth/navigation';
 import { errorText, showStatus, validateFields, value } from '../../lib/cuenta/auth/page';
 import { authRepository } from '../../lib/data/auth';
@@ -8,6 +8,7 @@ import { ApiError } from '../../lib/data/http/api-client';
 import { mostrarCarga } from '../../lib/comun/animaciones';
 import { avisoDeAcceso, destinoTrasAcceso } from '../../lib/ciudadania/participacion/borrador';
 import { acceptanceOf } from '../../lib/cuenta/auth/acceptance';
+import { enviarConCarga, vigilarCambios } from '../../lib/comun/cambios';
 
 const loginPanel = document.querySelector<HTMLElement>('#login-panel')!;
 const profilePanel = document.querySelector<HTMLElement>('#profile-panel')!;
@@ -27,8 +28,6 @@ const passwordGoogleStep = document.querySelector<HTMLElement>('#google-password
 const passwordGoogleUnavailable = document.querySelector<HTMLElement>('#google-password-unavailable')!;
 const loading = document.querySelector<HTMLElement>('#account-loading')!;
 let current: Profile | undefined;
-let addingPassword = false;
-let savingProfile = false;
 let googleCredential: string | undefined;
 let signingWithGoogle = false;
 
@@ -110,7 +109,7 @@ async function showProfile(profile: Profile) {
   profilePanel.hidden = false;
   profileForm.querySelector<HTMLInputElement>('[name="nombresCompletos"]')!.value = profile.nombresCompletos ?? '';
   profileForm.querySelector<HTMLInputElement>('[name="direccion"]')!.value = profile.direccion ?? '';
-  syncProfileButton();
+  vigilarPerfil();
   document.querySelector<HTMLElement>('#admin-panel-link')!.hidden = !profile.permisos?.includes('contenido.editar');
   passwordPanel.hidden = !profile.tieneGoogle || profile.tieneContrasenia;
   changePasswordPanel.hidden = !profile.tieneContrasenia;
@@ -123,89 +122,76 @@ async function loadProfile() {
   await showProfile(profile);
 }
 
-loginForm.addEventListener('submit', async event => {
+loginForm.addEventListener('submit', event => {
   event.preventDefault();
   const submit = loginForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-  submit.disabled = true;
-  const terminarCarga = mostrarCarga(loginForm);
-  try {
-    if (!validateFields(loginForm)) {
-      showStatus(status, 'Revisa los campos marcados.', true);
-      return;
+  void enviarConCarga(submit, loginForm, async () => {
+    try {
+      if (!validateFields(loginForm)) {
+        showStatus(status, 'Revisa los campos marcados.', true);
+        return;
+      }
+      const result = await authRepository.login(value(loginForm, 'correo'), value(loginForm, 'contrasenia'));
+      if (result === 'link') {
+        showStatus(status, 'Por seguridad te enviamos un enlace a tu correo para terminar de entrar. Revisa también la carpeta de spam.');
+        return;
+      }
+      afterLogin();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 429) showFormError(status, error, submit, value(loginForm, 'correo'));
+      else showAccountError(error);
     }
-    const result = await authRepository.login(value(loginForm, 'correo'), value(loginForm, 'contrasenia'));
-    if (result === 'link') {
-      showStatus(status, 'Por seguridad te enviamos un enlace a tu correo para terminar de entrar. Revisa también la carpeta de spam.');
-      return;
-    }
-    afterLogin();
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 429) showFormError(status, error, submit, value(loginForm, 'correo'));
-    else showAccountError(error);
-  } finally {
-    terminarCarga();
-    releaseButton(submit);
-  }
+  });
 });
 
-googleRegistrationForm.addEventListener('submit', async event => {
+googleRegistrationForm.addEventListener('submit', event => {
   event.preventDefault();
-  if (!googleCredential || signingWithGoogle || !validateFields(googleRegistrationForm)) return;
-  signingWithGoogle = true;
-  const button = googleRegistrationForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-  button.disabled = true;
-  const terminarCarga = mostrarCarga(googleRegistrationForm);
-  try {
-    const pending = await authRepository.googleLogin(googleCredential, acceptanceOf(googleRegistrationForm)!);
-    if (!pending) afterLogin();
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 401) {
-      await showLogin();
-      showStatus(status, 'Vuelve a entrar con Google para continuar.', true);
-    } else showStatus(status, errorText(error), true);
-  } finally {
-    signingWithGoogle = false;
-    button.disabled = false;
-    terminarCarga();
-  }
+  const credential = googleCredential;
+  if (!credential || !validateFields(googleRegistrationForm)) return;
+  void enviarConCarga(googleRegistrationForm.querySelector<HTMLButtonElement>('button[type="submit"]')!, googleRegistrationForm, async () => {
+    try {
+      const pending = await authRepository.googleLogin(credential, acceptanceOf(googleRegistrationForm)!);
+      if (!pending) afterLogin();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        await showLogin();
+        showStatus(status, 'Vuelve a entrar con Google para continuar.', true);
+      } else showStatus(status, errorText(error), true);
+    }
+  });
 });
 
 const profileSubmit = profileForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-const syncProfileButton = () => {
-  profileSubmit.disabled = savingProfile || !current || (value(profileForm, 'nombresCompletos').trim() === (current.nombresCompletos ?? '')
-    && value(profileForm, 'direccion').trim() === (current.direccion ?? ''));
-};
-profileForm.addEventListener('input', syncProfileButton);
+/** Activa «Guardar» solo cuando el nombre o la dirección difieren de los guardados. */
+const vigilarPerfil = () => vigilarCambios(profileForm, profileSubmit,
+  { nombresCompletos: current?.nombresCompletos ?? '', direccion: current?.direccion ?? '' },
+  () => ({ nombresCompletos: value(profileForm, 'nombresCompletos').trim(), direccion: value(profileForm, 'direccion').trim() }));
 
-profileForm.addEventListener('submit', async event => {
+profileForm.addEventListener('submit', event => {
   event.preventDefault();
-  if (!current || savingProfile) return;
+  if (!current) return;
   if (!Number.isInteger(current.versionPerfil) || current.versionPerfil < 1) {
     showStatus(status, 'Recarga la página antes de guardar tus datos.', true);
     return;
   }
-  savingProfile = true;
-  profileSubmit.disabled = true;
-  const terminarCarga = mostrarCarga(profileForm);
-  try {
-    if (!validateFields(profileForm)) {
-      showStatus(status, 'Revisa los campos marcados.', true);
-      return;
+  void enviarConCarga(profileSubmit, profileForm, async () => {
+    try {
+      if (!validateFields(profileForm)) {
+        showStatus(status, 'Revisa los campos marcados.', true);
+        return;
+      }
+      const updated = await authRepository.updateProfile({
+        nombresCompletos: value(profileForm, 'nombresCompletos'),
+        direccion: value(profileForm, 'direccion'),
+        versionPerfil: current!.versionPerfil,
+      });
+      current = { ...current!, ...updated };
+      vigilarPerfil();
+      showStatus(status, 'Datos guardados.');
+    } catch (error) {
+      showStatus(status, errorText(error), true);
     }
-    const updated = await authRepository.updateProfile({
-      nombresCompletos: value(profileForm, 'nombresCompletos'),
-      direccion: value(profileForm, 'direccion'),
-      versionPerfil: current.versionPerfil,
-    });
-    current = { ...current, ...updated };
-    showStatus(status, 'Datos guardados.');
-  } catch (error) {
-    showStatus(status, errorText(error), true);
-  } finally {
-    terminarCarga();
-    savingProfile = false;
-    syncProfileButton();
-  }
+  });
 });
 
 /** Solicita una autenticación Google reciente antes de añadir contraseña. */
@@ -223,28 +209,21 @@ async function confirmGoogleForPassword() {
 
 /** Añade la contraseña y actualiza los métodos de acceso del perfil. */
 async function saveGooglePassword(credential: string) {
-  if (addingPassword) return;
   if (!validateFields(passwordForm)) {
     showStatus(status, 'Revisa los campos marcados.', true);
     return;
   }
-  addingPassword = true;
-  const submit = passwordForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-  submit.disabled = true;
-  const terminarCarga = mostrarCarga(passwordForm);
-  try {
-    await authRepository.addPassword(credential, value(passwordForm, 'contrasenia'));
-    passwordForm.reset();
-    const updated = await authRepository.getProfile();
-    await showProfile(updated);
-    showStatus(status, 'Contraseña agregada. Ya puedes entrar también con tu correo.');
-  } catch (error) {
-    showStatus(status, errorText(error), true);
-  } finally {
-    addingPassword = false;
-    terminarCarga();
-    submit.disabled = false;
-  }
+  await enviarConCarga(passwordForm.querySelector<HTMLButtonElement>('button[type="submit"]')!, passwordForm, async () => {
+    try {
+      await authRepository.addPassword(credential, value(passwordForm, 'contrasenia'));
+      passwordForm.reset();
+      const updated = await authRepository.getProfile();
+      await showProfile(updated);
+      showStatus(status, 'Contraseña agregada. Ya puedes entrar también con tu correo.');
+    } catch (error) {
+      showStatus(status, errorText(error), true);
+    }
+  });
 }
 
 passwordForm.addEventListener('submit', async event => {
@@ -257,29 +236,26 @@ passwordForm.addEventListener('submit', async event => {
 });
 
 // Cambia la contraseña y fuerza un nuevo inicio de sesión tras la rotación.
-changePasswordForm.addEventListener('submit', async event => {
+changePasswordForm.addEventListener('submit', event => {
   event.preventDefault();
   const submit = changePasswordForm.querySelector<HTMLButtonElement>('button[type="submit"]')!;
-  submit.disabled = true;
-  const terminarCarga = mostrarCarga(changePasswordForm);
-  try {
-    if (!validateFields(changePasswordForm)) {
-      showStatus(status, 'Revisa los campos marcados.', true);
-      return;
+  void enviarConCarga(submit, changePasswordForm, async () => {
+    try {
+      if (!validateFields(changePasswordForm)) {
+        showStatus(status, 'Revisa los campos marcados.', true);
+        return;
+      }
+      const contraseniaActual = value(changePasswordForm, 'contraseniaActual');
+      const contraseniaNueva = value(changePasswordForm, 'contraseniaNueva');
+      const confirmarContrasenia = value(changePasswordForm, 'confirmarContrasenia');
+      await authRepository.changePassword({ contraseniaActual, contraseniaNueva, confirmarContrasenia });
+      changePasswordForm.reset();
+      await showLogin();
+      showStatus(status, 'Contraseña actualizada. Inicia sesión de nuevo.');
+    } catch (error) {
+      showFormError(status, error, submit);
     }
-    const contraseniaActual = value(changePasswordForm, 'contraseniaActual');
-    const contraseniaNueva = value(changePasswordForm, 'contraseniaNueva');
-    const confirmarContrasenia = value(changePasswordForm, 'confirmarContrasenia');
-    await authRepository.changePassword({ contraseniaActual, contraseniaNueva, confirmarContrasenia });
-    changePasswordForm.reset();
-    await showLogin();
-    showStatus(status, 'Contraseña actualizada. Inicia sesión de nuevo.');
-  } catch (error) {
-    showFormError(status, error, submit);
-  } finally {
-    terminarCarga();
-    releaseButton(submit);
-  }
+  });
 });
 
 /** Revoca la sesión y devuelve la pantalla al formulario de acceso. */

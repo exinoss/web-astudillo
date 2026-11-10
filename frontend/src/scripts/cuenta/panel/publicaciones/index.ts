@@ -1,7 +1,7 @@
 import { adminApi, type Publication } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { seguirPublicacion } from "../../../../lib/comun/avisos";
-import { busy, card, cargar, esc, iconSvg, notify, PILL, reloadPending, state, syncPublishButton } from "../ui";
+import { busy, card, cargar, esc, fechaHora, iconSvg, notify, PILL, reloadPending, state, syncPublishButton } from "../ui";
 
 const STATES: Record<Publication["estado"], [string, string]> = {
   en_cola: ["En cola", "bg-warning-soft text-warning-ink"],
@@ -9,7 +9,6 @@ const STATES: Record<Publication["estado"], [string, string]> = {
   publicada: ["Publicada", "bg-success-soft text-success-ink"],
   fallida: ["Falló", "bg-error-soft text-error"],
 };
-const date = new Intl.DateTimeFormat("es-EC", { dateStyle: "medium", timeStyle: "short" });
 let page = 1;
 let poll = 0;
 
@@ -59,7 +58,7 @@ async function drawHistory(section: HTMLElement) {
       <div class="grid grid-cols-[60px_150px_1fr_1fr_80px] items-center gap-3 border-t border-t-base-300 py-3 text-[0.85rem] first:border-t-0 max-tablet:grid-cols-[auto_1fr] max-tablet:gap-x-3 max-tablet:gap-y-1">
         <strong>#${esc(p.id)}</strong>
         <span class="max-tablet:justify-self-end"><span class="${PILL} ${classes}">${name}</span></span>
-        <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-muted">${esc(date.format(new Date(p.creadoEn)))}</span>
+        <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-muted">${esc(fechaHora.format(new Date(p.creadoEn)))}</span>
         <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-muted">${esc(p.autor ?? "—")}</span>
         <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-muted">${duration(p)}</span>
         ${p.detalle ? `<span class="col-span-5 text-[0.78rem] text-error max-tablet:col-span-2">${esc(p.detalle)}</span>` : ""}

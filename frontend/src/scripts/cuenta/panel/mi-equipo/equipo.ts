@@ -1,9 +1,9 @@
 import { GRUPOS, MAX_PRESENTACION, MAX_PUNTO_TRAYECTORIA, MAX_TRAYECTORIA, PUESTOS, type Grupo, type Puesto } from "../../../../../../backend/src/contracts/equipo";
-import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
+import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type Photo, type TeamMemberBody } from "../../../../lib/data/http/admin-api";
 import { infoPrefecto } from "../../../../lib/mi-equipo/prefecto";
 import { silueta } from "../../../../lib/mi-equipo/silueta";
-import { avisarVacios, BORRADOR_GUARDADO, busy, confirmarCambio, DRAFT_PILL, esc, field, GHOST, HINT, ICON_BUTTON, iconSvg, isPending, LABEL, LARGOS, MAX_MB_FOTO, notify, previewButton, reloadDraft, reloadPending, selectField, state, subirFotos, thumb, upload, value } from "../ui";
+import { avisarVacios, avisoBorrador, busy, esc, field, GHOST, guardarYRecargar, HINT, ICON_BUTTON, iconSvg, isPending, LABEL, LARGOS, MAX_MB_FOTO, notify, previewButton, selectField, state, subirFotos, thumb, upload, value } from "../ui";
 
 // `clave` sigue a la persona aunque cambie de lugar en la lista mientras sube su foto.
 interface Persona { clave: string; puesto: Puesto | null; nombre: string; presentacion: string; trayectoria: string[]; foto: Photo | null }
@@ -95,7 +95,7 @@ function tarjeta(p: Persona, i: number) {
 export function renderTeam(body: HTMLElement, rerender: () => void) {
   personas ??= desdeBorrador();
   body.innerHTML = `
-    ${isPending("Mi equipo", "Equipo") ? `<p class="-mt-2 mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
+    ${avisoBorrador(isPending("Mi equipo", "Equipo"))}
     <form id="equipo-form" novalidate>
       <ol class="m-0 grid list-none grid-cols-2 gap-4 p-0 max-laptop:grid-cols-1">${personas.map(tarjeta).join("")}</ol>
       ${personas.length < PUESTOS.length ? `<button type="button" id="persona-agregar" class="${GHOST} mt-4">${iconSvg("plus", 17)} Añadir a alguien</button>` : ""}
@@ -169,14 +169,12 @@ export function renderTeam(body: HTMLElement, rerender: () => void) {
       return avisarVacios(document.querySelector("#equipo-form")!, "Elige el tipo de cada persona.");
     }
     if (personas!.some((p) => !p.nombre)) return avisarVacios(form, "Escribe el nombre de cada persona.");
-    void busy(form.querySelector("button[type=submit]"), async () => {
-      await adminApi.saveTeam(paraGuardar(personas!) as TeamMemberBody[], state.draft!.versiones.miEquipo.equipo ?? null);
-      await Promise.all([reloadDraft(), reloadPending()]);
-      personas = null;
-      marcarSinTipo = false;
-      rerender();
-      confirmarCambio(BORRADOR_GUARDADO);
-    });
+    void busy(form.querySelector("button[type=submit]"), () => guardarYRecargar(
+      () => adminApi.saveTeam(paraGuardar(personas!) as TeamMemberBody[], state.draft!.versiones.miEquipo.equipo ?? null), () => {
+        personas = null;
+        marcarSinTipo = false;
+        rerender();
+      }));
   });
   return () => capturar(form);
 }

@@ -1,3 +1,5 @@
+import { guardarClave, leerClave } from "../../comun/almacen";
+
 // localStorage y no sessionStorage: el acceso puede pasar por otra pestaña (enlace del correo).
 // La foto va en IndexedDB. Si el navegador no deja guardar, simplemente no se recupera.
 
@@ -21,7 +23,7 @@ const NOMBRES: Record<Formulario, string> = { alerta: "tu alerta", sugerencia: "
 /** Borrador pendiente (de un formulario concreto, si se indica); los vencidos se descartan. */
 export function leer(formulario?: Formulario): Borrador | null {
   try {
-    const borrador = JSON.parse(localStorage.getItem(CLAVE) ?? "null") as Borrador | null;
+    const borrador = JSON.parse(leerClave("local", CLAVE) ?? "null") as Borrador | null;
     if (!borrador) return null;
     if (Date.now() - borrador.guardadoEn > VIGENCIA_MS) {
       borrar();
@@ -37,8 +39,7 @@ export function leer(formulario?: Formulario): Borrador | null {
 export async function guardar(datos: Omit<Borrador, "guardadoEn" | "conFoto">, foto?: File) {
   try {
     const conFoto = !!foto && await fotos("readwrite", (s) => s.put(foto, "foto")).then(() => true, () => false);
-    localStorage.setItem(CLAVE, JSON.stringify({ ...datos, conFoto, guardadoEn: Date.now() }));
-    return true;
+    return guardarClave("local", CLAVE, JSON.stringify({ ...datos, conFoto, guardadoEn: Date.now() }));
   } catch {
     return false;
   }
@@ -49,9 +50,7 @@ export async function leerFoto(): Promise<File | null> {
 }
 
 export function borrar() {
-  try {
-    localStorage.removeItem(CLAVE);
-  } catch { /* sin almacenamiento no hay nada que borrar */ }
+  guardarClave("local", CLAVE, null);
   void fotos("readwrite", (s) => s.delete("foto")).catch(() => {});
 }
 

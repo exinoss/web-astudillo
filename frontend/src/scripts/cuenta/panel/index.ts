@@ -14,7 +14,7 @@ import { filtrarParticipacion, renderParticipation } from "./participacion";
 import { renderProposals } from "./propuestas";
 import { publish, renderPublications } from "./publicaciones";
 import { renderTexts } from "./textos";
-import { can, cargar, reloadDraft, reloadPending, state } from "./ui";
+import { can, cargar, recargarBorrador, state } from "./ui";
 import { renderUsers } from "./usuarios";
 import { nombreRol } from "../../../../../backend/src/contracts/roles";
 
@@ -109,7 +109,7 @@ async function start() {
     state.profile = await authRepository.getProfile();
     setAccountNav(true);
     if (!can("contenido.editar")) throw new ApiError(403, "Sin permiso");
-    await Promise.all([reloadDraft(), reloadPending()]);
+    await recargarBorrador();
   } catch (error) {
     loading.hidden = true;
     // Sin sesión se va al acceso; cualquier otro rechazo se muestra con el mismo texto genérico.

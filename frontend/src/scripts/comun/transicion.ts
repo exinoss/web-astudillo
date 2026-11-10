@@ -1,4 +1,5 @@
-import { ahorroDatos, precargar, reproducir, sinMovimiento } from "../../lib/comun/animaciones";
+import { ahorroDatos, precargar, reproducir } from "../../lib/comun/animaciones";
+import { sinMovimiento } from "../../lib/comun/movimiento";
 
 const capa = document.querySelector<HTMLElement>(".transicion")!;
 const lienzo = capa.querySelector<HTMLElement>(".transicion-lienzo")!;

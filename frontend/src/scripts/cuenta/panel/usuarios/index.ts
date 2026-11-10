@@ -1,4 +1,4 @@
-import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
+import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { NOMBRES_ROL, nombreRol, ROLES } from "../../../../../../backend/src/contracts/roles";
 import { adminApi, type AdminUser } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";

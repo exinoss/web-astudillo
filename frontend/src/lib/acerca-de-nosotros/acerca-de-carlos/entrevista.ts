@@ -1,9 +1,9 @@
-import { esc, escLines } from "../../comun/html";
+import { esc, escLines, parrafos } from "../../comun/html";
 import type { AboutCarlosPageView } from "./vista";
 
 export function interviewSection(items: AboutCarlosPageView["interview"]) {
   if (!items.length) return "";
-  const paragraphs = (answer: string) => answer.split(/\n\s*\n/)
+  const paragraphs = (answer: string) => parrafos(answer)
     .map((p) => `<p class="m-0 mb-3 last:mb-0">${escLines(p)}</p>`).join("");
   return `
 <section aria-labelledby="entrevista-titulo" class="mt-9 max-tablet:mt-8">

@@ -2,9 +2,7 @@ import type { AlertRepository } from '../alert-repository';
 import type { ChatRepository } from '../chat-repository';
 import type { SuggestionRepository } from '../suggestion-repository';
 import type { SentAlert, SentSuggestion } from '../types';
-import { apiRequest } from './api-client';
-
-const call = <T>(path: string, method = 'GET', body?: object | FormData) => apiRequest<T>(path, method, body, true);
+import { sessionRequest as call } from './api-client';
 
 export const httpAlertRepository: AlertRepository = {
   submit(input) {

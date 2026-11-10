@@ -1,8 +1,8 @@
-import { vigilarCambios } from "../../../../lib/cuenta/panel/cambios";
+import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type DraftBiographyItem } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
 import { ANIO_BIOGRAFIA } from "../../../../../../backend/src/contracts/limites";
-import { ACEPTA_FOTOS, avisarVacios, BORRADOR_GUARDADO, busy, card, confirmarCambio, DANGER, DRAFT_PILL, esc, field, FORMATOS_FOTO, GHOST, iconSvg, isPending, LARGOS, MAX_MB_FOTO, notify, previewButton, reloadDraft, reloadPending, state, subirFotos, value } from "../ui";
+import { ACEPTA_FOTOS, avisarVacios, avisoBorrador, busy, card, DANGER, esc, field, FORMATOS_FOTO, GHOST, guardarYRecargar, iconSvg, isPending, LARGOS, MAX_MB_FOTO, notify, previewButton, state, subirFotos, value } from "../ui";
 
 const MAX_ITEMS = 30;
 const YEARS = Array.from({ length: new Date().getFullYear() + 2 - 1940 }, (_, i) => String(new Date().getFullYear() + 1 - i));
@@ -51,7 +51,7 @@ export function renderBiography(section: HTMLElement) {
       <button type="button" class="${GHOST}" id="hito-agregar" ${items.length >= MAX_ITEMS ? "disabled" : ""}>${iconSvg("plus", 18)} Añadir hito</button>
     </div>`;
   const form = !item ? card("Sin hitos", `<p class="m-0">Añade el primer hito de la línea de tiempo.</p>`) : card(item.titulo || "Nuevo hito", `
-    ${isPending("Biografía", "Línea de tiempo") ? `<p class="-mt-2 mb-5"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : ""}
+    ${avisoBorrador(isPending("Biografía", "Línea de tiempo"))}
     <form id="hito-form" class="flex flex-col gap-[18px]" novalidate>
       <div class="grid grid-cols-[180px_minmax(0,1fr)] gap-4 max-tablet:grid-cols-1">
         <div>
@@ -147,15 +147,12 @@ function bind(section: HTMLElement) {
       renderBiography(section);
       return avisarVacios(section, "Elige el año y completa título, texto y la descripción de la foto de cada hito.");
     }
-    void busy(form.querySelector("button[type=submit]"), async () => {
-      await adminApi.saveBiography(
-        items!.map((h) => ({ anios: h.anios, titulo: h.titulo, texto: h.texto, idMedio: h.foto?.idMedio ?? null, alt: h.alt })),
-        state.draft!.versiones.biografia,
-      );
-      await Promise.all([reloadDraft(), reloadPending()]);
+    void busy(form.querySelector("button[type=submit]"), () => guardarYRecargar(() => adminApi.saveBiography(
+      items!.map((h) => ({ anios: h.anios, titulo: h.titulo, texto: h.texto, idMedio: h.foto?.idMedio ?? null, alt: h.alt })),
+      state.draft!.versiones.biografia,
+    ), () => {
       items = null;
       renderBiography(section);
-      confirmarCambio(BORRADOR_GUARDADO);
-    });
+    }));
   });
 }

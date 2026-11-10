@@ -5,21 +5,24 @@ import type { Profile } from "../../../lib/data/auth-repository";
 import { adminApi, type Draft, type Photo } from "../../../lib/data/http/admin-api";
 import { esc } from "../../../lib/comun/html";
 import { iconSvg } from "../../../lib/comun/iconos";
-import { bloquearMientras } from "../../../lib/cuenta/panel/cambios";
+import { bloquearMientras } from "../../../lib/comun/cambios";
 import { ACEPTA_FOTOS, FORMATOS_FOTO, MAX_MB_FOTO } from "../../../../../backend/src/contracts/media";
 import { LARGOS } from "../../../../../backend/src/contracts/limites";
 import { GHOST } from "../../../lib/cuenta/panel/campos";
 import { pedirAvisos } from "../../../lib/comun/avisos";
-import { notificar, type Notificacion } from "../../../lib/comun/notificacion";
+import { BORRADOR_GUARDADO, notificar, type Notificacion } from "../../../lib/comun/notificacion";
 
 export { ACEPTA_FOTOS, esc, FORMATOS_FOTO, iconSvg, LARGOS, MAX_MB_FOTO };
-export { BORRADOR_GUARDADO } from "../../../lib/comun/notificacion";
-export { field, GHOST, HINT, ICON_BUTTON, LABEL, moveButtons, selectField, thumb, upload } from "../../../lib/cuenta/panel/campos";
+export { enlazarLista, field, GHOST, HINT, ICON_BUTTON, LABEL, moveButtons, selectField, subirBajar, thumb, upload } from "../../../lib/cuenta/panel/campos";
 
 export const DANGER =
   "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] border border-error/40 bg-transparent px-[18px] text-[0.82rem] font-bold text-error hover:bg-error-soft";
 export const PILL = "inline-flex items-center rounded-full px-3 py-1 text-[0.66rem] font-bold tracking-[0.08em] whitespace-nowrap uppercase";
 export const DRAFT_PILL = `${PILL} border border-secondary/60 bg-warning-soft text-warning-ink`;
+/** Pastilla «Borrador sin publicar» encima del formulario; `margen` cambia su separación. */
+export const avisoBorrador = (pendiente: boolean, margen = "-mt-2 mb-5") =>
+  pendiente ? `<p class="${margen}"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : "";
+export const fechaHora = new Intl.DateTimeFormat("es-EC", { dateStyle: "medium", timeStyle: "short" });
 
 // Sin el permiso de publicar no se conoce lo pendiente: el botón queda siempre activo.
 const nothingToPreview = () => can("contenido.publicar") && !state.pending.length;
@@ -72,15 +75,22 @@ export function avisarVacios(raiz: ParentNode, message: string) {
 
 export const can = (permission: string) => state.profile?.permisos.includes(permission) ?? false;
 
-export async function reloadDraft() {
-  state.draft = await adminApi.draft();
-}
-
 /** Actualiza lo pendiente de publicar y el contador del botón de la cabecera. */
 export async function reloadPending() {
   if (!can("contenido.publicar")) return;
   state.pending = (await adminApi.pending()).cambios;
   syncPublishButton();
+}
+
+/** Vuelve a leer el borrador y lo pendiente de publicar. */
+export const recargarBorrador = () => Promise.all([adminApi.draft().then((draft) => { state.draft = draft; }), reloadPending()]);
+
+/** Guarda, recarga el borrador, vuelve a dibujar con `despues` y confirma que quedó como borrador. */
+export async function guardarYRecargar(guardar: () => Promise<unknown>, despues: () => unknown) {
+  await guardar();
+  await recargarBorrador();
+  await despues();
+  confirmarCambio(BORRADOR_GUARDADO);
 }
 
 export function syncPublishButton() {
