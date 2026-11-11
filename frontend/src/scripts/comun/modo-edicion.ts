@@ -7,13 +7,13 @@ import { escLines } from "../../lib/comun/html";
 import { guardarClave, leerClave } from "../../lib/comun/almacen";
 import { sinMovimiento } from "../../lib/comun/movimiento";
 import { iconSvg } from "../../lib/comun/iconos";
+import { BOTON, PRINCIPAL } from "../../lib/cuenta/panel/campos";
 import { seguirPublicacion } from "../../lib/comun/avisos";
 import { BORRADOR_GUARDADO, notificar } from "../../lib/comun/notificacion";
 
 const STORAGE = "modo-edicion";
 // Lo envían este archivo y editor-carruseles.ts al guardar en el borrador.
 const GUARDADO = "Guardado como borrador. Publica para que se vea en el sitio.";
-const BUTTON = "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] px-[18px] text-[0.82rem] font-bold whitespace-nowrap";
 const IDLE = ["outline-1", "outline-dashed", "outline-current/40", "outline-offset-[6px]", "rounded-[2px]", "cursor-text",
   "hover:outline-2", "hover:outline-current", "focus-visible:outline-2", "focus-visible:outline-current"];
 const ACTIVE = ["outline-2", "outline-solid", "outline-secondary", "bg-accent-soft", "text-primary"];
@@ -52,8 +52,8 @@ bar.innerHTML = `
     </button>
     <span class="flex items-center gap-3 max-tablet:gap-2">
       <span id="edicion-pendientes" class="text-[0.82rem] max-nav:hidden"></span>
-      <a href="/cuenta/panel/#publicaciones" class="${BUTTON} border border-[#ffffff55] text-primary-content max-nav:hidden">Ver pendientes</a>
-      <button type="button" id="edicion-publicar" class="${BUTTON} bg-accent text-primary disabled:bg-disabled disabled:text-muted" hidden>${iconSvg("upload", 18)}Publicar</button>
+      <a href="/cuenta/panel/#publicaciones" class="${BOTON} border border-line-on-dark text-primary-content max-nav:hidden">Ver pendientes</a>
+      <button type="button" id="edicion-publicar" class="${BOTON} bg-accent text-primary disabled:bg-disabled disabled:text-muted" hidden>${iconSvg("upload", 18)}Publicar</button>
     </span>
   </div>`;
 const toggle = bar.querySelector<HTMLButtonElement>("#edicion-interruptor")!;
@@ -89,7 +89,7 @@ function notify(message: string, error = false) {
 
 
 const chip = document.createElement("span");
-chip.className = "pointer-events-none fixed z-[940] flex items-center gap-2 rounded-[3px] bg-secondary px-2.5 py-[5px] text-[0.68rem] font-bold text-primary";
+chip.className = "pointer-events-none fixed z-[940] flex items-center gap-2 rounded-control bg-secondary px-2.5 py-[5px] text-[0.68rem] font-bold text-primary";
 chip.innerHTML = `${iconSvg("edit", 14)} Editando · Enter guarda · Esc cancela`;
 chip.hidden = true;
 
@@ -170,8 +170,8 @@ sheet.innerHTML = `
       <textarea id="edicion-hoja-campo" rows="4" class="campo min-h-24 text-[0.88rem] leading-normal"></textarea>
     </div>
     <div class="flex gap-2.5">
-      <button type="button" data-cerrar class="${BUTTON} flex-1 border border-[#06317640] text-primary">Cancelar</button>
-      <button type="button" id="edicion-hoja-guardar" class="${BUTTON} flex-1 bg-primary text-primary-content disabled:bg-disabled disabled:text-muted">Guardar borrador</button>
+      <button type="button" data-cerrar class="${BOTON} flex-1 border border-primary-line text-primary">Cancelar</button>
+      <button type="button" id="edicion-hoja-guardar" class="${PRINCIPAL} flex-1">Guardar borrador</button>
     </div>
   </div>`;
 const sheetField = sheet.querySelector<HTMLTextAreaElement>("#edicion-hoja-campo")!;

@@ -1,18 +1,11 @@
 @media (max-width: 1199px) {
-  .light-bg #main-nav {
-    background: var(--color-base-100);
-  }
-}
-
-@media (max-width: 1199px) {
-  .text-large #main-nav {
-    gap: 0;
-  }
-}
-
-@media (max-width: 1199px) {
+  .light-bg #main-nav,
   .high-contrast #main-nav {
     background: var(--color-base-100);
+  }
+
+  .text-large #main-nav {
+    gap: 0;
   }
 }
 
@@ -113,16 +106,7 @@
 .light-bg .proposals-section,
 .light-bg .detail-banner,
 .light-bg .citizen-form,
-.light-bg .proposal-card {
-  background: var(--color-base-100);
-}
-
-@media (max-width: 760px) {
-  .text-large .values {
-    flex-wrap: wrap;
-  }
-}
-
+.light-bg .proposal-card,
 .high-contrast body,
 .high-contrast .site-header,
 .high-contrast .about-section,

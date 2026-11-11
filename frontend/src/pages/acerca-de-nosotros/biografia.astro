@@ -39,7 +39,7 @@ const biography = await contentRepository.getBiography();
       <div class="pt-8 pb-8 text-center max-tablet:pt-6 max-tablet:pb-6">
         <Editable clave="biografia.antetitulo" class="eyebrow justify-center text-primary" />
         <Editable as="h1" clave="biografia.titulo" class="mt-[15px] mb-4 text-primary" />
-        <Editable as="p" clave="biografia.nota" class="content-note m-0" />
+        <Editable as="p" clave="biografia.nota" class="text-[0.82rem] text-base-content m-0" />
       </div>
       <Timeline milestones={biography} />
     </div>

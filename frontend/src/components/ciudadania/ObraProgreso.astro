@@ -1,7 +1,7 @@
 ---
 import Icon from "../comun/Icon.astro";
 import type { Proposal, WorkProgress } from "../../lib/data/types";
-import { STAGE_NAMES, workProgress, type WorkStage } from "../../lib/ciudadania/obras";
+import { BARRA_AVANCE, RELLENO_AVANCE, STAGE_CLASSES, STAGE_NAMES, workProgress } from "../../lib/ciudadania/obras";
 
 interface Props {
   work: WorkProgress;
@@ -16,11 +16,6 @@ interface Props {
 }
 const { work, proposal, enPropuesta = false, ancho = false, class: extra } = Astro.props;
 const { percent, stage } = workProgress(work.milestones);
-const etapas: Record<WorkStage, string> = {
-  "por-iniciar": "border border-base-300 text-primary",
-  "en-ejecucion": "bg-secondary text-primary",
-  terminada: "bg-primary text-primary-content",
-};
 const siguiente = work.milestones.findIndex((hito) => !hito.done);
 // Fecha fija sin zona horaria: `new Date("AAAA-MM-DD")` se interpreta en UTC y en Ecuador mostraría el día anterior.
 const actualizado = `Actualizado el ${new Intl.DateTimeFormat("es-EC", { dateStyle: "long", timeZone: "UTC" }).format(new Date(work.updatedAt))}`;
@@ -29,7 +24,7 @@ const etiqueta = "text-[0.64rem] font-bold tracking-[0.12em] text-neutral upperc
 
 <article
   class:list={[
-    "obra flex flex-col rounded-[4px] bg-base-100 p-7 text-primary [border-right:1px_solid_var(--color-card-border)] [border-bottom:1px_solid_var(--color-card-border)] [border-left:1px_solid_var(--color-card-border)] [border-top:4px_solid_var(--color-secondary)] shadow-card max-desktop-sm:p-[23px] max-tablet:px-4 max-tablet:py-5",
+    "obra flex flex-col tarjeta-acento p-7 text-primary max-desktop-sm:p-[23px] max-tablet:px-4 max-tablet:py-5",
     extra,
   ]}
 >
@@ -44,7 +39,7 @@ const etiqueta = "text-[0.64rem] font-bold tracking-[0.12em] text-neutral upperc
             <span class={etiqueta}>{proposal.label}</span>
           </span>
         )}
-        <span class:list={["rounded-full px-3 py-1 text-[0.66rem] font-bold tracking-[0.08em] whitespace-nowrap uppercase", etapas[stage]]}>
+        <span class:list={["rounded-full px-3 py-1 text-[0.66rem] font-bold tracking-[0.08em] whitespace-nowrap uppercase", STAGE_CLASSES[stage]]}>
           {STAGE_NAMES[stage]}
         </span>
       </div>
@@ -54,14 +49,14 @@ const etiqueta = "text-[0.64rem] font-bold tracking-[0.12em] text-neutral upperc
         <span class:list={["font-display leading-none", enPropuesta ? "text-[2.4rem]" : "text-[1.5rem]"]}>{percent} %</span>
       </div>
       <div
-        class="h-2.5 overflow-hidden rounded-full bg-[#06317618]"
+        class={BARRA_AVANCE}
         role="progressbar"
         aria-label={`Avance de ${proposal.name}`}
         aria-valuenow={percent}
         aria-valuemin="0"
         aria-valuemax="100"
       >
-        <div class="h-full rounded-full bg-neutral" style={`width: ${percent}%`} />
+        <div class={RELLENO_AVANCE} style={`width: ${percent}%`} />
       </div>
       <p class:list={["mt-4 text-[0.85rem] leading-[1.6] whitespace-pre-line", ancho ? "mb-0" : "mb-5"]}>{work.note}</p>
     </div>

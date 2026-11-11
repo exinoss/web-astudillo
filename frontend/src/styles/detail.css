@@ -1,18 +1,5 @@
-/* `.breadcrumb a:hover` afecta a enlaces sin clase propia y `.detail-title > svg` es un <svg>
-   que `Icon.astro` no puede recibir por prop: no pueden ser utilidades. */
+/* `.breadcrumb a:hover` afecta a enlaces sin clase propia: no puede ser una utilidad. */
 
 .breadcrumb a:hover {
   text-decoration: underline;
-}
-
-.content-note {
-  font-size: 0.82rem;
-  color: var(--color-base-content);
-}
-
-@media (max-width: 760px) {
-  .detail-title > svg {
-    width: 45px;
-    height: 45px;
-  }
 }

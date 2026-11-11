@@ -1,84 +1,56 @@
 ---
 import Icon from "../comun/Icon.astro";
-import LegalAcceptance from '../comun/LegalAcceptance.astro';
+import FormularioParticipacion from "./FormularioParticipacion.astro";
 import { TIPOS_ALERTA } from "../../lib/ciudadania/participacion/tipos";
 import { FORMATOS_FOTO } from "../../../../backend/src/contracts/media";
 import { LARGOS_PARTICIPACION as LARGOS, MAX_MB_FOTO_ALERTA, MIN_DESCRIPCION_ALERTA } from "../../../../backend/src/contracts/participacion";
-import { TARJETA, ETIQUETA, AYUDA, ERROR, ESTADO } from "./estilos";
+import { ETIQUETA, AYUDA, ERROR } from "./estilos";
 import { MENSAJE_CAMPO } from "../../lib/comun/campos";
 ---
 
-<section class="site-container max-w-[1100px] pt-8 pb-14 max-tablet:pt-6 max-tablet:pb-10">
-  <div class="max-w-[760px]">
-    <span class="eyebrow">UN ESPACIO PARA TI</span>
-    <h2 class="mt-[15px] mb-2 max-tablet:text-[2.7rem]">Cuéntanos lo que pasa.</h2>
-    <p>Elige el tipo de problema, indica el barrio y, si puedes, añade una foto.</p>
-    <p class="content-note mt-[20px]">Este espacio no recibe emergencias ni genera reportes oficiales.</p>
-  </div>
-  <div class="mt-7 grid grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] items-start gap-10 max-laptop:gap-6 max-tablet:mt-[22px] max-tablet:grid-cols-1 max-tablet:gap-[30px]">
-    <form id="alerta-form" class={TARJETA} novalidate>
-      <p id="alerta-recuperada" class="mt-0 mb-[18px] border-l-4 border-neutral bg-primary-soft px-4 py-3 text-[0.84rem] leading-normal" role="status" hidden>
-        Recuperamos tu alerta. Revísala antes de enviarla.
-      </p>
-      <div class="mb-5 flex items-center justify-between gap-[15px] max-nav:flex-col max-nav:items-start max-nav:gap-2">
-        <h3 class="m-0 max-tablet:text-[1.1rem]">Nueva alerta</h3>
-        <span class="text-[0.73rem] text-base-content">* Campos obligatorios</span>
-      </div>
-      <fieldset id="alerta-tipo" class="m-0 grid min-w-0 grid-cols-3 gap-2.5 border-0 p-0 max-mobile:grid-cols-2 aria-invalid:[&_.opcion]:border-error" aria-describedby="alerta-tipo-error">
-        <legend class:list={[ETIQUETA, "mt-0"]}>¿Qué tipo de problema es? *</legend>
-        {TIPOS_ALERTA.map((t) => (
-          <label class="relative block cursor-pointer">
-            <input class="peer absolute inset-0 m-0 cursor-pointer opacity-0" type="radio" name="tipo" value={t.valor} />
-            <span class="opcion flex min-h-[78px] flex-col items-center justify-center gap-1.5 rounded-[4px] border border-field-border bg-base-100 px-1.5 py-2.5 text-center text-[0.82rem] font-bold text-primary transition-colors hover:border-primary peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-content peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-neutral">
-              <Icon name={t.icono} size={26} />
-              {t.nombre}
-            </span>
-          </label>
-        ))}
-      </fieldset>
-      <p id="alerta-tipo-error" class={ERROR} hidden></p>
-
-      <label class={ETIQUETA} for="alerta-sector">Sector o barrio *</label>
-      <input id="alerta-sector" class="campo" name="sector" placeholder="Indica el sector" maxlength={LARGOS.sector} aria-describedby="alerta-sector-error" />
-      <p id="alerta-sector-error" class={MENSAJE_CAMPO} hidden></p>
-
-      <label class={ETIQUETA} for="alerta-referencia">Dirección o punto de referencia <span class="font-normal text-base-content">(opcional)</span></label>
-      <input id="alerta-referencia" class="campo" name="referencia" maxlength={LARGOS.referencia} placeholder="Por ejemplo: frente al parque, calle principal" />
-
-      <label class={ETIQUETA} for="alerta-descripcion">¿Qué está ocurriendo? *</label>
-      <textarea id="alerta-descripcion" class="campo min-h-[110px] resize-y" name="descripcion" rows="4" maxlength={LARGOS.descripcion} placeholder="Describe la situación y dónde ocurre…" aria-describedby="alerta-descripcion-ayuda alerta-descripcion-error"></textarea>
-      <p id="alerta-descripcion-ayuda" class={AYUDA}>Mínimo {MIN_DESCRIPCION_ALERTA} caracteres. Evita incluir datos sensibles.</p>
-      <p id="alerta-descripcion-error" class={MENSAJE_CAMPO} hidden></p>
-
-      <span class={ETIQUETA}>Foto del problema <span class="font-normal text-base-content">(opcional)</span></span>
-      <!-- Sin «capture»: así el celular ofrece cámara o galería. -->
-      <label id="alerta-foto-zona" class="relative flex min-h-[190px] cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[6px] border-2 border-dashed border-field-border bg-[#f4f7fb] px-4 py-6 text-center text-primary transition-colors hover:border-primary hover:bg-[#eaf0f8] focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral">
-        <input id="alerta-foto" class="absolute inset-0 cursor-pointer opacity-0" type="file" accept="image/*" aria-describedby="alerta-foto-error" />
-        <span class="grid size-[76px] place-items-center rounded-full bg-primary text-primary-content"><Icon name="camera" size={38} /></span>
-        <strong class="text-base">Toca para añadir una foto</strong>
-        <small class="text-[0.78rem] text-base-content">Cámara o galería · {FORMATOS_FOTO} · hasta {MAX_MB_FOTO_ALERTA} MB</small>
+<FormularioParticipacion nombre="alerta" titulo="Cuéntanos lo que pasa." intro="Elige el tipo de problema, indica el barrio y, si puedes, añade una foto." encabezado="Nueva alerta" historial="Tus alertas">
+  <p slot="nota" class="text-[0.82rem] text-base-content mt-[20px]">Este espacio no recibe emergencias ni genera reportes oficiales.</p>
+  <fieldset id="alerta-tipo" class="m-0 grid min-w-0 grid-cols-3 gap-2.5 border-0 p-0 max-mobile:grid-cols-2 aria-invalid:[&_.opcion]:border-error" aria-describedby="alerta-tipo-error">
+    <legend class:list={[ETIQUETA, "mt-0"]}>¿Qué tipo de problema es? *</legend>
+    {TIPOS_ALERTA.map((t) => (
+      <label class="relative block cursor-pointer">
+        <input class="peer absolute inset-0 m-0 cursor-pointer opacity-0" type="radio" name="tipo" value={t.valor} />
+        <span class="opcion flex min-h-[78px] flex-col items-center justify-center gap-1.5 rounded-card border border-field-border bg-base-100 px-1.5 py-2.5 text-center text-[0.82rem] font-bold text-primary transition-colors hover:border-primary peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-content peer-focus-visible:outline-3 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-neutral">
+          <Icon name={t.icono} size={26} />
+          {t.nombre}
+        </span>
       </label>
-      <div id="alerta-foto-vista" class="grid grid-cols-[96px_1fr] items-center gap-3.5 rounded-[6px] border border-base-300 p-2.5" hidden>
-        <img class="size-24 rounded-[4px] object-cover" alt="Vista previa de la foto del problema" />
-        <div class="flex min-w-0 flex-col gap-2 text-[0.78rem] [overflow-wrap:anywhere]">
-          <span id="alerta-foto-nombre"></span>
-          <button id="alerta-foto-quitar" type="button" class="min-h-11 self-start rounded-[3px] border border-primary bg-base-100 px-3.5 text-[0.8rem]">Quitar foto</button>
-        </div>
-      </div>
-      <p id="alerta-foto-error" class={ERROR} role="alert" hidden></p>
+    ))}
+  </fieldset>
+  <p id="alerta-tipo-error" class={ERROR} hidden></p>
 
-      <LegalAcceptance id="alerta-aceptacion" hidden prompt="Antes de enviar tu alerta, confirma:" />
-      <button class="button mt-6 w-full" type="submit" data-envia><span data-envio-texto>Enviar alerta</span> <Icon name="arrow" size={18} /></button>
-      <p id="alerta-estado" class={ESTADO} role="status" hidden></p>
-    </form>
+  <label class={ETIQUETA} for="alerta-sector">Sector o barrio *</label>
+  <input id="alerta-sector" class="campo" name="sector" placeholder="Indica el sector" maxlength={LARGOS.sector} aria-describedby="alerta-sector-error" />
+  <p id="alerta-sector-error" class={MENSAJE_CAMPO} hidden></p>
 
-    <aside class="rounded-[5px] border border-base-300 bg-base-100 p-6 max-nav:px-4 max-nav:py-5" aria-labelledby="historial-titulo">
-      <h3 id="historial-titulo" class="m-0 mb-1 text-[1.35rem]">Tus alertas</h3>
-      <p class="m-0 mb-3.5 text-[0.78rem] text-base-content">Las últimas que enviaste y en qué estado están.</p>
-      <div id="historial" aria-live="polite">
-        <p class="m-0 text-[0.84rem]">Cargando…</p>
-      </div>
-    </aside>
+  <label class={ETIQUETA} for="alerta-referencia">Dirección o punto de referencia <span class="font-normal text-base-content">(opcional)</span></label>
+  <input id="alerta-referencia" class="campo" name="referencia" maxlength={LARGOS.referencia} placeholder="Por ejemplo: frente al parque, calle principal" />
+
+  <label class={ETIQUETA} for="alerta-descripcion">¿Qué está ocurriendo? *</label>
+  <textarea id="alerta-descripcion" class="campo min-h-[110px] resize-y" name="descripcion" rows="4" maxlength={LARGOS.descripcion} placeholder="Describe la situación y dónde ocurre…" aria-describedby="alerta-descripcion-ayuda alerta-descripcion-error"></textarea>
+  <p id="alerta-descripcion-ayuda" class={AYUDA}>Mínimo {MIN_DESCRIPCION_ALERTA} caracteres. Evita incluir datos sensibles.</p>
+  <p id="alerta-descripcion-error" class={MENSAJE_CAMPO} hidden></p>
+
+  <span class={ETIQUETA}>Foto del problema <span class="font-normal text-base-content">(opcional)</span></span>
+  <!-- Sin «capture»: así el celular ofrece cámara o galería. -->
+  <label id="alerta-foto-zona" class="relative flex min-h-[190px] cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[6px] border-2 border-dashed border-field-border bg-[#f4f7fb] px-4 py-6 text-center text-primary transition-colors hover:border-primary hover:bg-[#eaf0f8] focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral">
+    <input id="alerta-foto" class="absolute inset-0 cursor-pointer opacity-0" type="file" accept="image/*" aria-describedby="alerta-foto-error" />
+    <span class="grid size-[76px] place-items-center rounded-full bg-primary text-primary-content"><Icon name="camera" size={38} /></span>
+    <strong class="text-base">Toca para añadir una foto</strong>
+    <small class="text-[0.78rem] text-base-content">Cámara o galería · {FORMATOS_FOTO} · hasta {MAX_MB_FOTO_ALERTA} MB</small>
+  </label>
+  <div id="alerta-foto-vista" class="grid grid-cols-[96px_1fr] items-center gap-3.5 rounded-[6px] border border-base-300 p-2.5" hidden>
+    <img class="size-24 rounded-card object-cover" alt="Vista previa de la foto del problema" />
+    <div class="flex min-w-0 flex-col gap-2 text-[0.78rem] wrap-anywhere">
+      <span id="alerta-foto-nombre"></span>
+      <button id="alerta-foto-quitar" type="button" class="min-h-11 self-start rounded-control border border-primary bg-base-100 px-3.5 text-[0.8rem]">Quitar foto</button>
+    </div>
   </div>
-</section>
+  <p id="alerta-foto-error" class={ERROR} role="alert" hidden></p>
+</FormularioParticipacion>
 <script src="../../scripts/ciudadania/alerta.ts"></script>

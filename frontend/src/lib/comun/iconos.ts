@@ -68,12 +68,13 @@ export const ICON_PATHS: Record<string, string> = {
   mic: "M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3ZM5 11a7 7 0 0 0 14 0M12 18v3",
   volume: "M4 9v6h4l5 4V5L8 9H4Zm12 0a4 4 0 0 1 0 6m2.5-8.5a7.5 7.5 0 0 1 0 11",
   volumeOff: "M4 9v6h4l5 4V5L8 9H4Zm12 1 5 5m0-5-5 5",
+  play: "m8 5 11 7-11 7Z",
 };
 
-export const FILLED = new Set(["facebook", "tiktok", "whatsapp"]);
+export const FILLED = new Set(["facebook", "tiktok", "whatsapp", "play"]);
 
 /** Icono como texto SVG para HTML generado desde scripts. */
-export function iconSvg(name: string, size = 24) {
+export function iconSvg(name: string, size = 24, clase = "") {
   const filled = FILLED.has(name);
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="${filled ? "currentColor" : "none"}" stroke="${filled ? "none" : "currentColor"}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICON_PATHS[name] ?? ICON_PATHS.arrow}"/></svg>`;
+  return `<svg${clase ? ` class="${clase}"` : ""} width="${size}" height="${size}" viewBox="0 0 24 24" fill="${filled ? "currentColor" : "none"}" stroke="${filled ? "none" : "currentColor"}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICON_PATHS[name] ?? ICON_PATHS.arrow}"/></svg>`;
 }

@@ -9,14 +9,15 @@ import { bloquearMientras } from "../../../lib/comun/cambios";
 import { ACEPTA_FOTOS, FORMATOS_FOTO, MAX_MB_FOTO } from "../../../../../backend/src/contracts/media";
 import { LARGOS } from "../../../../../backend/src/contracts/limites";
 import { GHOST } from "../../../lib/cuenta/panel/campos";
+import { TARJETA_CUENTA } from "../../../lib/cuenta/tarjeta";
 import { pedirAvisos } from "../../../lib/comun/avisos";
 import { BORRADOR_GUARDADO, notificar, type Notificacion } from "../../../lib/comun/notificacion";
 
 export { ACEPTA_FOTOS, esc, FORMATOS_FOTO, iconSvg, LARGOS, MAX_MB_FOTO };
-export { enlazarLista, field, GHOST, HINT, ICON_BUTTON, LABEL, moveButtons, selectField, subirBajar, thumb, upload } from "../../../lib/cuenta/panel/campos";
+export { BOTON, enlazarLista, field, filtro, GHOST, GRUPO, LEYENDA, PESTANA, PESTANA_NORMAL, PRINCIPAL, selector, HINT, ICON_BUTTON, LABEL, moveButtons, selectField, subirBajar, thumb, upload } from "../../../lib/cuenta/panel/campos";
 
 export const DANGER =
-  "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] border border-error/40 bg-transparent px-[18px] text-[0.82rem] font-bold text-error hover:bg-error-soft";
+  "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-control border border-error/40 bg-transparent px-[18px] text-[0.82rem] font-bold text-error hover:bg-error-soft";
 export const PILL = "inline-flex items-center rounded-full px-3 py-1 text-[0.66rem] font-bold tracking-[0.08em] whitespace-nowrap uppercase";
 export const DRAFT_PILL = `${PILL} border border-secondary/60 bg-warning-soft text-warning-ink`;
 /** Pastilla «Borrador sin publicar» encima del formulario; `margen` cambia su separación. */
@@ -31,9 +32,19 @@ const nothingToPreview = () => can("contenido.publicar") && !state.pending.lengt
 export const previewButton = (ruta: string) =>
   `<button type="button" class="${GHOST} disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent" data-vista-previa="${esc(ruta)}" ${nothingToPreview() ? "disabled" : ""}>${iconSvg("eye", 18)} Vista previa del borrador</button>`;
 
+/** «Vista previa del borrador» de `ruta` y «Guardar borrador», en el orden del pie de cada formulario. */
+export const botonesGuardar = (ruta: string) => `
+          ${previewButton(ruta)}
+          <button type="submit" class="button">Guardar borrador</button>`;
+
+/** Pie de un formulario del panel con sus botones; `extra` añade clases al contenedor. */
+export const acciones = (ruta: string, extra = "") => `
+      <div class="${extra} flex flex-wrap justify-end gap-2.5 border-t border-t-base-300 pt-[18px] max-tablet:flex-col-reverse">${botonesGuardar(ruta)}
+      </div>`;
+
 /** Tarjeta blanca con borde superior amarillo, como las de cuenta. */
 export const card = (title: string, inner: string, extra = "") => `
-  <section class="rounded-[3px] border border-base-300 border-t-[5px] border-t-accent bg-base-100 px-8 py-7 [box-shadow:0_10px_35px_#0631760d] max-tablet:px-4 max-tablet:py-5 ${extra}">
+  <section class="${TARJETA_CUENTA} px-8 py-7 max-tablet:px-4 max-tablet:py-5 ${extra}">
     ${title ? `<h2 class="m-0 mb-4 text-[2rem] leading-[1.05] max-tablet:text-[1.8rem]">${esc(title)}</h2>` : ""}
     ${inner}
   </section>`;

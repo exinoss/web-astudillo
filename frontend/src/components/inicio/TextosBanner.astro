@@ -1,0 +1,11 @@
+---
+import Editable from "../comun/Editable.astro";
+
+const OVERLAY = "hidden max-tablet:absolute max-tablet:inset-y-0 max-tablet:right-auto max-tablet:left-0 max-tablet:flex max-tablet:w-[48%] max-tablet:flex-col max-tablet:justify-center max-tablet:bg-accent max-tablet:pt-6 max-tablet:pr-0 max-tablet:pb-5 max-tablet:pl-5";
+---
+
+<div class={OVERLAY}>
+  <Editable clave="inicio.carrusel.antetitulo" class="max-tablet:text-[0.56rem] max-tablet:font-bold max-tablet:tracking-[0.08em]" />
+  <Editable as="h2" clave="inicio.carrusel.titulo" class="max-tablet:mx-0 max-tablet:mt-[15px] max-tablet:mb-[18px] max-tablet:text-[clamp(2rem,8vw,3.6rem)]" />
+  <Editable as="p" clave="inicio.carrusel.texto" class="max-tablet:m-0 max-tablet:text-[0.67rem] max-tablet:leading-[1.6] max-tablet:text-primary" />
+</div>

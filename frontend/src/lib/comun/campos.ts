@@ -1,4 +1,5 @@
 export const MENSAJE_CAMPO = "m-0 mt-1.5 text-[0.75rem] leading-[1.4] text-error";
+export const BOTON_MOSTRAR = "password-toggle absolute inset-y-0 right-0 min-h-11 min-w-[76px] px-3 text-[0.82rem] font-bold";
 export const CAMPO_VACIO = "Completa este campo.";
 
 type Campo = HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;

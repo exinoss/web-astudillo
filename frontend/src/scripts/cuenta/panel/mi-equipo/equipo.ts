@@ -3,7 +3,7 @@ import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type Photo, type TeamMemberBody } from "../../../../lib/data/http/admin-api";
 import { infoPrefecto } from "../../../../lib/mi-equipo/prefecto";
 import { silueta } from "../../../../lib/mi-equipo/silueta";
-import { avisarVacios, avisoBorrador, busy, esc, field, GHOST, guardarYRecargar, HINT, ICON_BUTTON, iconSvg, isPending, LABEL, LARGOS, MAX_MB_FOTO, notify, previewButton, selectField, state, subirFotos, thumb, upload, value } from "../ui";
+import { acciones, avisarVacios, avisoBorrador, busy, esc, field, GHOST, guardarYRecargar, HINT, ICON_BUTTON, iconSvg, isPending, LABEL, LARGOS, MAX_MB_FOTO, notify, selectField, state, subirFotos, thumb, upload, value } from "../ui";
 
 // `clave` sigue a la persona aunque cambie de lugar en la lista mientras sube su foto.
 interface Persona { clave: string; puesto: Puesto | null; nombre: string; presentacion: string; trayectoria: string[]; foto: Photo | null }
@@ -35,7 +35,7 @@ function capturar(form: HTMLElement) {
 }
 
 /** Foto o silueta de la persona sobre el amarillo de la tarjeta, para ver el recorte. */
-const miniatura = (p: Persona) => `<div class="relative aspect-[480/561] w-full overflow-hidden rounded-[3px] bg-accent max-mobile:w-[100px]">
+const miniatura = (p: Persona) => `<div class="relative aspect-[480/561] w-full overflow-hidden rounded-control bg-accent max-mobile:w-[100px]">
   ${p.foto ? `<img src="${esc(thumb(p.foto))}" alt="" class="absolute inset-0 h-full w-full object-contain object-bottom" />` : silueta("absolute inset-0 h-full w-full")}
 </div>`;
 
@@ -58,7 +58,7 @@ function tarjeta(p: Persona, i: number) {
         return { value: x.clave, label: ocupado ? `${x.texto} (ocupado)` : x.texto, disabled: ocupado };
       }),
     })
-    : `<div><span class="${LABEL}">Puesto</span><p class="m-0 flex min-h-12 items-center"><span class="rounded-[3px] px-2 py-[3px] text-[0.72rem] font-bold ${grupo ? "bg-primary text-accent" : "bg-disabled text-muted"}">${grupo ? "PREFECTO" : "Elige primero el tipo"}</span></p></div>`;
+    : `<div><span class="${LABEL}">Puesto</span><p class="m-0 flex min-h-12 items-center"><span class="rounded-control px-2 py-[3px] text-[0.72rem] font-bold ${grupo ? "bg-primary text-accent" : "bg-disabled text-muted"}">${grupo ? "PREFECTO" : "Elige primero el tipo"}</span></p></div>`;
   const quitar = `<div class="mt-auto flex justify-end"><button type="button" class="${ICON_BUTTON} text-error" data-quitar="${i}" aria-label="Quitar a ${esc(p.nombre || "esta persona")}">${iconSvg("trash", 18)}</button></div>`;
   const foto = `<div class="flex w-[160px] shrink-0 flex-col gap-2 max-mobile:w-full max-mobile:flex-row max-mobile:flex-wrap max-mobile:items-end">
     ${miniatura(p)}
@@ -69,12 +69,12 @@ function tarjeta(p: Persona, i: number) {
   </div>`;
   const campos = `${tipo}${puesto}${field({ id: `persona-nombre-${i}`, label: "Nombre", value: p.nombre, max: LARGOS.equipo.nombre , required: true })}`;
   if (p.puesto !== "prefecto")
-    return `<li class="flex gap-4 rounded-[3px] border border-base-300 p-3 max-mobile:flex-col">${foto}<div class="flex min-w-0 flex-1 flex-col gap-3">${campos}${quitar}</div></li>`;
+    return `<li class="flex gap-4 rounded-control border border-base-300 p-3 max-mobile:flex-col">${foto}<div class="flex min-w-0 flex-1 flex-col gap-3">${campos}${quitar}</div></li>`;
   const puntos = p.trayectoria.map((punto, j) => `<li class="flex items-center gap-1">
     <input id="persona-trayectoria-${i}-${j}" data-trayectoria="${i}" maxlength="${MAX_PUNTO_TRAYECTORIA}" value="${esc(punto)}" class="campo" aria-label="Punto ${j + 1} de la trayectoria" />
     <button type="button" class="${ICON_BUTTON}" data-quitar-punto="${j}" aria-label="Quitar el punto ${j + 1} de la trayectoria">${iconSvg("close", 18)}</button>
   </li>`).join("");
-  return `<li class="col-span-2 flex gap-4 rounded-[3px] border border-base-300 p-3 max-laptop:col-span-1 max-mobile:flex-col">${foto}
+  return `<li class="col-span-2 flex gap-4 rounded-control border border-base-300 p-3 max-laptop:col-span-1 max-mobile:flex-col">${foto}
     <div class="grid min-w-0 flex-1 grid-cols-2 items-start gap-5 max-laptop:grid-cols-1">
       <div class="flex flex-col gap-3">
         ${campos}
@@ -100,10 +100,7 @@ export function renderTeam(body: HTMLElement, rerender: () => void) {
       <ol class="m-0 grid list-none grid-cols-2 gap-4 p-0 max-laptop:grid-cols-1">${personas.map(tarjeta).join("")}</ol>
       ${personas.length < PUESTOS.length ? `<button type="button" id="persona-agregar" class="${GHOST} mt-4">${iconSvg("plus", 17)} Añadir a alguien</button>` : ""}
       <p class="${HINT}">Hasta ${PUESTOS.length} personas: 1 prefecto, ${cuantos("urbanos")} concejales urbanos y ${cuantos("rurales")} rurales. Foto opcional: PNG o WebP sin fondo, de la cabeza a la cintura, de 700 × 820 px o más y hasta ${MAX_MB_FOTO} MB.</p>
-      <div class="mt-6 flex flex-wrap justify-end gap-2.5 border-t border-t-base-300 pt-[18px] max-tablet:flex-col-reverse">
-        ${previewButton("/mi-equipo/")}
-        <button type="submit" class="button">Guardar borrador</button>
-      </div>
+      ${acciones("/mi-equipo/", "mt-6")}
     </form>`;
   const form = body.querySelector<HTMLFormElement>("#equipo-form")!;
   /** Aplica un cambio y vuelve a pintar; si se indica, devuelve el foco a ese campo de la persona. */

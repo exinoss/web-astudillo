@@ -2,7 +2,7 @@ import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type DraftBiographyItem } from "../../../../lib/data/http/admin-api";
 import { uploadedUrl } from "../../../../lib/comun/fotos";
 import { ANIO_BIOGRAFIA } from "../../../../../../backend/src/contracts/limites";
-import { ACEPTA_FOTOS, avisarVacios, avisoBorrador, busy, card, DANGER, esc, field, FORMATOS_FOTO, GHOST, guardarYRecargar, iconSvg, isPending, LARGOS, MAX_MB_FOTO, notify, previewButton, state, subirFotos, value } from "../ui";
+import { ACEPTA_FOTOS, avisarVacios, avisoBorrador, botonesGuardar, busy, card, DANGER, esc, field, FORMATOS_FOTO, GHOST, guardarYRecargar, iconSvg, isPending, LARGOS, MAX_MB_FOTO, notify, state, subirFotos, value } from "../ui";
 
 const MAX_ITEMS = 30;
 const YEARS = Array.from({ length: new Date().getFullYear() + 2 - 1940 }, (_, i) => String(new Date().getFullYear() + 1 - i));
@@ -16,8 +16,8 @@ let items: WorkingItem[] | null = null;
 let selected = 0;
 
 const photoPreview = (item: DraftBiographyItem, big = false) => item.foto
-  ? `<img src="${esc(uploadedUrl(item.foto, item.foto.anchos[0]))}" alt="" class="${big ? "aspect-[4/3] w-full rounded-[12px]" : "h-11 w-16 rounded-[4px]"} object-cover" />`
-  : `<span class="${big ? "aspect-[4/3] w-full rounded-[12px] text-[0.8rem]" : "h-11 w-16 rounded-[4px] text-[0.6rem]"} grid place-items-center border border-dashed border-neutral/35 bg-neutral/8 font-bold text-neutral">Sin foto</span>`;
+  ? `<img src="${esc(uploadedUrl(item.foto, item.foto.anchos[0]))}" alt="" class="${big ? "aspect-[4/3] w-full rounded-[12px]" : "h-11 w-16 rounded-card"} object-cover" />`
+  : `<span class="${big ? "aspect-[4/3] w-full rounded-[12px] text-[0.8rem]" : "h-11 w-16 rounded-card text-[0.6rem]"} grid place-items-center border border-dashed border-neutral/35 bg-neutral/8 font-bold text-neutral">Sin foto</span>`;
 
 /** Lo que se guarda de cada hito, para comparar la copia de trabajo con el borrador. */
 const saved = (list: DraftBiographyItem[]) => list.map((h) => ({
@@ -39,7 +39,7 @@ export function renderBiography(section: HTMLElement) {
   const item = items[selected];
   const list = items.map((h, i) => `
     <button type="button" data-hito="${i}" aria-current="${i === selected}"
-      class="flex w-full items-center gap-3 rounded-[3px] border border-base-300 border-l-4 p-2.5 text-left aria-[current=true]:border-secondary aria-[current=true]:bg-accent-soft">
+      class="flex w-full items-center gap-3 rounded-control border border-base-300 border-l-4 p-2.5 text-left aria-[current=true]:border-secondary aria-[current=true]:bg-accent-soft">
       ${photoPreview(h)}
       <span class="flex min-w-0 flex-col"><strong class="font-display text-[1.2rem] text-neutral">${esc(yearOf(h.anios) || "Sin año")}</strong>
       <span class="truncate text-[0.8rem]">${esc(h.titulo || "Hito sin título")}</span></span>
@@ -78,9 +78,7 @@ export function renderBiography(section: HTMLElement) {
       ${item.foto ? field({ id: "hito-alt", label: "Descripción de la foto", value: item.alt ?? "", max: LARGOS.descripcionFoto, hint: "Describe lo que se ve en la foto." , required: true }) : ""}
       <div class="flex flex-wrap justify-between gap-2.5 border-t border-t-base-300 pt-[18px] max-tablet:flex-col-reverse">
         <button type="button" id="hito-eliminar" class="${DANGER}">${iconSvg("trash", 18)} Eliminar hito</button>
-        <span class="flex flex-wrap gap-2.5 max-tablet:flex-col-reverse">
-          ${previewButton("/acerca-de-nosotros/biografia/")}
-          <button type="submit" class="button">Guardar borrador</button>
+        <span class="flex flex-wrap gap-2.5 max-tablet:flex-col-reverse">${botonesGuardar("/acerca-de-nosotros/biografia/")}
         </span>
       </div>
     </form>`);

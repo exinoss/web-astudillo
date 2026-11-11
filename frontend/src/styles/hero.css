@@ -1,11 +1,3 @@
-/* Apunta a un <svg>: `Icon.astro` no reenvía `class`. */
-
-@media (max-width: 760px) {
-  .alternate-inner .button svg {
-    width: 14px;
-  }
-}
-
 /* Zoom del candidato en el banner 1: el polígono es la zona del puntero y el fondo sin él tapa al original. */
 .silueta-portada {
   display: none;

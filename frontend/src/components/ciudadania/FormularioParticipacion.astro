@@ -1,0 +1,49 @@
+---
+import Icon from "../comun/Icon.astro";
+import LegalAcceptance from "../comun/LegalAcceptance.astro";
+import { TARJETA, ESTADO } from "./estilos";
+
+interface Props {
+  /** Prefijo de los id (`alerta-form`, `alerta-estado`…) y palabra de los textos («Enviar alerta»). */
+  nombre: "alerta" | "sugerencia";
+  titulo: string;
+  intro: string;
+  encabezado: string;
+  historial: string;
+  temas?: string;
+}
+const { nombre, titulo, intro, encabezado, historial, temas } = Astro.props;
+---
+
+<section class="site-container max-w-[1100px] py-pagina">
+  <div class="max-w-[760px]">
+    <span class="eyebrow">UN ESPACIO PARA TI</span>
+    <h2 class="mt-[15px] mb-2 max-tablet:text-[2.7rem]">{titulo}</h2>
+    <p>{intro}</p>
+    <slot name="nota" />
+  </div>
+  <div class="mt-7 grid grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)] items-start gap-10 max-laptop:gap-6 max-tablet:mt-[22px] max-tablet:grid-cols-1 max-tablet:gap-[30px]">
+    <form id={`${nombre}-form`} class={TARJETA} data-temas={temas} novalidate>
+      <p id={`${nombre}-recuperada`} class="mt-0 mb-[18px] border-l-4 border-neutral bg-primary-soft px-4 py-3 text-[0.84rem] leading-normal" role="status" hidden>
+        Recuperamos tu {nombre}. Revísala antes de enviarla.
+      </p>
+      <div class="mb-5 flex items-center justify-between gap-[15px] max-nav:flex-col max-nav:items-start max-nav:gap-2">
+        <h3 class="m-0 max-tablet:text-[1.1rem]">{encabezado}</h3>
+        <span class="text-[0.73rem] text-base-content">* Campos obligatorios</span>
+      </div>
+      <slot />
+
+      <LegalAcceptance id={`${nombre}-aceptacion`} hidden prompt={`Antes de enviar tu ${nombre}, confirma:`} />
+      <button class="button mt-6 w-full" type="submit" data-envia><span data-envio-texto>Enviar {nombre}</span> <Icon name="arrow" size={18} /></button>
+      <p id={`${nombre}-estado`} class={ESTADO} role="status" hidden></p>
+    </form>
+
+    <aside class="rounded-[5px] border border-base-300 bg-base-100 p-6 max-nav:px-4 max-nav:py-5" aria-labelledby="historial-titulo">
+      <h3 id="historial-titulo" class="m-0 mb-1 text-[1.35rem]">{historial}</h3>
+      <p class="m-0 mb-3.5 text-[0.78rem] text-base-content">Las últimas que enviaste y en qué estado están.</p>
+      <div id="historial" aria-live="polite">
+        <p class="m-0 text-[0.84rem]">Cargando…</p>
+      </div>
+    </aside>
+  </div>
+</section>

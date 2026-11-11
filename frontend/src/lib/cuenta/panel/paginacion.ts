@@ -9,7 +9,7 @@ interface PageInfo {
 const ARROW = (turn: number) =>
   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6" transform="rotate(${turn} 12 12)"/></svg>`;
 const BUTTON =
-  "grid min-h-11 min-w-11 place-items-center rounded-[3px] border border-base-300 px-1.5 text-[0.85rem] font-bold text-primary hover:bg-base-200 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent aria-[current=page]:border-primary aria-[current=page]:bg-primary aria-[current=page]:text-primary-content";
+  "grid min-h-11 min-w-11 place-items-center rounded-control border border-base-300 px-1.5 text-[0.85rem] font-bold text-primary hover:bg-base-200 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent aria-[current=page]:border-primary aria-[current=page]:bg-primary aria-[current=page]:text-primary-content";
 
 /** Páginas visibles: todas si son pocas; si no, primeras, vecinas de la actual y última. */
 function visiblePages(current: number, last: number): (number | "…")[] {

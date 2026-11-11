@@ -31,7 +31,7 @@ const fotos = parish.photos.map((p) => ({ image: p.image, alt: p.alt, caption: p
         <Fragment set:html={visorFotos(`visor-${parish.slug}`, `Fotos de ${parish.name}`, fotos.map((f) => ({ ...f, image: imageView(f.image) })))} />
       </CarruselFotos>
     ) : (
-      <p class:list={["m-0 grid w-full place-items-center rounded-[4px] border border-dashed border-neutral/35 bg-neutral/8 p-4 text-center text-[0.8rem] text-neutral", conTexto ? "aspect-[4/3] max-laptop:aspect-auto max-laptop:min-h-[160px]" : "min-h-[160px]"]}>
+      <p class:list={["m-0 grid w-full place-items-center rounded-card border border-dashed border-neutral/35 bg-neutral/8 p-4 text-center text-[0.8rem] text-neutral", conTexto ? "aspect-[4/3] max-laptop:aspect-auto max-laptop:min-h-[160px]" : "min-h-[160px]"]}>
         Aún no hay fotos de esta parroquia.
       </p>
     )}

@@ -1,7 +1,7 @@
 /* `#main-nav` es un selector de ID: ninguna utilidad de Tailwind puede
    sobreescribirlo, y su menú móvil depende de la clase `is-open` que
-   conmuta `src/scripts/layout.ts`. Lo demás son reglas sobre <svg> y el
-   pseudo-elemento del enlace activo. */
+   conmuta `src/scripts/comun/layout.ts`. Lo demás es el pseudo-elemento del
+   enlace activo. */
 
 #main-nav {
   display: flex;
@@ -44,15 +44,6 @@
   }
   .nav-link.active:after {
     bottom: 9px;
-  }
-}
-
-@media (max-width: 760px) {
-  .topbar-inner svg {
-    width: 12px;
-  }
-  .account-link svg {
-    width: 16px;
   }
 }
 

@@ -7,6 +7,7 @@ import AccountStatus from '../../components/cuenta/AccountStatus.astro';
 import AccountSignOut from '../../components/cuenta/AccountSignOut.astro';
 import Icon from '../../components/comun/Icon.astro';
 import LegalAcceptance from '../../components/comun/LegalAcceptance.astro';
+import EnlaceCuenta from '../../components/cuenta/EnlaceCuenta.astro';
 ---
 
 <AccountShell title="Mi cuenta" lead="Accede para gestionar tus datos y participar.">
@@ -20,7 +21,7 @@ import LegalAcceptance from '../../components/comun/LegalAcceptance.astro';
           <AccountField id="login-correo" name="correo" label="Correo electrónico" type="email" placeholder="nombre@ejemplo.com" autocomplete="email" required maxLength={LARGOS.cuenta.correo} />
           <AccountField id="login-contrasenia" name="contrasenia" label="Contraseña" type="password" placeholder="Tu contraseña" autocomplete="current-password" required />
           <div class="-mt-3 mb-1.5 flex justify-end">
-            <a class="inline-flex min-h-11 items-center text-sm underline" href="/cuenta/recuperar/">¿Olvidaste tu contraseña?</a>
+            <EnlaceCuenta href="/cuenta/recuperar/" class="text-sm">¿Olvidaste tu contraseña?</EnlaceCuenta>
           </div>
           <button type="submit" class="button w-full">Entrar</button>
         </form>
@@ -28,7 +29,7 @@ import LegalAcceptance from '../../components/comun/LegalAcceptance.astro';
         <div id="google-login-button" class="flex min-h-12 w-full justify-center"></div>
         <p id="google-login-unavailable" hidden class="m-0 text-center text-xs text-muted">El acceso con Google estará disponible cuando se configure.</p>
         <p class="m-0 mt-6 mb-2.5 text-center text-sm text-muted">¿No tienes cuenta?</p>
-        <a class="flex min-h-[50px] w-full items-center justify-center rounded-[3px] border-2 border-primary px-6 text-[0.9375rem] font-bold text-primary no-underline hover:bg-primary-soft" href="/cuenta/registro/">Crear una cuenta</a>
+        <a class="flex min-h-[50px] w-full items-center justify-center rounded-control border-2 border-primary px-6 text-[0.9375rem] font-bold text-primary no-underline hover:bg-primary-soft" href="/cuenta/registro/">Crear una cuenta</a>
       </AccountCard>
     </div>
   </div>
@@ -36,12 +37,12 @@ import LegalAcceptance from '../../components/comun/LegalAcceptance.astro';
   <div id="google-registration-panel" class="mx-auto max-w-[560px]" hidden>
     <AccountCard heading="Completa tu registro">
       <p id="google-registration-name" class="m-0 mb-1 text-[0.9rem] font-medium"></p>
-      <p id="google-registration-email" class="m-0 text-[0.87rem] [overflow-wrap:anywhere]"></p>
+      <p id="google-registration-email" class="m-0 text-[0.87rem] wrap-anywhere"></p>
       <form id="google-registration-form" novalidate>
         <LegalAcceptance id="google-aceptacion" />
         <button type="submit" class="button mt-[18px] w-full">Crear mi cuenta</button>
       </form>
-      <a href="/cuenta/" class="mt-4 inline-flex min-h-11 items-center text-[0.82rem] underline">Volver a acceder</a>
+      <EnlaceCuenta href="/cuenta/" class="mt-4 text-[0.82rem]">Volver a acceder</EnlaceCuenta>
     </AccountCard>
   </div>
 
@@ -51,7 +52,7 @@ import LegalAcceptance from '../../components/comun/LegalAcceptance.astro';
       <span class="grid size-12 shrink-0 place-items-center rounded-full bg-accent text-primary"><Icon name="edit" size={24} /></span>
       <span class="flex min-w-0 flex-1 flex-col gap-0.5"><strong class="text-[1.15rem]">Panel de administración</strong>
         <span class="text-[0.85rem] text-white/80">Edita el contenido del sitio y publica los cambios.</span></span>
-      <span class="inline-flex min-h-11 items-center gap-2 rounded-[3px] bg-accent px-4 text-[0.88rem] font-bold text-primary max-tablet:w-full max-tablet:justify-center">Entrar al panel <Icon name="arrow" size={18} /></span>
+      <span class="inline-flex min-h-11 items-center gap-2 rounded-control bg-accent px-4 text-[0.88rem] font-bold text-primary max-tablet:w-full max-tablet:justify-center">Entrar al panel <Icon name="arrow" size={18} /></span>
     </a>
     <div class="mx-auto grid max-w-[1050px] grid-cols-2 items-start gap-[22px] max-tablet:grid-cols-1">
       <AccountCard heading="Mis datos" description="Estos datos se usan en tu cuenta.">

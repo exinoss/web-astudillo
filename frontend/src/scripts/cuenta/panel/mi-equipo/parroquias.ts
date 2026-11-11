@@ -1,7 +1,7 @@
 import { MAX_FOTOS_PARROQUIA, PARROQUIAS } from "../../../../../../backend/src/contracts/parroquias";
 import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type DraftMyTeam } from "../../../../lib/data/http/admin-api";
-import { avisarVacios, avisoBorrador, busy, esc, field, FORMATOS_FOTO, enlazarLista, guardarYRecargar, HINT, isPending, LARGOS, MAX_MB_FOTO, moveButtons, notify, previewButton, state, subirFotos, thumb, upload, value } from "../ui";
+import { acciones, avisarVacios, avisoBorrador, busy, enlazarLista, esc, field, FORMATOS_FOTO, guardarYRecargar, HINT, isPending, LARGOS, MAX_MB_FOTO, moveButtons, notify, selector, state, subirFotos, thumb, upload, value } from "../ui";
 
 type Parroquia = DraftMyTeam["parroquias"][number];
 let elegida: string = PARROQUIAS[0].slug;
@@ -20,18 +20,13 @@ function capturar(form: HTMLElement) {
 export function renderParishes(body: HTMLElement, rerender: () => void) {
   const p = (trabajo[elegida] ??= structuredClone(delBorrador(elegida)));
   const fotos = p.fotos.map((f, i) => `
-    <li class="flex min-w-0 flex-col gap-3 rounded-[3px] border border-base-300 p-3">
-      <img src="${esc(thumb(f.foto))}" alt="" class="aspect-[4/3] w-full rounded-[3px] object-cover" />
+    <li class="flex min-w-0 flex-col gap-3 rounded-control border border-base-300 p-3">
+      <img src="${esc(thumb(f.foto))}" alt="" class="aspect-[4/3] w-full rounded-control object-cover" />
       ${field({ id: `parroquia-foto-${i}`, label: "Descripción de la foto", value: f.alt, max: LARGOS.descripcionFoto, hint: "Se lee debajo de la foto." , required: true })}
       <div class="flex flex-wrap gap-1">${moveButtons("foto", i, p.fotos.length, `foto ${i + 1}`)}</div>
     </li>`).join("");
   body.innerHTML = `
-    <div class="mb-5 flex items-center gap-3.5 max-tablet:flex-col max-tablet:items-stretch max-tablet:gap-1.5">
-      <label for="parroquia-selector" class="text-[0.82rem] font-bold">Parroquia</label>
-      <select id="parroquia-selector" class="campo min-w-[320px] max-tablet:min-w-0">
-        ${PARROQUIAS.map((x) => `<option value="${x.slug}" ${x.slug === elegida ? "selected" : ""}>${esc(x.nombre)}</option>`).join("")}
-      </select>
-    </div>
+    ${selector("parroquia-selector", "Parroquia", PARROQUIAS.map((x) => `<option value="${x.slug}" ${x.slug === elegida ? "selected" : ""}>${esc(x.nombre)}</option>`).join(""))}
     ${avisoBorrador(isPending("Mi equipo", nombre(elegida)), "mb-5")}
     <form id="parroquia-form" novalidate>
       ${field({ id: "parroquia-texto", label: "Texto", value: p.texto, max: LARGOS.equipo.textoParroquia, area: true, hint: "Deja una línea en blanco entre párrafos. Es opcional." })}
@@ -39,10 +34,7 @@ export function renderParishes(body: HTMLElement, rerender: () => void) {
       ${p.fotos.length ? `<ol class="m-0 grid list-none grid-cols-3 gap-4 p-0 max-laptop:grid-cols-2 max-tablet:grid-cols-1">${fotos}</ol>` : `<p class="m-0 text-[0.85rem]">Esta parroquia todavía no tiene fotos.</p>`}
       ${p.fotos.length < MAX_FOTOS_PARROQUIA ? `<div class="mt-4">${upload("parroquia-fotos", "Subir fotos", true)}</div>` : ""}
       <p class="${HINT}">Hasta ${MAX_FOTOS_PARROQUIA} fotos, en el orden en que se muestran. ${FORMATOS_FOTO} de hasta ${MAX_MB_FOTO} MB, de 2000 × 1200 px o más (horizontal).</p>
-      <div class="mt-6 flex flex-wrap justify-end gap-2.5 border-t border-t-base-300 pt-[18px] max-tablet:flex-col-reverse">
-        ${previewButton("/mi-equipo/")}
-        <button type="submit" class="button">Guardar borrador</button>
-      </div>
+      ${acciones("/mi-equipo/", "mt-6")}
     </form>`;
   const form = body.querySelector<HTMLFormElement>("#parroquia-form")!;
   const editar = (cambio: () => void) => { capturar(form); cambio(); rerender(); };

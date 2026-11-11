@@ -1,24 +1,12 @@
 ---
-import { FILLED, ICON_PATHS } from "../../lib/comun/iconos";
+import { iconSvg } from "../../lib/comun/iconos";
 
 interface Props {
   name: string;
   size?: number;
+  class?: string;
 }
-const { name, size = 24 } = Astro.props;
-const paths = ICON_PATHS;
+const { name, size = 24, class: clase } = Astro.props;
 ---
 
-<svg
-  width={size}
-  height={size}
-  viewBox="0 0 24 24"
-  fill={FILLED.has(name) ? "currentColor" : "none"}
-  stroke={FILLED.has(name) ? "none" : "currentColor"}
-  stroke-width="1.7"
-  stroke-linecap="round"
-  stroke-linejoin="round"
-  aria-hidden="true"
->
-  <path d={paths[name] || paths.arrow} />
-</svg>
+<Fragment set:html={iconSvg(name, size, clase)} />

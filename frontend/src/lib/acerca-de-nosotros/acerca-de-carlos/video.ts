@@ -3,6 +3,12 @@ import { iconSvg } from "../../comun/iconos";
 import { PROVIDER_NAMES, videoSource } from "./reproductor";
 import type { AboutCarlosPageView } from "./vista";
 
+/** Círculo con el triángulo y el texto del botón que reproduce el video. */
+export const verVideo = (texto: string) => `<span class="flex items-center gap-2.5 text-[0.9rem] font-bold">
+          <span class="grid size-10 shrink-0 place-items-center rounded-full bg-accent text-primary transition-transform group-hover:scale-105">${iconSvg("play", 18)}</span>
+          ${texto}
+        </span>`;
+
 export function videoSection(v: AboutCarlosPageView["video"]) {
   const source = v && videoSource(v.url);
   if (!v || !source) return "";
@@ -17,17 +23,12 @@ export function videoSection(v: AboutCarlosPageView["video"]) {
       ${img(v.cover, "", "absolute inset-0 h-full w-full object-cover object-[50%_25%]", v.vertical ? "300px" : "(max-width: 760px) calc(100vw - 40px), 650px")}
       <div aria-hidden="true" class="absolute inset-0 [background:linear-gradient(to_top,#063176e6_0%,transparent_45%)]"></div>
       <button data-video-play type="button" aria-label="Reproducir el video: ${esc(v.title)}" class="group absolute inset-0 flex items-end p-4 text-left text-white">
-        <span class="flex items-center gap-2.5 text-[0.9rem] font-bold">
-          <span class="grid size-10 shrink-0 place-items-center rounded-full bg-accent text-primary transition-transform group-hover:scale-105">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m8 5 11 7-11 7Z" /></svg>
-          </span>
-          Ver video · ${PROVIDER_NAMES[source.provider]}
-        </span>
+        ${verVideo(`Ver video · ${PROVIDER_NAMES[source.provider]}`)}
       </button>
       <div data-video-error hidden class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-primary px-5 text-center text-white">
         ${iconSvg("alert", 28)}
         <strong class="text-base">El video no está disponible.</strong>
-        <button data-video-retry type="button" class="min-h-11 rounded-[3px] border border-white px-4 text-sm font-bold">Reintentar</button>
+        <button data-video-retry type="button" class="min-h-11 rounded-control border border-white px-4 text-sm font-bold">Reintentar</button>
         <a href="${esc(source.url)}" target="_blank" rel="noopener noreferrer" class="inline-flex min-h-11 items-center text-sm underline underline-offset-4">Ver en ${PROVIDER_NAMES[source.provider]}</a>
       </div>
     </div>

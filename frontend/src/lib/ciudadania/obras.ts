@@ -6,6 +6,14 @@ export const STAGE_NAMES: Record<WorkStage, string> = {
   terminada: "Terminada",
 };
 
+export const STAGE_CLASSES: Record<WorkStage, string> = {
+  "por-iniciar": "border border-base-300 text-primary",
+  "en-ejecucion": "bg-secondary text-primary",
+  terminada: "bg-primary text-primary-content",
+};
+export const BARRA_AVANCE = "h-2.5 overflow-hidden rounded-full bg-progress-track";
+export const RELLENO_AVANCE = "h-full rounded-full bg-neutral";
+
 /** Porcentaje de hitos completados y etapa de una obra; lo usan la página y el panel para mostrar lo mismo. */
 export function workProgress(milestones: { done: boolean }[]) {
   const done = milestones.filter((m) => m.done).length;

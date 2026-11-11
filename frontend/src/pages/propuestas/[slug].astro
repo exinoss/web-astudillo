@@ -45,7 +45,7 @@ const fila = "mt-3.5 grid grid-cols-2 gap-[18px] max-tablet:grid-cols-1 max-tabl
     lead={proposal.intro}
   />
   <KpiStrip kpis={proposal.kpis} label={`Cifras de la propuesta ${proposal.name}`} />
-  <article class="site-container pt-8 pb-14 max-tablet:pt-6 max-tablet:pb-10">
+  <article class="site-container py-pagina">
     <Editable clave="propuesta.antetitulo" class="eyebrow" />
     <Editable as="h2" clave="propuesta.titulo" class="mt-[15px] max-tablet:text-[2.6rem]" />
     <Editable as="p" clave="propuesta.texto" class="max-w-[680px]" />

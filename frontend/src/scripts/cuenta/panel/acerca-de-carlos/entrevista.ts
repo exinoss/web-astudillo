@@ -1,11 +1,11 @@
-import { field, GHOST, HINT, iconSvg, LARGOS, moveButtons, value } from "../ui";
+import { field, GHOST, GRUPO, HINT, iconSvg, LARGOS, moveButtons, value } from "../ui";
 import { bindListActions, MAX_ITEMS, type Editor, type SectionEditor } from "./comun";
 
 export const interview: SectionEditor = {
   html(editor: Editor) {
     const list = editor.page.entrevista;
     const rows = list.map((e, i) => `
-      <fieldset class="flex min-w-0 flex-col gap-4 rounded-[3px] border border-base-300 p-4">
+      <fieldset class="${GRUPO} flex flex-col gap-4">
         <legend class="px-1 text-sm font-bold">Pregunta ${i + 1}</legend>
         ${field({ id: `pregunta-${i}`, label: "Pregunta", value: e.pregunta, max: LARGOS.acercaDeCarlos.pregunta , required: true })}
         ${field({ id: `respuesta-${i}`, label: "Respuesta", value: e.respuesta, max: LARGOS.acercaDeCarlos.respuesta, area: true, hint: "Hasta 1000 caracteres." , required: true })}

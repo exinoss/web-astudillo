@@ -1,6 +1,6 @@
-import { cardMarkup } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/tarjeta";
+import { CARD_COLORS, cardMarkup } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/tarjeta";
 import { cardImageUrl } from "../../../../lib/comun/fotos";
-import { esc, field, FORMATOS_FOTO, HINT, LABEL, LARGOS, MAX_MB_FOTO, moveButtons, upload, value } from "../ui";
+import { esc, field, FORMATOS_FOTO, GRUPO, HINT, LABEL, LARGOS, LEYENDA, MAX_MB_FOTO, moveButtons, upload, value } from "../ui";
 import { bindListActions, MAX_ITEMS, onFiles, radios, type Editor, type SectionEditor } from "./comun";
 
 let selectedCard = 0;
@@ -16,7 +16,7 @@ export const cards: SectionEditor = {
     const list = editor.page.tarjetas;
     selectedCard = Math.min(selectedCard, Math.max(0, list.length - 1));
     const card = list[selectedCard];
-    const items = list.map((c, i) => `<button type="button" data-card-select="${i}" aria-pressed="${i === selectedCard}" class="min-h-14 w-full rounded-[3px] border border-base-300 border-l-4 p-3 text-left text-[0.8rem] font-bold aria-pressed:border-l-secondary aria-pressed:bg-accent-soft [overflow-wrap:anywhere]">${i + 1} · ${esc(c.titulo || "Nueva tarjeta")}</button>`).join("");
+    const items = list.map((c, i) => `<button type="button" data-card-select="${i}" aria-pressed="${i === selectedCard}" class="min-h-14 w-full rounded-control border border-base-300 border-l-4 p-3 text-left text-[0.8rem] font-bold aria-pressed:border-l-secondary aria-pressed:bg-accent-soft wrap-anywhere">${i + 1} · ${esc(c.titulo || "Nueva tarjeta")}</button>`).join("");
     const add = list.length < MAX_ITEMS ? `<div class="mt-3">${upload("tarjeta-nueva", "Añadir tarjeta")}</div>` : "";
     const editorHtml = card ? `
       <div class="flex min-w-0 flex-col gap-[18px]">
@@ -28,18 +28,18 @@ export const cards: SectionEditor = {
           ${upload("tarjeta-foto", "Cambiar foto")}
           <p class="${HINT}">Medida recomendada: 800 × 1170 px (vertical). ${FORMATOS_FOTO} de hasta ${MAX_MB_FOTO} MB. Mejor una escena o un detalle que represente la idea.</p>
         </div>
-        <fieldset class="min-w-0 rounded-[3px] border border-base-300 p-4">
-          <legend class="px-1 text-[0.82rem] font-bold">Encuadre</legend>
+        <fieldset class="${GRUPO}">
+          <legend class="${LEYENDA}">Encuadre</legend>
           <div class="grid grid-cols-2 gap-4 max-tablet:grid-cols-1">
             <div><label for="tarjeta-x" class="block text-[0.8rem]">Horizontal</label><input id="tarjeta-x" type="range" min="0" max="100" value="${card.enfoque.x}" class="min-h-11 w-full accent-primary" /></div>
             <div><label for="tarjeta-y" class="block text-[0.8rem]">Vertical</label><input id="tarjeta-y" type="range" min="0" max="100" value="${card.enfoque.y}" class="min-h-11 w-full accent-primary" /></div>
           </div>
         </fieldset>
-        <fieldset class="min-w-0 rounded-[3px] border border-base-300 p-4">
-          <legend class="px-1 text-[0.82rem] font-bold">Color de la tarjeta</legend>
+        <fieldset class="${GRUPO}">
+          <legend class="${LEYENDA}">Color de la tarjeta</legend>
           <div class="flex flex-wrap gap-3">${radios("tarjeta-color", [
-            ["rojo", "Rojo", '<span aria-hidden="true" class="size-6 rounded-full bg-[#d81919]"></span>'],
-            ["azul", "Azul", '<span aria-hidden="true" class="size-6 rounded-full bg-[#284e9c]"></span>'],
+            ["rojo", "Rojo", `<span aria-hidden="true" class="size-6 rounded-full" style="background: ${CARD_COLORS.rojo.base}"></span>`],
+            ["azul", "Azul", `<span aria-hidden="true" class="size-6 rounded-full" style="background: ${CARD_COLORS.azul.base}"></span>`],
           ], card.color)}</div>
         </fieldset>
         <div class="flex flex-wrap gap-1 border-t border-base-300 pt-3">${moveButtons("tarjeta", selectedCard, list.length, `tarjeta ${selectedCard + 1}`)}</div>
@@ -48,8 +48,8 @@ export const cards: SectionEditor = {
         <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
           <strong class="text-[0.85rem]">Vista previa</strong>
           <div class="flex gap-1">
-            <button data-preview-width="260" type="button" aria-pressed="true" class="min-h-11 rounded-[3px] border border-base-300 px-2 text-[0.72rem] aria-pressed:bg-accent">Escritorio</button>
-            <button data-preview-width="200" type="button" aria-pressed="false" class="min-h-11 rounded-[3px] border border-base-300 px-2 text-[0.72rem] aria-pressed:bg-accent">Móvil</button>
+            <button data-preview-width="260" type="button" aria-pressed="true" class="min-h-11 rounded-control border border-base-300 px-2 text-[0.72rem] aria-pressed:bg-accent">Escritorio</button>
+            <button data-preview-width="200" type="button" aria-pressed="false" class="min-h-11 rounded-control border border-base-300 px-2 text-[0.72rem] aria-pressed:bg-accent">Móvil</button>
           </div>
         </div>
         <div id="tarjeta-vista" class="mx-auto w-full max-w-[260px]">${cardPreview(editor)}</div>

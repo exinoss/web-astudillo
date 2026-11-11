@@ -23,7 +23,7 @@ const { quickReplies } = Astro.props;
         <small class="mt-[5px] block text-[0.68rem] text-footer-muted">Respuestas automáticas · Información del sitio</small>
       </div>
       <button id="chat-voz" type="button" aria-pressed="false" hidden
-        class="inline-flex min-h-11 items-center gap-2 rounded-full border border-[#ffffff55] bg-transparent px-3.5 text-[0.74rem] font-bold aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-primary">
+        class="inline-flex min-h-11 items-center gap-2 rounded-full border border-line-on-dark bg-transparent px-3.5 text-[0.74rem] font-bold aria-pressed:border-accent aria-pressed:bg-accent aria-pressed:text-primary">
         <span class="voz-activa" hidden><Icon name="volume" size={18} /></span>
         <span class="voz-silencio"><Icon name="volumeOff" size={18} /></span>
         Leer en voz alta
@@ -56,7 +56,7 @@ const { quickReplies } = Astro.props;
       <label class="sr-only group-data-[aceptacion-pendiente=true]:not-sr-only group-data-[aceptacion-pendiente=true]:block group-data-[aceptacion-pendiente=true]:w-full group-data-[aceptacion-pendiente=true]:text-[0.87rem]" for="chat-input">Escribe tu consulta</label>
       <input id="chat-input" class="min-w-0 flex-1 placeholder:text-field-placeholder placeholder:opacity-100" placeholder="Escribe tu consulta…" maxlength={LARGOS_PARTICIPACION.consulta} autocomplete="off" aria-describedby="chat-ayuda" />
       <button id="chat-mic" type="button" data-envia aria-label="Preguntar con tu voz" aria-pressed="false" hidden
-        class="chat-mic grid w-[50px] min-w-[50px] place-items-center rounded-[3px] border border-primary bg-base-100 text-primary aria-pressed:border-campaign-red aria-pressed:bg-campaign-red aria-pressed:text-primary-content">
+        class="chat-mic grid w-[50px] min-w-[50px] place-items-center rounded-control border border-primary bg-base-100 text-primary aria-pressed:border-campaign-red aria-pressed:bg-campaign-red aria-pressed:text-primary-content">
         <Icon name="mic" size={22} />
       </button>
       <button type="submit" data-envia class="button px-[15px] py-2.5 data-[aceptacion-pendiente=true]:w-full" aria-label="Enviar consulta">

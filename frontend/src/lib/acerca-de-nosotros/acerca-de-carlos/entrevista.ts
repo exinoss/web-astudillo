@@ -8,7 +8,7 @@ export function interviewSection(items: AboutCarlosPageView["interview"]) {
   return `
 <section aria-labelledby="entrevista-titulo" class="mt-9 max-tablet:mt-8">
   <h2 id="entrevista-titulo" class="mb-4 text-[2rem]">Una conversación con Carlos</h2>
-  <div class="rounded-[3px] border-t border-base-300 bg-base-100/90">
+  <div class="rounded-control border-t border-base-300 bg-base-100/90">
     ${items.map((item) => `<details data-interview class="group border-b border-base-300">
       <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-1 py-4 text-[0.95rem] font-bold [&::-webkit-details-marker]:hidden">
         ${esc(item.question)}

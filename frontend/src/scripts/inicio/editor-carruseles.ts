@@ -8,7 +8,7 @@ import { medidasFoto, uploadedSrcset, uploadedUrl } from "../../lib/comun/fotos"
 import { iconSvg } from "../../lib/comun/iconos";
 import { bloquearMientras, vigilarCambios } from "../../lib/comun/cambios";
 import { desmarcarAlEscribir, marcarVacios } from "../../lib/comun/campos";
-import { enlazarLista, field, GHOST, HINT, ICON_BUTTON, moveButtons, thumb, upload } from "../../lib/cuenta/panel/campos";
+import { enlazarLista, field, GHOST, HINT, ICON_BUTTON, moveButtons, PRINCIPAL, thumb, upload } from "../../lib/cuenta/panel/campos";
 import { adminApi, type Draft, type DraftHomeCarousels, type DraftHomeImage, type HomeImageBody } from "../../lib/data/http/admin-api";
 
 type Principal = DraftHomeCarousels["principal"];
@@ -22,7 +22,6 @@ interface Opciones {
   decorar: (raiz: ParentNode) => void;
 }
 
-const BUTTON = "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-[3px] px-[18px] text-[0.82rem] font-bold whitespace-nowrap";
 const LIMITE = `Máximo ${MAX_MB_FOTO} MB.`;
 // Mismas clases que index.astro: una pieza subida no se ve más grande que su archivo.
 const TOPE = ["m-auto", "max-h-[calc(var(--ancho-foto)/var(--proporcion))]", "max-w-(--ancho-foto)"];
@@ -54,18 +53,18 @@ const cuerpoImagen = (imagen: DraftHomeImage): HomeImageBody => ("foto" in image
 
 /** Tarjeta de un banner en el editor, con su imagen, la de celular y sus botones. */
 const tarjetaBanner = (b: Principal["banners"][number], i: number, total: number) => `
-  <li class="flex flex-col gap-3 rounded-[3px] border border-base-300 p-3">
+  <li class="flex flex-col gap-3 rounded-control border border-base-300 p-3">
     <div class="flex items-center justify-between gap-2">
       <strong class="text-[0.85rem]">Banner ${i + 1}</strong>
       <span class="flex">${moveButtons("banner", i, total, `banner ${i + 1}`, 0, 1)}</span>
     </div>
     <div class="grid grid-cols-[minmax(0,260px)_minmax(0,1fr)] items-start gap-4 max-tablet:grid-cols-1">
-      <img src="${miniatura(b.imagen)}" alt="" class="aspect-[1947/741] w-full rounded-[3px] bg-base-200 object-cover" />
+      <img src="${miniatura(b.imagen)}" alt="" class="aspect-[1947/741] w-full rounded-control bg-base-200 object-cover" />
       <div class="flex flex-col gap-3">
         ${i === 0 ? `<p class="${HINT} mt-0">Este banner ya tiene su versión para celular.</p>` : `<div class="flex flex-wrap items-center gap-3">
           ${b.celular
-            ? `<img src="${thumb(b.celular)}" alt="" class="aspect-[4/3] w-[104px] rounded-[3px] bg-base-200 object-cover" />`
-            : `<span class="grid aspect-[4/3] w-[104px] place-items-center rounded-[3px] border border-dashed border-field-border px-2 text-center text-[0.68rem] leading-tight text-muted">Sin imagen para celular</span>`}
+            ? `<img src="${thumb(b.celular)}" alt="" class="aspect-[4/3] w-[104px] rounded-control bg-base-200 object-cover" />`
+            : `<span class="grid aspect-[4/3] w-[104px] place-items-center rounded-control border border-dashed border-field-border px-2 text-center text-[0.68rem] leading-tight text-muted">Sin imagen para celular</span>`}
           <span class="flex min-w-0 flex-1 flex-col items-start gap-1">
             <span class="text-[0.82rem] font-bold">Imagen para celular <span class="font-normal">(opcional) · 1520 × 1140 px</span></span>
             <span class="flex flex-wrap gap-2">
@@ -90,8 +89,8 @@ const htmlPrincipal = (p: Principal) => `
   <section aria-labelledby="carrusel-retrato" class="mt-6 border-t border-t-base-300 pt-5">
     <h3 id="carrusel-retrato" class="m-0 mb-1 font-sans text-[1rem] font-bold">Retrato de la segunda diapositiva</h3>
     <p class="${HINT} mb-3">1200 × 1200 px · ${LIMITE}</p>
-    <div class="flex flex-wrap items-end gap-3 rounded-[3px] border border-base-300 p-3">
-      <img src="${miniatura(p.retrato.imagen)}" alt="" class="aspect-square w-[104px] rounded-[3px] bg-base-200 object-cover" />
+    <div class="flex flex-wrap items-end gap-3 rounded-control border border-base-300 p-3">
+      <img src="${miniatura(p.retrato.imagen)}" alt="" class="aspect-square w-[104px] rounded-control bg-base-200 object-cover" />
       <span class="pb-0.5">${upload("retrato-nuevo", "Cambiar retrato")}</span>
       <div class="basis-full">${field({ id: "retrato-alt", label: "Descripción de la imagen", value: p.retrato.alt, max: LARGOS.descripcionFoto, required: true })}</div>
     </div>
@@ -101,8 +100,8 @@ const htmlPrincipal = (p: Principal) => `
 const htmlPiezas = (p: Piezas) => `
   <p class="${HINT} mt-0 mb-3">Hasta ${MAX_PIEZAS} · 1080 × 1350 px · ${LIMITE}</p>
   <ol class="m-0 flex list-none flex-col gap-3 p-0">${p.piezas.map((x, i) => `
-    <li class="flex gap-3 rounded-[3px] border border-base-300 p-3">
-      <img src="${miniatura(x.imagen)}" alt="" class="aspect-[4/5] w-[104px] shrink-0 self-start rounded-[3px] bg-secondary object-contain max-mobile:w-[72px]" />
+    <li class="flex gap-3 rounded-control border border-base-300 p-3">
+      <img src="${miniatura(x.imagen)}" alt="" class="aspect-[4/5] w-[104px] shrink-0 self-start rounded-control bg-secondary object-contain max-mobile:w-[72px]" />
       <div class="flex min-w-0 flex-1 flex-col gap-2">
         <div class="flex items-center justify-between gap-2">
           <strong class="text-[0.85rem]">Pieza ${i + 1}</strong>
@@ -117,8 +116,8 @@ const htmlPiezas = (p: Piezas) => `
 const htmlEquipo = (e: Equipo) => `
   <p class="${HINT} mt-0 mb-3">Hasta ${MAX_FOTOS_EQUIPO} · imágenes horizontales · 2000 × 761 px · ${LIMITE}</p>
   <ol class="m-0 flex list-none flex-col gap-3 p-0">${e.fotos.map((x, i) => `
-    <li class="flex gap-3 rounded-[3px] border border-base-300 p-3 max-mobile:flex-col">
-      <img src="${thumb(x.foto)}" alt="" class="aspect-[1947/741] w-[200px] shrink-0 self-start rounded-[3px] bg-accent object-contain max-mobile:w-full" />
+    <li class="flex gap-3 rounded-control border border-base-300 p-3 max-mobile:flex-col">
+      <img src="${thumb(x.foto)}" alt="" class="aspect-[1947/741] w-[200px] shrink-0 self-start rounded-control bg-accent object-contain max-mobile:w-full" />
       <div class="flex min-w-0 flex-1 flex-col gap-2">
         <div class="flex items-center justify-between gap-2">
           <strong class="text-[0.85rem]">Imagen ${i + 1}</strong>
@@ -141,7 +140,7 @@ dialogo.innerHTML = `
     <div data-cuerpo class="overflow-y-auto overscroll-contain px-6 py-5 max-tablet:px-4"></div>
     <div class="flex justify-end gap-2.5 border-t border-t-base-300 px-6 pt-3 pb-[calc(12px+env(safe-area-inset-bottom,0px))] max-tablet:px-4">
       <button type="button" data-cerrar class="${GHOST} max-tablet:flex-1">Cancelar</button>
-      <button type="button" data-guardar class="${BUTTON} bg-primary text-primary-content disabled:bg-disabled disabled:text-muted max-tablet:flex-1">Guardar borrador</button>
+      <button type="button" data-guardar class="${PRINCIPAL} max-tablet:flex-1">Guardar borrador</button>
     </div>
   </div>`;
 const guardar = dialogo.querySelector<HTMLButtonElement>("[data-guardar]")!;

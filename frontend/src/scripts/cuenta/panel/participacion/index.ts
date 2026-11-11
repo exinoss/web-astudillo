@@ -25,13 +25,13 @@ const stateControl = (id: number, current: ParticipationState) => can("participa
 function alertItem(a: ReviewedAlert) {
   const tipo = TIPOS_ALERTA.find((t) => t.valor === a.tipo)!;
   const thumb = a.foto
-    ? `<a href="${esc(a.foto.grande)}" target="_blank" rel="noopener" aria-label="Ver la foto en grande"><img class="size-[72px] rounded-[4px] object-cover max-tablet:size-14" src="${esc(a.foto.miniatura)}" alt="Foto enviada con la alerta" loading="lazy" /></a>`
-    : `<span class="grid size-[72px] place-items-center rounded-[4px] bg-neutral-soft text-neutral max-tablet:size-14">${iconSvg(tipo.icono, 28)}</span>`;
+    ? `<a href="${esc(a.foto.grande)}" target="_blank" rel="noopener" aria-label="Ver la foto en grande"><img class="size-[72px] rounded-card object-cover max-tablet:size-14" src="${esc(a.foto.miniatura)}" alt="Foto enviada con la alerta" loading="lazy" /></a>`
+    : `<span class="grid size-[72px] place-items-center rounded-card bg-neutral-soft text-neutral max-tablet:size-14">${iconSvg(tipo.icono, 28)}</span>`;
   return `<li class="grid grid-cols-[72px_minmax(0,1fr)_auto] items-start gap-3.5 border-t border-t-base-300 py-4 first:border-t-0 max-tablet:grid-cols-[56px_minmax(0,1fr)]">
     ${thumb}
     <div class="min-w-0">
       <strong class="flex items-center gap-1.5 text-[0.92rem]">${iconSvg(tipo.icono, 18)} ${esc(tipo.nombre)} · ${esc(a.sector)}</strong>
-      <p class="mt-1 mb-0 text-[0.84rem] leading-normal [overflow-wrap:anywhere]">${esc(a.descripcion)}</p>
+      <p class="mt-1 mb-0 text-[0.84rem] leading-normal wrap-anywhere">${esc(a.descripcion)}</p>
       <small class="text-[0.72rem] text-muted">${esc(a.autor ?? a.correo)} · ${fechaHora.format(new Date(a.creadoEn))}${a.referencia ? ` · Ref.: ${esc(a.referencia)}` : ""}</small>
     </div>
     <div class="max-tablet:col-span-2">${stateControl(a.id, a.estado)}</div>
@@ -42,7 +42,7 @@ function suggestionItem(s: ReviewedSuggestion) {
   return `<li class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3.5 border-t border-t-base-300 py-4 first:border-t-0 max-tablet:grid-cols-1">
     <div class="min-w-0">
       <strong class="text-[0.92rem]">${esc(topicName(s.tema))}</strong>
-      <p class="mt-1 mb-0 text-[0.84rem] leading-normal whitespace-pre-line [overflow-wrap:anywhere]">${esc(s.mensaje)}</p>
+      <p class="mt-1 mb-0 text-[0.84rem] leading-normal whitespace-pre-line wrap-anywhere">${esc(s.mensaje)}</p>
       <small class="text-[0.72rem] text-muted">${esc(s.autor ?? s.correo)} · ${fechaHora.format(new Date(s.creadoEn))}</small>
     </div>
     <div>${stateControl(s.id, s.estado)}</div>
