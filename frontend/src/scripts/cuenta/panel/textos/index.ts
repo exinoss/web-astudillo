@@ -2,7 +2,7 @@ import { TEXTOS, type TextKey } from "../../../../../../backend/src/contracts/te
 import { adminApi } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { renderSocial } from "../redes";
-import { busy, DRAFT_PILL, esc, filtro, GHOST, guardarYRecargar, iconSvg, isPending, PILL, state } from "../ui";
+import { busy, DRAFT_PILL, esc, filtro, GHOST, guardarYRecargar, iconSvg, isPending, state } from "../ui";
 
 const PAGE_SIZE = 20;
 const filters = { q: "", lugar: "", estado: "", pagina: 1 };
@@ -56,7 +56,7 @@ function drawList(section: HTMLElement) {
         <span class="text-[0.74rem] text-muted">${esc(r.def.campo)}</span></span>
       <span class="flex-1 text-[0.86rem] leading-normal whitespace-pre-line">${esc(r.valor)}</span>
       <span class="flex flex-wrap items-center gap-3 max-tablet:justify-between">
-        ${r.borrador ? `<span class="${DRAFT_PILL}">Borrador</span>` : r.cambiado ? `<span class="${PILL} bg-success-soft text-success-ink">Cambiado</span>` : `<span class="${PILL} border border-base-300">Original</span>`}
+        ${r.borrador ? `<span class="${DRAFT_PILL}">Borrador</span>` : r.cambiado ? `<span class="pildora bg-success-soft text-success-ink">Cambiado</span>` : `<span class="pildora border border-base-300">Original</span>`}
         ${r.cambiado ? `<button type="button" class="${GHOST}" data-original="${esc(r.clave)}">Volver al original</button>` : ""}
         <a class="inline-flex min-h-11 items-center gap-1.5 text-[0.8rem] font-bold whitespace-nowrap" href="${esc(`${r.def.ruta}?editar=${encodeURIComponent(r.clave)}`)}">${iconSvg("edit", 16)} Editar en el sitio</a>
       </span>

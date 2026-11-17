@@ -18,8 +18,7 @@ export { BOTON, enlazarLista, field, filtro, GHOST, GRUPO, LEYENDA, PESTANA, PES
 
 export const DANGER =
   "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-control border border-error/40 bg-transparent px-[18px] text-[0.82rem] font-bold text-error hover:bg-error-soft";
-export const PILL = "inline-flex items-center rounded-full px-3 py-1 text-[0.66rem] font-bold tracking-[0.08em] whitespace-nowrap uppercase";
-export const DRAFT_PILL = `${PILL} border border-secondary/60 bg-warning-soft text-warning-ink`;
+export const DRAFT_PILL = "pildora border border-secondary/60 bg-warning-soft text-warning-ink";
 /** Pastilla «Borrador sin publicar» encima del formulario; `margen` cambia su separación. */
 export const avisoBorrador = (pendiente: boolean, margen = "-mt-2 mb-5") =>
   pendiente ? `<p class="${margen}"><span class="${DRAFT_PILL}">Borrador sin publicar</span></p>` : "";
