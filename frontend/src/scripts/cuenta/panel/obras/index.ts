@@ -53,7 +53,7 @@ export function renderWorks(section: HTMLElement) {
       <span class="font-display text-[2.4rem] leading-none font-bold">${percent} %</span>
       <div class="flex flex-1 flex-col gap-2">
         <span class="flex items-center justify-between gap-3 text-[0.78rem]"><strong>Avance</strong>
-        <span class="rounded-full px-3 py-1 text-[0.66rem] font-bold tracking-[0.08em] uppercase ${STAGE_CLASSES[stage]}">${STAGE_NAMES[stage]}</span></span>
+        <span class="pildora ${STAGE_CLASSES[stage]}">${STAGE_NAMES[stage]}</span></span>
         <div class="${BARRA_AVANCE}"><div class="${RELLENO_AVANCE}" style="width: ${percent}%"></div></div>
       </div>
     </div>

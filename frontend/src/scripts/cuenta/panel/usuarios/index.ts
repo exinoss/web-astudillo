@@ -3,16 +3,16 @@ import { NOMBRES_ROL, nombreRol, ROLES } from "../../../../../../backend/src/con
 import { adminApi, type AdminUser } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { confirmarIdentidad } from "../confirmacion";
-import { busy, cargar, confirmarCambio, DANGER, esc, filtro, GHOST, iconSvg, LARGOS, notify, PILL } from "../ui";
+import { busy, cargar, confirmarCambio, DANGER, esc, filtro, GHOST, iconSvg, LARGOS, notify } from "../ui";
 
 const ROLE_CLASSES: Record<string, string> = { admin: "bg-neutral text-neutral-content", coadmin: "bg-accent text-primary", analista: "border border-base-300", votante: "border border-base-300" };
 const filters = { q: "", rol: "", estado: "", pagina: 1 };
 
 /** Pastilla con el nombre del rol de la cuenta. */
-const rolePill = (u: AdminUser) => `<span class="${PILL} ${ROLE_CLASSES[u.rol] ?? ""}">${esc(nombreRol(u.rol))}</span>`;
+const rolePill = (u: AdminUser) => `<span class="pildora ${ROLE_CLASSES[u.rol] ?? ""}">${esc(nombreRol(u.rol))}</span>`;
 const statePill = (u: AdminUser) => u.estado === "activo"
-  ? `<span class="${PILL} bg-success-soft text-success-ink">Activa</span>`
-  : `<span class="${PILL} bg-error-soft text-error">Desactivada</span>`;
+  ? `<span class="pildora bg-success-soft text-success-ink">Activa</span>`
+  : `<span class="pildora bg-error-soft text-error">Desactivada</span>`;
 const nombre = (u: AdminUser) => u.nombresCompletos ?? u.correo;
 
 /** Acciones de una cuenta; si la jerarquía no lo permite, el motivo genérico que da la API. */

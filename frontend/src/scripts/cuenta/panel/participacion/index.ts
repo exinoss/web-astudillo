@@ -4,7 +4,7 @@ import {
 } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { ESTADOS, TIPOS_ALERTA } from "../../../../lib/ciudadania/participacion/tipos";
-import { busy, can, card, cargar, confirmarCambio, esc, fechaHora, iconSvg, PILL, state } from "../ui";
+import { busy, can, card, cargar, confirmarCambio, esc, fechaHora, iconSvg, state } from "../ui";
 
 const view = { tipo: "alertas" as ParticipationKind, estado: "" as ParticipationState | "", pagina: 1 };
 const STATES = Object.keys(ESTADOS) as ParticipationState[];
@@ -20,7 +20,7 @@ const stateControl = (id: number, current: ParticipationState) => can("participa
       ${STATES.map((s) => `<option value="${s}" ${s === current ? "selected" : ""}>${ESTADOS[s].nombre}</option>`).join("")}
     </select>
     <button type="button" class="button min-h-11 px-4 py-0">Guardar</button>
-  </span>` : `<span class="${PILL} ${ESTADOS[current].clases}">${ESTADOS[current].nombre}</span>`;
+  </span>` : `<span class="pildora ${ESTADOS[current].clases}">${ESTADOS[current].nombre}</span>`;
 
 function alertItem(a: ReviewedAlert) {
   const tipo = TIPOS_ALERTA.find((t) => t.valor === a.tipo)!;

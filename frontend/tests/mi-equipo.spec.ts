@@ -82,7 +82,7 @@ test('cada parroquia muestra su texto y sus fotos, o su aviso si no tiene fotos'
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/mi-equipo/');
   await expect(page.getByText('Alto Tambo', { exact: true })).toBeHidden();
-  await abrirParroquias(page, 'Alto Tambo', 'Ancón (Pichangal)', 'Calderón', 'Carondelet');
+  await abrirParroquias(page, 'Alto Tambo', 'Ancón de Sardinas (Palmareal)', 'Calderón', 'Carondelet');
   await expect(page.locator('main details details')).toHaveCount(12);
   const conTexto = page.getByRole('region', { name: 'Fotos de Alto Tambo' });
   const sinTexto = page.getByRole('region', { name: 'Fotos de Calderón' });

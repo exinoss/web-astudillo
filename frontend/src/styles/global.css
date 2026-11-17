@@ -47,6 +47,10 @@
   @apply grid size-11 place-items-center rounded-full;
 }
 
+@utility pildora {
+  @apply inline-flex items-center rounded-full px-3 py-1 text-[0.66rem] font-bold tracking-[0.08em] whitespace-nowrap uppercase;
+}
+
 @utility py-pagina {
   @apply pt-8 pb-14 max-tablet:pt-6 max-tablet:pb-10;
 }

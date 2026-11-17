@@ -1,7 +1,7 @@
 import { adminApi, type Publication } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { seguirPublicacion } from "../../../../lib/comun/avisos";
-import { busy, card, cargar, esc, fechaHora, iconSvg, notify, PILL, reloadPending, state, syncPublishButton } from "../ui";
+import { busy, card, cargar, esc, fechaHora, iconSvg, notify, reloadPending, state, syncPublishButton } from "../ui";
 
 const STATES: Record<Publication["estado"], [string, string]> = {
   en_cola: ["En cola", "bg-warning-soft text-warning-ink"],
@@ -23,7 +23,7 @@ export async function renderPublications(section: HTMLElement) {
     <p class="m-0 mb-2 text-[0.85rem] leading-normal">Se publican juntos. Mientras tanto, el sitio público sigue mostrando la última versión.</p>
     ${changes.length ? changes.map((c) => `
       <div class="flex items-start gap-3.5 border-t border-t-base-300 py-3.5 first:border-t-0 max-tablet:flex-col max-tablet:gap-1.5">
-        <span class="${PILL} border border-base-300">${esc(c.tipo)}</span><strong class="text-[0.88rem]">${esc(c.descripcion)}</strong>
+        <span class="pildora border border-base-300">${esc(c.tipo)}</span><strong class="text-[0.88rem]">${esc(c.descripcion)}</strong>
       </div>`).join("") : `<p class="m-0 py-3 text-[0.86rem]">No hay cambios por publicar.</p>`}
     <button type="button" id="publicar-ahora" class="button mt-4 w-full" ${changes.length ? "" : "disabled"}>${iconSvg("upload", 18)} Publicar ${changes.length || ""} ${changes.length === 1 ? "cambio" : "cambios"}</button>
     <p class="m-0 mt-2.5 text-center text-[0.74rem] text-muted">Tarda cerca de un minuto.</p>`);
@@ -57,7 +57,7 @@ async function drawHistory(section: HTMLElement) {
     return `
       <div class="grid grid-cols-[60px_150px_1fr_1fr_80px] items-center gap-3 border-t border-t-base-300 py-3 text-[0.85rem] first:border-t-0 max-tablet:grid-cols-[auto_1fr] max-tablet:gap-x-3 max-tablet:gap-y-1">
         <strong>#${esc(p.id)}</strong>
-        <span class="max-tablet:justify-self-end"><span class="${PILL} ${classes}">${name}</span></span>
+        <span class="max-tablet:justify-self-end"><span class="pildora ${classes}">${name}</span></span>
         <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-muted">${esc(fechaHora.format(new Date(p.creadoEn)))}</span>
         <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-muted">${esc(p.autor ?? "—")}</span>
         <span class="max-tablet:col-span-2 max-tablet:text-[0.76rem] max-tablet:text-muted">${duration(p)}</span>

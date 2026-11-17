@@ -6,6 +6,10 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+### Changed
+
+- Mi equipo: las parroquias se llaman «Ancón de Sardinas (Palmareal)», «5 de Junio», «Mataje» y «San Javier».
+
 ## [1.4.2] - 2026-11-10
 
 ### Changed
