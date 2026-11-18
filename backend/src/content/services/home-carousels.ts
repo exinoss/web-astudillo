@@ -2,14 +2,16 @@ import type { SQL } from 'bun';
 import initial from '../../../database/contenido-inicial.json';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
-import { AVISO_ENLACE_BOTON, AVISO_HORIZONTAL, enlaceBoton, type Carrusel } from '../../contracts/inicio';
+import { AVISO_ENLACE_BOTON, AVISO_HORIZONTAL, AVISO_PIEZAS, enlaceBoton, MAX_IMAGENES_PIEZAS, MAX_VIDEOS_PIEZAS, type Carrusel } from '../../contracts/inicio';
 import { LARGOS } from '../../contracts/limites';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { plainText } from '../../validation/texto';
 import { existingPhotos, saved, type SaveRow } from '../guardado';
-import type { HomeCarousels, HomeCarouselsStored, HomeImage, HomeImageStored, Photo } from '../types';
+import type { HomeCarousels, HomeCarouselsStored, HomeImage, HomeImageStored, HomePiece, Photo } from '../types';
+import { assertInsertable, cleanVideo } from '../videos';
 import { photosById } from './media';
+import { videoInsertable } from './video-cover';
 
 type Stored = HomeCarouselsStored[Carrusel];
 
@@ -23,7 +25,8 @@ export const HOME_CAROUSELS_SEED = initial.inicio as Pick<HomeCarousels & HomeCa
 const BANNER_FIJO = 'portada';
 const ids = (image: HomeImageStored) => ('idMedio' in image ? [image.idMedio] : []);
 const mainIds = ({ banners, retrato }: HomeMainInput) => [...banners.flatMap(b => [...ids(b.imagen), ...(b.celular ? [b.celular] : [])]), ...ids(retrato.imagen)];
-const piecesIds = ({ piezas }: HomePiecesInput) => piezas.flatMap(p => ids(p.imagen));
+/** Fotos que usa el carrusel de piezas: las imágenes subidas y las portadas de los videos. */
+const piecesIds = ({ piezas }: HomePiecesInput) => piezas.flatMap(p => ('video' in p ? (p.video.idPortada ? [p.video.idPortada] : []) : ids(p.imagen)));
 const resolve = (image: HomeImageStored, media: Map<number, Photo>): HomeImage | null =>
   'original' in image ? { original: image.original } : media.has(image.idMedio) ? { foto: media.get(image.idMedio)! } : null;
 
@@ -39,9 +42,13 @@ export async function listHomeCarousels(sql: SQL): Promise<HomeCarousels> {
     return image ? [{ imagen: image, celular: celular ? media.get(celular) ?? null : null, alt }] : [];
   });
   const portrait = resolve(principal.retrato.imagen, media);
-  const pieces = piezas.piezas.flatMap(({ imagen, alt }) => {
-    const image = resolve(imagen, media);
-    return image ? [{ imagen: image, alt }] : [];
+  const pieces = piezas.piezas.flatMap((p): HomePiece[] => {
+    if ('video' in p) {
+      const { idPortada, ...video } = p.video;
+      return [{ video: { ...video, portada: idPortada ? media.get(idPortada) ?? null : null } }];
+    }
+    const image = resolve(p.imagen, media);
+    return image ? [{ imagen: image, alt: p.alt }] : [];
   });
   return {
     principal: {
@@ -59,7 +66,8 @@ const image = (value: HomeImageStored): HomeImageStored => ('original' in value 
 /** Descripción de una imagen del carrusel, validada como texto plano. */
 const alt = (value: string, field: string) => plainText(value, `${field} · descripción`, LARGOS.descripcionFoto);
 
-export function createHomeCarousels(sql: SQL, authorization: Authorization) {
+/** Guarda los carruseles de la portada; `checkVideo` permite simular las plataformas de video en las pruebas. */
+export function createHomeCarousels(sql: SQL, authorization: Authorization, checkVideo = videoInsertable) {
   async function save(actor: { id_usuario: number }, key: Carrusel, content: Stored, mediaIds: number[], version: string | null, horizontales = false) {
     const media = await existingPhotos(sql, mediaIds);
     if (horizontales && [...media.values()].some(f => f.ancho <= f.alto)) throw new ApiError(422, AVISO_HORIZONTAL);
@@ -84,7 +92,16 @@ export function createHomeCarousels(sql: SQL, authorization: Authorization) {
 
     async savePieces(access: string | undefined, input: HomePiecesInput, version: string | null) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
-      const content: HomePiecesInput = { piezas: input.piezas.map((p, i) => ({ imagen: image(p.imagen), alt: alt(p.alt, `Pieza ${i + 1}`) })) };
+      const videos = input.piezas.filter(p => 'video' in p).length;
+      if (videos > MAX_VIDEOS_PIEZAS || input.piezas.length - videos > MAX_IMAGENES_PIEZAS) throw new ApiError(422, AVISO_PIEZAS);
+      const content: HomePiecesInput = {
+        piezas: input.piezas.map((p, i) => {
+          if (!('video' in p)) return { imagen: image(p.imagen), alt: alt(p.alt, `Pieza ${i + 1}`) };
+          const { titulo, enlace, vertical, idPortada } = cleanVideo(p.video, `Pieza ${i + 1}`);
+          return { video: { titulo, enlace, vertical, idPortada } };
+        }),
+      };
+      await assertInsertable(content.piezas.flatMap((p, i) => ('video' in p ? [{ enlace: p.video.enlace, campo: `Pieza ${i + 1}` }] : [])), checkVideo);
       return save(actor, 'piezas', content, piecesIds(content), version);
     },
 

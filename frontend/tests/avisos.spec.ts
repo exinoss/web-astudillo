@@ -5,9 +5,9 @@ import type { Aviso } from '../../backend/src/contracts/avisos';
 
 const REEL = 'https://www.facebook.com/reel/4119395378341161/';
 const VIDEO: Aviso = {
-  clave: 'video:por-que-quiero-ser-alcalde', tipo: 'error', icono: 'alert', cantidad: 1,
-  ruta: '/cuenta/panel/?aviso=video%3Apor-que-quiero-ser-alcalde#acerca-de-carlos',
-  texto: 'El video de «Por qué quiero ser alcalde» ya no se puede ver en el sitio.', accion: 'Cambiar el video',
+  clave: 'video:por-que-quiero-ser-alcalde:2', tipo: 'error', icono: 'alert', cantidad: 1,
+  ruta: '/cuenta/panel/?aviso=video%3Apor-que-quiero-ser-alcalde%3A2#acerca-de-carlos',
+  texto: 'El video «Carlos en el barrio» de «Por qué quiero ser alcalde» ya no se puede ver en el sitio.', accion: 'Cambiar el video',
   detalle: avisoNoInsertable('facebook', 'bloqueado'), valor: REEL,
 };
 const SUGERENCIAS: Aviso = {
@@ -18,7 +18,10 @@ const SUGERENCIAS: Aviso = {
 /** Administrador con un video publicado que ya no se ve y diez sugerencias en revisión. */
 async function conAvisos(page: Page, avisos = [VIDEO, SUGERENCIAS]) {
   const data = panelData('admin');
-  data.draft.acercaDeCarlos['por-que-quiero-ser-alcalde'].video = { titulo: 'Carlos en el barrio', descripcion: null, enlace: REEL, vertical: true, portada: null };
+  data.draft.acercaDeCarlos['por-que-quiero-ser-alcalde'].videos = [
+    { titulo: 'Mi mensaje', descripcion: null, enlace: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', vertical: false, portada: null },
+    { titulo: 'Carlos en el barrio', descripcion: null, enlace: REEL, vertical: true, portada: null },
+  ];
   data.avisos = avisos;
   await mockPanelApi(page, data);
   return data;
@@ -100,19 +103,20 @@ test('entrar desde el aviso del video abre su sección marcada en rojo, con el f
   await conAvisos(page);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(VIDEO.ruta);
-  await expect(page.locator('#video-enlace')).toBeFocused();
-  await expect(page.locator('#video-enlace')).toHaveAttribute('aria-invalid', 'true');
-  await expect(page.locator('#video-detectado')).toHaveText(VIDEO.detalle!);
-  await expect(page.locator('[data-acerca-seccion="video"]')).toHaveAccessibleName('Video, tiene un aviso');
+  await expect(page.locator('#video-enlace-1')).toBeFocused();
+  await expect(page.locator('#video-enlace-1')).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.locator('#video-enlace-0')).not.toHaveAttribute('aria-invalid', 'true');
+  await expect(page.locator('#video-detectado-1')).toHaveText(VIDEO.detalle!);
+  await expect(page.locator('[data-acerca-seccion="video"]')).toHaveAccessibleName('Videos, tiene un aviso');
   await expect(page.locator('#pestania-acerca-de-carlos')).toHaveAttribute('data-aviso', '');
-  await expect(page.locator('#acerca-pagina option:checked')).toHaveText('Por qué quiero ser alcalde · Revisar el video');
+  await expect(page.locator('#acerca-pagina option:checked')).toHaveText('Por qué quiero ser alcalde · Revisar los videos');
   expect(new URL(page.url()).search).toBe('');
   // En el panel no sale la notificación: ahí están las marcas.
   await expect(notificacion(page)).toHaveCount(0);
 
   // Con otro enlace el campo vuelve a la normalidad.
-  await page.locator('#video-enlace').fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-  await expect(page.locator('#video-enlace')).not.toHaveAttribute('aria-invalid', 'true');
+  await page.locator('#video-enlace-1').fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  await expect(page.locator('#video-enlace-1')).not.toHaveAttribute('aria-invalid', 'true');
 });
 
 test('entrar desde un aviso agrupado abre Participación con su filtro, y revisar actualiza la campana', async ({ page }) => {

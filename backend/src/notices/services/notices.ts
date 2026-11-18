@@ -2,8 +2,8 @@ import type { SQL } from 'bun';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
 import type { Aviso } from '../../contracts/avisos';
-import { avisoNoInsertable, videoSource } from '../../contracts/video';
-import { PAGE_NAMES } from '../../content/services/content';
+import { avisoNoInsertable } from '../../contracts/video';
+import { contentVideos } from '../../content/services/content';
 import { videoInsertable } from '../../content/services/video-cover';
 import type { Snapshot } from '../../content/types';
 import { callPg } from '../../db/call';
@@ -25,17 +25,15 @@ export function createNotices(sql: SQL, authorization: Authorization, checkVideo
   /** Videos publicados que su plataforma ya no deja mostrar en el sitio. */
   async function videoNotices(): Promise<Aviso[]> {
     const [row] = await callPg<{ contenido: Snapshot }>(sql, 'publicationCurrent');
-    const pages = Object.entries(row?.contenido.acercaDeCarlos ?? {}).flatMap(([slug, page]) => {
-      const source = page.video && videoSource(page.video.enlace);
-      return source ? [{ slug, source }] : [];
-    });
-    const enlaces = JSON.stringify(pages.map(p => [p.slug, p.source.url]));
+    const publicados = row ? contentVideos(row.contenido) : [];
+    const enlaces = JSON.stringify(publicados.map(p => [p.clave, p.source.url]));
     if (videos?.enlaces !== enlaces || videos.hasta < Date.now()) {
-      const avisos = Promise.all(pages.map(async ({ slug, source }): Promise<Aviso[]> => {
+      const avisos = Promise.all(publicados.map(async ({ clave, lugar, titulo, source }): Promise<Aviso[]> => {
         const motivo = await checkVideo(source);
+        // Los de la portada se cambian en ella, con el modo edición.
         return motivo ? [{
-          clave: `video:${slug}`, tipo: 'error', icono: 'alert', cantidad: 1, ruta: ruta(`video:${slug}`, 'acerca-de-carlos'),
-          texto: `El video de «${PAGE_NAMES[slug] ?? slug}» ya no se puede ver en el sitio.`, accion: 'Cambiar el video',
+          clave, tipo: 'error', icono: 'alert', cantidad: 1, ruta: clave.startsWith('video:inicio:') ? '/' : ruta(clave, 'acerca-de-carlos'),
+          texto: `El video «${titulo}» de ${lugar} ya no se puede ver en el sitio.`, accion: 'Cambiar el video',
           detalle: avisoNoInsertable(source.provider, motivo), valor: source.url,
         }] : [];
       })).then(lists => lists.flat());

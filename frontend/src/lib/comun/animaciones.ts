@@ -11,7 +11,6 @@ import { alCambiarMovimiento, sinMovimiento } from "./movimiento";
 interface Ficha {
   url: string;
   fotogramaQuieto: number;
-  /** Tramo que se repite después de una primera vuelta completa; sin él se repite entera. */
   bucle?: AnimationSegment;
 }
 const ANIMACIONES = {

@@ -8,7 +8,6 @@ interface Props extends Omit<HTMLAttributes<"img">, "src" | "srcset" | "width" |
   alt: string;
   sizes: string;
   loading?: "lazy" | "eager";
-  /** Otra foto para celular (≤ 760 px, el corte de `max-tablet:`). */
   mobile?: UploadedPicture | null;
 }
 const { picture, alt, sizes, loading = "lazy", mobile, ...rest } = Astro.props;

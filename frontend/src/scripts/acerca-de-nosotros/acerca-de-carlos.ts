@@ -1,7 +1,7 @@
 import { sinMovimiento } from "../../lib/comun/movimiento";
 import { deslizar } from "../../lib/comun/carrusel";
 import { montarVisor } from "../../lib/comun/visor-fotos";
-import { mountPlayer, type VideoSource } from "../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
+import { activarVideo } from "../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
 
 /** Tira de tarjetas con flechas y teclado; las flechas se ocultan si todas caben. */
 function cardStrip(root: HTMLElement) {
@@ -48,25 +48,9 @@ function gallery(root: HTMLElement) {
   deslizar(mobile, (paso) => visor.ir(visor.actual + paso));
 }
 
-/** Portada del video que, al pulsarla, monta el reproductor de su plataforma. */
-function video(root: HTMLElement) {
-  const stage = root.querySelector<HTMLElement>("[data-video-stage]")!;
-  const play = root.querySelector<HTMLButtonElement>("[data-video-play]")!;
-  const error = root.querySelector<HTMLElement>("[data-video-error]")!;
-  const source = { provider: root.dataset.provider, embed: root.dataset.embed } as VideoSource;
-  const title = play.getAttribute("aria-label")!;
-  const start = () => {
-    error.hidden = true;
-    mountPlayer(stage, source, title).addEventListener("error", () => { error.hidden = false; });
-    play.hidden = true;
-  };
-  play.addEventListener("click", start);
-  root.querySelector("[data-video-retry]")!.addEventListener("click", start);
-}
-
 /** Activa tarjetas, galería y video de una página «Por qué quiero ser alcalde» o «Conoce más». */
 export function initAboutCarlosPage(root: ParentNode) {
   root.querySelectorAll<HTMLElement>("[data-card-strip]").forEach(cardStrip);
   root.querySelectorAll<HTMLElement>("[data-gallery]").forEach(gallery);
-  root.querySelectorAll<HTMLElement>("[data-video-preview]").forEach(video);
+  root.querySelectorAll<HTMLElement>("[data-video-preview]").forEach(activarVideo);
 }

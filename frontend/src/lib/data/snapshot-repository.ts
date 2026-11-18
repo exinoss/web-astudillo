@@ -11,8 +11,7 @@ import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, HomeCarousel
 type ApiHomeImage = { original: Original } | { foto: UploadedPicture };
 interface ApiHomeCarousels {
   principal: { banners: { imagen: ApiHomeImage; celular: UploadedPicture | null; alt: string }[]; retrato: { imagen: ApiHomeImage; alt: string }; enlace?: string };
-  piezas: { piezas: { imagen: ApiHomeImage; alt: string }[] };
-  /** Ausente en la semilla y en publicaciones anteriores al carrusel del equipo. */
+  piezas: { piezas: ({ imagen: ApiHomeImage; alt: string } | { video: { titulo: string; enlace: string; vertical: boolean; portada: UploadedPicture | null } })[] };
   equipo?: { fotos: { foto: UploadedPicture; alt: string }[] };
 }
 
@@ -29,7 +28,6 @@ export interface Snapshot {
     equipo: { puesto: string; nombre: string; presentacion: string; trayectoria: string[]; foto: UploadedPicture | null }[];
     parroquias: { slug: string; texto: string; fotos: { foto: UploadedPicture; alt: string }[] }[];
   };
-  /** Ausente en publicaciones anteriores a los carruseles editables: valen los de la semilla. */
   inicio?: ApiHomeCarousels;
 }
 
@@ -90,7 +88,9 @@ export abstract class SnapshotRepository implements ContentRepository {
       banners: principal.banners.map(b => ({ image: homeImage(b.imagen), mobile: b.celular, alt: b.alt })),
       portrait: { image: homeImage(principal.retrato.imagen), alt: principal.retrato.alt },
       link: principal.enlace ?? initial.inicio.principal.enlace,
-      pieces: piezas.piezas.map(p => ({ image: homeImage(p.imagen), alt: p.alt })),
+      pieces: piezas.piezas.map(p => ('video' in p
+        ? { video: { title: p.video.titulo, url: p.video.enlace, vertical: p.video.vertical, cover: p.video.portada } }
+        : { image: homeImage(p.imagen), alt: p.alt })),
       team: (equipo?.fotos ?? []).map(f => ({ image: f.foto, alt: f.alt })),
     };
   }

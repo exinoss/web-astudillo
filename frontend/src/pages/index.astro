@@ -10,6 +10,8 @@ import { imageView, medidasFoto } from "../lib/comun/fotos";
 import { visorFotos } from "../lib/comun/visor-fotos";
 import { ORIGINALES } from "../lib/inicio/originales";
 import { atributosBoton, RETRATO } from "../lib/inicio/segunda-diapositiva";
+import { piezaVideo } from "../lib/inicio/pieza-video";
+import { defaultCover } from "../lib/acerca-de-nosotros/acerca-de-carlos/vista";
 import fondoPublico from "../assets/fondo-publico-equipo.jpg";
 import { contentRepository } from "../lib/data";
 import { statsRepository } from "../lib/data/stats";
@@ -34,6 +36,8 @@ const FOTO_EQUIPO = "block aspect-(--proporcion) h-auto w-[min(100cqw,var(--anch
 const fondoEquipo = await getImage({ src: fondoPublico, width: fondoPublico.width, format: "webp" });
 const PIECE_WIDTHS = [400, 640, 850];
 const PIECE_SIZES = "(max-width: 760px) 90vw, 40vw";
+// Portada de un video sin la suya; el modo edición también la usa (`data-portadas`).
+const portadasVideo = { horizontal: await defaultCover(false), vertical: await defaultCover(true) };
 // El modo edición pinta el borrador con estas versiones de las imágenes que vienen con el sitio.
 const originales = JSON.stringify(Object.fromEntries(await Promise.all(Object.entries(ORIGINALES).map(async ([clave, src]) => {
   const version = clave === "portada" ? { widths: BANNER_WIDTHS, quality: 85 } : { widths: PIECE_WIDTHS };
@@ -231,10 +235,13 @@ const contactos = [
       <div
         class="profile-carousel"
         data-carrusel-editable="piezas"
+        data-portadas={JSON.stringify(portadasVideo)}
         aria-roledescription="carrusel"
         aria-label="Carlos Astudillo"
       >
-        {pieces.map((piece, i) => "original" in piece.image ? (
+        {pieces.map((piece, i) => "video" in piece ? (
+          <Fragment set:html={piezaVideo({ ...piece.video, cover: piece.video.cover ? imageView(piece.video.cover) : portadasVideo[piece.video.vertical ? "vertical" : "horizontal"] }, i)} />
+        ) : "original" in piece.image ? (
           <Image
             data-profile-image={i}
             class={i ? undefined : "is-active"}
@@ -257,20 +264,20 @@ const contactos = [
             hidden={i > 0}
           />
         ))}
-        <div class="profile-glass-curtain" aria-hidden="true">
+        <div class="profile-glass-curtain" aria-hidden="true" hidden={"video" in pieces[0]}>
           <div class="profile-glass-veil"></div>
         </div>
         <div
           class="profile-dots"
           role="group"
-          aria-label="Imágenes de Carlos Astudillo"
+          aria-label="Imágenes y videos de Carlos Astudillo"
           hidden={pieces.length < 2}
         >
-          {pieces.map((_, i) => (
+          {pieces.map((piece, i) => (
             <button
               class:list={["profile-dot", !i && "is-active"]}
               type="button"
-              aria-label={`Ver imagen ${i + 1}`}
+              aria-label={`Ver ${"video" in piece ? "video" : "imagen"} ${i + 1}`}
               aria-current={i ? "false" : "true"}
             ></button>
           ))}

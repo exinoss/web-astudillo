@@ -53,7 +53,7 @@ CREATE OR REPLACE FUNCTION fn_about_carlos_state(p_slug text)
 RETURNS jsonb LANGUAGE sql STABLE AS $$
   SELECT CASE WHEN p_slug IN ('por-que-quiero-ser-alcalde', 'conoce-mas') THEN COALESCE(
     (SELECT p.contenido FROM tb_acerca_de_carlos p WHERE p.slug = p_slug),
-    '{"tarjetas": [], "video": null, "retrato": null, "entrevista": [], "galeria": []}'::jsonb) END;
+    '{"videos": [], "entrevista": [], "galeria": []}'::jsonb) END;
 $$;
 
 CREATE OR REPLACE FUNCTION fn_about_carlos_list()

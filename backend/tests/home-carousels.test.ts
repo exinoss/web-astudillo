@@ -2,7 +2,7 @@ import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { rm } from 'node:fs/promises';
 import { diff } from '../src/content/services/content';
 import { HOME_CAROUSELS_SEED } from '../src/content/services/home-carousels';
-import { AVISO_ENLACE_BOTON, AVISO_HORIZONTAL } from '../src/contracts/inicio';
+import { AVISO_ENLACE_BOTON, AVISO_HORIZONTAL, AVISO_PIEZAS } from '../src/contracts/inicio';
 import { migrate } from '../src/db/migrate';
 import { testApp } from './helpers';
 
@@ -182,6 +182,58 @@ test('valida descripciones, fotos, cantidades, imágenes del sitio y permisos', 
   expect(await pieces(Array.from({ length: 9 }, () => ({ imagen: { original: 'pieza-ferrocarril' }, alt: 'Pieza' })))).toBe(422);
   expect(await pieces([{ imagen: { original: 'pieza-ferrocarril' }, alt: 'Pieza', extra: 1 }])).toBe(422);
   expect((await call(PIEZAS, 'PUT', { piezas: [{ imagen: { original: 'pieza-ferrocarril' }, alt: 'Pieza' }], version: null })).status).toBe(401);
+});
+
+// TikTok y los MP4 no se consultan a la plataforma al guardar: las pruebas no salen a la red.
+const TIKTOK = 'https://www.tiktok.com/@scout2015/video/6718335390845095173?lang=es';
+const video = (extra: object = {}) => ({ video: { titulo: 'Recorrido por el malecón', enlace: TIKTOK, vertical: true, idPortada: null, ...extra } });
+const imagenPieza = { imagen: { original: 'pieza-ferrocarril' }, alt: 'Pieza' };
+
+test('el carrusel de piezas guarda imágenes y videos en orden, con su portada, y repetirlo no duplica nada', async () => {
+  const portada = await photo('#16a085', 1080, 1920);
+  const body = { piezas: [imagenPieza, video({ titulo: '  Recorrido por el malecón  ', idPortada: portada.idMedio }), video({ titulo: 'Entrevista', enlace: 'https://cdn.ejemplo.com/entrevista.mp4', vertical: false })], version: await version('piezas') };
+  const first = await call(PIEZAS, 'PUT', body, cookies.coadmin);
+  const again = await call(PIEZAS, 'PUT', body, cookies.coadmin);
+  expect([first.status, again.status]).toEqual([200, 200]);
+  expect((await again.json()).version).toBe((await first.json()).version);
+  const { piezas } = (await draft()).inicio.piezas;
+  expect(piezas).toHaveLength(3);
+  expect(piezas[0]).toEqual(imagenPieza);
+  expect(piezas[1].video).toMatchObject({ titulo: 'Recorrido por el malecón', enlace: 'https://www.tiktok.com/@scout2015/video/6718335390845095173', vertical: true, portada: { idMedio: portada.idMedio } });
+  expect(piezas[2].video).toEqual({ titulo: 'Entrevista', enlace: 'https://cdn.ejemplo.com/entrevista.mp4', vertical: false, portada: null });
+  const pending = await (await call('/api/admin/publicaciones/pendientes', 'GET', undefined, cookies.admin)).json();
+  expect(pending.cambios).toContainEqual({ tipo: 'Portada', descripcion: 'Carrusel de piezas' });
+});
+
+test('dos personas cambiando a la vez los videos del carrusel de piezas: una gana y la otra recibe 409 sin pisarla', async () => {
+  const loaded = await version('piezas');
+  const save = (titulo: string) => call(PIEZAS, 'PUT', { piezas: [video({ titulo })], version: loaded }, cookies.coadmin);
+  const replies = await Promise.all([save('Video de Ana'), save('Video de Luis')]);
+  expect(replies.map(r => r.status).sort()).toEqual([200, 409]);
+  const winner = replies[0].status === 200 ? 'Video de Ana' : 'Video de Luis';
+  expect((await draft()).inicio.piezas.piezas.map((p: { video: { titulo: string } }) => p.video.titulo)).toEqual([winner]);
+});
+
+test('el carrusel de piezas admite hasta 4 imágenes y 4 videos, valida cada video y no cambia al rechazarlos', async () => {
+  const antes = (await draft()).inicio.piezas;
+  const pieces = async (piezas: object[]) => {
+    const reply = await call(PIEZAS, 'PUT', { piezas, version: await version('piezas') }, cookies.coadmin);
+    return [reply.status, (await reply.json()).error] as const;
+  };
+  const cuatro = (pieza: object) => Array.from({ length: 4 }, () => pieza);
+  expect((await pieces([...cuatro(imagenPieza), ...cuatro(video())]))[0]).toBe(200);
+  expect(await pieces([...cuatro(imagenPieza), imagenPieza])).toEqual([422, AVISO_PIEZAS]);
+  expect(await pieces([...cuatro(video()), video()])).toEqual([422, AVISO_PIEZAS]);
+  const guardado = (await draft()).inicio.piezas;
+  expect((await pieces([video({ enlace: 'https://ejemplo.com/video' })]))[0]).toBe(422);
+  expect((await pieces([video({ enlace: 'https://vm.tiktok.com/ZM123/' })]))[1]).toStartWith('Pieza 1: Es un enlace corto');
+  expect((await pieces([video({ titulo: '   ' })]))[0]).toBe(422);
+  expect((await pieces([video({ titulo: '<b>Video</b>' })]))[0]).toBe(422);
+  expect((await pieces([video({ idPortada: 999999 })]))[0]).toBe(422);
+  expect((await pieces([{ video: { ...video().video, extra: 1 } }]))[0]).toBe(422);
+  expect((await pieces([{ ...video(), alt: 'Pieza' }]))[0]).toBe(422);
+  expect((await draft()).inicio.piezas).toEqual(guardado);
+  expect(guardado).not.toEqual(antes);
 });
 
 test('el enlace del botón admite una página del sitio, las redes, YouTube o nada, y repetirlo no duplica nada', async () => {

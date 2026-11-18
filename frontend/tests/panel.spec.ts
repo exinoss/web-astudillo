@@ -231,13 +231,16 @@ test('Guardar borrador sigue bloqueado mientras se guarda, aunque se siga escrib
   expect(puts).toBe(3);
 });
 
-for (const { seccion, api, campo } of [
+const TIKTOK = 'https://www.tiktok.com/@scout2015/video/6718335390845095173';
+for (const { seccion, api, campo, preparar } of [
   { seccion: 'biografia', api: '**/api/admin/contenido/biografia', campo: (s: Locator) => s.locator('#hito-titulo') },
   { seccion: 'obras', api: '**/api/admin/contenido/obras/**', campo: (s: Locator) => s.locator('#obra-nota') },
-  { seccion: 'acerca-de-carlos', api: '**/api/admin/contenido/acerca-de-carlos/**', campo: (s: Locator) => s.getByLabel('Título') },
+  { seccion: 'acerca-de-carlos', api: '**/api/admin/contenido/acerca-de-carlos/**', campo: (s: Locator) => s.locator('#video-titulo-0'),
+    preparar: (d: ReturnType<typeof panelData>) => { d.draft.acercaDeCarlos['por-que-quiero-ser-alcalde'].videos = [{ titulo: 'Video', descripcion: null, enlace: TIKTOK, vertical: true, portada: null }]; } },
 ]) {
   test(`${seccion}: un solo guardado aunque se escriba mientras responde`, async ({ page }) => {
     const data = panelData('admin');
+    preparar?.(data);
     await mockPanelApi(page, data);
     let puts = 0, release = () => {};
     const gate = new Promise<void>((r) => { release = r; });
@@ -490,7 +493,8 @@ test('el enlace del video se ve verde si es válido, rojo si no y normal si est�
   await mockPanelApi(page, panelData('coadmin'));
   await page.goto('/cuenta/panel/#acerca-de-carlos');
   await page.locator('[data-acerca-seccion="video"]').first().click();
-  const enlace = page.locator('#video-enlace');
+  await page.getByRole('button', { name: 'Añadir video' }).click();
+  const enlace = page.locator('#video-enlace-0');
   const borde = (color: string) => expect(enlace).toHaveCSS('box-shadow', `${color} 0px 0px 0px 1px inset`);
   await enlace.fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
   await borde('rgb(30, 122, 60)');
@@ -528,27 +532,29 @@ test('si la plataforma no deja mostrar el video, no se guarda y el aviso aparece
   await page.route(/\/api\/admin\/contenido\/acerca-de-carlos\//, (r) => {
     if (r.request().method() !== 'PUT') return r.fallback();
     intentos++;
-    return r.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ error: aviso }) });
+    return r.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ error: `Video 1: ${aviso}` }) });
   });
   await page.goto('/cuenta/panel/#acerca-de-carlos');
+  await page.locator('#seccion-acerca-de-carlos').getByLabel('Página', { exact: true }).selectOption('conoce-mas');
   await page.locator('[data-acerca-seccion="video"]').first().click();
-  await page.locator('#video-titulo').fill('Carlos en el barrio');
-  const enlace = page.locator('#video-enlace');
+  await page.getByRole('button', { name: 'Añadir video' }).click();
+  await page.locator('#video-titulo-0').fill('Carlos en el barrio');
+  const enlace = page.locator('#video-enlace-0');
   await enlace.fill('https://www.facebook.com/reel/4119395378341161/');
-  await expect(page.locator('#video-detectado')).toContainText('Enlace válido · Facebook');
-  await expect(page.locator('#video-nota')).toBeHidden();
+  await expect(page.locator('#video-detectado-0')).toContainText('Enlace válido · Facebook');
+  await expect(page.locator('#video-nota-0')).toBeHidden();
 
   // Se guarda desde otra sección: el panel vuelve a «Video» para mostrar el aviso.
-  await page.locator('[data-acerca-seccion="tarjetas"]').first().click();
+  await page.locator('[data-acerca-seccion="galeria"]').first().click();
   await page.getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(page.locator('#panel-estado')).toHaveText('Revisa el enlace del video.');
+  await expect(page.locator('#panel-estado')).toHaveText('Revisa el enlace del video 1.');
   await expect(page.locator('[data-acerca-seccion="video"]').first()).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#video-detectado')).toHaveText(aviso);
+  await expect(page.locator('#video-detectado-0')).toHaveText(`Video 1: ${aviso}`.replace('Video 1: ', ''));
   await expect(enlace).toHaveAttribute('aria-invalid', 'true');
   expect(intentos).toBe(1);
 
   await enlace.fill('https://www.tiktok.com/@carlosastudillo01/video/7400000000000000000');
   await expect(enlace).not.toHaveAttribute('aria-invalid', 'true');
-  await expect(page.locator('#video-detectado')).toContainText('Enlace válido · TikTok');
-  await expect(page.locator('#video-nota')).toHaveText('Si usa música con derechos, en el sitio puede verse sin sonido.');
+  await expect(page.locator('#video-detectado-0')).toContainText('Enlace válido · TikTok');
+  await expect(page.locator('#video-nota-0')).toHaveText('Si usa música con derechos, en el sitio puede verse sin sonido.');
 });

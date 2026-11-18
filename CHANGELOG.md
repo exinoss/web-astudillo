@@ -8,16 +8,28 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ### Added
 
+- «Por qué quiero ser alcalde» y «Conoce más sobre mí»: hasta seis videos por página, uno debajo de otro, cada uno con su título y su texto.
+- Portada: el carrusel de piezas admite también videos de Facebook, TikTok, YouTube o Vimeo, mezclados con las imágenes (hasta 4 imágenes y 4 videos). Cada video se ve con su portada y su título, y se reproduce dentro del carrusel; mientras suena, el carrusel no avanza. Al pegar el enlace se usa la imagen del video como portada.
 - Portada, modo edición: el botón de la segunda diapositiva («Conoce a Carlos») se puede cambiar. Su texto se edita pulsándolo, y en «Cambiar imágenes» se elige a dónde lleva: una página del sitio o un enlace de Facebook, TikTok, Instagram o YouTube, que se abre en otra pestaña. Sin enlace, el botón se ve apagado.
 
 ### Fixed
 
+- Panel, videos: al cambiar el enlace de un video, su portada ya no se queda con la imagen del video anterior. Al pegar un enlace se usa la imagen del video si su plataforma la ofrece, y al volver a un enlace anterior vuelve su imagen.
+- Panel y modo edición: los botones para quitar se ven en rojo: los de las listas (preguntas, fotos, banners, personas) y «Quitar foto» de Biografía y Mi equipo y «Quitar» de la imagen para celular de un banner, que además llevan un tacho.
 - Portada, modo edición: el carrusel principal ya no cambia de diapositiva mientras se edita uno de sus textos.
 
 ### Changed
 
+- Panel, videos: la portada se quita con un botón rojo junto a su miniatura.
+- «Por qué quiero ser alcalde» y «Conoce más sobre mí»: las tarjetas son ahora las de «Principios que nos definen» y «Valores que nos unen» del Partido Social Cristiano, seis en cada página. El título de cada grupo se cambia desde el modo edición.
 - Portada: una imagen subida en la segunda diapositiva se ve completa, sin recortes, en celular y en escritorio. La imagen que viene con el sitio se ve igual que antes.
+- Portada, modo edición: el carrusel de piezas admite hasta 4 imágenes (antes 8), y su botón dice «Cambiar imágenes y videos».
 - Mi equipo: las parroquias se llaman «Ancón de Sardinas (Palmareal)», «5 de Junio», «Mataje» y «San Javier».
+
+### Removed
+
+- Panel, páginas de Carlos: la sección «Tarjetas».
+- «Conoce más sobre mí»: el retrato de la cabecera y su sección en el panel. Las tarjetas ya no se crean ni se cambian desde el panel.
 
 ## [1.4.2] - 2026-11-10
 

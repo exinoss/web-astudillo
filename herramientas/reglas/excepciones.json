@@ -894,12 +894,7 @@
       "texto": "export function alcaldeHeader(t: Record<string, string>) {",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
-    {
-      "regla": "comentario-de-funcion",
-      "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/cabeceras.ts",
-      "texto": "export function conoceMasHeader(t: Record<string, string>, portrait: AboutCarlosPageView[\"portrait\"]) {",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
+    
     {
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/lib/acerca-de-nosotros/acerca-de-carlos/cierre.ts",
@@ -1301,18 +1296,8 @@
       "texto": "const setAccess = (open: boolean) => {",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
-    {
-      "regla": "color-a-mano",
-      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
-      "texto": "<span class=\"edicion-pista inline-flex h-6 w-[42px] shrink-0 items-center rounded-full bg-[#ffffff40] p-[3px] max-tablet:h-[22px] max-tablet:w-[38px]\">",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
-    {
-      "regla": "color-a-mano",
-      "archivo": "frontend/src/scripts/comun/modo-edicion.ts",
-      "texto": "track.classList.toggle(\"bg-[#ffffff40]\", !on);",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
+   
+   
     {
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/scripts/comun/modo-edicion.ts",

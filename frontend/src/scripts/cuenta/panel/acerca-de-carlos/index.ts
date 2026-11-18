@@ -6,42 +6,38 @@ import { adminApi, type AboutCarlosPageBody, type AboutCarlosSlug, type DraftAbo
 import type { Editor, Section, SectionEditor } from "./comun";
 import { interview } from "./entrevista";
 import { gallery } from "./galeria";
-import { portrait } from "./retrato";
-import { cards } from "./tarjetas";
 import { marcarNoInsertable, video } from "./video";
 import { PAGINAS_CARLOS } from "../../../../../../backend/src/contracts/acerca-de-carlos";
 import { acciones, avisarVacios, avisoBorrador, busy, card, esc, guardarYRecargar, iconSvg, isPending, PESTANA, PESTANA_NORMAL, selector, state } from "../ui";
 
 const SECTIONS: Record<Section, SectionEditor & { name: string }> = {
-  tarjetas: { name: "Tarjetas", ...cards },
-  video: { name: "Video", ...video },
-  retrato: { name: "Retrato", ...portrait },
+  video: { name: "Videos", ...video },
   entrevista: { name: "Entrevista", ...interview },
   galeria: { name: "Galería", ...gallery },
 };
 
 const PAGES: Record<AboutCarlosSlug, { name: string; sections: Section[] }> = {
-  "por-que-quiero-ser-alcalde": { name: PAGINAS_CARLOS["por-que-quiero-ser-alcalde"], sections: ["tarjetas", "video"] },
-  "conoce-mas": { name: PAGINAS_CARLOS["conoce-mas"], sections: ["tarjetas", "video", "retrato", "entrevista", "galeria"] },
+  "por-que-quiero-ser-alcalde": { name: PAGINAS_CARLOS["por-que-quiero-ser-alcalde"], sections: ["video"] },
+  "conoce-mas": { name: PAGINAS_CARLOS["conoce-mas"], sections: ["video", "entrevista", "galeria"] },
 };
 let slug: AboutCarlosSlug = "por-que-quiero-ser-alcalde";
-let section: Section = "tarjetas";
+let section: Section = "video";
 // Una copia por página: cambiar de página o de sección no pierde lo escrito.
 const working: Partial<Record<AboutCarlosSlug, DraftAboutCarlosPage>> = {};
 const TAB_AVISO = "inline-flex items-center gap-1.5 border-error text-error aria-pressed:border-error aria-pressed:bg-error";
-let enfocarEnlace = false;
+let enfocarEnlace: number | null = null;
 let marcados = "";
 let refrescar: (() => void) | null = null;
 
-/** El aviso de la campana sobre el video publicado de esa página, si lo hay. */
-const avisoDe = (s: AboutCarlosSlug) => avisosActuales().find((a) => a.clave === `video:${s}`);
+/** Avisos de la campana sobre los videos publicados de esa página. */
+const avisosDe = (s: AboutCarlosSlug) => avisosActuales().filter((a) => a.clave.startsWith(`video:${s}:`));
 
-/** Abre la sección Video de la página del aviso, con el foco en su enlace. */
-export function abrirVideo(pagina: string) {
+/** Abre la sección de videos de la página del aviso, con el foco en el enlace del video `numero`. */
+export function abrirVideo(pagina: string, numero: number) {
   if (!(pagina in PAGES)) return;
   slug = pagina as AboutCarlosSlug;
   section = "video";
-  enfocarEnlace = true;
+  enfocarEnlace = Number.isInteger(numero) && numero > 0 ? numero - 1 : 0;
 }
 
 // Cuando aparece o se resuelve un aviso de video, se vuelve a pintar conservando lo escrito.
@@ -53,18 +49,16 @@ alCambiarAvisos((avisos) => {
 });
 
 const toBody = (p: DraftAboutCarlosPage): AboutCarlosPageBody => ({
-  tarjetas: p.tarjetas.map(({ foto, ...t }) => ({ ...t, idMedio: foto.idMedio })),
-  video: p.video && { titulo: p.video.titulo, descripcion: p.video.descripcion, enlace: p.video.enlace, vertical: p.video.vertical, idPortada: p.video.portada?.idMedio ?? null },
-  retrato: p.retrato && { idMedio: p.retrato.foto.idMedio, alt: p.retrato.alt },
+  videos: p.videos.map((v) => ({ titulo: v.titulo, descripcion: v.descripcion, enlace: v.enlace, vertical: v.vertical, idPortada: v.portada?.idMedio ?? null })),
   entrevista: p.entrevista,
   galeria: p.galeria.map(({ foto, ...g }) => ({ ...g, idMedio: foto.idMedio })),
 });
 
 function problem(p: DraftAboutCarlosPage) {
-  if (p.tarjetas.some((t) => !t.titulo || !t.texto || !t.alt)) return "Completa el título, el texto y la descripción de la foto de cada tarjeta.";
-  if (p.video && !p.video.titulo) return "Escribe el título de la sección del video.";
-  if (p.video && !videoSource(p.video.enlace)) return videoLinkProblem(p.video.enlace);
-  if (p.retrato && !p.retrato.alt) return "Describe la foto del retrato.";
+  const sinTitulo = p.videos.findIndex((v) => !v.titulo);
+  if (sinTitulo >= 0) return `Escribe el título del video ${sinTitulo + 1}.`;
+  const malEnlace = p.videos.findIndex((v) => !videoSource(v.enlace));
+  if (malEnlace >= 0) return `Video ${malEnlace + 1}: ${videoLinkProblem(p.videos[malEnlace].enlace)}`;
   if (p.entrevista.some((e) => !e.pregunta || !e.respuesta)) return "Completa la pregunta y la respuesta de cada entrada de la entrevista.";
   if (p.galeria.some((g) => !g.alt || !g.pie)) return "Completa la descripción y el pie de cada foto de la galería.";
   return null;
@@ -73,15 +67,15 @@ function problem(p: DraftAboutCarlosPage) {
 export function renderAboutCarlos(root: HTMLElement) {
   const info = PAGES[slug];
   const page = (working[slug] ??= structuredClone(state.draft!.acercaDeCarlos[slug]));
-  if (!info.sections.includes(section)) section = "tarjetas";
+  if (!info.sections.includes(section)) section = "video";
   const editor: Editor = { slug, page, rerender: () => renderAboutCarlos(root) };
-  const aviso = avisoDe(slug);
+  const avisos = avisosDe(slug);
   const tabs = info.sections.map((id) => {
-    const marcada = id === "video" && aviso;
+    const marcada = id === "video" && avisos.length > 0;
     return `<button type="button" data-acerca-seccion="${id}" aria-pressed="${id === section}" class="${PESTANA} ${marcada ? TAB_AVISO : PESTANA_NORMAL}"${marcada ? ` aria-label="${SECTIONS[id].name}, tiene un aviso"` : ""}>${SECTIONS[id].name}${marcada ? iconSvg("alert", 16) : ""}</button>`;
   }).join("");
   root.innerHTML = `
-    ${selector("acerca-pagina", "Página", Object.entries(PAGES).map(([id, p]) => `<option value="${id}" ${id === slug ? "selected" : ""}>${esc(p.name)}${avisoDe(id as AboutCarlosSlug) ? " · Revisar el video" : ""}</option>`).join(""))}
+    ${selector("acerca-pagina", "Página", Object.entries(PAGES).map(([id, p]) => `<option value="${id}" ${id === slug ? "selected" : ""}>${esc(p.name)}${avisosDe(id as AboutCarlosSlug).length ? " · Revisar los videos" : ""}</option>`).join(""))}
     ${card(info.name, `
       ${avisoBorrador(isPending("Página", info.name))}
       <nav aria-label="Contenido de la página" class="mb-6 flex flex-wrap gap-2">${tabs}</nav>
@@ -91,11 +85,14 @@ export function renderAboutCarlos(root: HTMLElement) {
       </form>`)}`;
   bind(root, editor);
   if (section !== "video") return;
-  // El campo se marca mientras el borrador tenga el mismo enlace que se publicó.
-  if (aviso?.detalle && page.video?.enlace === aviso.valor) marcarNoInsertable(root, aviso.detalle);
-  if (!enfocarEnlace) return;
-  enfocarEnlace = false;
-  const enlace = root.querySelector<HTMLInputElement>("#video-enlace");
+  // Cada enlace se marca mientras el borrador tenga el mismo que se publicó.
+  for (const aviso of avisos) {
+    const i = page.videos.findIndex((v) => v.enlace === aviso.valor);
+    if (aviso.detalle && i >= 0) marcarNoInsertable(root, i, aviso.detalle);
+  }
+  if (enfocarEnlace === null) return;
+  const enlace = root.querySelector<HTMLInputElement>(`#video-enlace-${enfocarEnlace}`) ?? root.querySelector<HTMLInputElement>("#video-enlace-0");
+  enfocarEnlace = null;
   enlace?.scrollIntoView({ block: "center", behavior: sinMovimiento() ? "auto" : "smooth" });
   enlace?.focus({ preventScroll: true });
 }
@@ -136,13 +133,14 @@ function bind(root: HTMLElement, editor: Editor) {
       try {
         await adminApi.saveAboutCarlosPage(saving, toBody(editor.page), state.draft!.versiones.acercaDeCarlos[saving]);
       } catch (error) {
-        const source = editor.page.video && videoSource(editor.page.video.enlace);
-        const aviso = error instanceof Error && source && (["bloqueado", "no-existe"] as const).map((m) => avisoNoInsertable(source.provider, m)).find((t) => t === error.message);
-        if (!aviso) throw error;
+        const [, numero, texto] = (error instanceof Error && error.message.match(/^Video (\d+): (.+)$/)) || [];
+        const i = Number(numero) - 1;
+        const source = texto && editor.page.videos[i] ? videoSource(editor.page.videos[i].enlace) : null;
+        if (!source || !(["bloqueado", "no-existe"] as const).some((m) => avisoNoInsertable(source.provider, m) === texto)) throw error;
         section = "video";
         renderAboutCarlos(root);
-        marcarNoInsertable(root, aviso);
-        throw new Error("Revisa el enlace del video.");
+        marcarNoInsertable(root, i, texto);
+        throw new Error(`Revisa el enlace del video ${i + 1}.`);
       }
     }, () => {
       delete working[saving];

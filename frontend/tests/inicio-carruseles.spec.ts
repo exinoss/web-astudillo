@@ -177,6 +177,8 @@ for (const ancho of [1440, 390]) {
 test('el retrato de la semilla se recorta y uno subido se ve completo y no más grande que su archivo', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await abrirEdicion(page);
+  // Sin avance automático: con la máquina cargada, el carrusel escondía la diapositiva mientras se medía.
+  await page.evaluate(() => document.documentElement.classList.add('reduce-motion'));
   const retrato = page.locator('[data-slide="1"] img');
   await expect(retrato).toHaveCSS('object-fit', 'cover');
   await page.getByRole('button', { name: 'Cambiar las imágenes del carrusel principal' }).click();
@@ -196,7 +198,7 @@ test('el retrato de la semilla se recorta y uno subido se ve completo y no más 
 
 test('una foto de más de 40 megapíxeles se rechaza sin subirla ni mostrarla', async ({ page }) => {
   const data = await abrirEdicion(page);
-  await page.getByRole('button', { name: 'Cambiar las imágenes del carrusel de piezas' }).click();
+  await page.getByRole('button', { name: 'Cambiar las imágenes y videos del carrusel de piezas' }).click();
   const dialogo = page.getByRole('dialog', { name: 'Carrusel de piezas' });
   const enorme = await sharp({ create: { width: 9000, height: 5000, channels: 3, background: '#2e86c1' } }).jpeg().toBuffer();
   await dialogo.locator('#piezas-nuevas').setInputFiles({ name: 'enorme.jpg', mimeType: 'image/jpeg', buffer: enorme });
@@ -209,12 +211,12 @@ test('una foto de más de 40 megapíxeles se rechaza sin subirla ni mostrarla', 
 
 test('con una sola pieza no hay puntos y una pieza subida no se ve más grande que su archivo', async ({ page }) => {
   const data = await abrirEdicion(page);
-  await page.getByRole('button', { name: 'Cambiar las imágenes del carrusel de piezas' }).click();
+  await page.getByRole('button', { name: 'Cambiar las imágenes y videos del carrusel de piezas' }).click();
   const dialogo = page.getByRole('dialog', { name: 'Carrusel de piezas' });
   await dialogo.locator('#piezas-nuevas').setInputFiles(await archivo('pieza.png', 1080, 1350));
   await expect(dialogo.locator('li')).toHaveCount(4);
-  for (const n of [1, 1, 1]) await dialogo.getByRole('button', { name: `Quitar pieza ${n}` }).click();
-  await expect(dialogo.getByRole('button', { name: 'Quitar pieza 1' })).toBeDisabled();
+  for (const n of [1, 1, 1]) await dialogo.getByRole('button', { name: `Quitar imagen ${n}` }).click();
+  await expect(dialogo.getByRole('button', { name: 'Quitar imagen 1' })).toBeDisabled();
   await dialogo.locator('#pieza-alt-0').fill('Pieza nueva');
   await dialogo.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(dialogo).toBeHidden();
@@ -228,7 +230,7 @@ test('con una sola pieza no hay puntos y una pieza subida no se ve más grande q
 test('subir y guardar muestran la animación de carga dentro del editor', async ({ page }) => {
   await abrirEdicion(page);
   await page.route('**/api/admin/{medios,contenido/inicio/piezas}', async route => { await new Promise(r => setTimeout(r, 800)); await route.fallback(); });
-  await page.getByRole('button', { name: 'Cambiar las imágenes del carrusel de piezas' }).click();
+  await page.getByRole('button', { name: 'Cambiar las imágenes y videos del carrusel de piezas' }).click();
   const dialogo = page.getByRole('dialog', { name: 'Carrusel de piezas' });
   const carga = dialogo.locator('[role="status"]:not([data-notificacion])');
   await dialogo.locator('#piezas-nuevas').setInputFiles(await archivo('pieza.png', 1080, 1350));
@@ -246,9 +248,9 @@ test('subir y guardar muestran la animación de carga dentro del editor', async 
 test('si otra persona guardó antes, avisa sin cerrar el editor y no pisa su cambio', async ({ page }) => {
   const data = await abrirEdicion(page);
   data.draft.versiones.inicio.piezas = 'f'.repeat(32);
-  await page.getByRole('button', { name: 'Cambiar las imágenes del carrusel de piezas' }).click();
+  await page.getByRole('button', { name: 'Cambiar las imágenes y videos del carrusel de piezas' }).click();
   const dialogo = page.getByRole('dialog', { name: 'Carrusel de piezas' });
-  await dialogo.getByRole('button', { name: 'Bajar pieza 1' }).click();
+  await dialogo.getByRole('button', { name: 'Bajar imagen 1' }).click();
   await dialogo.getByRole('button', { name: 'Guardar borrador' }).click();
   const aviso = page.getByRole('alert').filter({ hasText: 'Otra persona guardó cambios' });
   await expect(aviso).toBeVisible();
@@ -342,4 +344,58 @@ test('el carrusel del equipo se edita: sin fotos ofrece agregarlas, rechaza las 
   await expect(page.locator('[data-carrusel-editable="equipo"] [data-diapositiva]')).toHaveCount(2);
   await expect(page.getByRole('button', { name: 'Ampliar: Foto del equipo de prueba 1' })).toBeVisible();
   await expect(page.getByRole('button', { name: /carrusel del equipo/ })).toHaveCount(0);
+});
+
+const REEL = 'https://www.facebook.com/reel/28327883403549284/';
+
+test('añade un video al carrusel de piezas con la portada de su plataforma, lo guarda una vez y se reproduce sin el efecto de vidrio', async ({ page }) => {
+  await page.route(/facebook\.com|tiktok\.com|youtube/, route => route.fulfill({ contentType: 'text/html', body: '<p>video</p>' }));
+  const data = await abrirEdicion(page);
+  await page.clock.install();
+  await page.getByRole('button', { name: 'Cambiar las imágenes y videos del carrusel de piezas' }).click();
+  const dialogo = page.getByRole('dialog', { name: 'Carrusel de piezas' });
+  await dialogo.getByRole('button', { name: 'Añadir video' }).click();
+  await expect(dialogo.locator('#video-titulo-3')).toBeFocused();
+  await dialogo.locator('#video-titulo-3').fill('Te cuento mis razones');
+  await dialogo.locator('#video-enlace-3').fill('https://fb.watch/abc/');
+  await expect(dialogo.locator('#video-detectado-3')).toContainText('enlace corto');
+  await dialogo.locator('#video-enlace-3').fill(REEL);
+  await expect(dialogo.locator('#video-detectado-3')).toContainText('Enlace válido · Facebook');
+  await expect(dialogo.locator('[name="video-formato-3"][value="vertical"]')).toBeChecked();
+  await dialogo.locator('#video-enlace-3').blur();
+  await expect(dialogo.getByRole('button', { name: 'Quitar la portada del video 4' })).toBeVisible();
+  expect(data.videoCovers).toEqual([REEL]);
+  await dialogo.getByRole('button', { name: 'Guardar borrador' }).dblclick();
+  await expect(dialogo).toBeHidden();
+  expect(data.savedHome).toHaveLength(1);
+  expect((data.savedHome[0].piezas as unknown[]).at(-1)).toEqual({ video: { titulo: 'Te cuento mis razones', enlace: REEL, vertical: true, idPortada: 91 } });
+
+  const carrusel = page.locator('[data-carrusel-editable="piezas"]');
+  const cortina = carrusel.locator('.profile-glass-curtain');
+  await expect(cortina).not.toHaveAttribute('hidden');
+  await carrusel.getByRole('button', { name: 'Ver video 4' }).click();
+  await expect(cortina).toHaveAttribute('hidden', '');
+  await carrusel.getByRole('button', { name: 'Reproducir el video: Te cuento mis razones' }).click();
+  await expect(carrusel.locator('[data-video-stage] iframe')).toHaveAttribute('src', /facebook\.com\/plugins\/video\.php/);
+  // Mientras suena, el carrusel no avanza solo.
+  await page.clock.runFor(20_000);
+  await expect(carrusel.locator('[data-profile-image="3"]')).toBeVisible();
+  await carrusel.getByRole('button', { name: 'Ver imagen 1' }).click();
+  await expect(carrusel.locator('iframe')).toHaveCount(0);
+  await expect(cortina).not.toHaveAttribute('hidden');
+});
+
+test('el carrusel de piezas admite hasta 4 imágenes y 4 videos', async ({ page }) => {
+  await abrirEdicion(page);
+  await page.getByRole('button', { name: 'Cambiar las imágenes y videos del carrusel de piezas' }).click();
+  const dialogo = page.getByRole('dialog', { name: 'Carrusel de piezas' });
+  await dialogo.locator('#piezas-nuevas').setInputFiles(await archivo('pieza.png', 1080, 1350));
+  await expect(dialogo.locator('li')).toHaveCount(4);
+  await expect(dialogo.locator('#piezas-nuevas')).toHaveCount(0);
+  for (let i = 0; i < 4; i++) await dialogo.getByRole('button', { name: 'Añadir video' }).click();
+  await expect(dialogo.locator('li')).toHaveCount(8);
+  await expect(dialogo.getByRole('button', { name: 'Añadir video' })).toHaveCount(0);
+  await dialogo.getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.getByRole('alert').filter({ hasText: 'Revisa los campos marcados antes de guardar.' })).toBeVisible();
+  await expect(dialogo.locator('#video-titulo-4')).toHaveAttribute('aria-invalid', 'true');
 });

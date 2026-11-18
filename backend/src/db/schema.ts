@@ -378,7 +378,6 @@ export const tbChatRespuestas = pgTable("tb_chat_respuestas", {
 	idRespuesta: integer("id_respuesta").primaryKey().generatedAlwaysAsIdentity(),
 	orden: integer().notNull(),
 	pregunta: varchar({ length: 160 }).notNull(),
-	// Separadas por comas; el chat compara sin tildes ni mayúsculas.
 	palabrasClave: varchar("palabras_clave", { length: 300 }).notNull(),
 	respuesta: varchar({ length: 1000 }).notNull(),
 	enlaceTexto: varchar("enlace_texto", { length: 60 }),
