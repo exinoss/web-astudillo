@@ -1,4 +1,4 @@
-// Botones y destinos de enlaces no están aquí a propósito (salvo las redes, en frontend/src/lib/comun/contenido/redes.ts).
+// Botones y destinos de enlaces no están aquí a propósito, salvo las redes (frontend/src/lib/comun/contenido/redes.ts) y el botón de la segunda diapositiva (D-028).
 // Sin dependencias: también lo usa el panel en el navegador. El backend exige cada `max` al guardar.
 interface TextDefinition {
   lugar: string;
@@ -34,6 +34,7 @@ export const TEXTOS = {
   "inicio.carrusel-2.antetitulo": t("Portada · Carrusel, diapositiva 2", "Antetítulo", 40),
   "inicio.carrusel-2.titulo": t("Portada · Carrusel, diapositiva 2", "Título", 60),
   "inicio.carrusel-2.destacado": t("Portada · Carrusel, diapositiva 2", "Título (parte amarilla)", 30),
+  "inicio.carrusel-2.boton": t("Portada · Carrusel, diapositiva 2", "Texto del botón", 30),
   "inicio.participa.antetitulo": t("Portada · Tu voz cuenta", "Antetítulo", 40),
   "inicio.participa.titulo": t("Portada · Tu voz cuenta", "Título", 40),
   "inicio.conoce.antetitulo": t("Portada · Conoce a Carlos", "Antetítulo", 40),

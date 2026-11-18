@@ -1,5 +1,5 @@
 // Modo edición sobre el sitio: solo lo descarga quien tiene `contenido.editar` (lo importa layout.ts).
-// Edita los textos marcados con data-editable; los botones y destinos de enlaces nunca lo llevan.
+// Edita los textos marcados con data-editable; los botones y destinos de enlaces no lo llevan, salvo el de la segunda diapositiva (D-028).
 import { TEXTOS, type TextKey } from "../../../../backend/src/contracts/textos";
 import type { Profile } from "../../lib/data/auth-repository";
 import { adminApi } from "../../lib/data/http/admin-api";
@@ -7,7 +7,7 @@ import { escLines } from "../../lib/comun/html";
 import { guardarClave, leerClave } from "../../lib/comun/almacen";
 import { sinMovimiento } from "../../lib/comun/movimiento";
 import { iconSvg } from "../../lib/comun/iconos";
-import { BOTON, PRINCIPAL } from "../../lib/cuenta/panel/campos";
+import { BOLA, BOTON, INTERRUPTOR, PISTA, PRINCIPAL } from "../../lib/cuenta/panel/campos";
 import { seguirPublicacion } from "../../lib/comun/avisos";
 import { BORRADOR_GUARDADO, notificar } from "../../lib/comun/notificacion";
 
@@ -44,9 +44,9 @@ bar.className = "bg-primary text-primary-content";
 bar.innerHTML = `
   <div class="site-container flex min-h-14 items-center justify-between gap-4 py-1.5 max-tablet:gap-2.5">
     <button type="button" id="edicion-interruptor" role="switch" aria-checked="false"
-      class="flex min-h-11 items-center gap-3.5 text-left text-[0.85rem] font-bold max-tablet:gap-2.5 max-tablet:text-[0.78rem]">
-      <span class="edicion-pista inline-flex h-6 w-[42px] shrink-0 items-center rounded-full bg-[#ffffff40] p-[3px] max-tablet:h-[22px] max-tablet:w-[38px]">
-        <span class="edicion-bola size-[18px] rounded-full bg-primary-content max-tablet:size-4"></span>
+      class="${INTERRUPTOR} font-bold">
+      <span class="edicion-pista ${PISTA} bg-track-on-dark">
+        <span class="edicion-bola ${BOLA} bg-primary-content"></span>
       </span>
       <span><span id="edicion-estado">Modo edición desactivado</span><span id="edicion-ayuda" class="font-normal opacity-80 max-nav:hidden"></span></span>
     </button>
@@ -63,7 +63,7 @@ function drawBar() {
   toggle.setAttribute("aria-checked", String(on));
   const track = bar.querySelector<HTMLElement>(".edicion-pista")!;
   track.classList.toggle("bg-accent", on);
-  track.classList.toggle("bg-[#ffffff40]", !on);
+  track.classList.toggle("bg-track-on-dark", !on);
   track.classList.toggle("justify-end", on);
   bar.querySelector<HTMLElement>(".edicion-bola")!.classList.toggle("bg-primary-content", !on);
   bar.querySelector<HTMLElement>(".edicion-bola")!.classList.toggle("bg-primary", on);

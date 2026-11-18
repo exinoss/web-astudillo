@@ -10,7 +10,7 @@ import type { BiographyMilestone, AboutCarlosPage, AboutCarlosSlug, HomeCarousel
 
 type ApiHomeImage = { original: Original } | { foto: UploadedPicture };
 interface ApiHomeCarousels {
-  principal: { banners: { imagen: ApiHomeImage; celular: UploadedPicture | null; alt: string }[]; retrato: { imagen: ApiHomeImage; alt: string } };
+  principal: { banners: { imagen: ApiHomeImage; celular: UploadedPicture | null; alt: string }[]; retrato: { imagen: ApiHomeImage; alt: string }; enlace?: string };
   piezas: { piezas: { imagen: ApiHomeImage; alt: string }[] };
   /** Ausente en la semilla y en publicaciones anteriores al carrusel del equipo. */
   equipo?: { fotos: { foto: UploadedPicture; alt: string }[] };
@@ -89,6 +89,7 @@ export abstract class SnapshotRepository implements ContentRepository {
     return {
       banners: principal.banners.map(b => ({ image: homeImage(b.imagen), mobile: b.celular, alt: b.alt })),
       portrait: { image: homeImage(principal.retrato.imagen), alt: principal.retrato.alt },
+      link: principal.enlace ?? initial.inicio.principal.enlace,
       pieces: piezas.piezas.map(p => ({ image: homeImage(p.imagen), alt: p.alt })),
       team: (equipo?.fotos ?? []).map(f => ({ image: f.foto, alt: f.alt })),
     };

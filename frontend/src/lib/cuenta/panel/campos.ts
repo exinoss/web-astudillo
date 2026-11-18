@@ -16,6 +16,9 @@ export const PRINCIPAL = `${BOTON} bg-primary text-primary-content disabled:bg-d
 // El color del borde va aparte (`PESTANA_NORMAL`) para que una variante lo cambie sin competir con él.
 export const PESTANA = "min-h-11 rounded-control border bg-base-100 px-4 text-[0.82rem] font-bold aria-pressed:text-white";
 export const PESTANA_NORMAL = "border-base-300 aria-pressed:border-primary aria-pressed:bg-primary";
+export const INTERRUPTOR = "flex min-h-11 items-center gap-3.5 text-left text-[0.85rem] max-tablet:gap-2.5 max-tablet:text-[0.78rem]";
+export const PISTA = "inline-flex h-6 w-[42px] shrink-0 items-center rounded-full p-[3px] max-tablet:h-[22px] max-tablet:w-[38px]";
+export const BOLA = "size-[18px] rounded-full max-tablet:size-4";
 export const GRUPO = "min-w-0 rounded-control border border-base-300 p-4";
 export const LEYENDA = "px-1 text-[0.82rem] font-bold";
 

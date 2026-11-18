@@ -4,6 +4,7 @@ import type { Authorization } from '../../auth/types';
 import { MAX_PRESENTACION, MAX_PUNTO_TRAYECTORIA, MAX_TRAYECTORIA, PUESTOS } from '../../contracts/equipo';
 import { MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_PIEZAS, ORIGINALES } from '../../contracts/inicio';
 import { MAX_FOTOS_PARROQUIA } from '../../contracts/parroquias';
+import { MAX_ENLACE_RED } from '../../contracts/redes';
 import { LARGOS } from '../../contracts/limites';
 import { VIDEO_URL_MAX } from '../../contracts/video';
 import { createAboutCarlosPages } from '../services/about-carlos';
@@ -116,6 +117,7 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
       body: t.Object({
         banners: t.Array(t.Object({ imagen: homeImage, celular: t.Union([mediaId, t.Null()]), alt: text(LARGOS.descripcionFoto) }, strict), { minItems: 1, maxItems: MAX_BANNERS }),
         retrato: t.Object({ imagen: homeImage, alt: text(LARGOS.descripcionFoto) }, strict),
+        enlace: t.String({ maxLength: MAX_ENLACE_RED }),
         version: t.Union([version, t.Null()]),
       }, strict),
     })

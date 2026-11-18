@@ -186,6 +186,7 @@ interface HomeSlideImage { image: HomeImage; alt: string }
 export interface HomeCarousels {
   banners: (HomeSlideImage & { mobile: UploadedPicture | null })[];
   portrait: HomeSlideImage;
+  link: string;
   pieces: HomeSlideImage[];
   team: { image: UploadedPicture; alt: string }[];
 }

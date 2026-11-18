@@ -86,13 +86,13 @@ export type HomeImage = { original: Original } | { foto: Photo };
 
 /** La semilla crea el principal y el de piezas con las imágenes que vienen con el sitio; el del equipo empieza vacío. */
 export interface HomeCarouselsStored {
-  principal: { banners: { imagen: HomeImageStored; celular: number | null; alt: string }[]; retrato: { imagen: HomeImageStored; alt: string } };
+  principal: { banners: { imagen: HomeImageStored; celular: number | null; alt: string }[]; retrato: { imagen: HomeImageStored; alt: string }; enlace?: string };
   piezas: { piezas: { imagen: HomeImageStored; alt: string }[] };
   equipo: { fotos: { idMedio: number; alt: string }[] };
 }
 
 export interface HomeCarousels {
-  principal: { banners: { imagen: HomeImage; celular: Photo | null; alt: string }[]; retrato: { imagen: HomeImage; alt: string } };
+  principal: { banners: { imagen: HomeImage; celular: Photo | null; alt: string }[]; retrato: { imagen: HomeImage; alt: string }; enlace: string };
   piezas: { piezas: { imagen: HomeImage; alt: string }[] };
   equipo: { fotos: { foto: Photo; alt: string }[] };
 }

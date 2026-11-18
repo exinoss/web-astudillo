@@ -1,5 +1,6 @@
 // Lo carga modo-edicion.ts antes de pintar los textos del borrador: `publicado` guarda la portada tal como se publicó.
-import { AVISO_HORIZONTAL, MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_PIEZAS, type Carrusel, type Original } from "../../../../backend/src/contracts/inicio";
+import { AVISO_ENLACE_BOTON, AVISO_HORIZONTAL, enlaceBoton, MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_PIEZAS, type Carrusel, type Original } from "../../../../backend/src/contracts/inicio";
+import { MAX_ENLACE_RED } from "../../../../backend/src/contracts/redes";
 import { LARGOS } from "../../../../backend/src/contracts/limites";
 import { MAX_MB_FOTO } from "../../../../backend/src/contracts/media";
 import { mostrarCarga } from "../../lib/comun/animaciones";
@@ -8,13 +9,16 @@ import { medidasFoto, uploadedSrcset, uploadedUrl } from "../../lib/comun/fotos"
 import { iconSvg } from "../../lib/comun/iconos";
 import { bloquearMientras, vigilarCambios } from "../../lib/comun/cambios";
 import { desmarcarAlEscribir, marcarVacios } from "../../lib/comun/campos";
-import { enlazarLista, field, GHOST, HINT, ICON_BUTTON, moveButtons, PRINCIPAL, thumb, upload } from "../../lib/cuenta/panel/campos";
+import { BOLA, enlazarLista, field, GHOST, HINT, ICON_BUTTON, INTERRUPTOR, LABEL, moveButtons, PISTA, PRINCIPAL, thumb, upload } from "../../lib/cuenta/panel/campos";
+import { opcionesDePagina } from "../../lib/cuenta/panel/paginas";
+import { atributosBoton, RETRATO } from "../../lib/inicio/segunda-diapositiva";
 import { adminApi, type Draft, type DraftHomeCarousels, type DraftHomeImage, type HomeImageBody } from "../../lib/data/http/admin-api";
 
 type Principal = DraftHomeCarousels["principal"];
 type Piezas = DraftHomeCarousels["piezas"];
 type Equipo = DraftHomeCarousels["equipo"];
 type Version = { src: string; srcset: string; miniatura: string };
+type Sitio = Pick<Draft, "inicio" | "versiones" | "textos" | "originales" | "propuestas">;
 interface Opciones {
   avisar: (mensaje: string, error?: boolean) => void;
   alGuardar: () => Promise<void>;
@@ -44,6 +48,7 @@ sinFotos.innerHTML = `<p class="m-0 text-[0.9rem] text-primary"><strong>Carrusel
 
 let opciones: Opciones;
 let borrador: DraftHomeCarousels;
+let sitio: Sitio;
 let versiones: Draft["versiones"]["inicio"] = {};
 
 /** Miniatura de una imagen del borrador: la foto subida o la original del sitio. */
@@ -87,14 +92,34 @@ const htmlPrincipal = (p: Principal) => `
     ${p.banners.length < MAX_BANNERS ? `<div class="mt-3">${upload("banners-nuevos", "Añadir banners", true)}</div>` : ""}
   </section>
   <section aria-labelledby="carrusel-retrato" class="mt-6 border-t border-t-base-300 pt-5">
-    <h3 id="carrusel-retrato" class="m-0 mb-1 font-sans text-[1rem] font-bold">Retrato de la segunda diapositiva</h3>
-    <p class="${HINT} mb-3">1200 × 1200 px · ${LIMITE}</p>
-    <div class="flex flex-wrap items-end gap-3 rounded-control border border-base-300 p-3">
-      <img src="${miniatura(p.retrato.imagen)}" alt="" class="aspect-square w-[104px] rounded-control bg-base-200 object-cover" />
-      <span class="pb-0.5">${upload("retrato-nuevo", "Cambiar retrato")}</span>
-      <div class="basis-full">${field({ id: "retrato-alt", label: "Descripción de la imagen", value: p.retrato.alt, max: LARGOS.descripcionFoto, required: true })}</div>
+    <h3 id="carrusel-retrato" class="m-0 mb-1 font-sans text-[1rem] font-bold">Segunda diapositiva</h3>
+    <p class="${HINT} mb-3">Retrato: 1200 × 1200 px · ${LIMITE}</p>
+    <div class="flex flex-col gap-4 rounded-control border border-base-300 p-3">
+      <div class="flex gap-3 max-mobile:flex-col">
+        <img src="${miniatura(p.retrato.imagen)}" alt="" class="aspect-square w-[104px] rounded-control bg-base-200 object-cover" />
+        <div class="flex min-w-0 flex-1 flex-col items-start gap-3">${upload("retrato-nuevo", "Cambiar retrato")}<div class="w-full">${field({ id: "retrato-alt", label: "Descripción de la imagen", value: p.retrato.alt, max: LARGOS.descripcionFoto, required: true })}</div></div>
+      </div>
+      ${destinoBoton(p.enlace, abierto?.externo ?? false)}
     </div>
   </section>`;
+
+/** Interruptor, selector de página y campo de enlace externo del botón de la segunda diapositiva. */
+const destinoBoton = (enlace: string, externo: boolean) => `
+  <div role="group" aria-labelledby="boton-destino" class="flex flex-col gap-3">
+    <span id="boton-destino" class="${LABEL}">¿A dónde lleva el botón?</span>
+    <button type="button" data-destino role="switch" aria-checked="${externo}" aria-label="Enlace externo" class="${INTERRUPTOR} self-start whitespace-nowrap">
+      <span data-lado="pagina" aria-hidden="true" class="${externo ? "text-muted" : "font-bold"}">Página del sitio</span>
+      <span data-pista class="${PISTA} bg-primary${externo ? " justify-end" : ""}"><span class="${BOLA} bg-primary-content"></span></span>
+      <span data-lado="externo" aria-hidden="true" class="${externo ? "font-bold" : "text-muted"}">Enlace externo</span>
+    </button>
+    <div data-panel="pagina" ${externo ? "hidden" : ""}>
+      <label for="boton-pagina" class="${LABEL}">Página</label>
+      <select id="boton-pagina" class="campo">${opcionesDePagina(sitio, externo ? null : enlace || null)}</select>
+      <p class="${HINT}">Con «Sin enlace», el botón se ve apagado. Su texto se cambia en la diapositiva.</p>
+    </div>
+    <div data-panel="externo" ${externo ? "" : "hidden"}>${field({ id: "boton-url", label: "Enlace", value: externo ? enlace : "", max: MAX_ENLACE_RED,
+      hint: "De Facebook, TikTok, Instagram o YouTube, por ejemplo https://www.facebook.com/watch/?v=… Su texto se cambia en la diapositiva." })}</div>
+  </div>`;
 
 /** Contenido del editor del carrusel de piezas. */
 const htmlPiezas = (p: Piezas) => `
@@ -146,7 +171,7 @@ dialogo.innerHTML = `
 const guardar = dialogo.querySelector<HTMLButtonElement>("[data-guardar]")!;
 const ventana = dialogo.firstElementChild as HTMLElement;
 
-let abierto: { cual: Carrusel; trabajo: Principal | Piezas | Equipo; origen: HTMLElement; cuerpo: HTMLElement; comprobar: () => void } | null = null;
+let abierto: { cual: Carrusel; trabajo: Principal | Piezas | Equipo; origen: HTMLElement; cuerpo: HTMLElement; comprobar: () => void; externo: boolean } | null = null;
 let subiendo = false;
 
 /** Pasa lo escrito al trabajo; un campo que todavía no está pintado conserva su valor. */
@@ -157,8 +182,30 @@ function capturar() {
     const t = abierto.trabajo as Principal;
     t.banners.forEach((b, i) => { b.alt = valor(`banner-alt-${i}`, b.alt); });
     t.retrato.alt = valor("retrato-alt", t.retrato.alt);
+    t.enlace = valor(abierto.externo ? "boton-url" : "boton-pagina", t.enlace);
   } else if (abierto.cual === "piezas") (abierto.trabajo as Piezas).piezas.forEach((x, i) => { x.alt = valor(`pieza-alt-${i}`, x.alt); });
   else (abierto.trabajo as Equipo).fotos.forEach((x, i) => { x.alt = valor(`equipo-alt-${i}`, x.alt); });
+}
+
+/** Cambia el destino del botón entre una página del sitio y un enlace externo, sin perder lo escrito en el otro. */
+function cambiarDestino(a: NonNullable<typeof abierto>, boton: HTMLButtonElement) {
+  a.externo = !a.externo;
+  boton.setAttribute("aria-checked", String(a.externo));
+  boton.querySelector("[data-pista]")!.classList.toggle("justify-end", a.externo);
+  const activo = a.externo ? "externo" : "pagina";
+  boton.querySelectorAll<HTMLElement>("[data-lado]").forEach((x) => {
+    x.classList.toggle("font-bold", x.dataset.lado === activo);
+    x.classList.toggle("text-muted", x.dataset.lado !== activo);
+  });
+  a.cuerpo.querySelectorAll<HTMLElement>("[data-panel]").forEach((x) => { x.hidden = x.dataset.panel !== activo; });
+  a.comprobar();
+}
+
+/** Por qué no se puede guardar el enlace del botón, o null si vale. */
+function avisoEnlace(a: NonNullable<typeof abierto>) {
+  const { enlace } = a.trabajo as Principal;
+  if (a.externo && !enlace) return "Pega el enlace del botón o elige una página del sitio.";
+  return enlaceBoton(enlace) === null ? AVISO_ENLACE_BOTON : null;
 }
 
 /** Una por una; se detiene en la primera que no se puede subir. Ninguna se muestra antes de que el backend la procese. */
@@ -219,6 +266,7 @@ function pintar() {
     alElegir("banners-nuevos", MAX_BANNERS - t.banners.length, (fotos) => t.banners.push(...fotos.map((foto) => ({ imagen: { foto }, celular: null, alt: "" }))));
     alElegir("retrato-nuevo", 1, ([foto]) => { t.retrato = { imagen: { foto }, alt: "" }; });
     t.banners.forEach((_, i) => alElegir(`banner-celular-${i}`, 1, ([foto]) => { t.banners[i].celular = foto; }));
+    a.cuerpo.querySelector<HTMLButtonElement>("[data-destino]")!.addEventListener("click", (e) => cambiarDestino(a, e.currentTarget as HTMLButtonElement));
   } else if (a.cual === "piezas") {
     const t = a.trabajo as Piezas;
     alElegir("piezas-nuevas", MAX_PIEZAS - t.piezas.length, (fotos) => t.piezas.push(...fotos.map((foto) => ({ imagen: { foto }, alt: "" }))));
@@ -237,7 +285,8 @@ function abrir(cual: Carrusel, origen: HTMLElement) {
   dialogo.querySelector("[data-cuerpo]")!.replaceWith(cuerpo);
   cuerpo.dataset.cuerpo = "";
   desmarcarAlEscribir(cuerpo);
-  abierto = { cual, trabajo, origen, cuerpo, comprobar: () => {} };
+  const { enlace } = borrador.principal;
+  abierto = { cual, trabajo, origen, cuerpo, comprobar: () => {}, externo: !!enlace && !enlace.startsWith("/") };
   abierto.comprobar = vigilarCambios(cuerpo, guardar, borrador[cual], () => { capturar(); return trabajo; });
   dialogo.querySelector("#carrusel-titulo")!.innerHTML = `${iconSvg("image", 20)} ${NOMBRES[cual]}`;
   pintar();
@@ -268,6 +317,12 @@ guardar.addEventListener("click", () => void bloquearMientras(guardar, async () 
     opciones.avisar("Describe cada imagen antes de guardar.", true);
     return;
   }
+  const aviso = a.cual === "principal" ? avisoEnlace(a) : null;
+  if (aviso) {
+    a.cuerpo.querySelector("#boton-url")?.setAttribute("aria-invalid", "true");
+    opciones.avisar(aviso, true);
+    return;
+  }
   const terminarCarga = mostrarCarga(ventana, "Guardando…");
   try {
     if (a.cual === "principal") {
@@ -275,6 +330,7 @@ guardar.addEventListener("click", () => void bloquearMientras(guardar, async () 
       await adminApi.saveHomeMain({
         banners: t.banners.map((b) => ({ imagen: cuerpoImagen(b.imagen), celular: b.celular?.idMedio ?? null, alt: b.alt })),
         retrato: { imagen: cuerpoImagen(t.retrato.imagen), alt: t.retrato.alt },
+        enlace: t.enlace,
       }, versiones[a.cual] ?? null);
     } else if (a.cual === "piezas") {
       await adminApi.saveHomePieces({ piezas: (a.trabajo as Piezas).piezas.map((x) => ({ imagen: cuerpoImagen(x.imagen), alt: x.alt })) }, versiones[a.cual] ?? null);
@@ -364,7 +420,13 @@ function pintarBorrador() {
   segunda.dataset.slide = String(banners.length);
   segunda.setAttribute("aria-label", `${total} de ${total}`);
   segunda.hidden = true;
-  ponerImagen(segunda.querySelector("img")!, retrato.imagen, retrato.alt, "(max-width: 760px) 49vw, 47vw");
+  const imagenRetrato = segunda.querySelector("img")!;
+  ponerImagen(imagenRetrato, retrato.imagen, retrato.alt, "(max-width: 760px) 49vw, 47vw");
+  imagenRetrato.className = "foto" in retrato.imagen ? RETRATO.subido : RETRATO.original;
+  if ("foto" in retrato.imagen) imagenRetrato.style.cssText = medidasFoto(retrato.imagen.foto);
+  const enlace = segunda.querySelector<HTMLAnchorElement>("[data-boton-diapositiva]")!;
+  ["href", "target", "rel", "aria-disabled"].forEach((x) => enlace.removeAttribute(x));
+  Object.entries(atributosBoton(borrador.principal.enlace)).forEach(([x, v]) => enlace.setAttribute(x, v));
   puntos(hero.querySelector<HTMLElement>(".carousel-controls [role=group]")!, ".slide-dot", total, "diapositiva");
 
   const { piezas } = borrador.piezas;
@@ -425,7 +487,8 @@ export function iniciarCarruseles(o: Opciones) {
 }
 
 /** Muestra el borrador en la portada y los botones «Cambiar imágenes». */
-export function mostrarCarruseles(draft: Pick<Draft, "inicio" | "versiones">) {
+export function mostrarCarruseles(draft: Sitio) {
+  sitio = draft;
   borrador = draft.inicio;
   versiones = draft.versiones.inicio;
   pintarBorrador();

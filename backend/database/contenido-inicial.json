@@ -14,6 +14,7 @@
     "inicio.carrusel-2.antetitulo": "CONOCE AL CANDIDATO",
     "inicio.carrusel-2.titulo": "Respeto.\nCoherencia.",
     "inicio.carrusel-2.destacado": "Claridad.",
+    "inicio.carrusel-2.boton": "Conoce a Carlos",
     "inicio.participa.antetitulo": "ESTAMOS PARA ESCUCHARTE",
     "inicio.participa.titulo": "Tu voz cuenta.",
     "inicio.conoce.antetitulo": "CONOCE A CARLOS",
@@ -544,7 +545,8 @@
           "alt": "Carlos Astudillo, PSC. La nueva historia. Creo en una ciudad donde el progreso no sea privilegio de pocos, sino derecho de todos."
         }
       ],
-      "retrato": { "imagen": { "original": "pieza-respeto" }, "alt": "Retrato de Carlos Astudillo" }
+      "retrato": { "imagen": { "original": "pieza-respeto" }, "alt": "Retrato de Carlos Astudillo" },
+      "enlace": "/acerca-de-nosotros/"
     },
     "piezas": {
       "piezas": [

@@ -282,8 +282,9 @@ export function diff(before: Snapshot | null, after: Snapshot) {
         changes.push({ tipo: 'Mi equipo', descripcion: PARROQUIAS.find(p => p.slug === parish.slug)!.nombre });
   }
   const home = before.inicio ?? HOME_CAROUSELS_SEED;
+  const principal = { ...home.principal, enlace: home.principal.enlace ?? HOME_CAROUSELS_SEED.principal.enlace };
   if (after.inicio) {
-    if (!same(home.principal, after.inicio.principal)) changes.push({ tipo: 'Portada', descripcion: 'Carrusel principal' });
+    if (!same(principal, after.inicio.principal)) changes.push({ tipo: 'Portada', descripcion: 'Carrusel principal' });
     if (!same(home.piezas, after.inicio.piezas)) changes.push({ tipo: 'Portada', descripcion: 'Carrusel de piezas' });
     if (!same(before.inicio?.equipo ?? { fotos: [] }, after.inicio.equipo)) changes.push({ tipo: 'Portada', descripcion: 'Carrusel del equipo' });
   }

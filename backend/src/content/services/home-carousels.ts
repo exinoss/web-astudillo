@@ -2,7 +2,7 @@ import type { SQL } from 'bun';
 import initial from '../../../database/contenido-inicial.json';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
-import { AVISO_HORIZONTAL, type Carrusel } from '../../contracts/inicio';
+import { AVISO_ENLACE_BOTON, AVISO_HORIZONTAL, enlaceBoton, type Carrusel } from '../../contracts/inicio';
 import { LARGOS } from '../../contracts/limites';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
@@ -47,6 +47,7 @@ export async function listHomeCarousels(sql: SQL): Promise<HomeCarousels> {
     principal: {
       banners: banners.length ? banners : HOME_CAROUSELS_SEED.principal.banners,
       retrato: portrait ? { imagen: portrait, alt: principal.retrato.alt } : HOME_CAROUSELS_SEED.principal.retrato,
+      enlace: principal.enlace ?? HOME_CAROUSELS_SEED.principal.enlace,
     },
     piezas: { piezas: pieces.length ? pieces : HOME_CAROUSELS_SEED.piezas.piezas },
     equipo: { fotos: equipo.fotos.flatMap(({ idMedio, alt }) => { const foto = media.get(idMedio); return foto ? [{ foto, alt }] : []; }) },
@@ -70,10 +71,13 @@ export function createHomeCarousels(sql: SQL, authorization: Authorization) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       const primero = input.banners[0].imagen;
       if (!('original' in primero && primero.original === BANNER_FIJO)) throw new ApiError(422, 'El primer banner no se puede quitar ni mover.');
+      const enlace = enlaceBoton(input.enlace ?? '');
+      if (enlace === null) throw new ApiError(422, `Enlace del botón: ${AVISO_ENLACE_BOTON}`);
       const content: HomeMainInput = {
         // El banner 1 tiene su propia versión para celular en la portada.
         banners: input.banners.map((b, i) => ({ imagen: image(b.imagen), celular: i ? b.celular : null, alt: alt(b.alt, `Banner ${i + 1}`) })),
         retrato: { imagen: image(input.retrato.imagen), alt: alt(input.retrato.alt, 'Retrato') },
+        enlace,
       };
       return save(actor, 'principal', content, mainIds(content), version);
     },
