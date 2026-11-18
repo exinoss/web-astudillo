@@ -124,6 +124,7 @@
   --color-divider: #cbd5e1;
   --color-progress-track: #06317618;
   --color-line-on-dark: #ffffff55;
+  --color-track-on-dark: #ffffff40;
   --color-primary-line: #06317640;
   --shadow-card: 0 4px 14px #06317608;
   /* En px: el ajuste de tamaño de texto cambia el `font-size` de <html> y no debe agrandar las esquinas. */

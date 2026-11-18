@@ -2,7 +2,7 @@ import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { rm } from 'node:fs/promises';
 import { diff } from '../src/content/services/content';
 import { HOME_CAROUSELS_SEED } from '../src/content/services/home-carousels';
-import { AVISO_HORIZONTAL } from '../src/contracts/inicio';
+import { AVISO_ENLACE_BOTON, AVISO_HORIZONTAL } from '../src/contracts/inicio';
 import { migrate } from '../src/db/migrate';
 import { testApp } from './helpers';
 
@@ -19,6 +19,7 @@ const version = async (clave: 'principal' | 'piezas' | 'equipo') => ((await draf
 const photo = (color: string, width = 2400, height = 914) => uploadPhoto(color, width, height);
 
 const retrato = { imagen: { original: 'pieza-respeto' }, alt: 'Retrato de Carlos Astudillo' };
+const enlace = '/acerca-de-nosotros/';
 type BannerGuardado = { imagen: { original?: string; foto?: { idMedio: number } }; celular: { idMedio: number } | null; alt: string };
 /** Convierte un banner del borrador en el cuerpo que acepta la API. */
 const cuerpoBanner = (b: BannerGuardado) => ({ imagen: b.imagen.foto ? { idMedio: b.imagen.foto.idMedio } : b.imagen, celular: b.celular?.idMedio ?? null, alt: b.alt });
@@ -55,7 +56,7 @@ test('un banner subido convive con el original, lleva su foto para celular y rep
       { imagen: { original: 'portada' }, celular: null, alt: 'Banner original' },
       { imagen: { idMedio: banner.idMedio }, celular: celular.idMedio, alt: '  Carlos con vecinos  ' },
     ],
-    retrato, version: await version('principal'),
+    retrato, enlace, version: await version('principal'),
   };
   const first = await call(PRINCIPAL, 'PUT', body, cookies.coadmin);
   expect(first.status).toBe(200);
@@ -75,7 +76,7 @@ test('el primer banner no se puede quitar ni mover, y el borrador no cambia', as
   const subido = { imagen: { idMedio: foto.idMedio }, celular: null, alt: 'Banner subido' };
   const antes = (await draft()).inicio.principal.banners;
   for (const banners of [[subido], [subido, portada]]) {
-    const reply = await call(PRINCIPAL, 'PUT', { banners, retrato, version: await version('principal') }, cookies.coadmin);
+    const reply = await call(PRINCIPAL, 'PUT', { banners, retrato, enlace, version: await version('principal') }, cookies.coadmin);
     expect(reply.status).toBe(422);
     expect((await reply.json()).error).toBe('El primer banner no se puede quitar ni mover.');
   }
@@ -86,7 +87,7 @@ test('el primer banner se guarda siempre sin imagen para celular, también al re
   const celular = await photo('#16a085', 1520, 1140);
   const antes = (await draft()).inicio.principal.banners;
   const banners = antes.map((b: BannerGuardado, i: number) => ({ ...cuerpoBanner(b), celular: i ? b.celular?.idMedio ?? null : celular.idMedio }));
-  const body = { banners, retrato, version: await version('principal') };
+  const body = { banners, retrato, enlace, version: await version('principal') };
   const first = await call(PRINCIPAL, 'PUT', body, cookies.coadmin);
   expect(first.status).toBe(200);
   const again = await call(PRINCIPAL, 'PUT', body, cookies.coadmin);
@@ -111,7 +112,7 @@ test('una foto borrada desaparece de su carrusel; sin imágenes, vuelven las de 
   const nuevoRetrato = { imagen: { idMedio: foto.idMedio }, alt: 'Otro retrato' };
   const { banners } = (await draft()).inicio.principal;
   const body = banners.map(cuerpoBanner);
-  expect((await call(PRINCIPAL, 'PUT', { banners: body, retrato: nuevoRetrato, version: await version('principal') }, cookies.coadmin)).status).toBe(200);
+  expect((await call(PRINCIPAL, 'PUT', { banners: body, retrato: nuevoRetrato, enlace, version: await version('principal') }, cookies.coadmin)).status).toBe(200);
   await sql`DELETE FROM tb_medios WHERE id_medio = ${foto.idMedio}`;
   const { inicio } = await draft();
   expect(inicio.piezas).toEqual(HOME_CAROUSELS_SEED.piezas);
@@ -162,7 +163,7 @@ test('dos personas guardando a la vez el carrusel del equipo: una gana y la otra
 test('valida descripciones, fotos, cantidades, imágenes del sitio y permisos', async () => {
   const foto = await photo('#f39c12');
   const main = async (body: object, who = 'coadmin') =>
-    (await call(PRINCIPAL, 'PUT', { banners: [{ imagen: { original: 'portada' }, celular: null, alt: 'Banner' }], retrato, version: await version('principal'), ...body }, cookies[who])).status;
+    (await call(PRINCIPAL, 'PUT', { banners: [{ imagen: { original: 'portada' }, celular: null, alt: 'Banner' }], retrato, enlace, version: await version('principal'), ...body }, cookies[who])).status;
   const pieces = async (piezas: object[]) => (await call(PIEZAS, 'PUT', { piezas, version: await version('piezas') }, cookies.coadmin)).status;
   const banner = (extra: object = {}) => ({ imagen: { idMedio: foto.idMedio }, celular: null, alt: 'Banner', ...extra });
   const portada = banner({ imagen: { original: 'portada' } });
@@ -181,6 +182,48 @@ test('valida descripciones, fotos, cantidades, imágenes del sitio y permisos', 
   expect(await pieces(Array.from({ length: 9 }, () => ({ imagen: { original: 'pieza-ferrocarril' }, alt: 'Pieza' })))).toBe(422);
   expect(await pieces([{ imagen: { original: 'pieza-ferrocarril' }, alt: 'Pieza', extra: 1 }])).toBe(422);
   expect((await call(PIEZAS, 'PUT', { piezas: [{ imagen: { original: 'pieza-ferrocarril' }, alt: 'Pieza' }], version: null })).status).toBe(401);
+});
+
+test('el enlace del botón admite una página del sitio, las redes, YouTube o nada, y repetirlo no duplica nada', async () => {
+  const { banners } = (await draft()).inicio.principal;
+  const casos = [['/mi-equipo/', '/mi-equipo/'], ['  https://www.facebook.com/watch/?v=123  ', 'https://www.facebook.com/watch/?v=123'], ['https://youtu.be/abc', 'https://youtu.be/abc'], ['', '']];
+  for (const [valor, guardado] of casos) {
+    const body = { banners: banners.map(cuerpoBanner), retrato, enlace: valor, version: await version('principal') };
+    const first = await call(PRINCIPAL, 'PUT', body, cookies.coadmin);
+    const again = await call(PRINCIPAL, 'PUT', body, cookies.coadmin);
+    expect([first.status, again.status]).toEqual([200, 200]);
+    expect((await again.json()).version).toBe((await first.json()).version);
+    expect((await draft()).inicio.principal.enlace).toBe(guardado);
+  }
+});
+
+test('un enlace del botón que no es del sitio ni de las redes recibe 422 y el borrador no cambia', async () => {
+  const { banners } = (await draft()).inicio.principal;
+  const antes = (await draft()).inicio.principal.enlace;
+  for (const valor of ['http://www.facebook.com/x', 'https://ejemplo.com/', 'javascript:alert(1)', '//ejemplo.com/', '/Página con espacios/', 'https://usuario:clave@www.facebook.com/']) {
+    const reply = await call(PRINCIPAL, 'PUT', { banners: banners.map(cuerpoBanner), retrato, enlace: valor, version: await version('principal') }, cookies.coadmin);
+    expect(reply.status).toBe(422);
+    expect((await reply.json()).error).toBe(`Enlace del botón: ${AVISO_ENLACE_BOTON}`);
+  }
+  expect((await draft()).inicio.principal.enlace).toBe(antes);
+});
+
+test('dos personas cambiando a la vez el enlace del botón: una gana y la otra recibe 409 sin pisarla', async () => {
+  const { banners } = (await draft()).inicio.principal;
+  const loaded = await version('principal');
+  const save = (valor: string) => call(PRINCIPAL, 'PUT', { banners: banners.map(cuerpoBanner), retrato, enlace: valor, version: loaded }, cookies.coadmin);
+  const replies = await Promise.all([save('/mi-equipo/'), save('/acerca-de-nosotros/biografia/')]);
+  expect(replies.map(r => r.status).sort()).toEqual([200, 409]);
+  const winner = replies[0].status === 200 ? '/mi-equipo/' : '/acerca-de-nosotros/biografia/';
+  expect((await draft()).inicio.principal.enlace).toBe(winner);
+});
+
+test('un carrusel guardado antes del botón editable usa el enlace de la semilla, y una publicación sin enlace no cuenta como cambio', async () => {
+  await sql`UPDATE tb_inicio_carruseles SET contenido = contenido - 'enlace' WHERE clave = 'principal'`;
+  const current = await draft();
+  expect(current.inicio.principal.enlace).toBe(HOME_CAROUSELS_SEED.principal.enlace);
+  const { enlace: _, ...principal } = current.inicio.principal;
+  expect(diff({ ...current, inicio: { ...current.inicio, principal } }, current).filter(c => c.descripcion === 'Carrusel principal')).toEqual([]);
 });
 
 test('publicar congela los carruseles, los pendientes los nombran y un snapshot anterior sin ellos no cuenta como cambio', async () => {

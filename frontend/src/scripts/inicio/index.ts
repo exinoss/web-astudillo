@@ -20,8 +20,9 @@ const showSlide = (next: number) => {
     dot.setAttribute("aria-current", String(i === index));
   });
 };
-// No avanza mientras el puntero está sobre el candidato del banner 1, para no cortar su zoom.
-const syncAutoplay = autoavance(() => { if (!document.querySelector(".silueta-portada polygon:hover")) showSlide(index + 1); }, 6000);
+// No avanza con el puntero sobre el candidato del banner 1 (cortaría su zoom) ni mientras se edita un texto o hay un diálogo abierto.
+const quieto = () => document.querySelector(".silueta-portada polygon:hover, .hero-slides [contenteditable], dialog[open]");
+const syncAutoplay = autoavance(() => { if (!quieto()) showSlide(index + 1); }, 6000);
 const carousel = document.querySelector<HTMLElement>(".hero-slides")!;
 // El fondo sin el candidato solo sirve para el zoom con ratón: se descarga al entrar el puntero, no en celular.
 carousel.addEventListener("pointerenter", (e) => {

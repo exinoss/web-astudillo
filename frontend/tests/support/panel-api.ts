@@ -186,7 +186,7 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
       const image = (i: { idMedio?: number; original?: string }) => (i.idMedio ? { foto: photo(i.idMedio) } : { original: i.original });
       data.draft.inicio[key] = key === 'principal'
         ? { banners: fields.banners.map((b: { imagen: object; celular: number | null; alt: string }) => ({ imagen: image(b.imagen), celular: b.celular ? photo(b.celular) : null, alt: b.alt })),
-          retrato: { imagen: image(fields.retrato.imagen), alt: fields.retrato.alt } }
+          retrato: { imagen: image(fields.retrato.imagen), alt: fields.retrato.alt }, enlace: fields.enlace }
         : key === 'piezas' ? { piezas: fields.piezas.map((p: { imagen: object; alt: string }) => ({ imagen: image(p.imagen), alt: p.alt })) }
         : { fotos: fields.fotos.map((f: { idMedio: number; alt: string }) => ({ foto: photo(f.idMedio), alt: f.alt })) };
       data.draft.versiones.inicio[key] = nextVersion();

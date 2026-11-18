@@ -36,7 +36,7 @@ export interface DraftMyTeam {
 export type DraftHomeImage = { original: Original } | { foto: Photo };
 export type HomeImageBody = { original: Original } | { idMedio: number };
 export interface DraftHomeCarousels {
-  principal: { banners: { imagen: DraftHomeImage; celular: Photo | null; alt: string }[]; retrato: { imagen: DraftHomeImage; alt: string } };
+  principal: { banners: { imagen: DraftHomeImage; celular: Photo | null; alt: string }[]; retrato: { imagen: DraftHomeImage; alt: string }; enlace: string };
   piezas: { piezas: { imagen: DraftHomeImage; alt: string }[] };
   equipo: { fotos: { foto: Photo; alt: string }[] };
 }
@@ -45,6 +45,7 @@ interface HomeTeamBody { fotos: { idMedio: number; alt: string }[] }
 interface HomeMainBody {
   banners: { imagen: HomeImageBody; celular: number | null; alt: string }[];
   retrato: { imagen: HomeImageBody; alt: string };
+  enlace: string;
 }
 interface HomePiecesBody { piezas: { imagen: HomeImageBody; alt: string }[] }
 /**

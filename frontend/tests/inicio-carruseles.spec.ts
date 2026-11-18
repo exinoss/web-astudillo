@@ -1,6 +1,7 @@
 import { expect, test, type Page } from './support/prueba';
 import sharp from 'sharp';
 import { mockPanelApi, panelData } from './support/panel-api';
+import { AVISO_ENLACE_BOTON } from '../../backend/src/contracts/inicio';
 
 async function abrirEdicion(page: Page, data = panelData('coadmin')) {
   await mockPanelApi(page, data);
@@ -21,6 +22,8 @@ test('la portada muestra los carruseles de la semilla y no ofrece editarlos a qu
   await expect(page.locator('.profile-dot')).toHaveCount(3);
   await expect(page.locator('[data-slide="0"] picture img')).toHaveAttribute('fetchpriority', 'high');
   await expect(page.getByRole('button', { name: /Cambiar las imágenes/ })).toHaveCount(0);
+  await expect(page.locator('[data-boton-diapositiva]')).toHaveAttribute('href', '/acerca-de-nosotros/');
+  await expect(page.locator('[data-boton-diapositiva]')).toHaveText('Conoce a Carlos');
 });
 
 test('sin permiso para subir fotos, el modo edición no muestra los botones de los carruseles', async ({ page }) => {
@@ -73,6 +76,7 @@ test('añade un banner con imagen para celular, lo guarda una sola vez y la port
       { imagen: { idMedio: 90 }, celular: 91, alt: 'Carlos con vecinos en el malecón' },
     ],
     retrato: { imagen: { original: 'pieza-respeto' }, alt: 'Retrato de Carlos Astudillo' },
+    enlace: '/acerca-de-nosotros/',
   }]);
   await expect(page.getByRole('status').filter({ hasText: 'Guardado como borrador' })).toBeVisible();
   await expect(page.locator('#edicion-pendientes')).toHaveText('1 cambio sin publicar');
@@ -94,6 +98,100 @@ test('añade un banner con imagen para celular, lo guarda una sola vez y la port
   await expect(page.locator('.hero-slides [data-slide]')).toHaveCount(2);
   await expect(page.locator('.slide-dot')).toHaveCount(2);
   await expect(page.locator('[data-editable="inicio.carrusel.titulo"]').first()).not.toHaveAttribute('tabindex');
+});
+
+test('el botón de la segunda diapositiva lleva a una página, a un enlace externo o a ninguna, y su texto se edita en la diapositiva', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  const data = await abrirEdicion(page);
+  const boton = page.locator('[data-slide="1"] [data-boton-diapositiva]');
+  await page.locator('.slide-next').click();
+  await expect(boton.locator('[data-editable="inicio.carrusel-2.boton"]')).toHaveAttribute('tabindex', '0');
+  await boton.locator('[data-editable="inicio.carrusel-2.boton"]').click();
+  await expect(page).toHaveURL(/\/$/);
+  await page.keyboard.press('Escape');
+
+  const abrir = page.getByRole('button', { name: 'Cambiar las imágenes del carrusel principal' });
+  const dialogo = page.getByRole('dialog', { name: 'Carrusel principal' });
+  const interruptor = dialogo.getByRole('switch', { name: 'Enlace externo' });
+  const pagina = dialogo.getByLabel('Página', { exact: true });
+  const url = dialogo.getByLabel('Enlace', { exact: true });
+  const guardar = dialogo.getByRole('button', { name: 'Guardar borrador' });
+  await abrir.click();
+  await expect(interruptor).toHaveAttribute('aria-checked', 'false');
+  expect((await interruptor.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  await expect(pagina).toHaveValue('/acerca-de-nosotros/');
+  await expect(url).toBeHidden();
+  await pagina.selectOption({ label: 'Mi equipo' });
+  await guardar.click();
+  await expect(dialogo).toBeHidden();
+  expect(data.savedHome.at(-1)).toMatchObject({ clave: 'principal', enlace: '/mi-equipo/' });
+  await expect(boton).toHaveAttribute('href', '/mi-equipo/');
+
+  await abrir.click();
+  await interruptor.press('Enter');
+  await expect(interruptor).toHaveAttribute('aria-checked', 'true');
+  await expect(pagina).toBeHidden();
+  await guardar.click();
+  await expect(page.getByRole('alert').filter({ hasText: 'Pega el enlace del botón o elige una página del sitio.' })).toBeVisible();
+  await url.fill('https://ejemplo.com/video');
+  await guardar.click();
+  await expect(page.getByRole('alert').filter({ hasText: AVISO_ENLACE_BOTON })).toBeVisible();
+  await expect(url).toHaveAttribute('aria-invalid', 'true');
+  await url.fill('https://www.facebook.com/watch/?v=123');
+  await guardar.dblclick();
+  await expect(dialogo).toBeHidden();
+  expect(data.savedHome.at(-1)).toMatchObject({ enlace: 'https://www.facebook.com/watch/?v=123' });
+  await expect(boton).toHaveAttribute('target', '_blank');
+  await expect(boton).toHaveAttribute('rel', 'noopener noreferrer');
+
+  await abrir.click();
+  await expect(interruptor).toHaveAttribute('aria-checked', 'true');
+  await expect(url).toHaveValue('https://www.facebook.com/watch/?v=123');
+  await interruptor.click();
+  await pagina.selectOption('');
+  await guardar.click();
+  await expect(dialogo).toBeHidden();
+  expect(data.savedHome.at(-1)).toMatchObject({ enlace: '' });
+  await expect(boton).not.toHaveAttribute('href');
+  await expect(boton).toHaveCSS('cursor', 'not-allowed');
+  expect(data.savedHome).toHaveLength(3);
+});
+
+for (const ancho of [1440, 390]) {
+  test(`a ${ancho} px el carrusel principal no cambia de diapositiva mientras se edita un texto`, async ({ page }) => {
+    await abrirEdicion(page);
+    await page.setViewportSize({ width: ancho, height: 900 });
+    await page.clock.install();
+    await page.locator('.slide-next').click();
+    const segunda = page.locator('[data-slide="1"]');
+    await expect(segunda).toBeVisible();
+    await segunda.locator('[data-editable="inicio.carrusel-2.titulo"]').click();
+    await page.clock.runFor(20_000);
+    await expect(segunda).toBeVisible();
+    await page.keyboard.press('Escape');
+    await page.clock.runFor(7_000);
+    await expect(segunda).toBeHidden();
+  });
+}
+
+test('el retrato de la semilla se recorta y uno subido se ve completo y no más grande que su archivo', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await abrirEdicion(page);
+  const retrato = page.locator('[data-slide="1"] img');
+  await expect(retrato).toHaveCSS('object-fit', 'cover');
+  await page.getByRole('button', { name: 'Cambiar las imágenes del carrusel principal' }).click();
+  const dialogo = page.getByRole('dialog', { name: 'Carrusel principal' });
+  await dialogo.locator('#retrato-nuevo').setInputFiles(await archivo('retrato.png', 1600, 1200));
+  await dialogo.locator('#retrato-alt').fill('Afiche de la entrevista');
+  await dialogo.getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(dialogo).toBeHidden();
+  for (const ancho of [1440, 390]) {
+    await page.setViewportSize({ width: ancho, height: 900 });
+    await page.locator('.slide-dot').last().click();
+    await expect(retrato).toBeVisible();
+    await expect(retrato).toHaveCSS('object-fit', 'contain');
+    expect((await retrato.boundingBox())!.width).toBeLessThanOrEqual(1600);
+  }
 });
 
 test('una foto de más de 40 megapíxeles se rechaza sin subirla ni mostrarla', async ({ page }) => {

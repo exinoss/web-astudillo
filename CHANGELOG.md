@@ -6,8 +6,17 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+### Added
+
+- Portada, modo edición: el botón de la segunda diapositiva («Conoce a Carlos») se puede cambiar. Su texto se edita pulsándolo, y en «Cambiar imágenes» se elige a dónde lleva: una página del sitio o un enlace de Facebook, TikTok, Instagram o YouTube, que se abre en otra pestaña. Sin enlace, el botón se ve apagado.
+
+### Fixed
+
+- Portada, modo edición: el carrusel principal ya no cambia de diapositiva mientras se edita uno de sus textos.
+
 ### Changed
 
+- Portada: una imagen subida en la segunda diapositiva se ve completa, sin recortes, en celular y en escritorio. La imagen que viene con el sitio se ve igual que antes.
 - Mi equipo: las parroquias se llaman «Ancón de Sardinas (Palmareal)», «5 de Junio», «Mataje» y «San Javier».
 
 ## [1.4.2] - 2026-11-10

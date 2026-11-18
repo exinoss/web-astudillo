@@ -1,4 +1,4 @@
-import { enlaceRed, normalizarWhatsapp, REDES_SOCIALES, type RedSocial, whatsappValido } from '../../contracts/redes';
+import { enlaceRed, esRutaDelSitio, normalizarWhatsapp, REDES_SOCIALES, type RedSocial, whatsappValido } from '../../contracts/redes';
 import { ApiError } from '../../http';
 import { ANIO_BIOGRAFIA } from '../../contracts/limites';
 
@@ -21,7 +21,7 @@ export function linkValue(key: string, value: string) {
 /** Ruta interna del sitio para los enlaces del chat (`/ciudadania/chat/`, `/#contacto`). */
 export function sitePath(value: string, field: string) {
   const path = value.trim();
-  if (!/^\/[a-z0-9/#-]*$/.test(path) || path.length > 200 || path.startsWith('//'))
+  if (!esRutaDelSitio(path) || path.length > 200)
     throw new ApiError(422, `${field}: escribe una página del sitio, por ejemplo /propuestas/agua-potable/`);
   return path;
 }

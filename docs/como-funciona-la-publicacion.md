@@ -123,7 +123,7 @@ async function save(el, nuevoTexto) {
 }
 ```
 
-En la portada, quien además puede subir fotos (`medios.subir`) ve el botón «Cambiar imágenes» en cada carrusel. Abre un editor ([`editor-carruseles.ts`](../frontend/src/scripts/inicio/editor-carruseles.ts)) para los banners (de 1 a 5, cada uno con una imagen opcional para celular), el retrato de la segunda diapositiva y las piezas (de 1 a 8).
+En la portada, quien además puede subir fotos (`medios.subir`) ve el botón «Cambiar imágenes» en cada carrusel. Abre un editor ([`editor-carruseles.ts`](../frontend/src/scripts/inicio/editor-carruseles.ts)) para los banners (de 1 a 5, cada uno con una imagen opcional para celular), el retrato y el destino del botón de la segunda diapositiva (D-028) y las piezas (de 1 a 8). El texto de ese botón se edita como los demás textos.
 
 - Cada foto se sube como cualquier otra (`POST /api/admin/medios`) y luego se guarda el carrusel con su versión (`PUT /api/admin/contenido/inicio/principal` o `/piezas`, tabla `tb_inicio_carruseles`).
 - Antes de subir, el navegador lee las medidas de la cabecera y rechaza lo que pase de 40 megapíxeles. El editor y la portada solo muestran las versiones WebP que devuelve el backend, nunca el archivo original.

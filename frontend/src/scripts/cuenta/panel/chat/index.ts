@@ -1,7 +1,7 @@
 import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type ChatAnswer } from "../../../../lib/data/http/admin-api";
 import { avisarVacios, avisoBorrador, botonesGuardar, busy, card, DANGER, enlazarLista, esc, field, GHOST, GRUPO, guardarYRecargar, iconSvg, isPending, LABEL, LARGOS, LEYENDA, state, subirBajar, value } from "../ui";
-import { paginasDelSitio } from "./paginas";
+import { opcionesDePagina } from "../../../../lib/cuenta/panel/paginas";
 
 const MAX_ITEMS = 60;
 // Copia de trabajo: la lista se edita entera y se guarda de una vez (orden incluido).
@@ -16,16 +16,6 @@ function capture(form: HTMLElement) {
     enlaceRuta: value(row, `#faq-enlace-ruta-${i}`) || null,
     destacada: row.querySelector<HTMLInputElement>(`#faq-destacada-${i}`)!.checked,
   }));
-}
-
-/** Opciones del selector; una ruta guardada que ya no está en la lista se conserva como «Otra página». */
-function opcionesDePagina(actual: string | null) {
-  const secciones = paginasDelSitio(state.draft!);
-  const conocida = !actual || secciones.some((s) => s.paginas.some((p) => p.ruta === actual));
-  return `<option value="">Sin enlace</option>
-    ${conocida ? "" : `<option value="${esc(actual)}" selected>Otra página: ${esc(actual)}</option>`}
-    ${secciones.map((s) => `<optgroup label="${esc(s.seccion)}">${s.paginas.map((p) =>
-      `<option value="${esc(p.ruta)}" ${p.ruta === actual ? "selected" : ""}>${esc(p.nombre)}</option>`).join("")}</optgroup>`).join("")}`;
 }
 
 const vistaChat = (c: Pick<ChatAnswer, "respuesta" | "enlaceTexto" | "enlaceRuta">) =>
@@ -45,7 +35,7 @@ const row = (c: ChatAnswer, i: number, total: number) => `
         <legend class="${LEYENDA}">Enlace bajo la respuesta (opcional)</legend>
         <div>
           <label for="faq-enlace-ruta-${i}" class="${LABEL}">¿A qué página lleva?</label>
-          <select id="faq-enlace-ruta-${i}" class="campo" ${c.enlaceTexto ? "required" : ""}>${opcionesDePagina(c.enlaceRuta)}</select>
+          <select id="faq-enlace-ruta-${i}" class="campo" ${c.enlaceTexto ? "required" : ""}>${opcionesDePagina(state.draft!, c.enlaceRuta)}</select>
         </div>
         ${field({ id: `faq-enlace-texto-${i}`, label: "Texto del enlace", value: c.enlaceTexto ?? "", max: LARGOS.chat.textoEnlace, hint: "Hasta 60 caracteres. Por ejemplo «Ver propuestas» o «Reportar un problema»." , required: !!c.enlaceRuta })}
         <a data-probar class="${GHOST} self-start" href="${esc(c.enlaceRuta ?? "/")}" target="_blank" rel="noopener" ${c.enlaceRuta ? "" : "hidden"}>Probar el enlace ${iconSvg("external", 17)}</a>

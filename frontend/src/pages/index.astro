@@ -9,13 +9,14 @@ import { getImage, Image } from "astro:assets";
 import { imageView, medidasFoto } from "../lib/comun/fotos";
 import { visorFotos } from "../lib/comun/visor-fotos";
 import { ORIGINALES } from "../lib/inicio/originales";
+import { atributosBoton, RETRATO } from "../lib/inicio/segunda-diapositiva";
 import fondoPublico from "../assets/fondo-publico-equipo.jpg";
 import { contentRepository } from "../lib/data";
 import { statsRepository } from "../lib/data/stats";
 import { enlaceRed, type TextKey } from "../lib/comun/contenido";
 import { enlaceRedValido, REDES, type RedSocial, usuarioRed } from "../lib/comun/contenido/redes";
 
-const { banners, portrait, pieces, team } = await contentRepository.getHomeCarousels();
+const { banners, portrait, link, pieces, team } = await contentRepository.getHomeCarousels();
 const slides = banners.length + 1;
 const BANNER_WIDTHS = [640, 960, 1440, 1947];
 // El banner 1 tiene su propia versión para celular: no usa la imagen para celular aunque quede una guardada.
@@ -23,7 +24,6 @@ const esPortada = (b: (typeof banners)[number]) => "original" in b.image && b.im
 const MARCO = "relative aspect-[1947/741] w-full max-h-[680px] overflow-hidden min-wide:max-h-[740px]";
 const SLIDE = `${MARCO} max-tablet:aspect-[4/3] max-tablet:max-h-none`;
 const BANNER = "h-full w-full object-cover max-tablet:absolute max-tablet:object-[100%_center]";
-const PORTRAIT = "h-full w-[47%] object-cover object-center max-tablet:w-[49%]";
 const DOT = "relative grid h-[11px] before:absolute before:-inset-x-[7px] before:-inset-y-[18px] before:content-[''] min-h-[11px] w-[11px] place-items-center rounded-[50%] border-[1.5px] border-primary bg-transparent p-0 text-primary hover:border-accent hover:bg-accent [&.is-active]:w-7 [&.is-active]:rounded-[10px] [&.is-active]:bg-primary disabled:cursor-default disabled:opacity-65 max-tablet:h-2.5 max-tablet:min-h-2.5 max-tablet:w-2.5";
 const CONTROLES = "pointer-events-none absolute inset-0 flex items-end justify-center pb-4 max-tablet:pb-2.5";
 const PASTILLA = "pointer-events-auto flex items-center gap-2.5 rounded-full bg-base-100/85 px-3 py-2 max-tablet:gap-3 max-tablet:px-2 max-tablet:py-1";
@@ -128,16 +128,17 @@ const contactos = [
               <Editable as="em" clave="inicio.carrusel-2.destacado" class="text-accent not-italic" />
             </h2>
             <a
-              href="/acerca-de-nosotros/"
+              {...atributosBoton(link)}
+              data-boton-diapositiva
               class="button button-light max-tablet:min-h-10 max-tablet:gap-2.5 max-tablet:p-2.5 max-tablet:text-[0.62rem]"
             >
-              Conoce a Carlos <Icon name="arrow" size={18} class="max-tablet:w-[14px]" />
+              <Editable clave="inicio.carrusel-2.boton" /> <Icon name="arrow" size={18} class="max-tablet:w-[14px]" />
             </a>
           </div>
           {"original" in portrait.image ? (
-            <Image class={PORTRAIT} src={ORIGINALES[portrait.image.original]} alt={portrait.alt} width={620} height={620} loading="lazy" />
+            <Image class={RETRATO.original} src={ORIGINALES[portrait.image.original]} alt={portrait.alt} width={620} height={620} loading="lazy" />
           ) : (
-            <Foto class={PORTRAIT} picture={portrait.image.photo} alt={portrait.alt} sizes="(max-width: 760px) 49vw, 47vw" />
+            <Foto class={RETRATO.subido} style={medidasFoto(portrait.image.photo)} picture={portrait.image.photo} alt={portrait.alt} sizes="(max-width: 760px) 49vw, 47vw" />
           )}
         </div>
       </div>
