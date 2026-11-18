@@ -12,3 +12,26 @@ export function mountPlayer(stage: HTMLElement, source: VideoSource, title: stri
   stage.append(player);
   return player;
 }
+
+/** Portada de video (`[data-video-preview]`) que, al pulsarla, monta el reproductor de su plataforma. */
+export function activarVideo(root: HTMLElement) {
+  const stage = root.querySelector<HTMLElement>("[data-video-stage]")!;
+  const play = root.querySelector<HTMLButtonElement>("[data-video-play]")!;
+  const error = root.querySelector<HTMLElement>("[data-video-error]")!;
+  const source = { provider: root.dataset.provider, embed: root.dataset.embed } as VideoSource;
+  const title = play.getAttribute("aria-label")!;
+  const start = () => {
+    error.hidden = true;
+    mountPlayer(stage, source, title).addEventListener("error", () => { error.hidden = false; });
+    play.hidden = true;
+  };
+  play.addEventListener("click", start);
+  root.querySelector("[data-video-retry]")!.addEventListener("click", start);
+}
+
+/** Quita el reproductor y vuelve a mostrar la portada; el video deja de sonar. */
+export function detenerVideo(root: HTMLElement) {
+  root.querySelector("[data-video-stage]")?.querySelector("iframe, video")?.remove();
+  root.querySelector<HTMLElement>("[data-video-play]")!.hidden = false;
+  root.querySelector<HTMLElement>("[data-video-error]")!.hidden = true;
+}

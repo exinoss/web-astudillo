@@ -123,7 +123,7 @@ async function save(el, nuevoTexto) {
 }
 ```
 
-En la portada, quien además puede subir fotos (`medios.subir`) ve el botón «Cambiar imágenes» en cada carrusel. Abre un editor ([`editor-carruseles.ts`](../frontend/src/scripts/inicio/editor-carruseles.ts)) para los banners (de 1 a 5, cada uno con una imagen opcional para celular), el retrato y el destino del botón de la segunda diapositiva (D-028) y las piezas (de 1 a 8). El texto de ese botón se edita como los demás textos.
+En la portada, quien además puede subir fotos (`medios.subir`) ve el botón «Cambiar imágenes» en cada carrusel. Abre un editor ([`editor-carruseles.ts`](../frontend/src/scripts/inicio/editor-carruseles.ts)) para los banners (de 1 a 5, cada uno con una imagen opcional para celular), el retrato y el destino del botón de la segunda diapositiva (D-028) y las piezas (hasta 4 imágenes y 4 videos por enlace, al menos una pieza; D-032). El texto de ese botón se edita como los demás textos.
 
 - Cada foto se sube como cualquier otra (`POST /api/admin/medios`) y luego se guarda el carrusel con su versión (`PUT /api/admin/contenido/inicio/principal` o `/piezas`, tabla `tb_inicio_carruseles`).
 - Antes de subir, el navegador lee las medidas de la cabecera y rechaza lo que pase de 40 megapíxeles. El editor y la portada solo muestran las versiones WebP que devuelve el backend, nunca el archivo original.
@@ -403,6 +403,7 @@ Detalles que conviene saber:
 | `bun run build` | Pide el contenido **una sola vez** y lo reutiliza en todas las páginas |
 | `bun run dev` | Lo vuelve a pedir en cada recarga (caché de 1 s) → ves lo recién publicado |
 | Base recién instalada | La semilla (`backend/src/db/seed.ts`) carga `contenido-inicial.json` y crea la **primera publicación** ya `publicada`. No hay que publicar para tener sitio. |
+| Publicación anterior a una parte del sitio | Esa parte falta en su contenido. El chat, las páginas de Carlos y «Mi equipo» se compilan vacíos (una página con un solo `video` se lee como una lista de uno, y su retrato se ignora); los carruseles de la portada y el enlace del botón de la segunda diapositiva, con los de la semilla. Al calcular los pendientes, lo que falta cuenta igual, así que no aparece como cambio. |
 | No hay ninguna publicación (404) | La compilación **falla** con «No se pudo leer el contenido publicado (404)». No hay vuelta atrás a la semilla. |
 | El backend está apagado o responde con error | La compilación **falla**. El publicador marca la publicación como `fallida` y `dist` queda como estaba: nunca se publica un sitio con datos de prueba. |
 

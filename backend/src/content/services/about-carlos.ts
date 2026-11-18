@@ -1,13 +1,14 @@
 import type { SQL } from 'bun';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
-import { avisoNoInsertable, videoLinkProblem, videoSource } from '../../contracts/video';
+import { videosDePagina } from '../../contracts/acerca-de-carlos';
 import { LARGOS } from '../../contracts/limites';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
-import { ABOUT_CARLOS_PAGES, type AboutCarlosPage, type AboutCarlosSlug, type AboutCarlosPageStored } from '../types';
+import { ABOUT_CARLOS_PAGES, type AboutCarlosPage, type AboutCarlosSlug, type AboutCarlosPageStored, type VideoStored } from '../types';
 import { existingPhotos, saved, type SaveRow } from '../guardado';
-import { ensureCardVariant, photosById } from './media';
+import { assertInsertable, cleanVideo } from '../videos';
+import { photosById } from './media';
 import { videoInsertable } from './video-cover';
 import { plainText } from '../../validation/texto';
 
@@ -17,57 +18,35 @@ const isSlug = (slug: string): slug is AboutCarlosSlug => (ABOUT_CARLOS_PAGES as
 const optional = (value: string | null | undefined, field: string, max: number, options?: { multiline?: boolean }) =>
   value?.trim() ? plainText(value, field, max, options) : null;
 
-/** Un elemento cuya foto ya no existe se omite. */
+/** Un elemento cuya foto ya no existe se omite; una portada borrada deja el video sin portada. */
 export async function listAboutCarlosPages(sql: SQL): Promise<Record<string, AboutCarlosPage>> {
-  const rows = await callPg<{ slug: string; contenido: AboutCarlosPageStored }>(sql, 'aboutCarlosList');
-  const media = await photosById(sql, rows.flatMap(({ contenido: c }) => [
-    ...c.tarjetas.map(t => t.idMedio), ...c.galeria.map(g => g.idMedio),
-    ...(c.retrato ? [c.retrato.idMedio] : []), ...(c.video?.idPortada ? [c.video.idPortada] : []),
+  const rows = (await callPg<{ slug: string; contenido: AboutCarlosPageStored }>(sql, 'aboutCarlosList'))
+    .map(({ slug, contenido }) => ({ slug, contenido, videos: videosDePagina<VideoStored>(contenido) }));
+  const media = await photosById(sql, rows.flatMap(({ contenido: c, videos }) => [
+    ...c.galeria.map(g => g.idMedio), ...videos.flatMap(v => (v.idPortada ? [v.idPortada] : [])),
   ]));
   const withPhoto = <T extends { idMedio: number }>(items: T[]) => items.flatMap(({ idMedio, ...rest }) => {
     const foto = media.get(idMedio);
     return foto ? [{ ...rest, foto }] : [];
   });
-  return Object.fromEntries(rows.map(({ slug, contenido: c }) => {
-    const retrato = c.retrato && media.get(c.retrato.idMedio);
-    const video = c.video && {
-      titulo: c.video.titulo, descripcion: c.video.descripcion, enlace: c.video.enlace, vertical: c.video.vertical,
-      portada: c.video.idPortada ? media.get(c.video.idPortada) ?? null : null,
-    };
-    return [slug, {
-      tarjetas: withPhoto(c.tarjetas),
-      video,
-      retrato: retrato ? { foto: retrato, alt: c.retrato!.alt } : null,
-      entrevista: c.entrevista,
-      galeria: withPhoto(c.galeria),
-    } satisfies AboutCarlosPage];
-  }));
+  return Object.fromEntries(rows.map(({ slug, contenido: c, videos }) => [slug, {
+    videos: videos.map(v => ({
+      titulo: v.titulo, descripcion: v.descripcion, enlace: v.enlace, vertical: v.vertical,
+      portada: v.idPortada ? media.get(v.idPortada) ?? null : null,
+    })),
+    entrevista: c.entrevista,
+    galeria: withPhoto(c.galeria),
+  } satisfies AboutCarlosPage]));
 }
 
 function clean(slug: AboutCarlosSlug, input: AboutCarlosPageInput): AboutCarlosPageStored {
-  const personal = slug === 'conoce-mas';
-  if (!personal && (input.retrato || input.entrevista.length || input.galeria.length))
-    throw new ApiError(422, 'Esta página solo tiene tarjetas y video');
-  let video: AboutCarlosPageStored['video'] = null;
-  if (input.video) {
-    const source = videoSource(input.video.enlace);
-    if (!source) throw new ApiError(422, `Video: ${videoLinkProblem(input.video.enlace)}`);
-    video = {
-      titulo: plainText(input.video.titulo, 'Video · título', LARGOS.acercaDeCarlos.tituloVideo),
-      descripcion: optional(input.video.descripcion, 'Video · texto breve', 200, { multiline: true }),
-      enlace: source.url, vertical: input.video.vertical, idPortada: input.video.idPortada,
-    };
-  }
+  if (slug !== 'conoce-mas' && (input.entrevista.length || input.galeria.length))
+    throw new ApiError(422, 'Esta página solo tiene videos');
   return {
-    tarjetas: input.tarjetas.map((t, i) => ({
-      idMedio: t.idMedio,
-      alt: plainText(t.alt, `Tarjeta ${i + 1} · descripción de la foto`, LARGOS.descripcionFoto),
-      titulo: plainText(t.titulo, `Tarjeta ${i + 1} · título`, LARGOS.acercaDeCarlos.tituloTarjeta),
-      texto: plainText(t.texto, `Tarjeta ${i + 1} · texto`, LARGOS.acercaDeCarlos.textoTarjeta, { multiline: true }),
-      color: t.color, enfoque: { x: t.enfoque.x, y: t.enfoque.y },
+    videos: input.videos.map((v, i) => ({
+      ...cleanVideo(v, `Video ${i + 1}`),
+      descripcion: optional(v.descripcion, `Video ${i + 1} · texto breve`, LARGOS.acercaDeCarlos.descripcionVideo, { multiline: true }),
     })),
-    video,
-    retrato: input.retrato ? { idMedio: input.retrato.idMedio, alt: plainText(input.retrato.alt, 'Retrato · descripción', LARGOS.descripcionFoto) } : null,
     entrevista: input.entrevista.map((e, i) => ({
       pregunta: plainText(e.pregunta, `Pregunta ${i + 1}`, LARGOS.acercaDeCarlos.pregunta),
       respuesta: plainText(e.respuesta, `Pregunta ${i + 1} · respuesta`, LARGOS.acercaDeCarlos.respuesta, { multiline: true }),
@@ -80,21 +59,15 @@ function clean(slug: AboutCarlosSlug, input: AboutCarlosPageInput): AboutCarlosP
   };
 }
 
-/** Guarda las páginas «Por qué quiero ser alcalde» y «Conoce más», comprobando que su video se pueda mostrar. */
-export function createAboutCarlosPages(sql: SQL, authorization: Authorization, mediaDir: string, checkVideo = videoInsertable) {
+/** Guarda las páginas «Por qué quiero ser alcalde» y «Conoce más», comprobando que cada video se pueda mostrar. */
+export function createAboutCarlosPages(sql: SQL, authorization: Authorization, checkVideo = videoInsertable) {
   return {
     async save(access: string | undefined, slug: string, input: AboutCarlosPageInput, version: string) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       if (!isSlug(slug)) throw new ApiError(404, 'No encontrado');
       const page = clean(slug, input);
-      const source = page.video && videoSource(page.video.enlace);
-      const motivo = source ? await checkVideo(source) : null;
-      if (source && motivo) throw new ApiError(422, avisoNoInsertable(source.provider, motivo));
-      const ids = [...page.tarjetas.map(t => t.idMedio), ...page.galeria.map(g => g.idMedio),
-        ...(page.retrato ? [page.retrato.idMedio] : []), ...(page.video?.idPortada ? [page.video.idPortada] : [])];
-      const media = await existingPhotos(sql, ids);
-      // Antes de guardar: una tarjeta publicada nunca apunta a una variante que falta.
-      await Promise.all(page.tarjetas.map(t => ensureCardVariant(mediaDir, media.get(t.idMedio)!)));
+      await assertInsertable(page.videos.map((v, i) => ({ enlace: v.enlace, campo: `Video ${i + 1}` })), checkVideo);
+      await existingPhotos(sql, [...page.galeria.map(g => g.idMedio), ...page.videos.flatMap(v => (v.idPortada ? [v.idPortada] : []))]);
       return saved(await callPg<SaveRow>(sql, 'aboutCarlosSave', [actor.id_usuario, slug, page, version]));
     },
   };

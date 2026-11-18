@@ -7,7 +7,6 @@ export type Formulario = "alerta" | "sugerencia" | "chat";
 
 export interface Borrador {
   formulario: Formulario;
-  /** Página del formulario, a la que se vuelve tras iniciar sesión. */
   ruta: string;
   campos: Record<string, string>;
   /** La misma clave del primer intento: si aquel envío sí llegó, el reintento no lo duplica. */

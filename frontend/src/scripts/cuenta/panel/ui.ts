@@ -14,10 +14,8 @@ import { pedirAvisos } from "../../../lib/comun/avisos";
 import { BORRADOR_GUARDADO, notificar, type Notificacion } from "../../../lib/comun/notificacion";
 
 export { ACEPTA_FOTOS, esc, FORMATOS_FOTO, iconSvg, LARGOS, MAX_MB_FOTO };
-export { BOTON, enlazarLista, field, filtro, GHOST, GRUPO, LEYENDA, PESTANA, PESTANA_NORMAL, PRINCIPAL, selector, HINT, ICON_BUTTON, LABEL, moveButtons, selectField, subirBajar, thumb, upload } from "../../../lib/cuenta/panel/campos";
+export { BOTON, enlazarLista, field, filtro, GHOST, GRUPO, LEYENDA, PESTANA, PESTANA_NORMAL, PRINCIPAL, selector, HINT, ICON_BUTTON, ICON_DANGER, DANGER, LABEL, moveButtons, selectField, subirBajar, thumb, upload } from "../../../lib/cuenta/panel/campos";
 
-export const DANGER =
-  "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-control border border-error/40 bg-transparent px-[18px] text-[0.82rem] font-bold text-error hover:bg-error-soft";
 export const DRAFT_PILL = "pildora border border-secondary/60 bg-warning-soft text-warning-ink";
 /** Pastilla «Borrador sin publicar» encima del formulario; `margen` cambia su separación. */
 export const avisoBorrador = (pendiente: boolean, margen = "-mt-2 mb-5") =>

@@ -1,6 +1,4 @@
-import { img } from "../../comun/html";
 import { editable } from "./html";
-import type { AboutCarlosPageView } from "./vista";
 
 export function alcaldeHeader(t: Record<string, string>) {
   return `
@@ -15,10 +13,10 @@ export function alcaldeHeader(t: Record<string, string>) {
 </header>`;
 }
 
-export function conoceMasHeader(t: Record<string, string>, portrait: AboutCarlosPageView["portrait"]) {
+/** Cabecera de «Conoce más sobre mí»: antetítulo, título y texto, editables. */
+export function conoceMasHeader(t: Record<string, string>) {
   return `
-<header${portrait ? ' class="grid grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)] items-center gap-10 max-tablet:grid-cols-1 max-tablet:gap-5"' : ""}>
-  ${portrait ? img(portrait.image, portrait.alt, "aspect-[4/5] w-full rounded-[16px] object-cover object-top [box-shadow:0_18px_40px_#06317626] max-tablet:row-start-2 max-tablet:max-h-[520px]", "(max-width: 760px) calc(100vw - 40px), 380px", "eager") : ""}
+<header>
   <div class="max-w-[760px]">
     ${editable("span", "conoce-mas.antetitulo", t, "eyebrow")}
     ${editable("h1", "conoce-mas.titulo", t, "mt-3 mb-4 text-[clamp(2.5rem,4vw,3.4rem)] max-tablet:text-[2.4rem]")}

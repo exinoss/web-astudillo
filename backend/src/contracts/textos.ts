@@ -4,7 +4,6 @@ interface TextDefinition {
   lugar: string;
   campo: string;
   max: number;
-  /** Página donde aparece, para «Editar en el sitio». */
   ruta: string;
 }
 
@@ -80,9 +79,11 @@ export const TEXTOS = {
   "alcalde.titulo": t("Por qué quiero ser alcalde", "Título", 80),
   "alcalde.cita": t("Por qué quiero ser alcalde", "Cita", 400),
   "alcalde.nota": t("Por qué quiero ser alcalde", "Nota", 400),
+  "alcalde.tarjetas": t("Por qué quiero ser alcalde", "Título de las tarjetas", 40),
   "conoce-mas.antetitulo": t("Conoce más sobre mí", "Antetítulo", 40),
   "conoce-mas.titulo": t("Conoce más sobre mí", "Título", 80),
   "conoce-mas.texto": t("Conoce más sobre mí", "Texto", 400),
+  "conoce-mas.tarjetas": t("Conoce más sobre mí", "Título de las tarjetas", 40),
   "equipo.antetitulo": t("Mi equipo", "Antetítulo", 60),
   "equipo.titulo": t("Mi equipo", "Título", 60),
   "equipo.texto": t("Mi equipo", "Texto", 300),

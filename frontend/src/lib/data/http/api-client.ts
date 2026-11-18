@@ -1,8 +1,6 @@
 export class ApiError extends Error {
   readonly status: number;
-  /** Segundos hasta poder reintentar (429 y 503). */
   readonly retryAfter?: number;
-  /** Primer bloqueo del acceso: conviene ofrecer restablecer la contraseña. */
   readonly suggestRecovery: boolean;
 
   constructor(status: number, message: string, extra: { retryAfter?: number; suggestRecovery?: boolean } = {}) {

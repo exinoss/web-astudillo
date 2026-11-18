@@ -5,7 +5,7 @@ import { randomBytes } from 'node:crypto';
 import sharp from 'sharp';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
-import { AVISO_HEIC, avisoMegapixeles, CARD_SIZE, cardVariantFile, FORMATOS_FOTO, MAX_BYTES_FOTO, MAX_MB_FOTO, MAX_PIXELES } from '../../contracts/media';
+import { AVISO_HEIC, avisoMegapixeles, FORMATOS_FOTO, MAX_BYTES_FOTO, MAX_MB_FOTO, MAX_PIXELES } from '../../contracts/media';
 import { videoLinkProblem, videoSource } from '../../contracts/video';
 import { fetchVideoCover } from './video-cover';
 import { callPg } from '../../db/call';
@@ -78,39 +78,18 @@ export async function savePhoto(input: Buffer, dir: string, name: string, sizes:
   return { width, height, widths };
 }
 
-const CARD_CURVE = Uint8Array.from({ length: 256 }, (_, v) =>
-  Math.round(255 * Math.min(1, Math.max(0, 0.5 + ((v / 255) ** (1 / 1.3) - 0.5) * 1.8))));
-
-/** Idempotente. Parte de la variante más grande guardada porque el original no se conserva. */
-export async function ensureCardVariant(dir: string, photo: { nombre: string; anchos: number[] }) {
-  const target = join(dir, cardVariantFile(photo.nombre));
-  if (await Bun.file(target).exists()) return;
-  const source = join(dir, `${photo.nombre}-${Math.max(...photo.anchos)}.webp`);
-  // Desde memoria: con la ruta, sharp deja el archivo abierto en su caché y en Windows no se puede borrar después.
-  const { data, info } = await sharp(Buffer.from(await Bun.file(source).arrayBuffer()))
-    .resize({ width: CARD_SIZE, height: CARD_SIZE, fit: 'outside', withoutEnlargement: true })
-    .toColourspace('b-w').normalise({ lower: 5, upper: 95 }).raw().toBuffer({ resolveWithObject: true });
-  for (let i = 0; i < data.length; i++) data[i] = CARD_CURVE[data[i]];
-  await writeOnce(target, temporary =>
-    sharp(data, { raw: { width: info.width, height: info.height, channels: info.channels } }).webp({ quality: 80 }).toFile(temporary));
-}
-
 export function createMedia(sql: SQL, authorization: Authorization, mediaDir: string, fetchCover = fetchVideoCover) {
   async function store(actor: number, input: Buffer): Promise<Photo> {
     // Idempotente: la misma foto otra vez (reintento, doble envío) devuelve la ya guardada.
     const hash = sha256(input);
     const [existing] = await callPg<MediaRow>(sql, 'mediaByHash', [hash]);
-    if (existing) {
-      await ensureCardVariant(mediaDir, existing);
-      return toPhoto(existing);
-    }
+    if (existing) return toPhoto(existing);
     const name = `${Date.now().toString(36)}-${randomBytes(6).toString('hex')}`;
     const { width, height, widths } = await savePhoto(input, mediaDir, name, WIDTHS);
-    await ensureCardVariant(mediaDir, { nombre: name, anchos: widths });
     const [row] = await callPg<MediaRow>(sql, 'mediaCreate', [actor, name, width, height, widths.join(','), hash]);
     if (row) return toPhoto(row);
     // Otra subida simultánea del mismo archivo ganó: se usa la suya y se borran estos archivos.
-    await Promise.all([...widths.map(w => `${name}-${w}.webp`), cardVariantFile(name)].map(file => rm(join(mediaDir, file), { force: true })));
+    await Promise.all(widths.map(w => `${name}-${w}.webp`).map(file => rm(join(mediaDir, file), { force: true })));
     const [winner] = await callPg<MediaRow>(sql, 'mediaByHash', [hash]);
     if (!winner) throw new ApiError(403, 'Permiso insuficiente');
     return toPhoto(winner);

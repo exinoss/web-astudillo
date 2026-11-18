@@ -10,7 +10,6 @@ export interface Config {
   trustProxyIp: boolean;
   production: boolean;
   smtp: { host: string; port: number; user: string; pass: string; from: string; name: string };
-  /** Carpeta donde se guardan las fotos subidas desde el panel. */
   mediaDir: string;
   /** Fotos de las alertas ciudadanas: privadas, solo se sirven a su autor y a quien las revisa. */
   privateMediaDir: string;

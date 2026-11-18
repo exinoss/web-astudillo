@@ -23,9 +23,7 @@ export interface ChatAnswer {
 }
 export type DraftAboutCarlosPage = ApiAboutCarlosPage<Photo>;
 export interface AboutCarlosPageBody {
-  tarjetas: (Omit<DraftAboutCarlosPage['tarjetas'][number], 'foto'> & { idMedio: number })[];
-  video: (Omit<NonNullable<DraftAboutCarlosPage['video']>, 'portada'> & { idPortada: number | null }) | null;
-  retrato: { idMedio: number; alt: string } | null;
+  videos: (Omit<DraftAboutCarlosPage['videos'][number], 'portada'> & { idPortada: number | null })[];
   entrevista: DraftAboutCarlosPage['entrevista'];
   galeria: { idMedio: number; alt: string; pie: string }[];
 }
@@ -37,9 +35,11 @@ export type DraftHomeImage = { original: Original } | { foto: Photo };
 export type HomeImageBody = { original: Original } | { idMedio: number };
 export interface DraftHomeCarousels {
   principal: { banners: { imagen: DraftHomeImage; celular: Photo | null; alt: string }[]; retrato: { imagen: DraftHomeImage; alt: string }; enlace: string };
-  piezas: { piezas: { imagen: DraftHomeImage; alt: string }[] };
+  piezas: { piezas: DraftHomePiece[] };
   equipo: { fotos: { foto: Photo; alt: string }[] };
 }
+export type DraftHomeVideo = { titulo: string; enlace: string; vertical: boolean; portada: Photo | null };
+export type DraftHomePiece = { imagen: DraftHomeImage; alt: string } | { video: DraftHomeVideo };
 export type TeamMemberBody = Omit<DraftMyTeam['equipo'][number], 'foto'> & { idMedio: number | null };
 interface HomeTeamBody { fotos: { idMedio: number; alt: string }[] }
 interface HomeMainBody {
@@ -47,7 +47,7 @@ interface HomeMainBody {
   retrato: { imagen: HomeImageBody; alt: string };
   enlace: string;
 }
-interface HomePiecesBody { piezas: { imagen: HomeImageBody; alt: string }[] }
+interface HomePiecesBody { piezas: ({ imagen: HomeImageBody; alt: string } | { video: Omit<DraftHomeVideo, 'portada'> & { idPortada: number | null } })[] }
 /**
  * Versión de cada parte del borrador al cargarlo. Se envía al guardar: si otra persona guardó
  * antes, la API responde 409 y no se pisa su cambio. Un texto nunca cambiado no tiene versión.
@@ -59,7 +59,6 @@ interface DraftVersions {
   obras: Record<string, string>;
   chat: string;
   acercaDeCarlos: Record<AboutCarlosSlug, string>;
-  /** Solo las partes de «Mi equipo» que se guardaron alguna vez: las demás se guardan con null. */
   miEquipo: Record<string, string>;
   inicio: Partial<Record<Carrusel, string>>;
 }

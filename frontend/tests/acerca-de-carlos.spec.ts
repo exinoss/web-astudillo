@@ -9,12 +9,18 @@ test.beforeEach(async ({ page }) => {
   await page.route(/facebook\.com|tiktok\.com|youtube/, route => route.fulfill({ contentType: 'text/html', body: '<p>video</p>' }));
 });
 
-test('las tarjetas se navegan sin avanzar solas y el texto se abre en la misma tarjeta', async ({ page }) => {
+test('cada página muestra sus seis tarjetas fijas con su título editable y su texto como descripción', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto(ALCALDE);
-  const cards = page.locator('[data-carlos-card]');
-  await expect(cards).toHaveCount(4);
-  await expect(page.getByRole('heading', { name: 'Mis razones', exact: true })).toBeVisible();
+  const paginas = [[CONOCE, 'conoce-mas.tarjetas', 'Lo que me guía', '6. Respeto'], [ALCALDE, 'alcalde.tarjetas', 'Mis razones', '1. Primero la gente y especialmente los pobres']];
+  for (const [path, clave, titulo, alt] of paginas) {
+    await page.goto(path);
+    await expect(page.locator('[data-card-scroll] img')).toHaveCount(6);
+    await expect(page.getByRole('heading', { name: titulo, exact: true }).locator(`[data-editable="${clave}"]`)).toBeVisible();
+    await expect(page.getByAltText(alt, { exact: true })).toHaveCount(1);
+  }
+  const cards = page.locator('[data-card-scroll] img');
+  expect(Math.round((await cards.first().boundingBox())!.width)).toBe(260);
+  await expect(cards.first()).toHaveAttribute('srcset', /\.webp 780w/);
   const strip = page.locator('[data-card-scroll]');
   const next = page.getByRole('button', { name: 'Ver tarjetas siguientes' });
   await expect(next).toBeVisible();
@@ -23,21 +29,13 @@ test('las tarjetas se navegan sin avanzar solas y el texto se abre en la misma t
   expect(await strip.evaluate(e => e.scrollLeft)).toBe(0);
   await next.click();
   await expect.poll(() => strip.evaluate(e => e.scrollLeft)).toBeGreaterThan(0);
-
-  const heights = () => cards.evaluateAll(list => list.map(c => Math.round(c.getBoundingClientRect().height)));
-  const closed = await heights();
-  await cards.first().locator('summary').click();
-  await expect(cards.first().locator('summary p')).toHaveText('Texto de prueba de la tarjeta «Escuchar a su gente».');
-  await expect(cards.first().locator('summary p')).toBeVisible();
-  await expect(cards.first().getByText('Leer menos')).toBeVisible();
-  expect(await heights()).toEqual(closed);
-  await cards.first().locator('summary').press('Enter');
-  await expect(cards.first().getByText('Leer más')).toBeVisible();
 });
 
-test('el video se carga solo al pulsar, dentro de la página', async ({ page }) => {
+test('cada video se carga solo al pulsar, dentro de la página, y van en su orden', async ({ page }) => {
   await page.goto(ALCALDE);
-  const video = page.locator('[data-public-video]');
+  await expect(page.locator('[data-public-video] h2')).toHaveText(['Te cuento mis razones', 'Entrevista en Bambero TV']);
+  await expect(page.locator('[data-public-video]').nth(1).getByRole('button', { name: 'Reproducir el video: Entrevista en Bambero TV' })).toBeVisible();
+  const video = page.locator('[data-public-video]').first();
   await expect(video.getByRole('heading', { name: 'Te cuento mis razones' })).toBeVisible();
   expect(await video.locator('h2 + p').innerHTML()).toBe('Texto breve de prueba.<br>#LaNuevaHistoria');
   await expect(video.locator('iframe')).toHaveCount(0);
@@ -46,10 +44,10 @@ test('el video se carga solo al pulsar, dentro de la página', async ({ page }) 
   await expect(page.getByRole('link', { name: 'Ver propuestas' })).toHaveAttribute('href', '/#propuestas');
 });
 
-test('la página personal muestra retrato, entrevista y una galería accesible', async ({ page }) => {
+test('la página personal muestra entrevista y una galería accesible, sin retrato', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(CONOCE);
-  await expect(page.getByRole('img', { name: 'Retrato de prueba' })).toBeVisible();
+  await expect(page.locator('main header img')).toHaveCount(0);
   await page.getByText('¿Qué significa San Lorenzo para ti?').click();
   await expect(page.getByText('Respuesta de prueba.', { exact: true })).toBeVisible();
   const open = page.getByRole('button', { name: 'Ver todas (4)' });
@@ -107,14 +105,14 @@ test('las dos páginas no se desbordan de 320 px a escritorio, con los modos de 
       await page.evaluate(m => { document.documentElement.className = m ?? ''; }, mode);
       for (const width of [320, 390, 760, 768, 1440]) {
         await page.setViewportSize({ width, height: 900 });
-        await expect(page.locator('[data-carlos-card]').first()).toBeVisible();
+        await expect(page.locator('[data-card-scroll] img').first()).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `${path} ${mode} ${width}px`).toBeLessThanOrEqual(1);
       }
     }
   }
 });
 
-test('el panel edita una tarjeta con vista previa, valida el video y guarda la página', async ({ page }) => {
+test('el panel ya no ofrece tarjetas ni retrato, añade y quita videos, valida el enlace y guarda la página', async ({ page }) => {
   const data = panelData('coadmin');
   await mockPanelApi(page, data);
   await page.goto('/cuenta/panel/#acerca-de-carlos');
@@ -122,13 +120,12 @@ test('el panel edita una tarjeta con vista previa, valida el video y guarda la p
   await expect(section.getByRole('heading', { name: 'Por qué quiero ser alcalde' })).toBeVisible();
   const save = section.getByRole('button', { name: 'Guardar borrador' });
   await expect(save).toBeDisabled();
-  await section.getByLabel('Título').fill('Atender lo cotidiano');
-  await expect(section.locator('#tarjeta-vista [data-card-title]')).toHaveText('Atender lo cotidiano');
-  await section.getByText('Azul', { exact: true }).click();
-  await expect(section.locator('#tarjeta-vista [data-carlos-card]')).toHaveAttribute('style', /--mask-color:#284e9c/);
-
-  await section.getByRole('button', { name: 'Video', exact: true }).click();
-  await section.getByLabel('Título de la sección').fill('Te cuento mis razones');
+  await expect(section.getByRole('button', { name: 'Tarjetas' })).toHaveCount(0);
+  await expect(section.getByRole('button', { name: 'Videos', exact: true })).toHaveAttribute('aria-pressed', 'true');
+  await expect(section.getByText('Aún no hay videos.')).toBeVisible();
+  await section.getByRole('button', { name: 'Añadir video' }).click();
+  await expect(section.getByLabel('Título', { exact: true })).toBeFocused();
+  await section.getByLabel('Título', { exact: true }).fill('Te cuento mis razones');
   await section.getByLabel('Enlace del video').fill('https://example.com/video');
   await expect(section.getByText('Pega el enlace de un video de Facebook, TikTok, YouTube o Vimeo.')).toBeVisible();
   await section.getByLabel('Enlace del video').fill('https://www.facebook.com/share/v/1MyuBerxTu/');
@@ -138,15 +135,31 @@ test('el panel edita una tarjeta con vista previa, valida el video y guarda la p
   await expect(section.getByLabel('Enlace del video')).toHaveCSS('border-color', 'rgb(30, 122, 60)');
   await expect(section.getByLabel('Vertical')).toBeChecked();
   await section.getByRole('button', { name: 'Ver video' }).click();
-  await expect(section.locator('#video-escenario iframe')).toHaveAttribute('src', /tiktok\.com\/player\/v1\/6718335390845095173/);
+  await expect(section.locator('#video-escenario-0 iframe')).toHaveAttribute('src', /tiktok\.com\/player\/v1\/6718335390845095173/);
+
+  // Un segundo video se añade debajo y su botón rojo lo quita.
+  await section.getByRole('button', { name: 'Añadir video' }).click();
+  await expect(section.locator('#video-titulo-1')).toBeVisible();
+  const quitar = section.locator('[data-remove="video"][data-index="1"]');
+  await expect(quitar).toHaveText('Quitar video');
+  await expect(quitar).toHaveCSS('color', 'rgb(165, 9, 19)');
+  await quitar.click();
+  await expect(section.locator('#video-titulo-1')).toHaveCount(0);
+
+  await page.goto('/cuenta/panel/#acerca-de-carlos');
+  await section.getByLabel('Página', { exact: true }).selectOption('conoce-mas');
+  await expect(section.locator('[data-acerca-seccion]')).toHaveText(['Videos', 'Entrevista', 'Galería']);
+  await section.getByLabel('Página', { exact: true }).selectOption('por-que-quiero-ser-alcalde');
+  await expect(section.locator('#video-titulo-0')).toHaveValue('Te cuento mis razones');
 
   await save.click();
   await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.savedPages.at(-1)).toMatchObject({
     slug: 'por-que-quiero-ser-alcalde',
-    tarjetas: [{ idMedio: 3, titulo: 'Atender lo cotidiano', color: 'azul' }],
-    video: { titulo: 'Te cuento mis razones', enlace: 'https://www.tiktok.com/@scout2015/video/6718335390845095173', vertical: true, idPortada: null },
+    videos: [{ titulo: 'Te cuento mis razones', enlace: 'https://www.tiktok.com/@scout2015/video/6718335390845095173', vertical: true, idPortada: null }],
   });
+  expect(data.savedPages.at(-1)).not.toHaveProperty('retrato');
+  expect(data.savedPages.at(-1)).not.toHaveProperty('tarjetas');
   await expect(page.locator('#panel-publicar')).toContainText('Publicar cambios (1)');
 });
 
@@ -168,34 +181,47 @@ test('el panel de la página personal añade entrevista y exige completar los ca
   expect(data.savedPages.at(-1)).toMatchObject({ slug: 'conoce-mas', entrevista: [{ pregunta: '¿Qué significa San Lorenzo para ti?', respuesta: 'Mi casa.' }] });
 });
 
-test('la portada del video se toma del video al pegar el enlace y se puede cambiar', async ({ page }) => {
+test('la portada sigue al enlace: se toma al pegarlo, se quita al cambiarlo y vuelve con el enlace anterior', async ({ page }) => {
   const data = panelData('coadmin');
   await mockPanelApi(page, data);
   await page.goto('/cuenta/panel/#acerca-de-carlos');
   const section = page.locator('#seccion-acerca-de-carlos');
-  await section.getByRole('button', { name: 'Video', exact: true }).click();
-  await section.getByLabel('Título de la sección').fill('Te cuento mis razones');
+  const REEL = 'https://www.facebook.com/reel/28327883403549284/';
+  await section.getByRole('button', { name: 'Añadir video' }).click();
+  await section.getByLabel('Título', { exact: true }).fill('Te cuento mis razones');
   const enlace = section.getByLabel('Enlace del video');
-  await enlace.fill('https://www.facebook.com/reel/28327883403549284/');
+  const portada = section.locator('#video-escenario-0 img');
+  await enlace.fill(REEL);
   await enlace.press('Tab');
   await expect(page.locator('#panel-estado')).toContainText('Se usa la imagen del video como portada');
-  await expect(section.locator('#video-escenario img')).toHaveAttribute('src', /foto-91/);
-  expect(data.videoCovers).toEqual(['https://www.facebook.com/reel/28327883403549284/']);
+  await expect(portada).toHaveAttribute('src', /foto-91/);
+  await expect(section.locator('[name="video-formato-0"][value="vertical"]')).toBeFocused();
 
-  // Con portada, cambiar de enlace no la reemplaza; el botón la pide a propósito.
-  await section.getByRole('button', { name: 'Quitar portada' }).click();
-  await section.getByLabel('Enlace del video').fill('https://vimeo.com/76979871');
+  // El tacho rojo quita la portada y «Usar la imagen del video» la vuelve a pedir.
+  const tacho = section.getByRole('button', { name: 'Quitar la portada del video 1' });
+  await expect(tacho).toHaveCSS('color', 'rgb(165, 9, 19)');
+  await tacho.click();
+  await expect(portada).toHaveCount(0);
   await section.getByRole('button', { name: 'Usar la imagen del video' }).click();
+  await expect(portada).toHaveAttribute('src', /foto-91/);
+
+  // Otro enlace quita la portada del anterior y pide la suya; esta plataforma no la da.
+  await enlace.fill('https://vimeo.com/76979871');
+  await enlace.press('Tab');
   await expect(page.locator('#panel-estado')).toContainText('No se pudo obtener la imagen de este video');
-  await section.getByLabel('Enlace del video').fill('https://example.com/video.mp4');
+  await expect(portada).toHaveCount(0);
+  await enlace.fill('https://example.com/video.mp4');
+  await enlace.press('Tab');
   await expect(section.getByRole('button', { name: 'Usar la imagen del video' })).toBeHidden();
 
-  await section.getByLabel('Enlace del video').fill('https://www.facebook.com/reel/28327883403549284/');
-  await section.getByRole('button', { name: 'Usar la imagen del video' }).click();
-  await expect(section.locator('#video-escenario img')).toHaveAttribute('src', /foto-91/);
+  // Al volver al enlace anterior vuelve su imagen, sin pulsar nada.
+  await enlace.fill(REEL);
+  await enlace.press('Tab');
+  await expect(portada).toHaveAttribute('src', /foto-91/);
+  expect(data.videoCovers).toEqual([REEL, REEL, 'https://vimeo.com/76979871', REEL]);
   await section.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
-  expect(data.savedPages.at(-1)).toMatchObject({ video: { enlace: 'https://www.facebook.com/reel/28327883403549284/', idPortada: 91 } });
+  expect(data.savedPages.at(-1)).toMatchObject({ videos: [{ enlace: REEL, idPortada: 91 }] });
 });
 
 test('el editor abre la vista previa del borrador en la página que se edita', async ({ page }) => {

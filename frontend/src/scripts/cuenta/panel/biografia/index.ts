@@ -71,7 +71,7 @@ export function renderBiography(section: HTMLElement) {
             <label class="${GHOST} cursor-pointer self-start border-field-border focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral max-tablet:self-stretch">${iconSvg("upload", 18)} ${item.foto ? "Cambiar foto" : "Subir foto"}
               <input id="hito-foto" type="file" accept="${ACEPTA_FOTOS}" class="sr-only" /></label>
             <p class="m-0 text-[0.74rem] text-muted">${FORMATOS_FOTO} de hasta ${MAX_MB_FOTO} MB. Medida recomendada: 880 px o más en su lado más largo, vertical u horizontal. Se muestra completa, sin recortes.</p>
-            ${item.foto ? `<button type="button" id="hito-quitar-foto" class="${GHOST} self-start">Quitar foto</button>` : ""}
+            ${item.foto ? `<button type="button" id="hito-quitar-foto" class="${DANGER} self-start">${iconSvg("trash", 18)} Quitar foto</button>` : ""}
           </div>
         </div>
       </div>

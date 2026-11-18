@@ -25,8 +25,8 @@ globalThis.fetch = (async (input: string | URL | Request) => {
 
 const avisos = async (cookie = cookies.admin) => (await (await call('/api/admin/avisos', 'GET', undefined, cookie)).json()).avisos;
 const version = async () => (await (await call('/api/admin/contenido', 'GET', undefined, cookies.admin)).json()).versiones.acercaDeCarlos['por-que-quiero-ser-alcalde'];
-const guardarVideo = async (enlace: string) => call(ALCALDE, 'PUT', { tarjetas: [], retrato: null, entrevista: [], galeria: [],
-  video: { titulo: 'Te cuento mis razones', descripcion: null, enlace, vertical: true, idPortada: null }, version: await version() }, cookies.admin);
+const guardarVideo = async (enlace: string) => call(ALCALDE, 'PUT', { entrevista: [], galeria: [],
+  videos: [{ titulo: 'Te cuento mis razones', descripcion: null, enlace, vertical: true, idPortada: null }], version: await version() }, cookies.admin);
 /** Publica el borrador y da la publicación por terminada, como el publicador. */
 async function publicar() {
   const res = await call('/api/admin/publicaciones', 'POST', undefined, cookies.admin);
@@ -78,8 +78,8 @@ test('un video publicado que su plataforma ya no deja mostrar es un aviso; se re
   expect((await publicar()).status).toBe(200);
   bloqueado = true;
   const aviso = {
-    clave: 'video:por-que-quiero-ser-alcalde', tipo: 'error', icono: 'alert', cantidad: 1, ruta: '/cuenta/panel/?aviso=video%3Apor-que-quiero-ser-alcalde#acerca-de-carlos',
-    texto: 'El video de «Por qué quiero ser alcalde» ya no se puede ver en el sitio.', accion: 'Cambiar el video',
+    clave: 'video:por-que-quiero-ser-alcalde:1', tipo: 'error', icono: 'alert', cantidad: 1, ruta: '/cuenta/panel/?aviso=video%3Apor-que-quiero-ser-alcalde%3A1#acerca-de-carlos',
+    texto: 'El video «Te cuento mis razones» de «Por qué quiero ser alcalde» ya no se puede ver en el sitio.', accion: 'Cambiar el video',
     detalle: avisoNoInsertable('facebook', 'bloqueado'), valor: REEL,
   };
   expect(await avisos()).toEqual([aviso]);
@@ -93,7 +93,7 @@ test('un video publicado que su plataforma ya no deja mostrar es un aviso; se re
   const rechazos = await Promise.all([1, 2].map(() => call('/api/admin/publicaciones', 'POST', undefined, cookies.admin)));
   for (const r of rechazos) {
     expect(r.status).toBe(422);
-    expect((await r.json()).error).toBe('No se publicó: el video de «Por qué quiero ser alcalde» no se puede ver en el sitio. Cámbialo y vuelve a publicar.');
+    expect((await r.json()).error).toBe('No se publicó: el video «Te cuento mis razones» de «Por qué quiero ser alcalde» no se puede ver en el sitio. Cámbialo y vuelve a publicar.');
   }
   expect(await publicaciones()).toBe(antes);
 
@@ -111,5 +111,38 @@ test('si la plataforma no responde, se publica: no se bloquea por lo que no se p
     expect(await avisos()).toEqual([]);
   } finally {
     sinRed = false;
+  }
+});
+
+test('un video de la portada que su plataforma no deja mostrar no se guarda, avisa con su clave y bloquea la publicación', async () => {
+  const contenido = async () => (await (await call('/api/admin/contenido', 'GET', undefined, cookies.admin)).json());
+  expect((await call(ALCALDE, 'PUT', { entrevista: [], galeria: [], videos: [], version: await version() }, cookies.admin)).status).toBe(200);
+  const guardarPiezas = async () => call('/api/admin/contenido/inicio/piezas', 'PUT', {
+    piezas: [{ imagen: { original: 'pieza-ferrocarril' }, alt: 'Pieza' }, { video: { titulo: 'Mensaje a San Lorenzo', enlace: REEL, vertical: true, idPortada: null } }],
+    version: (await contenido()).versiones.inicio.piezas,
+  }, cookies.admin);
+  bloqueado = true;
+  try {
+    const rechazo = await guardarPiezas();
+    expect(rechazo.status).toBe(422);
+    expect((await rechazo.json()).error).toBe(`Pieza 2: ${avisoNoInsertable('facebook', 'bloqueado')}`);
+    bloqueado = false;
+    expect((await guardarPiezas()).status).toBe(200);
+    expect((await publicar()).status).toBe(200);
+    bloqueado = true;
+    expect(await avisos()).toEqual([{
+      clave: 'video:inicio:1', tipo: 'error', icono: 'alert', cantidad: 1, ruta: '/',
+      texto: 'El video «Mensaje a San Lorenzo» de la portada ya no se puede ver en el sitio.', accion: 'Cambiar el video',
+      detalle: avisoNoInsertable('facebook', 'bloqueado'), valor: REEL,
+    }]);
+    const texto = { valor: 'Por ti, San Lorenzo, siempre.', version: (await contenido()).versiones.textos['pie.linea-1'] ?? null };
+    expect((await call('/api/admin/contenido/textos/pie.linea-1', 'PUT', texto, cookies.admin)).status).toBe(200);
+    const antes = await publicaciones();
+    const r = await call('/api/admin/publicaciones', 'POST', undefined, cookies.admin);
+    expect(r.status).toBe(422);
+    expect((await r.json()).error).toBe('No se publicó: el video «Mensaje a San Lorenzo» de la portada no se puede ver en el sitio. Cámbialo y vuelve a publicar.');
+    expect(await publicaciones()).toBe(antes);
+  } finally {
+    bloqueado = false;
   }
 });

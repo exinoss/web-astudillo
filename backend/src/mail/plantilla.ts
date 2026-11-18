@@ -3,7 +3,6 @@
 
 interface Comun {
   asunto: string;
-  /** Texto oculto que los clientes muestran junto al asunto en la bandeja. */
   resumen: string;
   titulo: string;
   parrafos: string[];

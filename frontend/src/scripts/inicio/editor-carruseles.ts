@@ -1,18 +1,21 @@
 // Lo carga modo-edicion.ts antes de pintar los textos del borrador: `publicado` guarda la portada tal como se publicó.
-import { AVISO_ENLACE_BOTON, AVISO_HORIZONTAL, enlaceBoton, MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_PIEZAS, type Carrusel, type Original } from "../../../../backend/src/contracts/inicio";
+import { AVISO_ENLACE_BOTON, AVISO_HORIZONTAL, enlaceBoton, MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_IMAGENES_PIEZAS, MAX_VIDEOS_PIEZAS, type Carrusel, type Original } from "../../../../backend/src/contracts/inicio";
 import { MAX_ENLACE_RED } from "../../../../backend/src/contracts/redes";
 import { LARGOS } from "../../../../backend/src/contracts/limites";
 import { MAX_MB_FOTO } from "../../../../backend/src/contracts/media";
 import { mostrarCarga } from "../../lib/comun/animaciones";
 import { medidasArchivo } from "../../lib/comun/foto-local";
-import { medidasFoto, uploadedSrcset, uploadedUrl } from "../../lib/comun/fotos";
+import { imageView, medidasFoto, uploadedSrcset, uploadedUrl, type ImageView } from "../../lib/comun/fotos";
+import { esc } from "../../lib/comun/html";
 import { iconSvg } from "../../lib/comun/iconos";
+import { campoEnlace, campoFormato, campoPortada, comprobarEnlace } from "../../lib/cuenta/panel/campos-video";
+import { piezaVideo } from "../../lib/inicio/pieza-video";
 import { bloquearMientras, vigilarCambios } from "../../lib/comun/cambios";
 import { desmarcarAlEscribir, marcarVacios } from "../../lib/comun/campos";
-import { BOLA, enlazarLista, field, GHOST, HINT, ICON_BUTTON, INTERRUPTOR, LABEL, moveButtons, PISTA, PRINCIPAL, thumb, upload } from "../../lib/cuenta/panel/campos";
+import { BOLA, DANGER, enlazarLista, field, GHOST, HINT, ICON_BUTTON, INTERRUPTOR, LABEL, moveButtons, PISTA, PRINCIPAL, thumb, upload } from "../../lib/cuenta/panel/campos";
 import { opcionesDePagina } from "../../lib/cuenta/panel/paginas";
 import { atributosBoton, RETRATO } from "../../lib/inicio/segunda-diapositiva";
-import { adminApi, type Draft, type DraftHomeCarousels, type DraftHomeImage, type HomeImageBody } from "../../lib/data/http/admin-api";
+import { adminApi, type Draft, type DraftHomeCarousels, type DraftHomeImage, type DraftHomeVideo, type HomeImageBody } from "../../lib/data/http/admin-api";
 
 type Principal = DraftHomeCarousels["principal"];
 type Piezas = DraftHomeCarousels["piezas"];
@@ -34,6 +37,7 @@ const NOMBRES: Record<Carrusel, string> = { principal: "Carrusel principal", pie
 const hero = document.querySelector<HTMLElement>('[data-carrusel-editable="principal"]')!;
 const perfil = document.querySelector<HTMLElement>('[data-carrusel-editable="piezas"]')!;
 const originales = JSON.parse(hero.dataset.originales!) as Record<Original, Version>;
+const portadas = JSON.parse(perfil.dataset.portadas!) as Record<"horizontal" | "vertical", ImageView>;
 const plantilla = hero.querySelector<HTMLTemplateElement>("template[data-plantilla-banner]")!;
 const publicado = { hero: hero.innerHTML, perfil: perfil.innerHTML };
 const seccionEquipo = document.querySelector<HTMLElement>('[data-carrusel-editable="equipo"]')!;
@@ -74,7 +78,7 @@ const tarjetaBanner = (b: Principal["banners"][number], i: number, total: number
             <span class="text-[0.82rem] font-bold">Imagen para celular <span class="font-normal">(opcional) · 1520 × 1140 px</span></span>
             <span class="flex flex-wrap gap-2">
               ${upload(`banner-celular-${i}`, b.celular ? "Cambiar" : "Subir")}
-              ${b.celular ? `<button type="button" class="${GHOST}" data-quitar-celular="${i}">Quitar</button>` : ""}
+              ${b.celular ? `<button type="button" class="${DANGER}" data-quitar-celular="${i}">${iconSvg("trash", 18)} Quitar</button>` : ""}
             </span>
           </span>
         </div>`}
@@ -121,21 +125,41 @@ const destinoBoton = (enlace: string, externo: boolean) => `
       hint: "De Facebook, TikTok, Instagram o YouTube, por ejemplo https://www.facebook.com/watch/?v=… Su texto se cambia en la diapositiva." })}</div>
   </div>`;
 
-/** Contenido del editor del carrusel de piezas. */
+/** Portada de un video del borrador: la suya o la imagen de la campaña en su formato. */
+const portadaVideo = (v: DraftHomeVideo): ImageView => (v.portada ? imageView(v.portada) : portadas[v.vertical ? "vertical" : "horizontal"]);
+/** Cuántos videos hay entre las piezas. */
+const cuantosVideos = (p: Piezas) => p.piezas.filter((x) => "video" in x).length;
+
+/** Campos de una pieza del editor: la descripción de una imagen o el título, enlace, formato y portada de un video. */
+const camposPieza = (x: Piezas["piezas"][number], i: number) => ("video" in x
+  ? `${field({ id: `video-titulo-${i}`, label: "Título del video", value: x.video.titulo, max: LARGOS.acercaDeCarlos.tituloVideo, required: true })}
+        ${campoEnlace(i, x.video.enlace)}
+        ${campoFormato(i, x.video.vertical)}
+        ${campoPortada(i, x.video.portada, false)}`
+  : field({ id: `pieza-alt-${i}`, label: "Descripción de la imagen", value: x.alt, max: LARGOS.descripcionFoto, required: true }));
+
+/** Contenido del editor del carrusel de piezas: imágenes y videos en el orden en que se muestran. */
 const htmlPiezas = (p: Piezas) => `
-  <p class="${HINT} mt-0 mb-3">Hasta ${MAX_PIEZAS} · 1080 × 1350 px · ${LIMITE}</p>
-  <ol class="m-0 flex list-none flex-col gap-3 p-0">${p.piezas.map((x, i) => `
+  <p class="${HINT} mt-0 mb-3">Hasta ${MAX_IMAGENES_PIEZAS} imágenes y ${MAX_VIDEOS_PIEZAS} videos · imágenes de 1080 × 1350 px · ${LIMITE}</p>
+  <ol class="m-0 flex list-none flex-col gap-3 p-0">${p.piezas.map((x, i) => {
+    const nombre = `${"video" in x ? "Video" : "Imagen"} ${i + 1}`;
+    return `
     <li class="flex gap-3 rounded-control border border-base-300 p-3">
-      <img src="${miniatura(x.imagen)}" alt="" class="aspect-[4/5] w-[104px] shrink-0 self-start rounded-control bg-secondary object-contain max-mobile:w-[72px]" />
-      <div class="flex min-w-0 flex-1 flex-col gap-2">
+      <img src="${"video" in x ? esc(portadaVideo(x.video).src) : miniatura(x.imagen)}" alt="" class="aspect-[4/5] w-[104px] shrink-0 self-start rounded-control bg-secondary object-contain max-mobile:w-[72px]" />
+      <div class="flex min-w-0 flex-1 flex-col ${"video" in x ? "gap-3" : "gap-2"}">
         <div class="flex items-center justify-between gap-2">
-          <strong class="text-[0.85rem]">Pieza ${i + 1}</strong>
-          <span class="flex">${moveButtons("pieza", i, p.piezas.length, `pieza ${i + 1}`, 1)}</span>
+          <strong class="text-[0.85rem]">${nombre}</strong>
+          <span class="flex">${moveButtons("pieza", i, p.piezas.length, nombre.toLowerCase(), 1)}</span>
         </div>
-        ${field({ id: `pieza-alt-${i}`, label: "Descripción de la imagen", value: x.alt, max: LARGOS.descripcionFoto, required: true })}
+        ${camposPieza(x, i)}
       </div>
-    </li>`).join("")}</ol>
-  ${p.piezas.length < MAX_PIEZAS ? `<div class="mt-3">${upload("piezas-nuevas", "Añadir piezas", true)}</div>` : ""}`;
+    </li>`;
+  }).join("")}</ol>
+  <div class="mt-3 flex flex-wrap gap-3">
+    ${p.piezas.length - cuantosVideos(p) < MAX_IMAGENES_PIEZAS ? upload("piezas-nuevas", "Añadir imágenes", true) : ""}
+    ${cuantosVideos(p) < MAX_VIDEOS_PIEZAS ? `<button type="button" data-anadir-video class="${GHOST}">${iconSvg("plus", 17)} Añadir video</button>` : ""}
+  </div>
+  <p class="${HINT}">Se muestran en este orden.</p>`;
 
 /** Contenido del editor del carrusel del equipo. */
 const htmlEquipo = (e: Equipo) => `
@@ -183,7 +207,13 @@ function capturar() {
     t.banners.forEach((b, i) => { b.alt = valor(`banner-alt-${i}`, b.alt); });
     t.retrato.alt = valor("retrato-alt", t.retrato.alt);
     t.enlace = valor(abierto.externo ? "boton-url" : "boton-pagina", t.enlace);
-  } else if (abierto.cual === "piezas") (abierto.trabajo as Piezas).piezas.forEach((x, i) => { x.alt = valor(`pieza-alt-${i}`, x.alt); });
+  } else if (abierto.cual === "piezas") (abierto.trabajo as Piezas).piezas.forEach((x, i) => {
+    if (!("video" in x)) { x.alt = valor(`pieza-alt-${i}`, x.alt); return; }
+    x.video.titulo = valor(`video-titulo-${i}`, x.video.titulo);
+    x.video.enlace = valor(`video-enlace-${i}`, x.video.enlace);
+    const formato = abierto!.cuerpo.querySelector<HTMLInputElement>(`[name="video-formato-${i}"]:checked`);
+    if (formato) x.video.vertical = formato.value === "vertical";
+  });
   else (abierto.trabajo as Equipo).fotos.forEach((x, i) => { x.alt = valor(`equipo-alt-${i}`, x.alt); });
 }
 
@@ -247,7 +277,7 @@ function pintar() {
     (a.trabajo as Principal).banners[Number(b.dataset.quitarCelular)].celular = null;
     pintar();
   }));
-  const alElegir = (id: string, maximo: number, poner: (fotos: Awaited<ReturnType<typeof subirAlEditor>>) => void, horizontales = false) =>
+  const alElegir = (id: string, maximo: number, poner: (fotos: Awaited<ReturnType<typeof subirAlEditor>>) => void, horizontales = false, listo = "") =>
     a.cuerpo.querySelector<HTMLInputElement>(`#${id}`)?.addEventListener("change", async (e) => {
       const archivos = [...((e.target as HTMLInputElement).files ?? [])].slice(0, maximo);
       if (!archivos.length || subiendo) return;
@@ -259,7 +289,7 @@ function pintar() {
       if (fotos.length) poner(fotos);
       pintar();
       if (fotos.length === archivos.length)
-        opciones.avisar(fotos.length === 1 ? "Imagen subida. Describe la imagen y guarda el borrador." : "Imágenes subidas. Describe cada una y guarda el borrador.");
+        opciones.avisar(listo || (fotos.length === 1 ? "Imagen subida. Describe la imagen y guarda el borrador." : "Imágenes subidas. Describe cada una y guarda el borrador."));
     });
   if (a.cual === "principal") {
     const t = a.trabajo as Principal;
@@ -269,12 +299,74 @@ function pintar() {
     a.cuerpo.querySelector<HTMLButtonElement>("[data-destino]")!.addEventListener("click", (e) => cambiarDestino(a, e.currentTarget as HTMLButtonElement));
   } else if (a.cual === "piezas") {
     const t = a.trabajo as Piezas;
-    alElegir("piezas-nuevas", MAX_PIEZAS - t.piezas.length, (fotos) => t.piezas.push(...fotos.map((foto) => ({ imagen: { foto }, alt: "" }))));
+    alElegir("piezas-nuevas", MAX_IMAGENES_PIEZAS - (t.piezas.length - cuantosVideos(t)), (fotos) => t.piezas.push(...fotos.map((foto) => ({ imagen: { foto }, alt: "" }))));
+    a.cuerpo.querySelector("[data-anadir-video]")?.addEventListener("click", () => {
+      capturar();
+      t.piezas.push({ video: { titulo: "", enlace: "", vertical: false, portada: null } });
+      pintar();
+      a.cuerpo.querySelector<HTMLInputElement>(`#video-titulo-${t.piezas.length - 1}`)?.focus();
+    });
+    t.piezas.forEach((x, i) => {
+      if (!("video" in x)) return;
+      enlazarVideo(a, x.video, i);
+      alElegir(`video-portada-${i}`, 1, ([foto]) => { x.video.portada = foto; }, false, "Portada subida. Guarda el borrador para conservarla.");
+    });
   } else {
     const t = a.trabajo as Equipo;
     alElegir("equipo-nuevas", MAX_FOTOS_EQUIPO - t.fotos.length, (fotos) => t.fotos.push(...fotos.map((foto) => ({ foto, alt: "" }))), true);
   }
   a.comprobar();
+}
+
+/** Enlaza los campos del video `i` del editor: comprueba su enlace y liga su portada a él. */
+function enlazarVideo(a: NonNullable<typeof abierto>, video: DraftHomeVideo, i: number) {
+  const input = a.cuerpo.querySelector<HTMLInputElement>(`#video-enlace-${i}`)!;
+  const auto = a.cuerpo.querySelector<HTMLButtonElement>(`[data-video-cover-auto="${i}"]`)!;
+  /** Vuelve a pintar el editor sin perder el campo que tenía el foco. */
+  const repintar = () => {
+    const id = document.activeElement?.id;
+    pintar();
+    if (id) a.cuerpo.querySelector<HTMLElement>(`#${CSS.escape(id)}`)?.focus({ preventScroll: true });
+  };
+  /** Pide a la plataforma la imagen del video y la pone de portada. */
+  const traerPortada = (boton: HTMLButtonElement | null) => {
+    const source = comprobarEnlace(a.cuerpo, i, false);
+    if (!source || source.provider === "mp4") return;
+    capturar();
+    const enlace = video.enlace;
+    /** Trae la imagen y la usa si el enlace sigue siendo el mismo. */
+    const pedir = async () => {
+      try {
+        const foto = await adminApi.videoCover(enlace);
+        // Si mientras tanto cambió el enlace o se cerró el editor, esta imagen ya no corresponde.
+        if (abierto !== a || video.enlace !== enlace) return;
+        video.portada = foto;
+        repintar();
+        opciones.avisar("Se usa la imagen del video como portada. Puedes cambiarla por otra.");
+      } catch (error) {
+        opciones.avisar(error instanceof Error ? error.message : "No se pudo traer la imagen del video.", true);
+      }
+    };
+    void (boton ? bloquearMientras(boton, pedir) : pedir());
+  };
+  let enlaceDeLaPortada = input.value.trim();
+  comprobarEnlace(a.cuerpo, i, false);
+  input.addEventListener("input", () => comprobarEnlace(a.cuerpo, i, true));
+  input.addEventListener("change", () => {
+    if (input.value.trim() === enlaceDeLaPortada) return;
+    enlaceDeLaPortada = input.value.trim();
+    capturar();
+    const habia = Boolean(video.portada);
+    video.portada = null;
+    traerPortada(null);
+    if (habia) repintar();
+  });
+  auto.addEventListener("click", () => traerPortada(auto));
+  a.cuerpo.querySelector(`[data-video-cover-remove="${i}"]`)?.addEventListener("click", () => {
+    capturar();
+    video.portada = null;
+    pintar();
+  });
 }
 
 /** Abre el editor de un carrusel con una copia de su borrador. */
@@ -314,7 +406,7 @@ guardar.addEventListener("click", () => void bloquearMientras(guardar, async () 
   const a = abierto!;
   marcarVacios(a.cuerpo);
   if (a.cuerpo.querySelector('[aria-invalid="true"]')) {
-    opciones.avisar("Describe cada imagen antes de guardar.", true);
+    opciones.avisar(a.cual === "piezas" ? "Revisa los campos marcados antes de guardar." : "Describe cada imagen antes de guardar.", true);
     return;
   }
   const aviso = a.cual === "principal" ? avisoEnlace(a) : null;
@@ -333,7 +425,9 @@ guardar.addEventListener("click", () => void bloquearMientras(guardar, async () 
         enlace: t.enlace,
       }, versiones[a.cual] ?? null);
     } else if (a.cual === "piezas") {
-      await adminApi.saveHomePieces({ piezas: (a.trabajo as Piezas).piezas.map((x) => ({ imagen: cuerpoImagen(x.imagen), alt: x.alt })) }, versiones[a.cual] ?? null);
+      await adminApi.saveHomePieces({ piezas: (a.trabajo as Piezas).piezas.map((x) => ("video" in x
+        ? { video: { titulo: x.video.titulo, enlace: x.video.enlace, vertical: x.video.vertical, idPortada: x.video.portada?.idMedio ?? null } }
+        : { imagen: cuerpoImagen(x.imagen), alt: x.alt })) }, versiones[a.cual] ?? null);
     } else {
       await adminApi.saveHomeTeam({ fotos: (a.trabajo as Equipo).fotos.map((x) => ({ idMedio: x.foto.idMedio, alt: x.alt })) }, versiones[a.cual] ?? null);
     }
@@ -341,7 +435,11 @@ guardar.addEventListener("click", () => void bloquearMientras(guardar, async () 
     borrador = draft.inicio;
     versiones = draft.versiones.inicio;
   } catch (error) {
-    opciones.avisar(error instanceof Error ? error.message : "No se pudo guardar.", true);
+    const mensaje = error instanceof Error ? error.message : "No se pudo guardar.";
+    // La API nombra la pieza cuyo video no se puede mostrar («Pieza 2: …»): se marca su enlace.
+    const pieza = Number(mensaje.match(/^Pieza (\d+):/)?.[1] ?? 0);
+    if (pieza) a.cuerpo.querySelector(`#video-enlace-${pieza - 1}`)?.setAttribute("aria-invalid", "true");
+    opciones.avisar(mensaje, true);
     return;
   } finally {
     terminarCarga();
@@ -368,15 +466,15 @@ function ponerImagen(img: HTMLImageElement, imagen: DraftHomeImage, alt: string,
   else img.removeAttribute("style");
 }
 
-/** Deja en `grupo` un punto por diapositiva, copiando el primero. */
-function puntos(grupo: HTMLElement, selector: string, total: number, nombre: string) {
+/** Deja en `grupo` un punto por diapositiva, copiando el primero; `nombre` dice qué es cada diapositiva. */
+function puntos(grupo: HTMLElement, selector: string, total: number, nombre: string | ((i: number) => string)) {
   const actuales = [...grupo.querySelectorAll<HTMLElement>(selector)];
   actuales.slice(1).forEach((x) => x.remove());
   const lista = Array.from({ length: total }, (_, i) => {
     const punto = i ? (actuales[0].cloneNode() as HTMLElement) : actuales[0];
     punto.classList.toggle("is-active", !i);
     punto.setAttribute("aria-current", String(!i));
-    punto.setAttribute("aria-label", `Ver ${nombre} ${i + 1}`);
+    punto.setAttribute("aria-label", `Ver ${typeof nombre === "string" ? nombre : nombre(i)} ${i + 1}`);
     return punto;
   });
   actuales[0].after(...lista.slice(1));
@@ -430,20 +528,24 @@ function pintarBorrador() {
   puntos(hero.querySelector<HTMLElement>(".carousel-controls [role=group]")!, ".slide-dot", total, "diapositiva");
 
   const { piezas } = borrador.piezas;
-  const actuales = [...perfil.querySelectorAll<HTMLImageElement>("[data-profile-image]")];
-  const modelo = actuales[0].cloneNode() as HTMLImageElement;
-  const imagenes = piezas.map((p, i) => {
-    const img = modelo.cloneNode() as HTMLImageElement;
+  const diapositivas = piezas.map((p, i) => {
+    if ("video" in p) {
+      const plantillaVideo = document.createElement("template");
+      plantillaVideo.innerHTML = piezaVideo({ title: p.video.titulo, url: p.video.enlace, vertical: p.video.vertical, cover: portadaVideo(p.video) }, i);
+      return plantillaVideo.content.firstElementChild as HTMLElement;
+    }
+    const img = document.createElement("img");
+    img.loading = "lazy";
     ponerImagen(img, p.imagen, p.alt, "(max-width: 760px) 90vw, 40vw", true);
     img.dataset.profileImage = String(i);
     img.classList.toggle("is-active", !i);
     img.hidden = i > 0;
     return img;
   });
-  actuales.forEach((x) => x.remove());
-  perfil.prepend(...imagenes);
+  perfil.querySelectorAll("[data-profile-image]").forEach((x) => x.remove());
+  perfil.prepend(...diapositivas);
   const grupo = perfil.querySelector<HTMLElement>(".profile-dots")!;
-  puntos(grupo, ".profile-dot", piezas.length, "imagen");
+  puntos(grupo, ".profile-dot", piezas.length, (i) => ("video" in piezas[i] ? "video" : "imagen"));
   grupo.hidden = piezas.length < 2;
 
   const { fotos } = borrador.equipo;
@@ -474,8 +576,9 @@ const botones = (["principal", "piezas", "equipo"] as const).map((cual) => {
   boton.type = "button";
   boton.dataset.editarCarrusel = cual;
   boton.className = "absolute top-4 right-4 z-[6] inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-accent bg-primary px-4 text-[0.82rem] font-bold text-primary-content [box-shadow:0_6px_18px_#06317666] hover:bg-neutral focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent max-tablet:top-2.5 max-tablet:right-2.5 max-tablet:px-3.5";
-  boton.innerHTML = `${iconSvg("image", 18)}<span>Cambiar imágenes</span>`;
-  boton.setAttribute("aria-label", `Cambiar las imágenes del ${NOMBRES[cual].toLowerCase()}`);
+  const que = cual === "piezas" ? "imágenes y videos" : "imágenes";
+  boton.innerHTML = `${iconSvg("image", 18)}<span>Cambiar ${que}</span>`;
+  boton.setAttribute("aria-label", `Cambiar las ${que} del ${NOMBRES[cual].toLowerCase()}`);
   boton.addEventListener("click", () => abrir(cual, boton));
   return boton;
 });

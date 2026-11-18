@@ -2,7 +2,7 @@ import { Elysia, t } from 'elysia';
 import type { SQL } from 'bun';
 import type { Authorization } from '../../auth/types';
 import { MAX_PRESENTACION, MAX_PUNTO_TRAYECTORIA, MAX_TRAYECTORIA, PUESTOS } from '../../contracts/equipo';
-import { MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_PIEZAS, ORIGINALES } from '../../contracts/inicio';
+import { MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_IMAGENES_PIEZAS, MAX_VIDEOS_PIEZAS, ORIGINALES } from '../../contracts/inicio';
 import { MAX_FOTOS_PARROQUIA } from '../../contracts/parroquias';
 import { MAX_ENLACE_RED } from '../../contracts/redes';
 import { LARGOS } from '../../contracts/limites';
@@ -19,13 +19,15 @@ const slug = t.Object({ slug: slugText });
 // Versión que el panel cargó (md5); con ella se detecta si otra persona guardó antes.
 const version = t.String({ pattern: '^[a-f0-9]{32}$' });
 const mediaId = t.Integer({ minimum: 1 });
-const percent = t.Integer({ minimum: 0, maximum: 100 });
 const homeImage = t.Union([t.Object({ original: literals(ORIGINALES) }, strict), t.Object({ idMedio: mediaId }, strict)]);
+const video = {
+  titulo: text(LARGOS.acercaDeCarlos.tituloVideo), enlace: t.String({ maxLength: VIDEO_URL_MAX }), vertical: t.Boolean(), idPortada: t.Union([mediaId, t.Null()]),
+};
 
 export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: string) {
   const content = createContent(sql, authorization);
   const media = createMedia(sql, authorization, mediaDir);
-  const aboutCarlosPages = createAboutCarlosPages(sql, authorization, mediaDir);
+  const aboutCarlosPages = createAboutCarlosPages(sql, authorization);
   const myTeam = createMyTeam(sql, authorization);
   const homeCarousels = createHomeCarousels(sql, authorization);
   const admin = new Elysia({ prefix: '/api/admin', normalize: false })
@@ -77,15 +79,7 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
       aboutCarlosPages.save(access(cookie), params.slug, body, body.version), {
       params: slug,
       body: t.Object({
-        tarjetas: t.Array(t.Object({
-          idMedio: mediaId, alt: text(LARGOS.descripcionFoto), titulo: text(LARGOS.acercaDeCarlos.tituloTarjeta), texto: text(LARGOS.acercaDeCarlos.textoTarjeta),
-          color: literals(['rojo', 'azul']), enfoque: t.Object({ x: percent, y: percent }, strict),
-        }, strict), { maxItems: 6 }),
-        video: t.Union([t.Object({
-          titulo: text(LARGOS.acercaDeCarlos.tituloVideo), descripcion: t.Union([text(LARGOS.acercaDeCarlos.descripcionVideo), t.Null()]), enlace: t.String({ maxLength: VIDEO_URL_MAX }),
-          vertical: t.Boolean(), idPortada: t.Union([mediaId, t.Null()]),
-        }, strict), t.Null()]),
-        retrato: t.Union([t.Object({ idMedio: mediaId, alt: text(LARGOS.descripcionFoto) }, strict), t.Null()]),
+        videos: t.Array(t.Object({ ...video, descripcion: t.Union([text(LARGOS.acercaDeCarlos.descripcionVideo), t.Null()]) }, strict), { maxItems: 6 }),
         entrevista: t.Array(t.Object({ pregunta: text(LARGOS.acercaDeCarlos.pregunta), respuesta: text(LARGOS.acercaDeCarlos.respuesta) }, strict), { maxItems: 6 }),
         galeria: t.Array(t.Object({ idMedio: mediaId, alt: text(LARGOS.descripcionFoto), pie: text(LARGOS.acercaDeCarlos.pie) }, strict), { maxItems: 6 }),
         version,
@@ -123,7 +117,10 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
     })
     .put('/contenido/inicio/piezas', ({ cookie, body }) => homeCarousels.savePieces(access(cookie), body, body.version), {
       body: t.Object({
-        piezas: t.Array(t.Object({ imagen: homeImage, alt: text(LARGOS.descripcionFoto) }, strict), { minItems: 1, maxItems: MAX_PIEZAS }),
+        piezas: t.Array(t.Union([
+          t.Object({ imagen: homeImage, alt: text(LARGOS.descripcionFoto) }, strict),
+          t.Object({ video: t.Object(video, strict) }, strict),
+        ]), { minItems: 1, maxItems: MAX_IMAGENES_PIEZAS + MAX_VIDEOS_PIEZAS }),
         version: t.Union([version, t.Null()]),
       }, strict),
     })

@@ -37,11 +37,8 @@ export function panelData(rol: 'admin' | 'coadmin') {
           enlaceTexto: 'Ver propuestas', enlaceRuta: '/#propuestas', destacada: true },
       ],
       acercaDeCarlos: {
-        'por-que-quiero-ser-alcalde': {
-          tarjetas: [{ foto: photo(3), alt: 'Vecinos en una calle', titulo: 'Escuchar a su gente', texto: 'Conocer las necesidades de los barrios.', color: 'rojo', enfoque: { x: 50, y: 50 } }],
-          video: null, retrato: null, entrevista: [], galeria: [],
-        },
-        'conoce-mas': { tarjetas: [], video: null, retrato: null, entrevista: [], galeria: [] },
+        'por-que-quiero-ser-alcalde': { videos: [], entrevista: [], galeria: [] },
+        'conoce-mas': { videos: [], entrevista: [], galeria: [] },
       } as Record<string, Record<string, unknown>>,
       miEquipo: {
         equipo: [
@@ -157,9 +154,8 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
       if (version !== data.draft.versiones.acercaDeCarlos[aboutCarlosPage[1]]) return conflict();
       data.savedPages.push({ slug: aboutCarlosPage[1], ...page });
       const withPhoto = (items: { idMedio: number }[]) => items.map(({ idMedio, ...rest }) => ({ ...rest, foto: photo(idMedio) }));
-      data.draft.acercaDeCarlos[aboutCarlosPage[1]] = { ...page, tarjetas: withPhoto(page.tarjetas), galeria: withPhoto(page.galeria),
-        retrato: page.retrato && { alt: page.retrato.alt, foto: photo(page.retrato.idMedio) },
-        video: page.video && { ...page.video, portada: page.video.idPortada ? photo(page.video.idPortada) : null } };
+      data.draft.acercaDeCarlos[aboutCarlosPage[1]] = { ...page, galeria: withPhoto(page.galeria),
+        videos: page.videos.map(({ idPortada, ...v }: { idPortada: number | null }) => ({ ...v, portada: idPortada ? photo(idPortada) : null })) };
       data.draft.versiones.acercaDeCarlos[aboutCarlosPage[1]] = nextVersion();
       data.pending = [...data.pending.filter(c => c.tipo !== 'Página'), { tipo: 'Página', descripcion: 'Por qué quiero ser alcalde' }];
       return json({ version: data.draft.versiones.acercaDeCarlos[aboutCarlosPage[1]] });
@@ -187,7 +183,11 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
       data.draft.inicio[key] = key === 'principal'
         ? { banners: fields.banners.map((b: { imagen: object; celular: number | null; alt: string }) => ({ imagen: image(b.imagen), celular: b.celular ? photo(b.celular) : null, alt: b.alt })),
           retrato: { imagen: image(fields.retrato.imagen), alt: fields.retrato.alt }, enlace: fields.enlace }
-        : key === 'piezas' ? { piezas: fields.piezas.map((p: { imagen: object; alt: string }) => ({ imagen: image(p.imagen), alt: p.alt })) }
+        : key === 'piezas' ? { piezas: fields.piezas.map((p: { imagen: object; alt: string } | { video: { idPortada: number | null } }) => {
+          if (!('video' in p)) return { imagen: image(p.imagen), alt: p.alt };
+          const { idPortada, ...video } = p.video;
+          return { video: { ...video, portada: idPortada ? photo(idPortada) : null } };
+        }) }
         : { fotos: fields.fotos.map((f: { idMedio: number; alt: string }) => ({ foto: photo(f.idMedio), alt: f.alt })) };
       data.draft.versiones.inicio[key] = nextVersion();
       data.pending.push({ tipo: 'Portada', descripcion: { principal: 'Carrusel principal', piezas: 'Carrusel de piezas', equipo: 'Carrusel del equipo' }[key]! });

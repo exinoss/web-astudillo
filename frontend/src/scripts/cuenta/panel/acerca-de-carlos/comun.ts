@@ -1,7 +1,7 @@
 import { type AboutCarlosSlug, type DraftAboutCarlosPage, type Photo } from "../../../../lib/data/http/admin-api";
 import { enlazarLista, notify, subirFotos } from "../ui";
 
-export type Section = "tarjetas" | "video" | "retrato" | "entrevista" | "galeria";
+export type Section = "video" | "entrevista" | "galeria";
 
 export interface Editor { slug: AboutCarlosSlug; page: DraftAboutCarlosPage; rerender(): void }
 
@@ -12,10 +12,6 @@ export interface SectionEditor {
 }
 
 export const MAX_ITEMS = 6;
-const RADIO = "flex min-h-11 cursor-pointer items-center gap-2 rounded-control border border-base-300 px-3 text-[0.82rem] font-bold has-checked:border-primary has-checked:bg-primary-soft focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral";
-
-export const radios = (name: string, options: [string, string, string][], checked: string) => options.map(([val, label, mark]) => `
-  <label class="${RADIO}"><input type="radio" name="${name}" value="${val}" ${val === checked ? "checked" : ""} class="sr-only" />${mark}${label}</label>`).join("");
 
 export function onFiles(input: HTMLInputElement | null, limit: number, use: (foto: Photo) => void, editor: Editor, capture: () => void) {
   input?.addEventListener("change", () => {
@@ -40,7 +36,7 @@ export function onFiles(input: HTMLInputElement | null, limit: number, use: (fot
 
 /** `onMove` recibe la nueva posición del elemento movido. */
 export function bindListActions(form: HTMLElement, editor: Editor, capture: () => void, onMove?: (index: number) => void) {
-  const lists = { tarjeta: editor.page.tarjetas, pregunta: editor.page.entrevista, foto: editor.page.galeria } as Record<string, unknown[]>;
+  const lists = { video: editor.page.videos, pregunta: editor.page.entrevista, foto: editor.page.galeria } as Record<string, unknown[]>;
   enlazarLista(form, (tipo) => lists[tipo], (mutar, movido) => {
     capture();
     mutar();

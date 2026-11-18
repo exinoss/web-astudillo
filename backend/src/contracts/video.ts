@@ -4,11 +4,8 @@ type VideoProvider = 'youtube' | 'facebook' | 'tiktok' | 'vimeo' | 'mp4';
 
 export interface VideoSource {
   provider: VideoProvider;
-  /** Enlace normalizado: es lo que se guarda. */
   url: string;
-  /** Dirección del reproductor oficial, o del archivo en el caso de un MP4. */
   embed: string;
-  /** Formato habitual del enlace; el panel permite corregirlo. */
   vertical: boolean;
 }
 

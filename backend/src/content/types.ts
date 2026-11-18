@@ -48,23 +48,20 @@ export interface ChatAnswer {
   destacada: boolean;
 }
 
-export type CardColor = 'rojo' | 'azul';
 export const ABOUT_CARLOS_PAGES = SLUGS_CARLOS;
 export type AboutCarlosSlug = PaginaCarlos;
 
 /** `enlace` llega ya normalizado por contracts/video.ts. */
+export type VideoStored = { titulo: string; descripcion: string | null; enlace: string; vertical: boolean; idPortada: number | null };
+
 export interface AboutCarlosPageStored {
-  tarjetas: { idMedio: number; alt: string; titulo: string; texto: string; color: CardColor; enfoque: { x: number; y: number } }[];
-  video: { titulo: string; descripcion: string | null; enlace: string; vertical: boolean; idPortada: number | null } | null;
-  retrato: { idMedio: number; alt: string } | null;
+  videos: VideoStored[];
   entrevista: { pregunta: string; respuesta: string }[];
   galeria: { idMedio: number; alt: string; pie: string }[];
 }
 
 export interface AboutCarlosPage {
-  tarjetas: (Omit<AboutCarlosPageStored['tarjetas'][number], 'idMedio'> & { foto: Photo })[];
-  video: (Omit<NonNullable<AboutCarlosPageStored['video']>, 'idPortada'> & { portada: Photo | null }) | null;
-  retrato: { foto: Photo; alt: string } | null;
+  videos: (Omit<VideoStored, 'idPortada'> & { portada: Photo | null })[];
   entrevista: AboutCarlosPageStored['entrevista'];
   galeria: (Omit<AboutCarlosPageStored['galeria'][number], 'idMedio'> & { foto: Photo })[];
 }
@@ -83,17 +80,20 @@ export interface MyTeam {
 
 export type HomeImageStored = { original: Original } | { idMedio: number };
 export type HomeImage = { original: Original } | { foto: Photo };
+export type HomeVideoStored = Omit<VideoStored, 'descripcion'>;
+export type HomePieceStored = { imagen: HomeImageStored; alt: string } | { video: HomeVideoStored };
+export type HomePiece = { imagen: HomeImage; alt: string } | { video: Omit<HomeVideoStored, 'idPortada'> & { portada: Photo | null } };
 
 /** La semilla crea el principal y el de piezas con las imágenes que vienen con el sitio; el del equipo empieza vacío. */
 export interface HomeCarouselsStored {
   principal: { banners: { imagen: HomeImageStored; celular: number | null; alt: string }[]; retrato: { imagen: HomeImageStored; alt: string }; enlace?: string };
-  piezas: { piezas: { imagen: HomeImageStored; alt: string }[] };
+  piezas: { piezas: HomePieceStored[] };
   equipo: { fotos: { idMedio: number; alt: string }[] };
 }
 
 export interface HomeCarousels {
   principal: { banners: { imagen: HomeImage; celular: Photo | null; alt: string }[]; retrato: { imagen: HomeImage; alt: string }; enlace: string };
-  piezas: { piezas: { imagen: HomeImage; alt: string }[] };
+  piezas: { piezas: HomePiece[] };
   equipo: { fotos: { foto: Photo; alt: string }[] };
 }
 
@@ -109,7 +109,6 @@ export interface ContentVersions {
   obras: Record<string, string>;
   chat: string;
   acercaDeCarlos: Record<string, string>;
-  /** Solo las partes que se guardaron alguna vez: las demás no tienen versión. */
   miEquipo: Record<string, string>;
   inicio: Partial<Record<Carrusel, string>>;
 }
@@ -125,12 +124,8 @@ export interface Snapshot {
   propuestas: ProposalContent[];
   biografia: BiographyItem[];
   obras: WorkContent[];
-  /** Ausente en publicaciones anteriores al chat editable. */
   chat?: ChatAnswer[];
-  /** Ausente en publicaciones anteriores a las páginas de Carlos. */
   acercaDeCarlos?: Record<string, AboutCarlosPage>;
-  /** Ausente en publicaciones anteriores a «Mi equipo». */
   miEquipo?: MyTeam;
-  /** Ausente en publicaciones anteriores a los carruseles editables: se usan los de la semilla. */
   inicio?: HomeCarousels;
 }

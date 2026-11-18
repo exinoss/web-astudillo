@@ -3,7 +3,7 @@ import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { adminApi, type Photo, type TeamMemberBody } from "../../../../lib/data/http/admin-api";
 import { infoPrefecto } from "../../../../lib/mi-equipo/prefecto";
 import { silueta } from "../../../../lib/mi-equipo/silueta";
-import { acciones, avisarVacios, avisoBorrador, busy, esc, field, GHOST, guardarYRecargar, HINT, ICON_BUTTON, iconSvg, isPending, LABEL, LARGOS, MAX_MB_FOTO, notify, selectField, state, subirFotos, thumb, upload, value } from "../ui";
+import { acciones, avisarVacios, avisoBorrador, busy, DANGER, esc, field, GHOST, guardarYRecargar, HINT, ICON_BUTTON, ICON_DANGER, iconSvg, isPending, LABEL, LARGOS, MAX_MB_FOTO, notify, selectField, state, subirFotos, thumb, upload, value } from "../ui";
 
 // `clave` sigue a la persona aunque cambie de lugar en la lista mientras sube su foto.
 interface Persona { clave: string; puesto: Puesto | null; nombre: string; presentacion: string; trayectoria: string[]; foto: Photo | null }
@@ -59,12 +59,12 @@ function tarjeta(p: Persona, i: number) {
       }),
     })
     : `<div><span class="${LABEL}">Puesto</span><p class="m-0 flex min-h-12 items-center"><span class="rounded-control px-2 py-[3px] text-[0.72rem] font-bold ${grupo ? "bg-primary text-accent" : "bg-disabled text-muted"}">${grupo ? "PREFECTO" : "Elige primero el tipo"}</span></p></div>`;
-  const quitar = `<div class="mt-auto flex justify-end"><button type="button" class="${ICON_BUTTON} text-error" data-quitar="${i}" aria-label="Quitar a ${esc(p.nombre || "esta persona")}">${iconSvg("trash", 18)}</button></div>`;
+  const quitar = `<div class="mt-auto flex justify-end"><button type="button" class="${ICON_DANGER}" data-quitar="${i}" aria-label="Quitar a ${esc(p.nombre || "esta persona")}">${iconSvg("trash", 18)}</button></div>`;
   const foto = `<div class="flex w-[160px] shrink-0 flex-col gap-2 max-mobile:w-full max-mobile:flex-row max-mobile:flex-wrap max-mobile:items-end">
     ${miniatura(p)}
     <div class="flex flex-col gap-2">
       ${upload(`persona-foto-${i}`, p.foto ? "Cambiar foto" : "Subir foto")}
-      ${p.foto ? `<button type="button" class="${GHOST}" data-quitar-foto="${i}">Quitar foto</button>` : ""}
+      ${p.foto ? `<button type="button" class="${DANGER}" data-quitar-foto="${i}">${iconSvg("trash", 18)} Quitar foto</button>` : ""}
     </div>
   </div>`;
   const campos = `${tipo}${puesto}${field({ id: `persona-nombre-${i}`, label: "Nombre", value: p.nombre, max: LARGOS.equipo.nombre , required: true })}`;

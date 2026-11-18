@@ -8,7 +8,6 @@ import type { PaginaCarlos } from "../../../../backend/src/contracts/acerca-de-c
 
 export interface ProposalModel {
   src: string;
-  // Importado en la semilla (se optimiza con astro:assets); URL si viene de la API.
   poster: ImageMetadata | string;
   alt: string;
 }
@@ -129,18 +128,6 @@ export interface WorkProgress {
 }
 
 export type AboutCarlosSlug = PaginaCarlos;
-export type CardColor = "rojo" | "azul";
-
-interface AboutCarlosCard {
-  title: string;
-  text: string;
-  image: UploadedPicture;
-  alt: string;
-  color: CardColor;
-  /** Punto de enfoque de la foto, en porcentaje. */
-  focus: { x: number; y: number };
-}
-
 interface AboutCarlosVideo {
   title: string;
   description: string | null;
@@ -150,19 +137,15 @@ interface AboutCarlosVideo {
 }
 
 export interface AboutCarlosPage {
-  cards: AboutCarlosCard[];
-  video: AboutCarlosVideo | null;
-  portrait: { image: UploadedPicture; alt: string } | null;
+  videos: AboutCarlosVideo[];
   interview: { question: string; answer: string }[];
   gallery: { image: UploadedPicture; alt: string; caption: string }[];
 }
 
 export interface TeamMember {
   name: string;
-  /** Su puesto de contracts/equipo.ts: el texto del cargo, el grupo y el lugar en la grilla. */
   post: (typeof PUESTOS)[number];
   image: UploadedPicture | null;
-  /** Presentación y trayectoria: solo las tiene el prefecto. */
   intro: string;
   career: string[];
 }
@@ -181,12 +164,13 @@ export interface MyTeam {
 
 export type HomeImage = { original: Original } | { photo: UploadedPicture };
 interface HomeSlideImage { image: HomeImage; alt: string }
+export type HomePiece = HomeSlideImage | { video: Omit<AboutCarlosVideo, "description"> };
 
 /** Siempre trae al menos un banner y una pieza; el del equipo puede venir vacío. */
 export interface HomeCarousels {
   banners: (HomeSlideImage & { mobile: UploadedPicture | null })[];
   portrait: HomeSlideImage;
   link: string;
-  pieces: HomeSlideImage[];
+  pieces: HomePiece[];
   team: { image: UploadedPicture; alt: string }[];
 }

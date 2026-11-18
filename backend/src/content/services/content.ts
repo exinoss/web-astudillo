@@ -5,10 +5,10 @@ import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { plainText } from '../../validation/texto';
 import { existingPhotos, saved, type SaveRow } from '../guardado';
-import type { BiographyItem, ChatAnswer, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
+import type { AboutCarlosPage, BiographyItem, ChatAnswer, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
 import { PARROQUIAS } from '../../contracts/parroquias';
 import { videoSource } from '../../contracts/video';
-import { PAGINAS_CARLOS } from '../../contracts/acerca-de-carlos';
+import { PAGINAS_CARLOS, videosDePagina } from '../../contracts/acerca-de-carlos';
 import { LARGOS } from '../../contracts/limites';
 import { TEXTOS, type TextKey } from '../../contracts/textos';
 import { listAboutCarlosPages } from './about-carlos';
@@ -208,13 +208,10 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
         return { id: last.id_publicacion, estado: last.estado };
       }
       // Mientras un video del borrador no se pueda ver en el sitio, no se publica nada (al guardar ya se comprueba).
-      const videos = Object.entries(current.acercaDeCarlos ?? {}).flatMap(([slug, page]) => {
-        const source = page.video && videoSource(page.video.enlace);
-        return source ? [{ slug, source }] : [];
-      });
+      const videos = contentVideos(current);
       const checks = await Promise.all(videos.map(v => checkVideo(v.source)));
       const blocked = videos.find((_, i) => checks[i]);
-      if (blocked) throw new ApiError(422, `No se publicó: el video de «${PAGE_NAMES[blocked.slug] ?? blocked.slug}» no se puede ver en el sitio. Cámbialo y vuelve a publicar.`);
+      if (blocked) throw new ApiError(422, `No se publicó: el video «${blocked.titulo}» de ${blocked.lugar} no se puede ver en el sitio. Cámbialo y vuelve a publicar.`);
       const [row] = await callPg<{ id_publicacion: number; estado: string }>(sql, 'publicationCreate', [actor.id_usuario, current]);
       if (!row) throw new ApiError(403, 'Permiso insuficiente');
       return { id: row.id_publicacion, estado: row.estado };
@@ -251,7 +248,24 @@ const stable = (value: unknown): string => JSON.stringify(value, (_, v) =>
   v && typeof v === 'object' && !Array.isArray(v) ? Object.fromEntries(Object.entries(v).sort(([a], [b]) => a.localeCompare(b))) : v);
 
 export const PAGE_NAMES: Record<string, string> = PAGINAS_CARLOS;
-const EMPTY_PAGE = { tarjetas: [], video: null, retrato: null, entrevista: [], galeria: [] };
+
+/** Videos de un contenido (borrador o publicación) con su clave de aviso, dónde están y su enlace reconocido. */
+export function contentVideos(s: Pick<Snapshot, 'acercaDeCarlos' | 'inicio'>) {
+  const videos = [
+    ...Object.entries(s.acercaDeCarlos ?? {}).flatMap(([slug, page]) => videosDePagina(page).map((v, i) =>
+      ({ clave: `video:${slug}:${i + 1}`, lugar: `«${PAGE_NAMES[slug] ?? slug}»`, titulo: v.titulo, enlace: v.enlace }))),
+    ...(s.inicio?.piezas.piezas ?? []).flatMap(p => ('video' in p ? [p.video] : [])).map((v, i) =>
+      ({ clave: `video:inicio:${i + 1}`, lugar: 'la portada', titulo: v.titulo, enlace: v.enlace })),
+  ];
+  return videos.flatMap(({ enlace, ...v }) => {
+    const source = videoSource(enlace);
+    return source ? [{ ...v, source }] : [];
+  });
+}
+const EMPTY_PAGE = { videos: [], entrevista: [], galeria: [] };
+/** Página con la forma de hoy: las publicaciones anteriores traen además `tarjetas`, `retrato` y un solo `video`. */
+const paginaActual = (p: AboutCarlosPage & { video?: AboutCarlosPage['videos'][number] | null }) =>
+  ({ videos: videosDePagina(p), entrevista: p.entrevista, galeria: p.galeria });
 
 /** Cambios entre dos versiones del contenido, descritos para el panel. */
 export function diff(before: Snapshot | null, after: Snapshot) {
@@ -273,7 +287,7 @@ export function diff(before: Snapshot | null, after: Snapshot) {
   }
   if (!same(before.chat ?? [], after.chat ?? [])) changes.push({ tipo: 'Chat', descripcion: 'Preguntas frecuentes' });
   for (const [slug, page] of Object.entries(after.acercaDeCarlos ?? {}))
-    if (!same(before.acercaDeCarlos?.[slug] ?? EMPTY_PAGE, page)) changes.push({ tipo: 'Página', descripcion: PAGE_NAMES[slug] ?? slug });
+    if (!same(paginaActual(before.acercaDeCarlos?.[slug] ?? EMPTY_PAGE), page)) changes.push({ tipo: 'Página', descripcion: PAGE_NAMES[slug] ?? slug });
   const team = before.miEquipo ?? emptyMyTeam();
   if (after.miEquipo) {
     if (!same(team.equipo, after.miEquipo.equipo)) changes.push({ tipo: 'Mi equipo', descripcion: 'Equipo' });

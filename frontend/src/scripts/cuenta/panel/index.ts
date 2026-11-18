@@ -74,8 +74,8 @@ function marcarPestanias(avisos: Aviso[]) {
 function prepararAviso(clave: string | null) {
   if (!clave) return;
   history.replaceState(null, "", location.pathname + location.hash);
-  const [tipo, valor] = clave.split(":");
-  if (tipo === "video") abrirVideo(valor);
+  const [tipo, valor, numero] = clave.split(":");
+  if (tipo === "video") abrirVideo(valor, Number(numero));
   else if (tipo === "alertas" || tipo === "sugerencias") filtrarParticipacion(tipo, valor);
 }
 

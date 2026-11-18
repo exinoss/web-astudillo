@@ -9,8 +9,12 @@ export const LABEL = "mb-[7px] block text-[0.82rem] font-bold";
 export const HINT = "m-0 mt-1.5 text-[0.72rem] leading-normal text-muted";
 export const GHOST =
   "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-control border border-base-300 bg-transparent px-[18px] text-[0.82rem] font-bold text-primary hover:bg-base-200";
-export const ICON_BUTTON =
-  "grid size-11 shrink-0 place-items-center rounded-control text-primary hover:bg-base-200 disabled:opacity-40 disabled:hover:bg-transparent";
+// El color va aparte: en el CSS compilado text-primary gana a text-error.
+const ICONO = "grid size-11 shrink-0 place-items-center rounded-control hover:bg-base-200 disabled:opacity-40 disabled:hover:bg-transparent";
+export const ICON_BUTTON = `${ICONO} text-primary`;
+export const ICON_DANGER = `${ICONO} text-error`;
+export const DANGER =
+  "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-control border border-error/40 bg-transparent px-[18px] text-[0.82rem] font-bold text-error hover:bg-error-soft";
 export const BOTON = "inline-flex min-h-11 items-center justify-center gap-2.5 rounded-control px-[18px] text-[0.82rem] font-bold whitespace-nowrap";
 export const PRINCIPAL = `${BOTON} bg-primary text-primary-content disabled:bg-disabled disabled:text-muted`;
 // El color del borde va aparte (`PESTANA_NORMAL`) para que una variante lo cambie sin competir con él.
@@ -33,7 +37,7 @@ export const subirBajar = (kind: string, i: number, total: number, name: string,
   <button type="button" class="${ICON_BUTTON}" data-move="${kind}" data-index="${i}" data-step="1" aria-label="Bajar ${name}" ${i === total - 1 || i < fijos ? "disabled" : ""}>${iconSvg("chevron", 18)}</button>`;
 /** Con `minimo`, quitar se desactiva si la lista no puede acortarse; los `fijos` primeros no se mueven ni se quitan. */
 export const moveButtons = (kind: string, i: number, total: number, name: string, minimo = 0, fijos = 0) => `${subirBajar(kind, i, total, name, fijos)}
-  ${i < fijos ? "" : `<button type="button" class="${ICON_BUTTON} text-error" data-remove="${kind}" data-index="${i}" aria-label="Quitar ${name}" ${total <= minimo ? "disabled" : ""}>${iconSvg("trash", 18)}</button>`}`;
+  ${i < fijos ? "" : `<button type="button" class="${ICON_DANGER}" data-remove="${kind}" data-index="${i}" aria-label="Quitar ${name}" ${total <= minimo ? "disabled" : ""}>${iconSvg("trash", 18)}</button>`}`;
 
 /** Campo de texto con etiqueta; `area` lo convierte en textarea. Todos los valores se escapan. */
 export function field(o: { id: string; label: string; value: string; max: number; area?: boolean; hint?: string; name?: string; required?: boolean }) {
