@@ -141,7 +141,7 @@ export function renderTeam(body: HTMLElement, rerender: () => void) {
     const archivo = (e.target as HTMLInputElement).files?.[0];
     if (!archivo) return;
     capturar(form);
-    void subirFotos([archivo], (foto) => {
+    void subirFotos(e.target as HTMLInputElement, [archivo], (foto) => {
       const persona = personas?.find((x) => x.clave === p.clave);
       if (!persona) {
         notify("Esa persona ya no está en la lista; la foto no se añadió.", true);

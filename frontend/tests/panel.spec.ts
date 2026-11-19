@@ -1,6 +1,7 @@
 import sharp from 'sharp';
 import { expect, test, type Locator } from './support/prueba';
 import { CODIGO_PANEL, CONTRASENIA_PANEL, mockPanelApi, panelData } from './support/panel-api';
+import { avisoNoInsertable } from '../../backend/src/contracts/video';
 
 test('un visitante sin permiso no ve el panel ni el enlace en su cuenta', async ({ page }) => {
   const data = panelData('coadmin');
@@ -143,7 +144,7 @@ test('el panel no se desborda de 320 px a escritorio', async ({ page }) => {
   await mockPanelApi(page, panelData('admin'));
   await page.goto('/cuenta/panel/');
   await expect(page.locator('#panel-pestanias')).toBeVisible();
-  for (const tab of ['propuestas', 'biografia', 'obras', 'acerca-de-carlos', 'textos', 'chat', 'participacion', 'publicaciones', 'usuarios'])
+  for (const tab of ['propuestas', 'biografia', 'obras', 'acerca-de-carlos', 'mi-equipo', 'textos', 'chat', 'participacion', 'publicaciones', 'usuarios'])
     for (const width of [320, 390, 768, 1440]) {
       await page.setViewportSize({ width, height: 900 });
       await page.goto(`/cuenta/panel/#${tab}`);
@@ -232,13 +233,16 @@ test('Guardar borrador sigue bloqueado mientras se guarda, aunque se siga escrib
 });
 
 const TIKTOK = 'https://www.tiktok.com/@scout2015/video/6718335390845095173';
-for (const { seccion, api, campo, preparar } of [
+for (const { seccion, nombre = seccion, api, campo, preparar, abrir } of [
   { seccion: 'biografia', api: '**/api/admin/contenido/biografia', campo: (s: Locator) => s.locator('#hito-titulo') },
   { seccion: 'obras', api: '**/api/admin/contenido/obras/**', campo: (s: Locator) => s.locator('#obra-nota') },
   { seccion: 'acerca-de-carlos', api: '**/api/admin/contenido/acerca-de-carlos/**', campo: (s: Locator) => s.locator('#video-titulo-0'),
     preparar: (d: ReturnType<typeof panelData>) => { d.draft.acercaDeCarlos['por-que-quiero-ser-alcalde'].videos = [{ titulo: 'Video', descripcion: null, enlace: TIKTOK, vertical: true, portada: null }]; } },
+  { seccion: 'mi-equipo', nombre: 'mi equipo', api: '**/api/admin/contenido/mi-equipo/equipo', campo: (s: Locator) => s.locator('#persona-nombre-0') },
+  { seccion: 'mi-equipo', nombre: 'parroquias', api: '**/api/admin/contenido/mi-equipo/parroquias/**', campo: (s: Locator) => s.locator('#parroquia-texto'),
+    abrir: (s: Locator) => s.getByRole('button', { name: 'Parroquias', exact: true }).click() },
 ]) {
-  test(`${seccion}: un solo guardado aunque se escriba mientras responde`, async ({ page }) => {
+  test(`${nombre}: un solo guardado aunque se escriba mientras responde`, async ({ page }) => {
     const data = panelData('admin');
     preparar?.(data);
     await mockPanelApi(page, data);
@@ -255,6 +259,7 @@ for (const { seccion, api, campo, preparar } of [
     });
     await page.goto(`/cuenta/panel/#${seccion}`);
     const section = page.locator(`#seccion-${seccion}`);
+    await abrir?.(section);
     const guardar = section.getByRole('button', { name: 'Guardar borrador' });
     await campo(section).fill('Primer cambio de prueba');
     await guardar.click();
@@ -326,14 +331,18 @@ test('participación: publicar, mostrar el nombre y borrar con la contraseña', 
   expect(data.alertas[0].borrada).toBe(true);
 });
 
-test('redes sociales: WhatsApp acepta el enlace de la comunidad', async ({ page }) => {
+test('redes sociales: WhatsApp acepta el enlace de la comunidad e Instagram se añade, aunque empiece vacío', async ({ page }) => {
   const data = panelData('admin');
   await mockPanelApi(page, data);
   await page.goto('/cuenta/panel/#textos');
+  const instagram = page.getByLabel('Instagram (opcional)');
+  await expect(instagram).toHaveValue('');
+  await instagram.fill('https://www.instagram.com/carlosastudillo/');
   await page.locator('#red-whatsapp').fill('https://chat.whatsapp.com/AbCdEf1234567890xyZ?mode=r_c');
   await page.locator('#redes-form').getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.draft.textos['enlace.whatsapp']).toBe('https://chat.whatsapp.com/AbCdEf1234567890xyZ');
+  expect(data.draft.textos['enlace.instagram']).toBe('https://www.instagram.com/carlosastudillo/');
   await expect(page.locator('#red-whatsapp')).toHaveValue('https://chat.whatsapp.com/AbCdEf1234567890xyZ');
 });
 
@@ -393,19 +402,7 @@ test('chat: el enlace se elige por el nombre de la página y se ve como quedará
   await expect(page.locator('#seccion-chat [data-probar]').first()).toBeHidden();
 });
 
-test('redes: Instagram se añade desde el panel y vacío no da error', async ({ page }) => {
-  const data = panelData('admin');
-  await mockPanelApi(page, data);
-  await page.goto('/cuenta/panel/#textos');
-  const instagram = page.getByLabel('Instagram (opcional)');
-  await expect(instagram).toHaveValue('');
-  await instagram.fill('https://www.instagram.com/carlosastudillo/');
-  await page.locator('#redes-form').getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
-  expect(data.draft.textos['enlace.instagram']).toBe('https://www.instagram.com/carlosastudillo/');
-});
-
-test('obras: la foto subida se ve al momento y se guarda con su pie', async ({ page }) => {
+test('obras: la foto subida se ve al momento, no se puede guardar mientras sube y se guarda con su pie', async ({ page }) => {
   const data = panelData('coadmin');
   await mockPanelApi(page, data);
   // Una red lenta: mientras sube, el loader cubre las secciones.
@@ -416,14 +413,31 @@ test('obras: la foto subida se ve al momento y se guarda con su pie', async ({ p
   await page.locator('#obra-fotos').setInputFiles('src/assets/pieza-respeto-cuadrada.jpg');
   const carga = page.locator('#panel-secciones [role="status"]');
   await expect(carga).toContainText('Subiendo…');
+  const guardar = section.getByRole('button', { name: 'Guardar borrador' });
+  await page.locator('#obra-nota').fill('Avance de la zanja');
+  await expect(guardar).toBeDisabled();
   await expect(page.locator('#panel-estado')).toContainText('Fotos subidas');
   await expect(carga).toHaveCount(0);
+  await expect(guardar).toBeEnabled();
   await expect(section.locator('img')).toHaveCount(2);
   await expect.poll(() => section.locator('img').nth(1).evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
   await page.locator('#foto-pie-1').fill('Zanja abierta');
   await section.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.draft.obras[0].fotos.map(f => [f.idMedio, f.pie])).toEqual([[2, 'Tubería instalada'], [90, 'Zanja abierta']]);
+});
+
+test('obras: una foto elegida mientras se guarda no se sube y avisa', async ({ page }) => {
+  const data = panelData('coadmin');
+  await mockPanelApi(page, data);
+  await page.route('**/api/admin/contenido/obras/**', async route => { await new Promise(r => setTimeout(r, 1500)); await route.fallback(); });
+  await page.goto('/cuenta/panel/#obras');
+  await page.locator('#obra-nota').fill('Avance de la zanja');
+  await page.locator('#seccion-obras').getByRole('button', { name: 'Guardar borrador' }).click();
+  await page.locator('#obra-fotos').setInputFiles('src/assets/pieza-respeto-cuadrada.jpg');
+  await expect(page.locator('#panel-estado')).toHaveText('Espera a que termine de guardarse y vuelve a elegir la foto.');
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
+  expect(data.uploads).toBe(0);
 });
 
 test('propuestas y obras: cambiar de elemento y volver conserva lo escrito sin guardar', async ({ page }) => {
@@ -493,14 +507,19 @@ test('fotos del panel: se rechaza antes de subir una de más de 40 megapíxeles 
   expect(subidas).toBe(1);
 });
 
-test('biografía: el año solo acepta cifras y Publicaciones es la última pestaña', async ({ page }) => {
+test('Publicaciones es la última pestaña del panel', async ({ page }) => {
+  await mockPanelApi(page, panelData('admin'));
+  await page.goto('/cuenta/panel/');
+  await expect(page.getByRole('tab').last()).toHaveText('Publicaciones');
+  await expect(page.getByRole('tab').nth(-2)).toHaveText('Usuarios');
+});
+
+test('biografía: el año solo acepta cifras', async ({ page }) => {
   const data = panelData('admin');
   await mockPanelApi(page, data);
   await page.goto('/cuenta/panel/#biografia');
   const year = page.locator('#hito-anios');
   await expect(year).toHaveValue('1985');
-  const tabs = await page.getByRole('tab').allTextContents();
-  expect(tabs.slice(-2).map(t => t.trim())).toEqual(['Usuarios', 'Publicaciones']);
   await year.fill('');
   await year.pressSequentially('19xx9a5');
   await expect(year).toHaveValue('1995');
@@ -572,7 +591,7 @@ test('si falla la red al filtrar usuarios o al paginar publicaciones, el panel l
 
 test('si la plataforma no deja mostrar el video, no se guarda y el aviso aparece junto al enlace', async ({ page }) => {
   await mockPanelApi(page, panelData('coadmin'));
-  const aviso = 'Facebook no permite mostrar este video en otros sitios, normalmente por la música. Elige otro, quítale la música o súbelo a YouTube.';
+  const aviso = avisoNoInsertable('facebook', 'bloqueado');
   let intentos = 0;
   await page.route(/\/api\/admin\/contenido\/acerca-de-carlos\//, (r) => {
     if (r.request().method() !== 'PUT') return r.fallback();
@@ -594,7 +613,7 @@ test('si la plataforma no deja mostrar el video, no se guarda y el aviso aparece
   await page.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(page.locator('#panel-estado')).toHaveText('Revisa el enlace del video 1.');
   await expect(page.locator('[data-acerca-seccion="video"]').first()).toHaveAttribute('aria-pressed', 'true');
-  await expect(page.locator('#video-detectado-0')).toHaveText(`Video 1: ${aviso}`.replace('Video 1: ', ''));
+  await expect(page.locator('#video-detectado-0')).toHaveText(aviso);
   await expect(enlace).toHaveAttribute('aria-invalid', 'true');
   expect(intentos).toBe(1);
 

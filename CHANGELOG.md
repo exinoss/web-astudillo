@@ -21,7 +21,7 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - Panel, videos: al cambiar el enlace de un video, su portada ya no se queda con la imagen del video anterior. Al pegar un enlace se usa la imagen del video si su plataforma la ofrece, y al volver a un enlace anterior vuelve su imagen.
 - Panel y modo edición: los botones para quitar se ven en rojo: los de las listas (preguntas, fotos, banners, personas) y «Quitar foto» de Biografía y Mi equipo y «Quitar» de la imagen para celular de un banner, que además llevan un tacho.
 - Portada, modo edición: el carrusel principal ya no cambia de diapositiva mientras se edita uno de sus textos.
-- Portada, modo edición: la descripción del retrato de la segunda diapositiva que se escribe mientras sube la imagen ya no se borra al terminar la subida.
+- Portada (modo edición) y panel (Biografía, Obras, Mi equipo, parroquias y páginas de Carlos): mientras sube una foto, «Guardar borrador» sigue desactivado aunque se escriba, así ya no se guarda sin la foto nueva. Si se elige una foto mientras se guarda, se pide esperar y volver a elegirla. En la portada, la descripción del retrato escrita durante la subida ya no se borra.
 
 ### Changed
 

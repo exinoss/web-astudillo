@@ -45,7 +45,7 @@ export function renderParishes(body: HTMLElement, rerender: () => void) {
     if (!archivos.length) return;
     capturar(form);
     const destino = elegida;
-    void subirFotos(archivos, (foto) => {
+    void subirFotos(e.target as HTMLInputElement, archivos, (foto) => {
       const abierto = document.querySelector<HTMLFormElement>("#parroquia-form");
       if (destino === elegida && abierto) capturar(abierto);
       trabajo[destino].fotos.push({ foto, alt: "" });

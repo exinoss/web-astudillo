@@ -100,7 +100,7 @@ function bind(section: HTMLElement) {
     if (!files.length) return;
     capture(form);
     const destino = selected;
-    void subirFotos(files, (foto) => {
+    void subirFotos(e.target as HTMLInputElement, files, (foto) => {
       const abierto = document.querySelector<HTMLFormElement>("#obra-form");
       if (destino === selected && abierto) capture(abierto);
       trabajo[destino].fotos.push({ ...foto, pie: "" });

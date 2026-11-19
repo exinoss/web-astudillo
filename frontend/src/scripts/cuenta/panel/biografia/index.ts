@@ -125,7 +125,7 @@ function bind(section: HTMLElement) {
     if (!file) return;
     capture(form);
     const clave = items![selected].clave;
-    void subirFotos([file], (foto) => {
+    void subirFotos(e.target as HTMLInputElement, [file], (foto) => {
       const destino = items?.findIndex((h) => h.clave === clave) ?? -1;
       if (destino < 0) {
         notify("El hito ya no existe; la foto no se añadió.", true);
