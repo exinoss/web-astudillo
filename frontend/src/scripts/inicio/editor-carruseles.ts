@@ -10,7 +10,7 @@ import { esc } from "../../lib/comun/html";
 import { iconSvg } from "../../lib/comun/iconos";
 import { campoEnlace, campoFormato, campoPortada, comprobarEnlace } from "../../lib/cuenta/panel/campos-video";
 import { piezaVideo } from "../../lib/inicio/pieza-video";
-import { bloquearMientras, vigilarCambios } from "../../lib/comun/cambios";
+import { AVISO_GUARDANDO, bloquearMientras, vigilarCambios } from "../../lib/comun/cambios";
 import { desmarcarAlEscribir, marcarVacios } from "../../lib/comun/campos";
 import { BOLA, DANGER, enlazarLista, field, GHOST, HINT, ICON_BUTTON, INTERRUPTOR, LABEL, moveButtons, PISTA, PRINCIPAL, thumb, upload } from "../../lib/cuenta/panel/campos";
 import { opcionesDePagina } from "../../lib/cuenta/panel/paginas";
@@ -242,7 +242,7 @@ function avisoEnlace(a: NonNullable<typeof abierto>) {
 async function subirAlEditor(archivos: File[], horizontales = false) {
   const subidas: Awaited<ReturnType<typeof adminApi.upload>>[] = [];
   // Con el bloqueo de `bloquearMientras`, escribir durante la subida no reactiva «Guardar» (`vigilarCambios` lo respeta).
-  await bloquearMientras(guardar, async () => {
+  const empezo = await bloquearMientras(guardar, async () => {
     subiendo = true;
     abierto?.cuerpo.querySelectorAll<HTMLInputElement>("input[type=file]").forEach((x) => { x.disabled = true; });
     const terminarCarga = mostrarCarga(ventana, "Subiendo…");
@@ -260,6 +260,7 @@ async function subirAlEditor(archivos: File[], horizontales = false) {
       terminarCarga();
     }
   });
+  if (!empezo) opciones.avisar(AVISO_GUARDANDO, true);
   return subidas;
 }
 

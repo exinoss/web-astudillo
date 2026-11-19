@@ -1,4 +1,4 @@
-import { expect, test } from './support/prueba';
+import { expect, test, type Page } from './support/prueba';
 import { mockPanelApi, panelData } from './support/panel-api';
 
 test('la vista previa espera a que el borrador esté listo y abre la página pedida', async ({ page }) => {
@@ -41,15 +41,14 @@ test('cada pestaña abre la vista previa de su página, siempre en la misma pest
   data.pending = [{ tipo: 'Texto', descripcion: 'pie.lema' }];
   await mockPanelApi(page, data);
   await page.context().route('**/cuenta/vista-previa/**', route => route.fulfill({ contentType: 'text/html', body: '<p>vista previa</p>' }));
-  let preview;
+  let preview: Page | undefined;
   for (const [tab, ruta] of [['biografia', '/acerca-de-nosotros/biografia/'], ['obras', '/ciudadania/obras-en-ejecucion/'],
     ['chat', '/ciudadania/chat/'], ['propuestas', '/propuestas/agua-potable/']]) {
     await page.goto(`/cuenta/panel/#${tab}`);
     const button = page.locator(`#seccion-${tab}`).getByRole('button', { name: 'Vista previa del borrador' });
-    const opened = context.waitForEvent('page', { timeout: 2000 }).catch(() => null);
-    await button.click();
-    preview = (await opened) ?? preview;
-    await preview!.waitForURL(`**/cuenta/vista-previa/?ruta=${encodeURIComponent(ruta)}`);
+    if (preview) await button.click();
+    else [preview] = await Promise.all([context.waitForEvent('page'), button.click()]);
+    await preview.waitForURL(`**/cuenta/vista-previa/?ruta=${encodeURIComponent(ruta)}`);
   }
   expect(context.pages()).toHaveLength(2);
 });

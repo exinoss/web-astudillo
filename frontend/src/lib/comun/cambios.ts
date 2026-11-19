@@ -22,10 +22,12 @@ export function vigilarCambios(formulario: HTMLElement, boton: HTMLButtonElement
   return comprobar;
 }
 
-/** Ejecuta `accion` con el botón bloqueado e ignora los clics que llegan mientras tanto. */
+export const AVISO_GUARDANDO = "Espera a que termine de guardarse y vuelve a elegir la foto.";
+
+/** Ejecuta `accion` con el botón bloqueado e ignora los clics que llegan mientras tanto; devuelve si la ejecutó. */
 export async function bloquearMientras(boton: HTMLButtonElement, accion: () => Promise<void>) {
   const k = clave(boton);
-  if (enCurso.has(k)) return;
+  if (enCurso.has(k)) return false;
   enCurso.add(k);
   boton.disabled = true;
   try {
@@ -40,6 +42,7 @@ export async function bloquearMientras(boton: HTMLButtonElement, accion: () => P
       else vigente.disabled = vigente.dataset.bloqueo !== undefined;
     }
   }
+  return true;
 }
 
 /** Ejecuta `accion` con el botón bloqueado y el loader sobre `zona`. */

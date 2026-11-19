@@ -5,7 +5,7 @@ import type { Profile } from "../../../lib/data/auth-repository";
 import { adminApi, type Draft, type Photo } from "../../../lib/data/http/admin-api";
 import { esc } from "../../../lib/comun/html";
 import { iconSvg } from "../../../lib/comun/iconos";
-import { bloquearMientras } from "../../../lib/comun/cambios";
+import { AVISO_GUARDANDO, bloquearMientras } from "../../../lib/comun/cambios";
 import { ACEPTA_FOTOS, FORMATOS_FOTO, MAX_MB_FOTO } from "../../../../../backend/src/contracts/media";
 import { LARGOS } from "../../../../../backend/src/contracts/limites";
 import { GHOST } from "../../../lib/cuenta/panel/campos";
@@ -111,7 +111,7 @@ export function syncPublishButton() {
 export const isPending = (tipo: string, descripcion: string) =>
   state.pending.some((c) => c.tipo === tipo && c.descripcion === descripcion);
 
-/** Ejecuta la acción con el botón bloqueado y el error como aviso; con `carga`, el loader cubre las secciones. */
+/** Ejecuta la acción con el botón bloqueado y el error como aviso; con `carga`, el loader cubre las secciones. Devuelve si la ejecutó. */
 export async function busy(button: HTMLButtonElement | null, action: () => Promise<void>, carga?: string) {
   const run = async () => {
     const terminarCarga = carga ? mostrarCarga(document.querySelector<HTMLElement>("#panel-secciones")!, carga) : () => {};
@@ -125,12 +125,14 @@ export async function busy(button: HTMLButtonElement | null, action: () => Promi
       terminarCarga();
     }
   };
-  await (button ? bloquearMientras(button, run) : run());
+  if (button) return bloquearMientras(button, run);
+  await run();
+  return true;
 }
 
 let subiendo = false;
-/** Sube las fotos una a una (una sola subida a la vez en el panel); `alSubir` devuelve false para detenerse. Devuelve si subieron todas. */
-export async function subirFotos(archivos: File[], alSubir: (foto: Photo) => boolean | void) {
+/** Sube las fotos de `campo` una a una (una sola subida a la vez en el panel); `alSubir` devuelve false para detenerse. Devuelve si subieron todas. */
+export async function subirFotos(campo: HTMLInputElement, archivos: File[], alSubir: (foto: Photo) => boolean | void) {
   if (subiendo) {
     notify("Espera a que termine la subida en curso.", true);
     return false;
@@ -138,13 +140,19 @@ export async function subirFotos(archivos: File[], alSubir: (foto: Photo) => boo
   subiendo = true;
   let todas = false;
   try {
-    await busy(null, async () => {
+    // Ocupa el bloqueo del envío de su formulario: guardar a mitad de la subida dejaría fuera la foto nueva.
+    const empezo = await busy(campo.form?.querySelector<HTMLButtonElement>("button[type=submit]") ?? null, async () => {
       for (const [i, archivo] of archivos.entries()) {
         notify(archivos.length > 1 ? `Subiendo foto ${i + 1} de ${archivos.length}…` : "Subiendo la foto…");
         if (alSubir(await adminApi.upload(archivo)) === false) return;
       }
       todas = true;
     }, "Subiendo…");
+    if (!empezo) {
+      // Sin vaciarlo, elegir el mismo archivo otra vez no dispara `change`.
+      campo.value = "";
+      notify(AVISO_GUARDANDO, true);
+    }
   } finally {
     subiendo = false;
   }

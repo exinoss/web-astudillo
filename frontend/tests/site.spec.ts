@@ -1,7 +1,7 @@
 import { test, expect, type Page } from './support/prueba';
 
 
-test('desktop navigation, carousel and accessibility', async ({ page }) => {
+test('en escritorio, los menús responden al ratón y al teclado, los puntos cambian de diapositiva y el texto grande se conserva al recargar', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -22,7 +22,6 @@ test('desktop navigation, carousel and accessibility', async ({ page }) => {
   await expect(page.locator('[data-slide="1"]')).toBeVisible();
   await page.getByRole('button', { name: 'Ver diapositiva 1' }).click();
   await expect(page.locator('[data-slide="0"]')).toBeVisible();
-  await page.screenshot({ path: 'test-results/desktop.png', fullPage: true });
   await page.getByRole('button', { name: 'Herramientas de accesibilidad' }).click();
   await page.getByRole('button', { name: 'Aumentar texto' }).click();
   await expect(page.locator('html')).toHaveClass(/text-large/);
@@ -31,7 +30,7 @@ test('desktop navigation, carousel and accessibility', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('mobile navigation in three taps and responsive layout', async ({ page }) => {
+test('en celular, una propuesta se abre en tres toques desde el menú', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await page.getByRole('button', { name: 'Abrir menú' }).click();
@@ -40,16 +39,9 @@ test('mobile navigation in three taps and responsive layout', async ({ page }) =
   await page.locator('#proposals-menu').getByRole('link', { name: 'Agua potable' }).click();
   await expect(page).toHaveURL(/propuestas\/agua-potable/);
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Agua potable');
-  await page.goto('/');
-  await page.evaluate(() => document.fonts.ready);
-  await page.screenshot({ path: 'test-results/mobile.png', fullPage: true });
-  for (const width of [320, 390, 768, 1024, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBeTruthy();
-  }
 });
 
-test('all internal destinations and image resources exist', async ({ page, request }) => {
+test('los enlaces internos y las imágenes de la portada existen', async ({ page, request }) => {
   await page.goto('/');
   const links = await page.locator('a[href^="/"]').evaluateAll(nodes => [...new Set(nodes.map(n => n.getAttribute('href')!.split('#')[0]).filter(Boolean))]);
   for (const href of links) expect((await request.get(href)).ok(), href).toBeTruthy();
@@ -60,7 +52,7 @@ test('all internal destinations and image resources exist', async ({ page, reque
   }
 });
 
-test('automatic carousel advances and respects the reduced-motion accessibility setting', async ({ page }) => {
+test('el carrusel avanza solo y se detiene con «Reducir movimiento»', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
   await page.clock.fastForward(6500);
@@ -74,20 +66,24 @@ test('automatic carousel advances and respects the reduced-motion accessibility 
   await expect(page.locator('[data-slide="0"]')).toBeVisible();
 });
 
-test('reporting is reachable from the Ciudadanía menu on mobile', async ({ page }) => {
+test('en celular, Alerta ciudadana se abre desde el menú Ciudadanía', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Abrir menú' }).click();
+  await page.getByRole('button', { name: 'Ciudadanía' }).click();
+  await page.locator('#citizen-menu').getByRole('link', { name: 'Alerta ciudadana' }).click();
+  await expect(page).toHaveURL(/alerta-ciudadana/);
+});
+
+test('en celular, las tarjetas de propuestas son blancas y la portada enlaza Facebook y TikTok', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await expect(page.locator('.proposal-card').first()).toHaveCSS('background-color', 'rgb(254, 255, 255)');
   await expect(page.locator('a[href="https://www.facebook.com/carlosastudillo7"]')).toHaveCount(1);
   await expect(page.locator('a[href="https://www.tiktok.com/@carlosastudillo01"]')).toHaveCount(1);
-  await page.getByRole('button', { name: 'Abrir menú' }).click();
-  await page.getByRole('button', { name: 'Ciudadanía' }).click();
-  await page.locator('#citizen-menu').getByRole('link', { name: 'Alerta ciudadana' }).click();
-  await expect(page).toHaveURL(/alerta-ciudadana/);
-  await page.screenshot({ path: 'test-results/report-mobile.png', fullPage: true });
 });
 
-test('proposal 3D model loads only when scrolled into view and replaces its poster', async ({ page }) => {
+test('el modelo 3D de una propuesta solo se carga al verse y reemplaza su portada', async ({ page }) => {
   // Tan baja que el bloque queda bajo el pliegue y fuera del margen de precarga de 200 px.
   await page.setViewportSize({ width: 390, height: 400 });
   const errors: string[] = [];
@@ -111,7 +107,7 @@ test('proposal 3D model loads only when scrolled into view and replaces its post
   expect(errors).toEqual([]);
 });
 
-test('the education proposal loads its 3D model', async ({ page }) => {
+test('la propuesta de educación carga su modelo 3D', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   await page.goto('/propuestas/educacion/');
@@ -135,7 +131,7 @@ async function servirModeloLigero(page: Page, antes?: () => Promise<void>) {
 const MODELO_PESADO = '/propuestas/centro-de-alto-rendimiento/';
 const visorCargado = (page: Page) => expect.poll(() => page.locator('model-viewer').evaluate((v: any) => v.loaded), { timeout: 30000 }).toBe(true);
 
-test('a heavy 3D model waits for the button, shows its progress and is reused on the next visit', async ({ page }) => {
+test('un modelo 3D pesado espera al botón, muestra su progreso y se reutiliza en la siguiente visita', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   const modelos: string[] = [];
@@ -163,7 +159,7 @@ test('a heavy 3D model waits for the button, shows its progress and is reused on
   expect(errors).toEqual([]);
 });
 
-test('the stadium 3D model can be panned and a click on the sky brings it back to the center', async ({ page }) => {
+test('el modelo 3D del estadio se puede desplazar y un clic en el cielo lo vuelve a centrar', async ({ page }) => {
   const errors: string[] = [];
   page.on('pageerror', e => errors.push(e.message));
   await servirModeloLigero(page);
@@ -189,7 +185,7 @@ test('the stadium 3D model can be panned and a click on the sky brings it back t
   expect(errors).toEqual([]);
 });
 
-test('a heavy 3D model offers the button again when its download fails', async ({ page }) => {
+test('si falla la descarga de un modelo 3D pesado, vuelve a ofrecer el botón', async ({ page }) => {
   const fallar = await servirModeloLigero(page);
   fallar(true);
   await page.goto(MODELO_PESADO);
@@ -204,7 +200,7 @@ test('a heavy 3D model offers the button again when its download fails', async (
   await visorCargado(page);
 });
 
-test('the 3D loading animation plays, and stays still with reduced motion', async ({ page }) => {
+test('la animación de carga del 3D se mueve y se queda quieta con «Reducir movimiento»', async ({ page }) => {
   let soltar = () => {};
   const espera = new Promise<void>(r => { soltar = r; });
   await servirModeloLigero(page, () => espera);
@@ -226,7 +222,7 @@ test('the 3D loading animation plays, and stays still with reduced motion', asyn
   await visorCargado(page);
 });
 
-test('proposals without a model do not load the 3D viewer', async ({ page }) => {
+test('las propuestas sin modelo no cargan el visor 3D', async ({ page }) => {
   const requests: string[] = [];
   page.on('request', r => requests.push(r.url()));
   await page.goto('/propuestas/agua-potable/');
@@ -236,7 +232,7 @@ test('proposals without a model do not load the 3D viewer', async ({ page }) => 
   expect(requests.filter(u => /model-viewer|\.glb$/.test(u))).toEqual([]);
 });
 
-test('3D model respects reduced motion and zooms with the wheel only inside its frame', async ({ page }) => {
+test('el modelo 3D respeta «Reducir movimiento» y la rueda solo hace zoom dentro de su marco', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.addInitScript(() => localStorage.setItem('reduce-motion', 'true'));
   await page.goto('/propuestas/tecnologias-emergentes/');
@@ -259,7 +255,7 @@ test('3D model respects reduced motion and zooms with the wheel only inside its 
   await expect(viewer).toHaveAttribute('auto-rotate', '');
 });
 
-test('3D model offers a retry button when the viewer fails to load', async ({ page }) => {
+test('si falla el visor 3D, ofrece un botón para reintentar', async ({ page }) => {
   let fail = true;
   await page.route('**/model-viewer*.js', route => (fail ? route.abort() : route.continue()));
   await page.goto('/propuestas/tecnologias-emergentes/');

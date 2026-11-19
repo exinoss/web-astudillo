@@ -19,7 +19,7 @@ export function onFiles(input: HTMLInputElement | null, limit: number, use: (fot
     if (!files.length) return;
     capture();
     const page = editor.page;
-    void subirFotos(files, (foto) => {
+    void subirFotos(input, files, (foto) => {
       // Si mientras subía se cambió de página, la foto no se añade a la otra.
       if (editor.page !== page) {
         notify("Cambiaste de página mientras se subía la foto; vuelve a subirla.", true);
