@@ -7,7 +7,7 @@ import { prepararAceptacion } from '../../lib/ciudadania/participacion/aceptacio
 import { MIN_MENSAJE_SUGERENCIA } from "../../../../backend/src/contracts/participacion";
 import { cuadroIcono, filaHistorial, historial } from "../../lib/ciudadania/participacion/historial";
 import { esc } from "../../lib/comun/html";
-import type { SentSuggestion } from "../../lib/data/types";
+import type { Published, SentSuggestion } from "../../lib/data/types";
 
 const form = document.querySelector<HTMLFormElement>("#sugerencia-form")!;
 const temas = form.querySelector<HTMLFieldSetElement>("#sugerencia-tema")!;
@@ -15,14 +15,19 @@ const mensaje = form.querySelector<HTMLTextAreaElement>("#sugerencia-mensaje")!;
 const estado = form.querySelector<HTMLElement>("#sugerencia-estado")!;
 prepararAceptacion(form);
 const TEMAS = JSON.parse(form.dataset.temas!) as { valor: string; nombre: string; icono: string }[];
-const cargarHistorial = historial(document.querySelector<HTMLElement>("#historial")!, {
-  cargar: () => suggestionRepository.mine(),
-  vacio: "Aún no has enviado sugerencias.",
+const cargarHistorial = historial<SentSuggestion, Published<SentSuggestion>>(document.querySelector<HTMLElement>("#historial-titulo")!.parentElement!, {
+  publicas: () => suggestionRepository.published(),
+  mias: () => suggestionRepository.mine(),
+  vacio: { publicas: "Aún no hay sugerencias. Comparte la primera.", mias: "Aún no has enviado sugerencias." },
+  ayuda: { publicas: "Lo que proponen los vecinos y en qué estado está.", mias: "Las últimas que enviaste y en qué estado están." },
   icono: "idea",
   sinSesion: "Inicia sesión para ver tus sugerencias.",
-  fila: (s: SentSuggestion) => {
+  fila: (s, vista) => {
     const tema = TEMAS.find((t) => t.valor === s.tema) ?? TEMAS.at(-1)!;
-    return filaHistorial({ miniatura: cuadroIcono(tema.icono), titulo: esc(tema.nombre), estado: s.estado, texto: s.mensaje, creadoEn: s.creadoEn });
+    return filaHistorial({
+      miniatura: cuadroIcono(tema.icono), titulo: esc(tema.nombre), estado: s.estado, texto: s.mensaje, creadoEn: s.creadoEn,
+      publicada: vista === "publicas" ? s as Published<SentSuggestion> : undefined,
+    });
   },
 });
 let idempotencia = "";
@@ -69,7 +74,7 @@ form.addEventListener("submit", (e) => {
       idempotencia = "";
       form.reset();
       form.querySelector<HTMLElement>("#sugerencia-recuperada")!.hidden = true;
-      showStatus(estado, "Gracias por compartir tu idea; sigue su estado en «Tus sugerencias».");
+      showStatus(estado, "Gracias por compartir tu idea; sigue su estado en «Mías».");
       void cargarHistorial();
     } catch (error) {
       showStatus(estado, errorText(error), true);

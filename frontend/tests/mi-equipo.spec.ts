@@ -128,7 +128,7 @@ test('al pulsar una foto se abre en grande en esa misma foto y al cerrar vuelve 
   await page.goto('/mi-equipo/');
   await abrirParroquias(page, 'Alto Tambo');
   const carrusel = page.getByRole('region', { name: 'Fotos de Alto Tambo' });
-  await carrusel.getByRole('button', { name: 'Foto siguiente' }).click();
+  await carrusel.getByRole('button', { name: 'Foto siguiente' }).press('Enter');
   const foto = carrusel.getByRole('button', { name: 'Ampliar: Foto de prueba 2' });
   await foto.click();
   const visor = page.getByRole('dialog', { name: 'Fotos de Alto Tambo' });

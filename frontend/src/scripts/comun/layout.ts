@@ -131,6 +131,21 @@ const setAccess = (open: boolean) => {
 
 accessToggle.addEventListener("click", () => setAccess(Boolean(access.hidden)));
 
+const whatsapp = document.querySelector<HTMLElement>(".whatsapp-flotante");
+if (whatsapp) {
+  const banner = document.querySelector<HTMLElement>("#contenido section");
+  /** Muestra el botón de WhatsApp al pasar el primer banner (o una pantalla), al final y en páginas sin desplazamiento. */
+  const syncWhatsapp = () => {
+    const limite = Math.min(banner ? banner.getBoundingClientRect().bottom + window.scrollY : Infinity, window.innerHeight);
+    const sinScroll = document.documentElement.scrollHeight <= window.innerHeight + 4;
+    const alFinal = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+    whatsapp.classList.toggle("is-visible", sinScroll || alFinal || window.scrollY >= limite);
+  };
+  window.addEventListener("scroll", syncWhatsapp, { passive: true });
+  window.addEventListener("resize", syncWhatsapp, { passive: true });
+  syncWhatsapp();
+}
+
 const backToTop = document.querySelector<HTMLButtonElement>(".back-to-top");
 if (backToTop) {
   // En móvil el botón se ancla al pie por CSS (ver Layout.astro).

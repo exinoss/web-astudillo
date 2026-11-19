@@ -8,6 +8,10 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ### Added
 
+- Sugerencias y Alerta ciudadana: la caja del historial tiene dos pestañas, «Públicas» y «Mías». En «Públicas» se ven las sugerencias de todos los vecinos y las alertas que el equipo publicó, con el nombre de quien la envió (o «Anónimo») y la marca «Tuya» en las propias. Se ven también sin iniciar sesión.
+- Panel, Participación: interruptores «Publicada en el sitio» (alertas) y «Mostrar el nombre», y un botón rojo para borrar una alerta o sugerencia, que pide tu contraseña.
+- Botón flotante de WhatsApp abajo a la izquierda en las páginas públicas; aparece al pasar el primer banner.
+- Panel, Redes sociales: WhatsApp acepta también el enlace de una comunidad (https://chat.whatsapp.com/…). En la portada, la tarjeta dice entonces «Únete a la comunidad».
 - «Por qué quiero ser alcalde» y «Conoce más sobre mí»: hasta seis videos por página, uno debajo de otro, cada uno con su título y su texto.
 - Portada: el carrusel de piezas admite también videos de Facebook, TikTok, YouTube o Vimeo, mezclados con las imágenes (hasta 4 imágenes y 4 videos). Cada video se ve con su portada y su título, y se reproduce dentro del carrusel; mientras suena, el carrusel no avanza. Al pegar el enlace se usa la imagen del video como portada.
 - Portada, modo edición: el botón de la segunda diapositiva («Conoce a Carlos») se puede cambiar. Su texto se edita pulsándolo, y en «Cambiar imágenes» se elige a dónde lleva: una página del sitio o un enlace de Facebook, TikTok, Instagram o YouTube, que se abre en otra pestaña. Sin enlace, el botón se ve apagado.
@@ -20,6 +24,10 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ### Changed
 
+- Obras en ejecución, propuestas y Mi equipo: el pie de cada foto ya no la tapa. Si es largo, la franja azul de abajo se alarga y la foto queda donde estaba. En celular las fotos se pasan deslizando, sin flechas.
+- Galerías: al ampliar una foto, su pie ocupa el ancho de la foto; en celular se muestran tres líneas y «Ver más…» abre el texto completo.
+- Panel: los pies y las descripciones de las fotos admiten hasta 300 caracteres (antes 200).
+- Términos y condiciones, Política de privacidad y casilla de aceptación: las sugerencias se publican con tu nombre y las alertas que el equipo apruebe se publican sin él salvo que el equipo elija mostrarlo. Antes del próximo envío se pide aceptar de nuevo.
 - Panel, videos: la portada se quita con un botón rojo junto a su miniatura.
 - «Por qué quiero ser alcalde» y «Conoce más sobre mí»: las tarjetas son ahora las de «Principios que nos definen» y «Valores que nos unen» del Partido Social Cristiano, seis en cada página. El título de cada grupo se cambia desde el modo edición.
 - Portada: una imagen subida en la segunda diapositiva se ve completa, sin recortes, en celular y en escritorio. La imagen que viene con el sitio se ve igual que antes.

@@ -41,6 +41,19 @@ test('con «Reducir movimiento» las cifras aparecen sin contar', async ({ page 
   await expect(visitas).toHaveText('12.480');
 });
 
+test('el botón flotante de WhatsApp aparece al pasar el primer banner y no está en la cuenta', async ({ page }) => {
+  await page.goto('/');
+  const flotante = page.locator('.whatsapp-flotante');
+  await expect(flotante).toBeHidden();
+  await page.locator('#contacto').scrollIntoViewIfNeeded();
+  await expect(flotante).toBeVisible();
+  await expect(flotante).toHaveAttribute('href', /^https:\/\/wa\.me\/\d+$/);
+  // Redondo: el radio llega al menos a la mitad del lado.
+  expect(await flotante.evaluate((a: HTMLElement) => [a.offsetWidth, a.offsetHeight, parseFloat(getComputedStyle(a).borderRadius) >= 22])).toEqual([44, 44, true]);
+  await page.goto('/cuenta/acceso/');
+  await expect(page.locator('.whatsapp-flotante')).toHaveCount(0);
+});
+
 test('las tarjetas de redes muestran el usuario sacado del enlace y no llevan línea inferior', async ({ page }) => {
   await page.goto('/#contacto');
   const contacto = page.locator('#contacto');

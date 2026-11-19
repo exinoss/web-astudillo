@@ -10,6 +10,8 @@ import Seo from '../components/comun/Seo.astro';
 import DraftPreviewBar from "../components/comun/DraftPreviewBar.astro";
 import { contentRepository, isDraftPreview } from "../lib/data";
 import { aboutLinks } from "../lib/acerca-de-nosotros/enlaces";
+import { enlaceRed } from "../lib/comun/contenido";
+import { whatsappEtiqueta } from "../lib/comun/contenido/redes";
 import "@fontsource/barlow-condensed/600.css";
 import "@fontsource/barlow-condensed/700.css";
 import "@fontsource/dm-sans/400.css";
@@ -33,6 +35,7 @@ const {
   contentClass,
 } = Astro.props;
 const current = Astro.url.pathname;
+const whatsapp = current.startsWith("/cuenta/") ? null : await enlaceRed("whatsapp");
 const proposals = await contentRepository.getProposals();
 const citizenLinks = await contentRepository.getCitizenLinks();
 
@@ -254,6 +257,18 @@ const accessButton =
         </button>
       </div>
     </footer>
+    {/* Espejo del botón de accesibilidad; aparece al pasar el primer banner (ver layout.ts). */}
+    {whatsapp && (
+      <a
+        href={whatsapp}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={whatsappEtiqueta(whatsapp)}
+        class="whatsapp-flotante invisible fixed bottom-3 left-3 z-[80] grid h-11 w-11 place-items-center rounded-full border-2 border-base-100 bg-whatsapp text-white opacity-0 [box-shadow:0_3px_15px_var(--color-card-border)] [transition:opacity_0.2s,visibility_0.2s] [&.is-visible]:visible [&.is-visible]:opacity-100"
+      >
+        <Icon name="whatsapp" size={24} />
+      </a>
+    )}
     {/* Esquina inferior derecha; el panel se abre hacia arriba. Queda por debajo de
         «Volver arriba»: en escritorio este flota a 84px y en móvil el pie reserva espacio. */}
     <div class="fixed right-3 bottom-3 z-[80] flex flex-col items-end gap-2">

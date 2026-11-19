@@ -30,7 +30,8 @@ const { id, evidence, name } = Astro.props;
     label={`Evidencias del avance de ${name}`}
     photos={evidence}
     sizes="(max-width: 760px) 90vw, 620px"
-    class="h-full min-h-[340px] max-tablet:mt-2 max-tablet:hidden max-tablet:aspect-[4/3] max-mobile:aspect-square max-tablet:h-auto max-tablet:min-h-0 max-tablet:group-[.is-abierto]:block"
+    class="h-full min-h-[340px] max-tablet:mt-2 max-tablet:hidden max-tablet:h-auto max-tablet:min-h-0 max-tablet:group-[.is-abierto]:block"
+    zona="min-h-[286px] shrink-0 grow basis-(--alto-foto) max-tablet:h-[calc(75cqw-54px)] max-tablet:min-h-0 max-tablet:flex-none max-tablet:basis-auto max-mobile:h-[calc(100cqw-54px)]"
   />
   </div>
 ) : (

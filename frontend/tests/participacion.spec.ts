@@ -12,6 +12,7 @@ function mockApi(page: Page, opciones: { loggedIn?: boolean; accepted?: boolean 
     rechazarSiguienteEnvio: false,
     alertas: [] as Record<string, unknown>[],
     sugerencias: [] as Record<string, unknown>[],
+    publicas: { alertas: [] as Record<string, unknown>[], sugerencias: [] as Record<string, unknown>[] },
     envios: [] as { path: string; campos: Record<string, string>; foto?: string }[],
     preguntas: [] as string[],
     clavesChat: [] as string[],
@@ -25,6 +26,8 @@ function mockApi(page: Page, opciones: { loggedIn?: boolean; accepted?: boolean 
     if (path === '/api/me') return data.loggedIn
       ? json(200, { id: 1, correo: 'maria@example.com', rol: 'votante', terminosAceptados: data.accepted, nombresCompletos: 'María', direccion: '', tieneContrasenia: true, tieneGoogle: false, permisos: ['participacion.enviar'] })
       : json(401, { error: 'Inicia sesión' });
+    const publicas = /^\/api\/participacion\/publicas\/(alertas|sugerencias)$/.exec(path)?.[1] as 'alertas' | 'sugerencias' | undefined;
+    if (publicas) return json(200, { items: data.publicas[publicas], total: data.publicas[publicas].length, pagina: 1, porPagina: 20 });
     if (!data.loggedIn) return json(401, { error: 'Inicia sesión' });
     if (path === '/api/auth/accept-terms') {
       data.aceptaciones.push(request.postDataJSON());
@@ -241,6 +244,8 @@ test('una alerta sin sesión se guarda, pide entrar y vuelve rellena con su foto
   const api = mockApi(page);
   await page.goto('/ciudadania/alerta-ciudadana/');
   await page.waitForLoadState('load');
+  await expect(page.locator('#historial')).toContainText('Aún no hay alertas publicadas.');
+  await page.getByRole('tab', { name: 'Mías' }).click();
   await expect(page.locator('#historial')).toContainText('Inicia sesión para ver tus alertas');
   // El botón siempre está activo: al tocarlo se marcan los campos que faltan.
   await page.getByRole('button', { name: 'Enviar alerta' }).click();
@@ -318,6 +323,7 @@ test('la foto de la alerta: zona grande, formatos válidos y hasta 5 MB', async 
   await expect.poll(() => vista.evaluate((img: HTMLImageElement) => img.complete && Math.min(img.naturalWidth, img.naturalHeight))).toBe(192);
   await page.getByRole('button', { name: 'Quitar foto' }).click();
   await expect(zona).toBeVisible();
+  await page.getByRole('tab', { name: 'Mías (0)' }).click();
   await expect(page.locator('#historial')).toContainText('Aún no has enviado alertas');
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -344,26 +350,41 @@ test('las sugerencias eligen el tema con fichas y llegan sin nombre', async ({ p
   expect(Object.keys(api.envios[0].campos).sort()).toEqual(['idempotencia', 'mensaje', 'tema']);
 });
 
-test('«Tus sugerencias» muestra lo enviado con su estado, como «Tus alertas»', async ({ page }) => {
+test('«Mías» muestra lo enviado con su estado y pasa a esa pestaña tras enviar', async ({ page }) => {
   const api = mockApi(page, { loggedIn: true });
   api.sugerencias.push({ id: 1, tema: 'agua-potable', mensaje: 'Tanques comunitarios en Las Palmas.', estado: 'atendida', creadoEn: '2026-09-20T15:00:00Z' });
   await page.goto('/ciudadania/sugerencias/');
   const historial = page.locator('#historial');
+  await expect(page.getByRole('tab', { name: 'Mías (1)' })).toBeVisible();
+  await page.getByRole('tab', { name: 'Mías (1)' }).click();
   await expect(historial.locator('li')).toHaveCount(1);
   await expect(historial.locator('li').first()).toContainText('Agua potable');
   await expect(historial.locator('li').first()).toContainText('Atendida');
   await page.getByRole('radio', { name: 'Otra idea' }).check();
   await page.locator('#sugerencia-mensaje').fill('Una cancha iluminada en el malecón.');
   await page.getByRole('button', { name: 'Enviar sugerencia' }).click();
-  await expect(page.locator('#sugerencia-estado')).toContainText('«Tus sugerencias»');
+  await expect(page.locator('#sugerencia-estado')).toContainText('«Mías»');
+  await expect(page.getByRole('tab', { name: 'Mías (2)' })).toHaveAttribute('aria-selected', 'true');
   await expect(historial.locator('li')).toHaveCount(2);
   await expect(historial.locator('li').first()).toContainText('Otra idea');
   await expect(historial.locator('li').first()).toContainText('Recibida');
 });
 
-test('sin sesión, «Tus sugerencias» invita a iniciar sesión', async ({ page }) => {
-  mockApi(page);
+test('sin sesión se ven las públicas con su autor, y «Mías» invita a iniciar sesión', async ({ page }) => {
+  const api = mockApi(page);
+  api.publicas.sugerencias.push(
+    { id: 2, tema: 'otro', mensaje: 'Una plaza con sombra junto al mercado.', estado: 'en_revision', creadoEn: '2026-09-21T15:00:00Z', autor: 'Luis Angulo', mia: false },
+    { id: 1, tema: 'agua-potable', mensaje: '<b>Más pozos</b> en los barrios altos.', estado: 'recibida', creadoEn: '2026-09-20T15:00:00Z', autor: null, mia: false },
+  );
   await page.goto('/ciudadania/sugerencias/');
+  const historial = page.locator('#historial');
+  await expect(page.getByRole('tab', { name: 'Públicas (2)' })).toHaveAttribute('aria-selected', 'true');
+  await expect(historial.locator('li')).toHaveCount(2);
+  await expect(historial.locator('li').first()).toContainText('Luis Angulo');
+  await expect(historial.locator('li').nth(1)).toContainText('Anónimo');
+  await expect(historial.locator('li').nth(1)).toContainText('<b>Más pozos</b>');
+  await expect(historial).not.toContainText('Tuya');
+  await page.getByRole('tab', { name: 'Mías' }).click();
   await expect(page.locator('#historial')).toContainText('Inicia sesión para ver tus sugerencias.');
   await expect(page.locator('#historial').getByRole('link', { name: 'Iniciar sesión' })).toHaveAttribute('href', '/cuenta/');
 });

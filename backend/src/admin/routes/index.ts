@@ -2,15 +2,12 @@ import { Elysia, t } from 'elysia';
 import type { SQL } from 'bun';
 import { ipOf } from '../../auth/routes/common';
 import { access } from '../../http';
-import { literals, pagina, strict } from '../../validation/esquemas';
+import { confirmacion, literals, pagina, strict } from '../../validation/esquemas';
 import type { Authorization, Confirmation } from '../../auth/types';
 import { ACCOUNT_STATES, ASSIGNABLE_ROLES } from '../services/hierarchy';
 import { createAdminUsers } from '../services/users';
 import { LARGOS } from '../../contracts/limites';
 import { ROLES } from '../../contracts/roles';
-
-/** La contraseña de quien hace el cambio o el código enviado a su correo. */
-const confirmacion = t.String({ minLength: 1, maxLength: LARGOS.cuenta.contrasenia });
 
 export function adminRoutes(sql: SQL, authorization: Authorization, confirmation: Confirmation, trustProxyIp: boolean) {
   const users = createAdminUsers(sql, authorization, confirmation);

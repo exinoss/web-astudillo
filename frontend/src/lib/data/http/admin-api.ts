@@ -82,8 +82,9 @@ export interface AdminUser {
   id: number; correo: string; nombresCompletos: string | null; rol: string; estado: 'activo' | 'bloqueado';
   rolesAsignables: string[]; puedeCambiarEstado: boolean; motivoBloqueo: string | null;
 }
-export type ReviewedAlert = SentAlert & { autor: string | null; correo: string };
-export type ReviewedSuggestion = SentSuggestion & { autor: string | null; correo: string };
+export type ReviewedAlert = SentAlert & { autor: string | null; correo: string; publica: boolean; anonima: boolean };
+export type ReviewedSuggestion = SentSuggestion & { autor: string | null; correo: string; anonima: boolean };
+export type ParticipationVisibility = { publica?: boolean; anonima: boolean };
 export type ParticipationKind = 'alertas' | 'sugerencias';
 export interface ParticipationPage<T> extends Omit<Page, 'total'> {
   items: T[];
@@ -134,6 +135,10 @@ export const adminApi = {
   // Se envía el estado que se veía: si otra persona lo cambió mientras tanto, la API responde 409.
   changeParticipationState: (tipo: ParticipationKind, id: number, estado: ParticipationState, estadoAnterior: ParticipationState) =>
     call<{ estado: ParticipationState }>(`/api/admin/participacion/${tipo}/${id}/estado`, 'PATCH', { estado, estadoAnterior }),
+  changeParticipationVisibility: (tipo: ParticipationKind, id: number, nueva: ParticipationVisibility, anterior: ParticipationVisibility) =>
+    call<ParticipationVisibility>(`/api/admin/participacion/${tipo}/${id}/visibilidad`, 'PATCH', { ...nueva, anterior }),
+  deleteParticipation: (tipo: ParticipationKind, id: number, confirmacion: string) =>
+    call(`/api/admin/participacion/${tipo}/${id}`, 'DELETE', { confirmacion }),
   /** Idempotente: con el mismo borrador devuelve la vista previa ya pedida o lista. */
   requestPreview: () => call<{ estado: PreviewState }>('/api/admin/vista-previa', 'POST'),
   previewState: () => call<{ estado: PreviewState | null }>('/api/admin/vista-previa'),

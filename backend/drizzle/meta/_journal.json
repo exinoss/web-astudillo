@@ -120,6 +120,20 @@
       "when": 1793887626337,
       "tag": "0016_carrusel_equipo",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1795041714450,
+      "tag": "0017_participacion_publica",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1795056890403,
+      "tag": "0018_pies_de_foto_300",
+      "breakpoints": true
     }
   ]
 }

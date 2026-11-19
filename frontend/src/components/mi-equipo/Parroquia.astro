@@ -24,7 +24,7 @@ const fotos = parish.photos.map((p) => ({ image: p.image, alt: p.alt, caption: p
         label={`Fotos de ${parish.name}`}
         photos={fotos}
         sizes={conTexto ? "(max-width: 1100px) 90vw, 520px" : "(max-width: 1100px) 90vw, 1000px"}
-        class={conTexto ? "aspect-[4/3] max-mobile:aspect-square" : "aspect-[16/9] max-mobile:aspect-square"}
+        zona={conTexto ? "h-[calc(75cqw-54px)] max-mobile:h-[calc(100cqw-54px)]" : "h-[calc(56.25cqw-54px)] max-mobile:h-[calc(100cqw-54px)]"}
         ampliable
         automatico
       >

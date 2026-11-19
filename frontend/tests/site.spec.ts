@@ -416,8 +416,30 @@ test('en móvil las fotos de cada obra se despliegan desde un acordeón', async 
   await boton.click();
   await expect(boton).toHaveAttribute('aria-expanded', 'true');
   await expect(carrusel).toBeVisible();
-  await carrusel.getByRole('button', { name: 'Foto siguiente' }).click();
+  // En celular se pasa de foto deslizando: las flechas no se ven, pero siguen para el teclado y los lectores de pantalla.
+  const siguiente = carrusel.getByRole('button', { name: 'Foto siguiente' });
+  expect((await siguiente.boundingBox())!.width).toBeLessThanOrEqual(1);
+  await siguiente.press('Enter');
   await expect(carrusel.getByText('2 / 3')).toBeVisible();
   await boton.click();
   await expect(carrusel).toBeHidden();
+});
+
+for (const ancho of [390, 1440]) test(`un pie largo no tapa la foto de la obra: el marco crece hacia abajo y la foto no se mueve (${ancho} px)`, async ({ page }) => {
+  await page.setViewportSize({ width: ancho, height: 900 });
+  await page.goto('/ciudadania/obras-en-ejecucion/');
+  if (ancho < 761) await page.getByRole('button', { name: 'Fotos del avance (3)' }).first().click();
+  const carrusel = page.getByRole('region', { name: 'Evidencias del avance de Agua potable' });
+  const medir = () => carrusel.evaluate((el) => {
+    const figura = el.querySelector('[data-diapositiva]:not([hidden])')!;
+    const [foto, pie] = [figura.querySelector('img')!, figura.querySelector('figcaption')!].map(n => n.getBoundingClientRect());
+    return { foto: [Math.round(foto.top - el.getBoundingClientRect().top), Math.round(foto.height)], pie: pie.top, finFoto: foto.bottom, alto: el.getBoundingClientRect().height };
+  });
+  const antes = await medir();
+  await carrusel.locator('[data-diapositiva]:not([hidden]) figcaption').evaluate((pie) => { pie.textContent = 'Vecinos y equipo técnico recorren la obra. '.repeat(7).slice(0, 300); });
+  const despues = await medir();
+  expect(despues.foto).toEqual(antes.foto);
+  expect(despues.pie).toBeGreaterThanOrEqual(despues.finFoto - 1);
+  expect(despues.alto).toBeGreaterThan(antes.alto);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
 });

@@ -28,6 +28,21 @@ export const normalizarWhatsapp = (texto: string) =>
 /** Indica si un número ya normalizado tiene el largo de un número internacional. */
 export const whatsappValido = (numero: string) => /^\d{10,15}$/.test(numero);
 
+/** Invitación a una comunidad o grupo (https://chat.whatsapp.com/<código>) sin parámetros; si no lo es, null. */
+export function comunidadWhatsapp(texto: string) {
+  let url: URL;
+  try { url = new URL(texto.trim()); } catch { return null; }
+  const codigo = /^\/([A-Za-z0-9]{10,40})\/?$/.exec(url.pathname)?.[1];
+  return url.protocol === 'https:' && url.hostname === 'chat.whatsapp.com' && !url.username && !url.password && codigo
+    ? `https://chat.whatsapp.com/${codigo}` : null;
+}
+
+/** Lo que se guarda en `enlace.whatsapp`: el enlace de la comunidad o el número en formato 593…; null si no es ninguno. */
+export function valorWhatsapp(texto: string) {
+  const numero = normalizarWhatsapp(texto);
+  return comunidadWhatsapp(texto) ?? (whatsappValido(numero) ? numero : null);
+}
+
 // Rutas de las redes que no son el nombre de una cuenta.
 const NO_USUARIO = /^(profile\.php|people|pages|groups|p|reel|reels|share|watch|video|videos|explore)$/i;
 

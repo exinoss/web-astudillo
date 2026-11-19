@@ -9,7 +9,32 @@ interface FotoDelVisor { image: ImageView; alt: string; caption: string }
 const REDONDO = "grid size-12 shrink-0 place-items-center rounded-full bg-white/12 text-white transition-colors hover:bg-white/25 disabled:opacity-30 disabled:hover:bg-white/12 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent";
 // La plantilla de cada foto trae las clases de la vista del móvil de la galería; el visor pone las suyas.
 const IMAGEN_AMPLIADA = "max-h-[calc(100dvh-230px)] max-w-full rounded-card object-contain transition-opacity duration-200 max-tablet:max-h-[calc(100dvh-250px)] max-tablet:rounded-none";
-const PIE_AMPLIADO = "mt-3 max-w-[720px] px-4 text-center text-[1rem] leading-normal text-white/90";
+// w-0 + min-w-full: el pie no ensancha la figura, así ocupa exactamente el ancho de la foto.
+const PIE_AMPLIADO = "mt-3 w-0 min-w-full px-4 text-center text-[1rem] leading-normal text-white/90";
+
+/** En celular recorta el pie a tres líneas y añade «Ver más…» si no cabe entero. */
+function pieConVerMas(pie: HTMLElement) {
+  const texto = document.createElement("span");
+  texto.className = "block celular:line-clamp-3";
+  texto.append(...pie.childNodes);
+  const boton = document.createElement("button");
+  boton.type = "button";
+  boton.className = "min-h-11 font-bold underline underline-offset-4";
+  boton.hidden = true;
+  boton.setAttribute("aria-expanded", "false");
+  boton.textContent = "Ver más…";
+  boton.addEventListener("click", () => {
+    const abierto = boton.getAttribute("aria-expanded") !== "true";
+    texto.classList.toggle("celular:line-clamp-3", !abierto);
+    // Abierto, el texto se desplaza dentro de su caja para no sacar la foto de la pantalla.
+    texto.classList.toggle("max-h-[30dvh]", abierto);
+    texto.classList.toggle("overflow-y-auto", abierto);
+    boton.setAttribute("aria-expanded", String(abierto));
+    boton.textContent = abierto ? "Ver menos" : "Ver más…";
+  });
+  pie.append(texto, boton);
+  requestAnimationFrame(() => { boton.hidden = texto.scrollHeight <= texto.clientHeight + 1; });
+}
 
 /** Diálogo a pantalla completa y una plantilla por foto. Lo abren los botones `data-visor-abrir` del mismo contenedor. */
 export function visorFotos(id: string, titulo: string, fotos: FotoDelVisor[]) {
@@ -57,7 +82,9 @@ export function montarVisor(root: HTMLElement, alCambiar?: (actual: number, foto
     figura.append(foto());
     const imagen = figura.querySelector("img")!;
     imagen.className = IMAGEN_AMPLIADA;
-    figura.querySelector("figcaption")!.className = PIE_AMPLIADO;
+    const pie = figura.querySelector<HTMLElement>("figcaption")!;
+    pie.className = PIE_AMPLIADO;
+    pieConVerMas(pie);
     if (!sinMovimiento()) {
       imagen.style.opacity = "0";
       requestAnimationFrame(() => requestAnimationFrame(() => { imagen.style.opacity = "1"; }));

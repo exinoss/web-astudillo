@@ -128,7 +128,7 @@ test('entrar desde un aviso agrupado abre Participación con su filtro, y revisa
   await expect(campana(page)).toHaveAccessibleName('Avisos: 1');
   data.avisos = [];
   await page.locator('#estado-7').selectOption('en_revision');
-  await page.locator('[data-estado-de="7"] button').click();
+  await page.locator('[data-estado-de="7"] [data-guardar-estado]').click();
   await expect(page.getByRole('status').filter({ hasText: 'Estado actualizado a «En revisión»' })).toBeVisible();
   await expect(campana(page)).toHaveAccessibleName('Avisos: ninguno');
 

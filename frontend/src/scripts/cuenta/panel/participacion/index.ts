@@ -1,26 +1,42 @@
 import { vigilarCambios } from "../../../../lib/comun/cambios";
 import {
-  adminApi, type ParticipationKind, type ParticipationPage, type ParticipationState, type ReviewedAlert, type ReviewedSuggestion,
+  adminApi, type ParticipationKind, type ParticipationPage, type ParticipationState, type ParticipationVisibility, type ReviewedAlert, type ReviewedSuggestion,
 } from "../../../../lib/data/http/admin-api";
+import { BOLA, INTERRUPTOR, PISTA } from "../../../../lib/cuenta/panel/campos";
+import { confirmarIdentidad } from "../confirmacion";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
+import { PESTANA_SUBRAYADA } from "../../../../lib/comun/pestanas";
 import { ESTADOS, TIPOS_ALERTA } from "../../../../lib/ciudadania/participacion/tipos";
-import { busy, can, card, cargar, confirmarCambio, esc, fechaHora, iconSvg, state } from "../ui";
+import { busy, can, card, cargar, confirmarCambio, esc, fechaHora, ICON_DANGER, iconSvg, state } from "../ui";
 
 const view = { tipo: "alertas" as ParticipationKind, estado: "" as ParticipationState | "", pagina: 1 };
 const STATES = Object.keys(ESTADOS) as ParticipationState[];
-const TAB = "relative min-h-11 py-3 text-[0.85rem] font-bold text-neutral aria-selected:text-primary aria-selected:after:absolute aria-selected:after:inset-x-0 aria-selected:after:-bottom-px aria-selected:after:h-[3px] aria-selected:after:bg-secondary aria-selected:after:content-['']";
 const CHIP = "min-h-11 rounded-full border border-base-300 bg-base-100 px-3.5 text-[0.78rem] font-bold aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-content";
 
 const topicName = (slug: string) => slug === "otro" ? "Otra idea" : state.draft!.propuestas.find((p) => p.slug === slug)?.nombre ?? slug;
 
-const stateControl = (id: number, current: ParticipationState) => can("participacion.gestionar") ? `
+/** Selector de estado con «Guardar» y la papelera; quien solo consulta ve la píldora del estado. */
+const stateControl = (id: number, current: ParticipationState, que: string) => can("participacion.gestionar") ? `
   <span class="flex flex-wrap items-center gap-2" data-estado-de="${id}" data-actual="${current}">
     <label class="sr-only" for="estado-${id}">Estado</label>
     <select id="estado-${id}" class="campo px-3">
       ${STATES.map((s) => `<option value="${s}" ${s === current ? "selected" : ""}>${ESTADOS[s].nombre}</option>`).join("")}
     </select>
-    <button type="button" class="button min-h-11 px-4 py-0">Guardar</button>
+    <button type="button" class="button min-h-11 px-4 py-0" data-guardar-estado>Guardar</button>
+    <button type="button" class="${ICON_DANGER}" data-borrar="${id}" aria-label="Borrar ${que}" title="Borrar ${que}">${iconSvg("trash", 18)}</button>
   </span>` : `<span class="pildora ${ESTADOS[current].clases}">${ESTADOS[current].nombre}</span>`;
+
+/** Interruptor encendido/apagado: pista gris apagada y azul encendida. */
+const interruptor = (campo: "publica" | "nombre", id: number, texto: string, activo: boolean) => `
+  <button type="button" role="switch" aria-checked="${activo}" data-${campo}="${id}" class="${INTERRUPTOR} whitespace-nowrap">
+    <span class="${PISTA} ${activo ? "justify-end bg-primary" : "bg-base-300"}"><span class="${BOLA} bg-primary-content"></span></span>${texto}
+  </button>`;
+
+/** «Publicada en el sitio» (solo alertas) y «Mostrar el nombre», bajo el texto de la fila. */
+const visibilityControls = (id: number, v: ParticipationVisibility) => can("participacion.gestionar") ? `
+  <div class="mt-1 flex flex-wrap gap-x-5">
+    ${v.publica === undefined ? "" : interruptor("publica", id, "Publicada en el sitio", v.publica)}${interruptor("nombre", id, "Mostrar el nombre", !v.anonima)}
+  </div>` : "";
 
 function alertItem(a: ReviewedAlert) {
   const tipo = TIPOS_ALERTA.find((t) => t.valor === a.tipo)!;
@@ -33,8 +49,9 @@ function alertItem(a: ReviewedAlert) {
       <strong class="flex items-center gap-1.5 text-[0.92rem]">${iconSvg(tipo.icono, 18)} ${esc(tipo.nombre)} · ${esc(a.sector)}</strong>
       <p class="mt-1 mb-0 text-[0.84rem] leading-normal wrap-anywhere">${esc(a.descripcion)}</p>
       <small class="text-[0.72rem] text-muted">${esc(a.autor ?? a.correo)} · ${fechaHora.format(new Date(a.creadoEn))}${a.referencia ? ` · Ref.: ${esc(a.referencia)}` : ""}</small>
+      ${visibilityControls(a.id, { publica: a.publica, anonima: a.anonima })}
     </div>
-    <div class="max-tablet:col-span-2">${stateControl(a.id, a.estado)}</div>
+    <div class="max-tablet:col-span-2">${stateControl(a.id, a.estado, "alerta")}</div>
   </li>`;
 }
 
@@ -44,8 +61,9 @@ function suggestionItem(s: ReviewedSuggestion) {
       <strong class="text-[0.92rem]">${esc(topicName(s.tema))}</strong>
       <p class="mt-1 mb-0 text-[0.84rem] leading-normal whitespace-pre-line wrap-anywhere">${esc(s.mensaje)}</p>
       <small class="text-[0.72rem] text-muted">${esc(s.autor ?? s.correo)} · ${fechaHora.format(new Date(s.creadoEn))}</small>
+      ${visibilityControls(s.id, { anonima: s.anonima })}
     </div>
-    <div>${stateControl(s.id, s.estado)}</div>
+    <div>${stateControl(s.id, s.estado, "sugerencia")}</div>
   </li>`;
 }
 
@@ -64,7 +82,7 @@ export async function renderParticipation(section: HTMLElement) {
     : `<p class="m-0 py-4 text-[0.86rem]">No hay ${view.tipo} en este estado.</p>`;
   section.innerHTML = card("", `
     <div class="flex gap-7 whitespace-nowrap" role="tablist" aria-label="Tipo">
-      ${(["alertas", "sugerencias"] as const).map((k) => `<button type="button" role="tab" class="${TAB}" data-tipo="${k}" aria-selected="${k === view.tipo}">${k === "alertas" ? "Alertas" : "Sugerencias"} (${total(k)})</button>`).join("")}
+      ${(["alertas", "sugerencias"] as const).map((k) => `<button type="button" role="tab" class="${PESTANA_SUBRAYADA}" data-tipo="${k}" aria-selected="${k === view.tipo}">${k === "alertas" ? "Alertas" : "Sugerencias"} (${total(k)})</button>`).join("")}
     </div>
     <div class="mt-3 mb-1.5 flex flex-wrap gap-2" role="group" aria-label="Filtrar por estado">
       <button type="button" class="${CHIP}" data-filtro="" aria-pressed="${!view.estado}">Todas (${all})</button>
@@ -87,7 +105,7 @@ function bind(section: HTMLElement, data: ParticipationPage<unknown>) {
   }));
   section.querySelectorAll<HTMLElement>("[data-estado-de]").forEach((control) => {
     const select = control.querySelector("select")!;
-    const button = control.querySelector("button")!;
+    const button = control.querySelector<HTMLButtonElement>("[data-guardar-estado]")!;
     const before = control.dataset.actual as ParticipationState;
     vigilarCambios(control, button, before, () => select.value);
     // Se envía el estado que se veía: si otra persona lo cambió mientras tanto, la API responde 409.
@@ -97,6 +115,40 @@ function bind(section: HTMLElement, data: ParticipationPage<unknown>) {
       confirmarCambio({ tipo: "exito", titulo: `Estado actualizado a «${ESTADOS[select.value as ParticipationState].nombre}»` });
     }));
   });
+  const items = data.items as (ReviewedAlert | ReviewedSuggestion)[];
+  const visibilidad = (id: number): ParticipationVisibility => {
+    const item = items.find((i) => i.id === id)!;
+    return "publica" in item ? { publica: item.publica, anonima: item.anonima } : { anonima: item.anonima };
+  };
+  // Se envía la visibilidad que se veía: si otra persona la cambió mientras tanto, la API responde 409.
+  const cambiar = (button: HTMLButtonElement, id: number, cambio: Partial<ParticipationVisibility>, aviso: string) =>
+    void busy(button, async () => {
+      const antes = visibilidad(id);
+      await adminApi.changeParticipationVisibility(view.tipo, id, { ...antes, ...cambio }, antes);
+      await renderParticipation(section);
+      confirmarCambio({ tipo: "exito", titulo: aviso });
+    });
+  section.querySelectorAll<HTMLButtonElement>("[data-publica]").forEach((b) => b.addEventListener("click", () => {
+    const publica = b.getAttribute("aria-checked") !== "true";
+    cambiar(b, Number(b.dataset.publica), { publica }, publica ? "Alerta publicada en el sitio" : "Alerta retirada del sitio");
+  }));
+  section.querySelectorAll<HTMLButtonElement>("[data-nombre]").forEach((b) => b.addEventListener("click", () => {
+    const anonima = b.getAttribute("aria-checked") === "true";
+    cambiar(b, Number(b.dataset.nombre), { anonima }, anonima ? "Se publica sin el nombre" : "Se publica con el nombre");
+  }));
+  section.querySelectorAll<HTMLButtonElement>("[data-borrar]").forEach((b) => b.addEventListener("click", () => void busy(b, async () => {
+    const id = Number(b.dataset.borrar);
+    const item = items.find((i) => i.id === id)!;
+    const que = view.tipo === "alertas" ? "la alerta" : "la sugerencia";
+    const hecho = await confirmarIdentidad({
+      resumen: `Vas a borrar ${que} de <strong>${esc(item.autor ?? item.correo)}</strong>. Dejará de verse en el sitio y en el panel.`,
+      boton: "Borrar", peligro: true,
+      enviar: (confirmacion) => adminApi.deleteParticipation(view.tipo, id, confirmacion),
+    });
+    if (!hecho) return;
+    await renderParticipation(section);
+    confirmarCambio({ tipo: "exito", titulo: view.tipo === "alertas" ? "Alerta borrada" : "Sugerencia borrada" });
+  })));
   const filtered = view.estado ? data.conteo[view.tipo][view.estado] : STATES.reduce((sum, s) => sum + data.conteo[view.tipo][s], 0);
   renderPagination(section.querySelector("#participacion-paginas")!, { total: filtered, pagina: data.pagina, porPagina: data.porPagina }, (p) => {
     view.pagina = p;

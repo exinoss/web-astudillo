@@ -2,6 +2,7 @@
 import Icon from "../comun/Icon.astro";
 import LegalAcceptance from "../comun/LegalAcceptance.astro";
 import { TARJETA, ESTADO } from "./estilos";
+import { PESTANA_SUBRAYADA } from "../../lib/comun/pestanas";
 
 interface Props {
   nombre: "alerta" | "sugerencia";
@@ -39,8 +40,15 @@ const { nombre, titulo, intro, encabezado, historial, temas } = Astro.props;
 
     <aside class="rounded-[5px] border border-base-300 bg-base-100 p-6 max-nav:px-4 max-nav:py-5" aria-labelledby="historial-titulo">
       <h3 id="historial-titulo" class="m-0 mb-1 text-[1.35rem]">{historial}</h3>
-      <p class="m-0 mb-3.5 text-[0.78rem] text-base-content">Las últimas que enviaste y en qué estado están.</p>
-      <div id="historial" aria-live="polite">
+      <div class="mb-1.5 flex gap-7 border-b border-b-base-300 whitespace-nowrap" role="tablist" aria-label="Qué mostrar">
+        {(["publicas", "mias"] as const).map((v) => (
+          <button type="button" role="tab" id={`historial-${v}`} class={PESTANA_SUBRAYADA} data-vista={v} aria-controls="historial" aria-selected={v === "publicas" ? "true" : "false"}>
+            {v === "publicas" ? "Públicas" : "Mías"}<span data-cuenta></span>
+          </button>
+        ))}
+      </div>
+      <p id="historial-ayuda" class="m-0 mb-3.5 text-[0.78rem] text-base-content"></p>
+      <div id="historial" role="tabpanel" aria-labelledby="historial-publicas" aria-live="polite">
         <p class="m-0 text-[0.84rem]">Cargando…</p>
       </div>
     </aside>

@@ -1,14 +1,14 @@
-import { enlaceRed, esRutaDelSitio, normalizarWhatsapp, REDES_SOCIALES, type RedSocial, whatsappValido } from '../../contracts/redes';
+import { enlaceRed, esRutaDelSitio, REDES_SOCIALES, type RedSocial, valorWhatsapp } from '../../contracts/redes';
 import { ApiError } from '../../http';
 import { ANIO_BIOGRAFIA } from '../../contracts/limites';
 
-/** Valida un `enlace.*`: redes solo por https a su dominio y WhatsApp normalizado a 593… para wa.me. */
+/** Valida un `enlace.*`: redes solo por https a su dominio y WhatsApp como número 593… o enlace de comunidad. */
 export function linkValue(key: string, value: string) {
   const text = value.trim();
   if (key === 'enlace.whatsapp') {
-    const digits = normalizarWhatsapp(text);
-    if (!whatsappValido(digits)) throw new ApiError(422, 'WhatsApp: escribe el número, por ejemplo 0985658595 o +593985658595');
-    return digits;
+    const whatsapp = valorWhatsapp(text);
+    if (!whatsapp) throw new ApiError(422, 'WhatsApp: escribe el número (0985658595 o +593985658595) o el enlace de la comunidad (https://chat.whatsapp.com/…)');
+    return whatsapp;
   }
   const red = (Object.keys(REDES_SOCIALES) as RedSocial[]).find((r) => REDES_SOCIALES[r].clave === key);
   if (!red) throw new ApiError(422, 'Clave de texto no válida');

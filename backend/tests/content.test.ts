@@ -198,6 +198,22 @@ test("biografía y obras guardan fotos existentes; el porcentaje no se guarda", 
   expect(c.obras[0]).not.toHaveProperty("porcentaje");
 });
 
+test("el pie y la descripción de una foto admiten 300 caracteres y no más", async () => {
+  const foto = await (await upload(await png())).json();
+  const v = await versiones();
+  const bio = (alt: string) => call("/api/admin/contenido/biografia", "PUT",
+    { hitos: [{ anios: "1990", titulo: "Raíces", texto: "Texto.", idMedio: foto.idMedio, alt }], version: v.biografia }, cookies.coadmin);
+  const obra = (pie: string) => call("/api/admin/contenido/obras/agua-potable", "PUT",
+    { nota: "Avanza la red.", hitos: [], fotos: [{ idMedio: foto.idMedio, pie }], version: v.obras["agua-potable"] }, cookies.coadmin);
+  expect((await bio("d".repeat(301))).status).toBe(422);
+  expect((await obra("p".repeat(301))).status).toBe(422);
+  expect((await bio("d".repeat(300))).status).toBe(200);
+  expect((await obra("p".repeat(300))).status).toBe(200);
+  const c = await (await call("/api/admin/contenido", "GET", undefined, cookies.coadmin)).json();
+  expect(c.biografia[0].alt).toHaveLength(300);
+  expect(c.obras.find((o: { slug: string }) => o.slug === "agua-potable").fotos[0].pie).toHaveLength(300);
+});
+
 test("publicar congela el contenido, calcula lo pendiente y agrupa la cola", async () => {
   const pendientes = async () => (await (await call("/api/admin/publicaciones/pendientes", "GET", undefined, cookies.coadmin)).json()).cambios;
   expect(await pendientes()).toEqual(expect.arrayContaining([{ tipo: 'Propuesta', descripcion: 'Agua potable' }]));

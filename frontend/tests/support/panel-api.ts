@@ -66,7 +66,8 @@ export function panelData(rol: 'admin' | 'coadmin') {
     },
     alertas: [
       { id: 7, tipo: 'agua', sector: 'Barrio Central', referencia: null, descripcion: 'Fuga de agua en la tubería principal.',
-        estado: 'recibida', creadoEn: '2026-09-30T15:00:00Z', foto: null, autor: 'María', correo: 'maria@example.com' },
+        estado: 'recibida', creadoEn: '2026-09-30T15:00:00Z', foto: null, autor: 'María', correo: 'maria@example.com',
+        publica: false, anonima: true, borrada: false },
     ],
     sinRespuesta: [{ clave: 'cuando hay caravana', ejemplo: '¿Cuándo hay caravana?', veces: 3, ultimaVez: '2026-09-30T15:00:00Z' }],
     pending: [] as { tipo: string; descripcion: string }[],
@@ -218,7 +219,7 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
       const estado = url.searchParams.get('estado');
       const conteo = (list: { estado: string }[]) => Object.fromEntries(['recibida', 'en_revision', 'atendida']
         .map(s => [s, list.filter(i => i.estado === s).length]));
-      const items = path.endsWith('alertas') ? data.alertas : [];
+      const items = path.endsWith('alertas') ? data.alertas.filter(a => !a.borrada) : [];
       return json({ items: items.filter(i => !estado || i.estado === estado), pagina: 1, porPagina: 20,
         conteo: { alertas: conteo(data.alertas), sugerencias: conteo([]) } });
     }
@@ -229,6 +230,22 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
         return json({ error: 'Otra persona cambió el estado mientras tanto; recarga la lista.' }, 409);
       alerta.estado = body().estado;
       return json({ estado: alerta.estado });
+    }
+    const visibilidad = path.match(/^\/api\/admin\/participacion\/alertas\/(\d+)\/visibilidad$/);
+    if (visibilidad) {
+      const alerta = data.alertas.find(a => a.id === Number(visibilidad[1]))!;
+      const { publica, anonima, anterior } = body();
+      const igual = (v: { publica: boolean; anonima: boolean }) => v.publica === alerta.publica && v.anonima === alerta.anonima;
+      if (!igual({ publica, anonima }) && !igual(anterior))
+        return json({ error: 'Otra persona cambió la publicación mientras tanto; recarga la lista.' }, 409);
+      Object.assign(alerta, { publica, anonima });
+      return json({ publica, anonima });
+    }
+    const borrado = path.match(/^\/api\/admin\/participacion\/alertas\/(\d+)$/);
+    if (borrado && route.request().method() === 'DELETE') {
+      if (body().confirmacion !== CONTRASENIA_PANEL) return json({ error: 'La contraseña no es correcta' }, 403);
+      data.alertas.find(a => a.id === Number(borrado[1]))!.borrada = true;
+      return json({ borrada: true });
     }
     if (path === '/api/admin/usuarios') {
       const q = url.searchParams.get('q')?.toLowerCase() ?? '';
