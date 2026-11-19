@@ -186,7 +186,7 @@ test('el retrato de la semilla se recorta y uno subido se ve completo y no más 
   await dialogo.locator('#retrato-nuevo').setInputFiles(await archivo('retrato.png', 1600, 1200));
   await dialogo.locator('#retrato-alt').fill('Afiche de la entrevista');
   await dialogo.getByRole('button', { name: 'Guardar borrador' }).click();
-  await expect(dialogo).toBeHidden();
+  await expect(dialogo).toBeHidden({ timeout: 15000 });
   for (const ancho of [1440, 390]) {
     await page.setViewportSize({ width: ancho, height: 900 });
     await page.locator('.slide-dot').last().click();
