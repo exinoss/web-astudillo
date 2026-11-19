@@ -1,5 +1,5 @@
 // Se guardan como textos con clave `enlace.*`. Sin dependencias: también lo usa el panel en el navegador.
-import { REDES_SOCIALES } from "../../../../../backend/src/contracts/redes";
+import { comunidadWhatsapp, REDES_SOCIALES } from "../../../../../backend/src/contracts/redes";
 
 export { comunidadWhatsapp, enlaceRed as enlaceRedValido, MAX_ENLACE_RED, normalizarWhatsapp, REDES_SOCIALES, type RedSocial, usuarioRed, valorWhatsapp, whatsappValido } from "../../../../../backend/src/contracts/redes";
 
@@ -14,6 +14,6 @@ export type Red = keyof typeof REDES;
 export const whatsappUrl = (valor: string) => valor.startsWith("https://") ? valor : `https://wa.me/${valor}`;
 
 /** Nombre accesible de un enlace de WhatsApp ya armado con `whatsappUrl()`. */
-export const whatsappEtiqueta = (url: string) => url.startsWith("https://chat.")
+export const whatsappEtiqueta = (url: string) => comunidadWhatsapp(url)
   ? "Unirse a la comunidad de WhatsApp de Carlos Astudillo (abre en otra pestaña)"
   : "Escribir por WhatsApp a Carlos Astudillo (abre en otra pestaña)";

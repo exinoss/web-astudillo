@@ -6,7 +6,7 @@ import { avisoBorrador, busy, card, field, guardarYRecargar, isPending, state } 
 const RED_LIST = Object.keys(REDES) as Red[];
 const guardado = (red: Red) => state.draft!.textos[REDES[red].clave] ?? "";
 /** El valor guardado como se escribe en el campo: el enlace tal cual o el número con «+». */
-const whatsappVisible =(valor: string) => valor.startsWith("https://") ? valor : `+${valor}`;
+const whatsappVisible = (valor: string) => valor.startsWith("https://") ? valor : `+${valor}`;
 /** Lo que se guardaría para cada red con lo escrito ahora (WhatsApp ya como 593… o enlace); lo no válido va tal cual y la API lo explica. */
 const leer = (form: HTMLElement) => Object.fromEntries(RED_LIST.map((red) => {
   const valor = form.querySelector<HTMLInputElement>(`#red-${red}`)!.value.trim();

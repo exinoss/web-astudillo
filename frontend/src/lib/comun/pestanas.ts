@@ -1,2 +1,1 @@
-// Pestaña de texto con la línea naranja debajo al elegirla (`aria-selected`); la usan el panel y el historial de participación.
 export const PESTANA_SUBRAYADA = "relative min-h-11 py-3 text-[0.85rem] font-bold text-neutral aria-selected:text-primary aria-selected:after:absolute aria-selected:after:inset-x-0 aria-selected:after:-bottom-px aria-selected:after:h-[3px] aria-selected:after:bg-secondary aria-selected:after:content-['']";

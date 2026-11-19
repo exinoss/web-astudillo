@@ -16,7 +16,7 @@ import fondoPublico from "../assets/fondo-publico-equipo.jpg";
 import { contentRepository } from "../lib/data";
 import { statsRepository } from "../lib/data/stats";
 import { enlaceRed, type TextKey } from "../lib/comun/contenido";
-import { enlaceRedValido, REDES, type RedSocial, usuarioRed, whatsappEtiqueta } from "../lib/comun/contenido/redes";
+import { comunidadWhatsapp, enlaceRedValido, REDES, type RedSocial, usuarioRed, whatsappEtiqueta } from "../lib/comun/contenido/redes";
 
 const { banners, portrait, link, pieces, team } = await contentRepository.getHomeCarousels();
 const slides = banners.length + 1;
@@ -68,7 +68,7 @@ const contactos = [
       fondo: FONDOS[red], clave: `inicio.contacto.${red}.texto` as TextKey, etiqueta: `${REDES[red].nombre} de Carlos Astudillo (abre en otra pestaña)`,
     })),
   {
-    red: "whatsapp", nombre: "WhatsApp", url: whatsapp, usuario: whatsapp.startsWith("https://chat.") ? "Únete a la comunidad" : "Mensaje directo",
+    red: "whatsapp", nombre: "WhatsApp", url: whatsapp, usuario: comunidadWhatsapp(whatsapp) ? "Únete a la comunidad" : "Mensaje directo",
     fondo: "bg-whatsapp", clave: "inicio.contacto.whatsapp.texto" as TextKey, etiqueta: whatsappEtiqueta(whatsapp),
   },
 ];
