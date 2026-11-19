@@ -45,7 +45,7 @@ type SuggestionRow = {
 type Kind = 'alertas' | 'sugerencias';
 type Visibility = { publica?: boolean; anonima: boolean };
 
-/** Ruta privada de la foto; la API la sirve solo a su autor y a quien revisa la participación. */
+/** Ruta de la foto en la API: la de una alerta publicada la ve cualquiera; si no, solo su autor y quien revisa la participación. */
 const photoUrl = (name: string | null, width: number) => (name ? `/api/participacion/fotos/${name}-${width}.webp` : null);
 
 const toAlert = (r: AlertRow) => ({
