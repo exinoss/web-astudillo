@@ -294,7 +294,9 @@ function pintar() {
   if (a.cual === "principal") {
     const t = a.trabajo as Principal;
     alElegir("banners-nuevos", MAX_BANNERS - t.banners.length, (fotos) => t.banners.push(...fotos.map((foto) => ({ imagen: { foto }, celular: null, alt: "" }))));
-    alElegir("retrato-nuevo", 1, ([foto]) => { t.retrato = { imagen: { foto }, alt: "" }; });
+    const altPintado = t.retrato.alt;
+    // La descripción vieja no vale para la foto nueva, pero lo escrito mientras se subía se conserva.
+    alElegir("retrato-nuevo", 1, ([foto]) => { t.retrato = { imagen: { foto }, alt: t.retrato.alt === altPintado ? "" : t.retrato.alt }; });
     t.banners.forEach((_, i) => alElegir(`banner-celular-${i}`, 1, ([foto]) => { t.banners[i].celular = foto; }));
     a.cuerpo.querySelector<HTMLButtonElement>("[data-destino]")!.addEventListener("click", (e) => cambiarDestino(a, e.currentTarget as HTMLButtonElement));
   } else if (a.cual === "piezas") {
