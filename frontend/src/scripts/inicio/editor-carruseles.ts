@@ -240,24 +240,26 @@ function avisoEnlace(a: NonNullable<typeof abierto>) {
 
 /** Una por una; se detiene en la primera que no se puede subir. Ninguna se muestra antes de que el backend la procese. */
 async function subirAlEditor(archivos: File[], horizontales = false) {
-  const subidas = [];
-  subiendo = true;
-  guardar.disabled = true;
-  abierto?.cuerpo.querySelectorAll<HTMLInputElement>("input[type=file]").forEach((x) => { x.disabled = true; });
-  const terminarCarga = mostrarCarga(ventana, "Subiendo…");
-  try {
-    for (const [i, archivo] of archivos.entries()) {
-      opciones.avisar(archivos.length > 1 ? `Subiendo imagen ${i + 1} de ${archivos.length}…` : "Subiendo imagen…");
-      const medidas = horizontales ? await medidasArchivo(archivo) : null;
-      if (medidas && medidas.ancho <= medidas.alto) throw new Error(AVISO_HORIZONTAL);
-      subidas.push(await adminApi.upload(archivo));
+  const subidas: Awaited<ReturnType<typeof adminApi.upload>>[] = [];
+  // Con el bloqueo de `bloquearMientras`, escribir durante la subida no reactiva «Guardar» (`vigilarCambios` lo respeta).
+  await bloquearMientras(guardar, async () => {
+    subiendo = true;
+    abierto?.cuerpo.querySelectorAll<HTMLInputElement>("input[type=file]").forEach((x) => { x.disabled = true; });
+    const terminarCarga = mostrarCarga(ventana, "Subiendo…");
+    try {
+      for (const [i, archivo] of archivos.entries()) {
+        opciones.avisar(archivos.length > 1 ? `Subiendo imagen ${i + 1} de ${archivos.length}…` : "Subiendo imagen…");
+        const medidas = horizontales ? await medidasArchivo(archivo) : null;
+        if (medidas && medidas.ancho <= medidas.alto) throw new Error(AVISO_HORIZONTAL);
+        subidas.push(await adminApi.upload(archivo));
+      }
+    } catch (error) {
+      opciones.avisar(error instanceof Error ? error.message : "No se pudo subir la imagen.", true);
+    } finally {
+      subiendo = false;
+      terminarCarga();
     }
-  } catch (error) {
-    opciones.avisar(error instanceof Error ? error.message : "No se pudo subir la imagen.", true);
-  } finally {
-    subiendo = false;
-    terminarCarga();
-  }
+  });
   return subidas;
 }
 

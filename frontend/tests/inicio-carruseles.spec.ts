@@ -196,14 +196,16 @@ test('el retrato de la semilla se recorta y uno subido se ve completo y no más 
   }
 });
 
-test('la descripción escrita mientras se sube el retrato no se pierde', async ({ page }) => {
+test('mientras se sube el retrato no se puede guardar y la descripción escrita no se pierde',async ({ page }) => {
   await abrirEdicion(page);
   await page.route('**/api/admin/medios', async (route) => { await new Promise(r => setTimeout(r, 500)); await route.fallback(); });
   await page.getByRole('button', { name: 'Cambiar las imágenes del carrusel principal' }).click();
   const dialogo = page.getByRole('dialog', { name: 'Carrusel principal' });
   await dialogo.locator('#retrato-nuevo').setInputFiles(await archivo('retrato.png', 1600, 1200));
   await dialogo.locator('#retrato-alt').fill('Afiche de la entrevista');
+  await expect(dialogo.getByRole('button', { name: 'Guardar borrador' })).toBeDisabled();
   await expect(page.getByRole('status').filter({ hasText: 'Imagen subida' })).toBeVisible();
+  await expect(dialogo.getByRole('button', { name: 'Guardar borrador' })).toBeEnabled();
   await expect(dialogo.locator('#retrato-alt')).toHaveValue('Afiche de la entrevista');
 });
 
