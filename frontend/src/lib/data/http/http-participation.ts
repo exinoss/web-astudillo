@@ -1,7 +1,7 @@
 import type { AlertRepository } from '../alert-repository';
 import type { ChatRepository } from '../chat-repository';
 import type { SuggestionRepository } from '../suggestion-repository';
-import type { SentAlert, SentSuggestion } from '../types';
+import type { Published, SentAlert, SentSuggestion } from '../types';
 import { sessionRequest as call } from './api-client';
 
 export const httpAlertRepository: AlertRepository = {
@@ -12,11 +12,13 @@ export const httpAlertRepository: AlertRepository = {
     return call<SentAlert>('/api/participacion/alertas', 'POST', form);
   },
   mine: () => call<{ alertas: SentAlert[] }>('/api/participacion/alertas/mias').then((r) => r.alertas),
+  published: () => call<{ items: Published<SentAlert>[]; total: number }>('/api/participacion/publicas/alertas'),
 };
 
 export const httpSuggestionRepository: SuggestionRepository = {
   submit: (input) => call<SentSuggestion>('/api/participacion/sugerencias', 'POST', input),
   mine: () => call<{ sugerencias: SentSuggestion[] }>('/api/participacion/sugerencias/mias').then((r) => r.sugerencias),
+  published: () => call<{ items: Published<SentSuggestion>[]; total: number }>('/api/participacion/publicas/sugerencias'),
 };
 
 export const httpChatRepository: ChatRepository = {

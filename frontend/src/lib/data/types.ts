@@ -72,8 +72,9 @@ export interface SentAlert {
   descripcion: string;
   estado: ParticipationState;
   creadoEn: string;
-  /** Rutas privadas de la API: solo las ven su autor y quien revisa la participación. */
+  /** Rutas de la API: las de una alerta sin publicar solo las ven su autor y quien revisa la participación. */
   foto: { miniatura: string; grande: string } | null;
+  publica?: boolean;
 }
 
 export interface SuggestionInput {
@@ -89,6 +90,9 @@ export interface SentSuggestion {
   estado: ParticipationState;
   creadoEn: string;
 }
+
+/** Lo que ve cualquier visitante: `autor` es null si se publicó sin nombre; `mia`, si la envió quien mira. */
+export type Published<T> = T & { autor: string | null; mia: boolean };
 
 export interface ChatReply {
   text: string;

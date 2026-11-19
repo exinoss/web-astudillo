@@ -2,7 +2,7 @@ import { afterAll, beforeAll, expect, test } from "bun:test";
 import { rm } from "node:fs/promises";
 import sharp from "sharp";
 import { migrate } from "../src/db/migrate";
-import { testApp } from "./helpers";
+import { PASSWORD, testApp } from "./helpers";
 import { callPg } from '../src/db/call';
 import { VERSION_LEGAL } from '../src/contracts/legal';
 
@@ -72,7 +72,7 @@ test("la foto es privada, sin metadatos, y solo la ven su autor y quien revisa",
   expect(meta.exif).toBeUndefined();
   expect((await call(url, "GET", undefined, cookies.analista)).status).toBe(200);
   expect((await call(url, "GET", undefined, cookies.otro)).status).toBe(404);
-  expect((await call(url, "GET")).status).toBe(401);
+  expect((await call(url, "GET")).status).toBe(404);
   expect((await call("/api/participacion/fotos/..%2F..%2Fsecreto-480.webp", "GET", undefined, cookies.votante)).status).toBe(404);
 });
 
@@ -325,4 +325,85 @@ test("los enlaces de redes solo aceptan su dominio y WhatsApp se guarda como nú
   expect(valor).toBe("593985658595");
   expect((await put("enlace.whatsapp", "+593 95 856 5874")).status).toBe(200);
   expect((await put("enlace.whatsapp", "llámame")).status).toBe(422);
+  expect((await put("enlace.whatsapp", "https://chat.whatsapp.com/AbCdEf1234567890xyZ?mode=r_c")).status).toBe(200);
+  const [{ valor: comunidad }] = await sql`SELECT valor FROM tb_textos WHERE clave = 'enlace.whatsapp'`;
+  expect(comunidad).toBe("https://chat.whatsapp.com/AbCdEf1234567890xyZ");
+  expect((await put("enlace.whatsapp", "https://chat.whatsapp.com.malo.example/AbCdEf1234567890")).status).toBe(422);
+  expect((await put("enlace.whatsapp", "http://chat.whatsapp.com/AbCdEf1234567890")).status).toBe(422);
+});
+
+test("las sugerencias son públicas con nombre y el panel puede ocultarlo con control de concurrencia", async () => {
+  await account("vecina", "votante");
+  const sent = await (await call("/api/participacion/sugerencias", "POST",
+    { idempotencia: crypto.randomUUID(), tema: "otro", mensaje: "Una plaza con sombra para el mercado" }, cookies.vecina)).json();
+  const publicOne = async () => (await (await call("/api/participacion/publicas/sugerencias")).json()).items.find((i: { id: number }) => i.id === sent.id);
+  expect(await publicOne()).toMatchObject({ autor: "vecina", mensaje: "Una plaza con sombra para el mercado" });
+  expect((await publicOne()).correo).toBeUndefined();
+  expect((await publicOne()).mia).toBe(false);
+  const seen = await (await call("/api/participacion/publicas/sugerencias", "GET", undefined, cookies.vecina)).json();
+  expect(seen.items.find((i: { id: number }) => i.id === sent.id).mia).toBe(true);
+  const change = (anonima: boolean, anterior: boolean, who = "admin") =>
+    call(`/api/admin/participacion/sugerencias/${sent.id}/visibilidad`, "PATCH", { anonima, anterior: { anonima: anterior } }, cookies[who]);
+  expect((await change(true, false, "analista")).status).toBe(403);
+  expect((await change(true, false, "vecina")).status).toBe(403);
+  expect((await change(true, false)).status).toBe(200);
+  expect((await change(true, false)).status).toBe(200);
+  expect((await change(false, false)).status).toBe(409);
+  expect((await publicOne()).autor).toBeNull();
+  const panel = await (await call("/api/admin/participacion/sugerencias", "GET", undefined, cookies.admin)).json();
+  expect(panel.items.find((i: { id: number }) => i.id === sent.id)).toMatchObject({ anonima: true, autor: "vecina" });
+  const [{ total }] = await sql`SELECT count(*)::int AS total FROM tb_auditoria WHERE accion = 'sugerencia_visibilidad' AND id_registro = ${sent.id}`;
+  expect(total).toBe(1);
+});
+
+test("una alerta es privada hasta que se publica, y entonces sale sin nombre y con su foto", async () => {
+  await account("vecino-alerta", "votante");
+  const sent = await (await call("/api/participacion/alertas", "POST",
+    alertForm(alert({ referencia: "Frente al parque" }), await photo()), cookies["vecino-alerta"])).json();
+  const publicOne = async () => (await (await call("/api/participacion/publicas/alertas")).json()).items.find((i: { id: number }) => i.id === sent.id);
+  expect(await publicOne()).toBeUndefined();
+  expect((await call(sent.foto.miniatura)).status).toBe(404);
+  const change = (body: object) => call(`/api/admin/participacion/alertas/${sent.id}/visibilidad`, "PATCH", body, cookies.admin);
+  const hidden = { publica: false, anonima: true };
+  expect((await change({ publica: true, anonima: true, anterior: hidden })).status).toBe(200);
+  expect((await change({ publica: true, anonima: true, anterior: hidden })).status).toBe(200);
+  expect(await publicOne()).toMatchObject({ autor: null, referencia: "Frente al parque" });
+  expect((await call(sent.foto.miniatura)).status).toBe(200);
+  // Otro admin con la lista vieja (aún privada) no pisa el cambio.
+  expect((await change({ publica: false, anonima: false, anterior: hidden })).status).toBe(409);
+  expect((await change({ publica: true, anonima: false, anterior: { publica: true, anonima: true } })).status).toBe(200);
+  expect((await publicOne()).autor).toBe("vecino-alerta");
+  const mine = await (await call("/api/participacion/alertas/mias", "GET", undefined, cookies["vecino-alerta"])).json();
+  expect(mine.alertas[0]).toMatchObject({ id: sent.id, publica: true });
+  expect((await call("/api/admin/participacion/alertas/9999/visibilidad", "PATCH", { publica: true, anonima: true, anterior: hidden }, cookies.admin)).status).toBe(404);
+});
+
+test("borrar pide la contraseña, es seguro repetirlo y solo su autor la sigue viendo", async () => {
+  const { items: [target] } = await (await call("/api/participacion/publicas/alertas")).json();
+  const remove = (confirmacion: string, who = "admin", tipo = "alertas", id = target.id) =>
+    call(`/api/admin/participacion/${tipo}/${id}`, "DELETE", { confirmacion }, cookies[who]);
+  expect((await remove(PASSWORD, "analista")).status).toBe(403);
+  expect((await remove("otra-clave")).status).toBe(403);
+  expect((await remove(PASSWORD)).status).toBe(200);
+  expect((await remove(PASSWORD)).status).toBe(200);
+  expect((await remove(PASSWORD, "admin", "alertas", 9999)).status).toBe(404);
+  const ids = (r: { items: { id: number }[] }) => r.items.map(i => i.id);
+  expect(ids(await (await call("/api/participacion/publicas/alertas")).json())).not.toContain(target.id);
+  expect(ids(await (await call("/api/admin/participacion/alertas", "GET", undefined, cookies.admin)).json())).not.toContain(target.id);
+  const mine = await (await call("/api/participacion/alertas/mias", "GET", undefined, cookies["vecino-alerta"])).json();
+  expect(mine.alertas[0]).toMatchObject({ id: target.id, publica: false });
+  expect((await call(target.foto.miniatura)).status).toBe(404);
+  // Una borrada ya no se publica ni cambia de estado.
+  expect((await call(`/api/admin/participacion/alertas/${target.id}/visibilidad`, "PATCH",
+    { publica: true, anonima: true, anterior: { publica: true, anonima: false } }, cookies.admin)).status).toBe(404);
+  expect((await call(`/api/admin/participacion/alertas/${target.id}/estado`, "PATCH",
+    { estado: "atendida", estadoAnterior: "recibida" }, cookies.admin)).status).toBe(404);
+  const [{ total }] = await sql`SELECT count(*)::int AS total FROM tb_auditoria WHERE accion = 'alerta_borrada' AND id_registro = ${target.id}`;
+  expect(total).toBe(1);
+  const [{ borrada }] = await sql`SELECT borrada_en IS NOT NULL AS borrada FROM tb_alertas WHERE id_alerta = ${target.id}`;
+  expect(borrada).toBe(true);
+
+  const { items: [suggestion] } = await (await call("/api/participacion/publicas/sugerencias")).json();
+  expect((await remove(PASSWORD, "admin", "sugerencias", suggestion.id)).status).toBe(200);
+  expect(ids(await (await call("/api/participacion/publicas/sugerencias")).json())).not.toContain(suggestion.id);
 });

@@ -41,7 +41,7 @@ export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; secu
     .use(adminRoutes(sql, authorization, confirmation, config.trustProxyIp))
     .use(contentRoutes(sql, authorization, config.mediaDir))
     .use(previewRoutes(sql, config, security, authorization))
-    .use(participationRoutes(sql, authorization, config.privateMediaDir))
+    .use(participationRoutes(sql, authorization, confirmation, config.privateMediaDir, config.trustProxyIp))
     .use(noticesRoutes(sql, authorization))
     .use(statsRoutes(sql, config))
     // En producción nginx sirve /medios desde el mismo volumen; esto solo cubre el desarrollo.

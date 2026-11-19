@@ -118,11 +118,14 @@ LANGUAGE sql STABLE AS $$
   FROM tb_alertas a WHERE a.id_usuario = p_user AND a.clave_idempotencia = p_key;
 $$;
 
+-- Historial de quien la envió, también las borradas; `publica` dice si hoy se ve en el sitio.
+DROP FUNCTION IF EXISTS fn_alerts_mine(integer, integer);
 CREATE OR REPLACE FUNCTION fn_alerts_mine(p_user integer, p_limit integer)
 RETURNS TABLE(id_alerta integer, tipo varchar, sector varchar, referencia varchar, descripcion varchar,
-  foto varchar, estado varchar, creado_en timestamptz)
+  foto varchar, estado varchar, creado_en timestamptz, publica boolean)
 LANGUAGE sql STABLE AS $$
-  SELECT a.id_alerta, a.tipo, a.sector, a.referencia, a.descripcion, a.foto, a.estado, a.creado_en
+  SELECT a.id_alerta, a.tipo, a.sector, a.referencia, a.descripcion, a.foto, a.estado, a.creado_en,
+    a.publica AND a.borrada_en IS NULL
   FROM tb_alertas a WHERE a.id_usuario = p_user ORDER BY a.id_alerta DESC LIMIT p_limit;
 $$;
 
@@ -159,35 +162,65 @@ LANGUAGE sql STABLE AS $$
   FROM tb_sugerencias s WHERE s.id_usuario = p_user ORDER BY s.id_sugerencia DESC LIMIT p_limit;
 $$;
 
--- Lista del panel, por estado (nulo = todos), con el nombre y el correo de quien la envió.
+-- Lista del panel sin las borradas, por estado (nulo = todos), con el nombre y el correo de quien la envió.
+DROP FUNCTION IF EXISTS fn_alerts_list(integer, text, integer, integer);
 CREATE OR REPLACE FUNCTION fn_alerts_list(p_actor integer, p_state text, p_limit integer, p_offset integer)
 RETURNS TABLE(id_alerta integer, tipo varchar, sector varchar, referencia varchar, descripcion varchar,
-  foto varchar, estado varchar, creado_en timestamptz, autor varchar, correo varchar)
+  foto varchar, estado varchar, creado_en timestamptz, publica boolean, anonima boolean, autor varchar, correo varchar)
 LANGUAGE sql STABLE AS $$
   SELECT a.id_alerta, a.tipo, a.sector, a.referencia, a.descripcion, a.foto, a.estado, a.creado_en,
-    u.nombres_completos, u.correo
+    a.publica, a.anonima, u.nombres_completos, u.correo
   FROM tb_alertas a JOIN tb_usuarios u ON u.id_usuario = a.id_usuario
-  WHERE fn_has_permission(p_actor, 'participacion.ver') AND (p_state IS NULL OR a.estado = p_state)
+  WHERE fn_has_permission(p_actor, 'participacion.ver') AND a.borrada_en IS NULL
+    AND (p_state IS NULL OR a.estado = p_state)
   ORDER BY a.id_alerta DESC LIMIT p_limit OFFSET p_offset;
 $$;
 
+DROP FUNCTION IF EXISTS fn_suggestions_list(integer, text, integer, integer);
 CREATE OR REPLACE FUNCTION fn_suggestions_list(p_actor integer, p_state text, p_limit integer, p_offset integer)
 RETURNS TABLE(id_sugerencia integer, tema varchar, mensaje varchar, estado varchar, creado_en timestamptz,
-  autor varchar, correo varchar)
+  anonima boolean, autor varchar, correo varchar)
 LANGUAGE sql STABLE AS $$
-  SELECT s.id_sugerencia, s.tema, s.mensaje, s.estado, s.creado_en, u.nombres_completos, u.correo
+  SELECT s.id_sugerencia, s.tema, s.mensaje, s.estado, s.creado_en, s.anonima, u.nombres_completos, u.correo
   FROM tb_sugerencias s JOIN tb_usuarios u ON u.id_usuario = s.id_usuario
-  WHERE fn_has_permission(p_actor, 'participacion.ver') AND (p_state IS NULL OR s.estado = p_state)
+  WHERE fn_has_permission(p_actor, 'participacion.ver') AND s.borrada_en IS NULL
+    AND (p_state IS NULL OR s.estado = p_state)
   ORDER BY s.id_sugerencia DESC LIMIT p_limit OFFSET p_offset;
 $$;
 
 CREATE OR REPLACE FUNCTION fn_participation_counts(p_actor integer)
 RETURNS TABLE(tipo text, estado varchar, total integer) LANGUAGE sql STABLE AS $$
   SELECT 'alertas', a.estado, count(*)::integer FROM tb_alertas a
-  WHERE fn_has_permission(p_actor, 'participacion.ver') GROUP BY a.estado
+  WHERE fn_has_permission(p_actor, 'participacion.ver') AND a.borrada_en IS NULL GROUP BY a.estado
   UNION ALL
   SELECT 'sugerencias', s.estado, count(*)::integer FROM tb_sugerencias s
-  WHERE fn_has_permission(p_actor, 'participacion.ver') GROUP BY s.estado;
+  WHERE fn_has_permission(p_actor, 'participacion.ver') AND s.borrada_en IS NULL GROUP BY s.estado;
+$$;
+
+-- Alertas publicadas para cualquier visitante; el nombre solo si se eligió mostrarlo y `mia` para quien la envió.
+CREATE OR REPLACE FUNCTION fn_alerts_public(p_user integer, p_limit integer, p_offset integer)
+RETURNS TABLE(id_alerta integer, tipo varchar, sector varchar, referencia varchar, descripcion varchar,
+  foto varchar, estado varchar, creado_en timestamptz, autor varchar, mia boolean, total integer)
+LANGUAGE sql STABLE AS $$
+  SELECT a.id_alerta, a.tipo, a.sector, a.referencia, a.descripcion, a.foto, a.estado, a.creado_en,
+    CASE WHEN a.anonima THEN NULL ELSE u.nombres_completos END, a.id_usuario IS NOT DISTINCT FROM p_user,
+    (count(*) OVER ())::integer
+  FROM tb_alertas a JOIN tb_usuarios u ON u.id_usuario = a.id_usuario
+  WHERE a.publica AND a.borrada_en IS NULL
+  ORDER BY a.id_alerta DESC LIMIT p_limit OFFSET p_offset;
+$$;
+
+-- Sugerencias no borradas para cualquier visitante, con el nombre salvo que se haya ocultado y `mia` para quien la envió.
+CREATE OR REPLACE FUNCTION fn_suggestions_public(p_user integer, p_limit integer, p_offset integer)
+RETURNS TABLE(id_sugerencia integer, tema varchar, mensaje varchar, estado varchar, creado_en timestamptz,
+  autor varchar, mia boolean, total integer)
+LANGUAGE sql STABLE AS $$
+  SELECT s.id_sugerencia, s.tema, s.mensaje, s.estado, s.creado_en,
+    CASE WHEN s.anonima THEN NULL ELSE u.nombres_completos END, s.id_usuario IS NOT DISTINCT FROM p_user,
+    (count(*) OVER ())::integer
+  FROM tb_sugerencias s JOIN tb_usuarios u ON u.id_usuario = s.id_usuario
+  WHERE s.borrada_en IS NULL
+  ORDER BY s.id_sugerencia DESC LIMIT p_limit OFFSET p_offset;
 $$;
 
 -- Cambia el estado con control optimista: «sin_cambios» si ya lo tiene y «conflicto» si otra persona lo cambió.
@@ -197,7 +230,7 @@ RETURNS TABLE(resultado text, estado varchar) LANGUAGE plpgsql AS $$
 DECLARE v_current varchar;
 BEGIN
   IF NOT fn_has_permission(p_actor, 'participacion.gestionar') THEN RETURN; END IF;
-  SELECT a.estado INTO v_current FROM tb_alertas a WHERE a.id_alerta = p_id FOR UPDATE;
+  SELECT a.estado INTO v_current FROM tb_alertas a WHERE a.id_alerta = p_id AND a.borrada_en IS NULL FOR UPDATE;
   IF NOT FOUND THEN RETURN; END IF;
   IF v_current = p_state THEN RETURN QUERY SELECT 'sin_cambios'::text, v_current; RETURN; END IF;
   IF v_current <> p_expected THEN RETURN QUERY SELECT 'conflicto'::text, v_current; RETURN; END IF;
@@ -214,7 +247,7 @@ RETURNS TABLE(resultado text, estado varchar) LANGUAGE plpgsql AS $$
 DECLARE v_current varchar;
 BEGIN
   IF NOT fn_has_permission(p_actor, 'participacion.gestionar') THEN RETURN; END IF;
-  SELECT s.estado INTO v_current FROM tb_sugerencias s WHERE s.id_sugerencia = p_id FOR UPDATE;
+  SELECT s.estado INTO v_current FROM tb_sugerencias s WHERE s.id_sugerencia = p_id AND s.borrada_en IS NULL FOR UPDATE;
   IF NOT FOUND THEN RETURN; END IF;
   IF v_current = p_state THEN RETURN QUERY SELECT 'sin_cambios'::text, v_current; RETURN; END IF;
   IF v_current <> p_expected THEN RETURN QUERY SELECT 'conflicto'::text, v_current; RETURN; END IF;
@@ -225,9 +258,88 @@ BEGIN
 END;
 $$;
 
--- La foto privada de una alerta solo la ve quien la envió o quien revisa la participación.
+-- La foto de una alerta publicada la ve cualquiera; si no, solo quien la envió o quien revisa la participación.
 CREATE OR REPLACE FUNCTION fn_alert_photo_allowed(p_user integer, p_photo text)
 RETURNS TABLE(permitido boolean) LANGUAGE sql STABLE AS $$
   SELECT EXISTS (SELECT 1 FROM tb_alertas a WHERE a.foto = p_photo
-    AND (a.id_usuario = p_user OR fn_has_permission(p_user, 'participacion.ver')));
+    AND ((a.publica AND a.borrada_en IS NULL) OR a.id_usuario = p_user OR fn_has_permission(p_user, 'participacion.ver')));
+$$;
+
+-- Publica u oculta una alerta y su nombre, con control optimista sobre lo que veía el panel.
+CREATE OR REPLACE FUNCTION fn_alert_visibility_change(p_actor integer, p_id integer, p_public boolean,
+  p_anonymous boolean, p_expected_public boolean, p_expected_anonymous boolean)
+RETURNS TABLE(resultado text, publica boolean, anonima boolean) LANGUAGE plpgsql AS $$
+#variable_conflict use_column
+DECLARE v_public boolean; v_anonymous boolean;
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'participacion.gestionar') THEN RETURN; END IF;
+  SELECT a.publica, a.anonima INTO v_public, v_anonymous FROM tb_alertas a
+  WHERE a.id_alerta = p_id AND a.borrada_en IS NULL FOR UPDATE;
+  IF NOT FOUND THEN RETURN; END IF;
+  IF (v_public, v_anonymous) = (p_public, p_anonymous) THEN
+    RETURN QUERY SELECT 'sin_cambios'::text, v_public, v_anonymous; RETURN;
+  END IF;
+  IF (v_public, v_anonymous) <> (p_expected_public, p_expected_anonymous) THEN
+    RETURN QUERY SELECT 'conflicto'::text, v_public, v_anonymous; RETURN;
+  END IF;
+  UPDATE tb_alertas a SET publica = p_public, anonima = p_anonymous, actualizado_en = now(), actualizado_por = p_actor
+  WHERE a.id_alerta = p_id;
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro, cambios)
+  VALUES (p_actor, 'alerta_visibilidad', 'tb_alertas', p_id, jsonb_build_object(
+    'antes', jsonb_build_object('publica', v_public, 'anonima', v_anonymous),
+    'despues', jsonb_build_object('publica', p_public, 'anonima', p_anonymous)));
+  RETURN QUERY SELECT 'guardado'::text, p_public, p_anonymous;
+END;
+$$;
+
+-- Oculta o muestra el nombre de una sugerencia, con control optimista sobre lo que veía el panel.
+CREATE OR REPLACE FUNCTION fn_suggestion_visibility_change(p_actor integer, p_id integer, p_anonymous boolean,
+  p_expected_anonymous boolean)
+RETURNS TABLE(resultado text, anonima boolean) LANGUAGE plpgsql AS $$
+#variable_conflict use_column
+DECLARE v_anonymous boolean;
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'participacion.gestionar') THEN RETURN; END IF;
+  SELECT s.anonima INTO v_anonymous FROM tb_sugerencias s
+  WHERE s.id_sugerencia = p_id AND s.borrada_en IS NULL FOR UPDATE;
+  IF NOT FOUND THEN RETURN; END IF;
+  IF v_anonymous = p_anonymous THEN RETURN QUERY SELECT 'sin_cambios'::text, v_anonymous; RETURN; END IF;
+  IF v_anonymous <> p_expected_anonymous THEN RETURN QUERY SELECT 'conflicto'::text, v_anonymous; RETURN; END IF;
+  UPDATE tb_sugerencias s SET anonima = p_anonymous, actualizado_en = now(), actualizado_por = p_actor
+  WHERE s.id_sugerencia = p_id;
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro, cambios)
+  VALUES (p_actor, 'sugerencia_visibilidad', 'tb_sugerencias', p_id,
+    jsonb_build_object('antes', jsonb_build_object('anonima', v_anonymous), 'despues', jsonb_build_object('anonima', p_anonymous)));
+  RETURN QUERY SELECT 'guardado'::text, p_anonymous;
+END;
+$$;
+
+-- Borrado lógico de una alerta; repetirlo devuelve «sin_cambios» y no vuelve a auditarlo.
+CREATE OR REPLACE FUNCTION fn_alert_delete(p_actor integer, p_id integer)
+RETURNS TABLE(resultado text) LANGUAGE plpgsql AS $$
+DECLARE v_deleted timestamptz;
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'participacion.gestionar') THEN RETURN; END IF;
+  SELECT a.borrada_en INTO v_deleted FROM tb_alertas a WHERE a.id_alerta = p_id FOR UPDATE;
+  IF NOT FOUND THEN RETURN; END IF;
+  IF v_deleted IS NOT NULL THEN RETURN QUERY SELECT 'sin_cambios'::text; RETURN; END IF;
+  UPDATE tb_alertas a SET borrada_en = now(), borrada_por = p_actor WHERE a.id_alerta = p_id;
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro) VALUES (p_actor, 'alerta_borrada', 'tb_alertas', p_id);
+  RETURN QUERY SELECT 'guardado'::text;
+END;
+$$;
+
+-- Borrado lógico de una sugerencia; repetirlo devuelve «sin_cambios» y no vuelve a auditarlo.
+CREATE OR REPLACE FUNCTION fn_suggestion_delete(p_actor integer, p_id integer)
+RETURNS TABLE(resultado text) LANGUAGE plpgsql AS $$
+DECLARE v_deleted timestamptz;
+BEGIN
+  IF NOT fn_has_permission(p_actor, 'participacion.gestionar') THEN RETURN; END IF;
+  SELECT s.borrada_en INTO v_deleted FROM tb_sugerencias s WHERE s.id_sugerencia = p_id FOR UPDATE;
+  IF NOT FOUND THEN RETURN; END IF;
+  IF v_deleted IS NOT NULL THEN RETURN QUERY SELECT 'sin_cambios'::text; RETURN; END IF;
+  UPDATE tb_sugerencias s SET borrada_en = now(), borrada_por = p_actor WHERE s.id_sugerencia = p_id;
+  INSERT INTO tb_auditoria (id_actor, accion, entidad, id_registro) VALUES (p_actor, 'sugerencia_borrada', 'tb_sugerencias', p_id);
+  RETURN QUERY SELECT 'guardado'::text;
+END;
 $$;

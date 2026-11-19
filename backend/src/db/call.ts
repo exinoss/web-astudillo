@@ -91,11 +91,17 @@ const names = {
   alertsList: 'fn_alerts_list',
   alertStateChange: 'fn_alert_state_change',
   alertPhotoAllowed: 'fn_alert_photo_allowed',
+  alertsPublic: 'fn_alerts_public',
+  alertVisibilityChange: 'fn_alert_visibility_change',
+  alertDelete: 'fn_alert_delete',
   suggestionCreate: 'fn_suggestion_create',
   suggestionByKey: 'fn_suggestion_by_key',
   suggestionsMine: 'fn_suggestions_mine',
   suggestionsList: 'fn_suggestions_list',
   suggestionStateChange: 'fn_suggestion_state_change',
+  suggestionsPublic: 'fn_suggestions_public',
+  suggestionVisibilityChange: 'fn_suggestion_visibility_change',
+  suggestionDelete: 'fn_suggestion_delete',
   participationCounts: 'fn_participation_counts',
   masterCreate: 'fn_master_create',
   masterTransfer: 'fn_master_transfer',
@@ -108,6 +114,8 @@ interface Params {
   alertByKey: [user: number, key: string];
   alertCreate: [user: number, key: string, type: string, sector: string, reference: string | null,
     description: string, photo: string | null, legalVersion: string];
+  alertVisibilityChange: [actor: number, id: number, isPublic: boolean, anonymous: boolean,
+    expectedPublic: boolean, expectedAnonymous: boolean];
   pendingCreate: [email: string, tokenHash: string, name: string, address: string | null, passwordHash: string,
     legalVersion: string, legalText: string, seconds: number];
   suggestionByKey: [user: number, key: string];
@@ -118,6 +126,8 @@ type Row = Record<string, unknown>;
 /** Ejecuta una función PostgreSQL del catálogo con parámetros enlazados; las listas de números van como texto «1,2,3». */
 export function callPg<T extends object = Row>(db: SQL, functionName: 'alertByKey', values: Params['alertByKey']): Promise<T[]>;
 export function callPg<T extends object = Row>(db: SQL, functionName: 'alertCreate', values: Params['alertCreate']): Promise<T[]>;
+/** Firma de `fn_alert_visibility_change`: lo nuevo y lo que veía el panel, en ese orden. */
+export function callPg<T extends object = Row>(db: SQL, functionName: 'alertVisibilityChange', values: Params['alertVisibilityChange']): Promise<T[]>;
 /** Firma de `fn_pending_create`, que recibe ocho valores en orden. */
 export function callPg<T extends object = Row>(db: SQL, functionName: 'pendingCreate', values: Params['pendingCreate']): Promise<T[]>;
 export function callPg<T extends object = Row>(db: SQL, functionName: 'suggestionByKey', values: Params['suggestionByKey']): Promise<T[]>;

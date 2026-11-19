@@ -89,6 +89,33 @@ test('en móvil el visor ocupa toda la pantalla y se avanza con los botones de a
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
 });
 
+const PIE_LARGO = 'Vecinos del barrio recorren con el equipo técnico la calle principal, donde ya se colocó la base del pavimento. '.repeat(3).slice(0, 300);
+// Pone un pie de 300 caracteres a la primera foto antes de abrir el visor.
+const alargarPie = (page: import('@playwright/test').Page) => page.locator('template[data-visor-foto]').first()
+  .evaluate((t, texto) => { (t as HTMLTemplateElement).content.querySelector('figcaption')!.textContent = texto; }, PIE_LARGO);
+
+test('en el visor el pie ocupa el ancho de la foto y en celular se recorta con «Ver más…»', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(CONOCE);
+  await alargarPie(page);
+  await page.getByRole('button', { name: 'Ver todas (4)' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Momentos en imágenes' });
+  const anchos = () => dialog.locator('[data-visor-escena] figure').evaluate((f) => [f.querySelector('img')!, f.querySelector('figcaption')!].map(n => Math.round(n.getBoundingClientRect().width)));
+  const [foto, pie] = await anchos();
+  expect(pie).toBe(foto);
+  await expect(dialog.getByRole('button', { name: 'Ver más…' })).toBeHidden();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Ver todas (4)' }).click();
+  const texto = dialog.locator('figcaption span');
+  const recortado = (await texto.boundingBox())!.height;
+  await dialog.getByRole('button', { name: 'Ver más…' }).click();
+  await expect(dialog.getByRole('button', { name: 'Ver menos' })).toHaveAttribute('aria-expanded', 'true');
+  expect((await texto.boundingBox())!.height).toBeGreaterThan(recortado);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+});
+
 test('en móvil la galería avanza con botones y contador', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(CONOCE);

@@ -10,17 +10,19 @@ interface Props {
   photos: { image: UploadedPicture; alt: string; caption: string }[];
   sizes: string;
   class?: string;
+  zona: string;
   ampliable?: boolean;
   automatico?: boolean;
 }
-const { id, label, photos, sizes, class: className, ampliable = false, automatico = false } = Astro.props;
-const flecha = "boton-redondo text-primary-content hover:bg-primary-content/15";
+const { id, label, photos, sizes, class: className, zona, ampliable = false, automatico = false } = Astro.props;
+// En celular se pasa de foto deslizando: las flechas solo quedan para lectores de pantalla y teclado.
+const flecha = "boton-redondo text-primary-content hover:bg-primary-content/15 celular:sr-only celular:focus-visible:not-sr-only";
 const imagen = "block aspect-(--proporcion) h-auto w-[min(100cqw,var(--ancho-foto),100cqh*var(--proporcion))]";
 ---
 
 <div
   id={id}
-  class:list={["relative overflow-hidden rounded-card bg-primary", className]}
+  class:list={["@container relative flex flex-col overflow-hidden rounded-card bg-primary", className]}
   role="region"
   aria-roledescription="carrusel"
   aria-label={label}
@@ -29,7 +31,7 @@ const imagen = "block aspect-(--proporcion) h-auto w-[min(100cqw,var(--ancho-fot
 >
   {photos.map((foto, i) => (
     <figure
-      class="@container-[size] absolute inset-0 m-0 flex items-center justify-center pb-[54px]"
+      class="m-0 flex flex-1 flex-col"
       style={medidasFoto(foto.image)}
       role="group"
       aria-roledescription="diapositiva"
@@ -37,14 +39,16 @@ const imagen = "block aspect-(--proporcion) h-auto w-[min(100cqw,var(--ancho-fot
       data-diapositiva
       hidden={i !== 0}
     >
-      {ampliable ? (
-        <button type="button" class="block cursor-zoom-in" data-visor-abrir={i} aria-label={`Ampliar: ${foto.alt}`}>
+      <div class:list={["@container-[size] flex items-center justify-center", zona]}>
+        {ampliable ? (
+          <button type="button" class="block cursor-zoom-in" data-visor-abrir={i} aria-label={`Ampliar: ${foto.alt}`}>
+            <Foto class={imagen} picture={foto.image} alt={foto.alt} sizes={sizes} />
+          </button>
+        ) : (
           <Foto class={imagen} picture={foto.image} alt={foto.alt} sizes={sizes} />
-        </button>
-      ) : (
-        <Foto class={imagen} picture={foto.image} alt={foto.alt} sizes={sizes} />
-      )}
-      <figcaption class="absolute inset-x-0 bottom-0 min-h-[54px] bg-primary/85 py-4 pr-[160px] pl-4 text-[0.8rem] leading-[1.4] text-primary-content">
+        )}
+      </div>
+      <figcaption class="min-h-[54px] bg-primary/85 py-4 pr-[160px] pl-4 text-[0.8rem] leading-[1.4] text-primary-content celular:pr-16">
         {foto.caption}
       </figcaption>
     </figure>

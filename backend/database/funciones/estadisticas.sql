@@ -10,6 +10,7 @@ DROP FUNCTION IF EXISTS fn_site_stats();
 CREATE OR REPLACE FUNCTION fn_site_stats()
 RETURNS TABLE(visitas bigint, voces bigint, personas bigint) LANGUAGE sql STABLE AS $$
   SELECT (SELECT COALESCE(sum(total), 0) FROM tb_visitas_dia),
-    (SELECT count(*) FROM tb_alertas) + (SELECT count(*) FROM tb_sugerencias) + (SELECT count(*) FROM tb_chat_envios),
+    (SELECT count(*) FROM tb_alertas WHERE borrada_en IS NULL)
+      + (SELECT count(*) FROM tb_sugerencias WHERE borrada_en IS NULL) + (SELECT count(*) FROM tb_chat_envios),
     (SELECT count(*) FROM tb_usuarios WHERE rol = 'votante' AND estado = 'activo');
 $$;

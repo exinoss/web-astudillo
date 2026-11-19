@@ -1,6 +1,6 @@
 import type { SQL } from 'bun';
 import { PERMISSIONS } from '../../auth/permissions';
-import type { Authorization, Limiter } from '../../auth/types';
+import type { Authorization, Confirmation, Limiter } from '../../auth/types';
 import { callPg } from '../../db/call';
 import { savePhoto } from '../../content/services/media';
 import { sha256 } from '../../security';
@@ -22,6 +22,7 @@ const HISTORY = 20;
 const SENDS_PER_WINDOW = 5;
 const WINDOW_MS = 10 * 60_000;
 const STATE_CONFLICT = 'Otra persona cambió el estado mientras tanto; recarga la lista.';
+const VISIBILITY_CONFLICT = 'Otra persona cambió la publicación mientras tanto; recarga la lista.';
 
 export interface AlertInput {
   idempotencia: string;
@@ -35,11 +36,14 @@ export interface AlertInput {
 type AlertRow = {
   id_alerta: number; tipo: string; sector: string; referencia: string | null; descripcion: string;
   foto: string | null; estado: State; creado_en: string; autor?: string | null; correo?: string;
+  publica?: boolean; anonima?: boolean; mia?: boolean;
 };
 type SuggestionRow = {
   id_sugerencia: number; tema: string; mensaje: string; estado: State; creado_en: string;
-  autor?: string | null; correo?: string;
+  autor?: string | null; correo?: string; anonima?: boolean; mia?: boolean;
 };
+type Kind = 'alertas' | 'sugerencias';
+type Visibility = { publica?: boolean; anonima: boolean };
 
 /** Ruta privada de la foto; la API la sirve solo a su autor y a quien revisa la participación. */
 const photoUrl = (name: string | null, width: number) => (name ? `/api/participacion/fotos/${name}-${width}.webp` : null);
@@ -48,14 +52,25 @@ const toAlert = (r: AlertRow) => ({
   id: r.id_alerta, tipo: r.tipo, sector: r.sector, referencia: r.referencia, descripcion: r.descripcion,
   estado: r.estado, creadoEn: r.creado_en,
   foto: r.foto ? { miniatura: photoUrl(r.foto, 480)!, grande: photoUrl(r.foto, 1280)! } : null,
-  ...(r.correo ? { autor: r.autor ?? null, correo: r.correo } : {}),
+  ...visibilityOf(r),
 });
 const toSuggestion = (r: SuggestionRow) => ({
   id: r.id_sugerencia, tema: r.tema, mensaje: r.mensaje, estado: r.estado, creadoEn: r.creado_en,
-  ...(r.correo ? { autor: r.autor ?? null, correo: r.correo } : {}),
+  ...visibilityOf(r),
 });
+/** Solo los campos que trae cada consulta: el panel recibe correo y visibilidad; la lista pública, el autor si se muestra. */
+function visibilityOf(r: AlertRow | SuggestionRow) {
+  return {
+    ...('autor' in r ? { autor: r.autor ?? null } : {}),
+    ...(r.correo ? { correo: r.correo } : {}),
+    ...('publica' in r ? { publica: r.publica } : {}),
+    ...('anonima' in r ? { anonima: r.anonima } : {}),
+    ...('mia' in r ? { mia: r.mia } : {}),
+  };
+}
 
-export function createParticipation(sql: SQL, authorization: Authorization, limit: Limiter, photoDir: string) {
+/** Envíos de votantes, su revisión en el panel y lo que se publica de ellos. */
+export function createParticipation(sql: SQL, authorization: Authorization, limit: Limiter, photoDir: string, confirmation: Confirmation) {
   type StateRow = { resultado: 'guardado' | 'sin_cambios' | 'conflicto'; estado: State };
   const stateResult = ([row]: StateRow[]) => {
     if (!row) throw new ApiError(404, 'No encontrado');
@@ -63,6 +78,9 @@ export function createParticipation(sql: SQL, authorization: Authorization, limi
     return { estado: row.estado };
   };
   const alertSending = compartirEnCurso<AlertRow>();
+  // Una sesión vencida no debe impedir ver lo publicado: se trata como visitante.
+  const sessionUser = (access: string | undefined) =>
+    access ? authorization.require(access, PERMISSIONS.participationSend).catch(() => null) : Promise.resolve(null);
   const suggestionSending = compartirEnCurso<SuggestionRow>();
 
   return {
@@ -141,10 +159,44 @@ export function createParticipation(sql: SQL, authorization: Authorization, limi
         [actor.id_usuario, id, state, expected]));
     },
 
-    /** Autoriza una foto privada; responde 404 también cuando no hay permiso para no revelar que existe. */
+    /** Lo publicado, para cualquier visitante y sin correos; con sesión marca lo propio. */
+    async publicList(access: string | undefined, kind: Kind, page: number) {
+      const user = await sessionUser(access);
+      const args = [user?.id_usuario ?? null, PAGE_SIZE, (page - 1) * PAGE_SIZE];
+      const rows = kind === 'alertas'
+        ? await callPg<AlertRow & { total: number }>(sql, 'alertsPublic', args)
+        : await callPg<SuggestionRow & { total: number }>(sql, 'suggestionsPublic', args);
+      const items = rows.map(({ total: _, ...r }) => 'id_alerta' in r ? toAlert(r) : toSuggestion(r));
+      return { items, total: rows[0]?.total ?? 0, pagina: page, porPagina: PAGE_SIZE };
+    },
+
+    /** Publica u oculta una alerta y su nombre (en sugerencias, solo el nombre) con control optimista. */
+    async changeVisibility(access: string | undefined, kind: Kind, id: number, next: Visibility, expected: Visibility) {
+      const actor = await authorization.require(access, PERMISSIONS.participationManage);
+      const [row] = kind === 'alertas'
+        ? await callPg<{ resultado: string; publica: boolean; anonima: boolean }>(sql, 'alertVisibilityChange', [
+          actor.id_usuario, id, next.publica ?? false, next.anonima, expected.publica ?? false, expected.anonima])
+        : await callPg<{ resultado: string; anonima: boolean }>(sql, 'suggestionVisibilityChange',
+          [actor.id_usuario, id, next.anonima, expected.anonima]);
+      if (!row) throw new ApiError(404, 'No encontrado');
+      if (row.resultado === 'conflicto') throw new ApiError(409, VISIBILITY_CONFLICT);
+      const { resultado: _, ...visibility } = row;
+      return visibility;
+    },
+
+    /** Borrado lógico tras confirmar la identidad; repetirlo responde lo mismo. */
+    async remove(access: string | undefined, kind: Kind, id: number, confirmacion: string, ip: string) {
+      const actor = await authorization.require(access, PERMISSIONS.participationManage);
+      await confirmation.require(actor.id_usuario, confirmacion, ip);
+      const [row] = await callPg<{ resultado: string }>(sql, kind === 'alertas' ? 'alertDelete' : 'suggestionDelete', [actor.id_usuario, id]);
+      if (!row) throw new ApiError(404, 'No encontrado');
+      return { borrada: true };
+    },
+
+    /** Autoriza una foto; responde 404 también cuando no hay permiso para no revelar que existe. */
     async photoAllowed(access: string | undefined, name: string) {
-      const user = await authorization.require(access, PERMISSIONS.participationSend);
-      const [row] = await callPg<{ permitido: boolean }>(sql, 'alertPhotoAllowed', [user.id_usuario, name]);
+      const user = await sessionUser(access);
+      const [row] = await callPg<{ permitido: boolean }>(sql, 'alertPhotoAllowed', [user?.id_usuario ?? null, name]);
       if (!row?.permitido) throw new ApiError(404, 'No encontrado');
     },
   };

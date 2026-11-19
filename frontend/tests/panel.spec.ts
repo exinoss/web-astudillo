@@ -292,6 +292,51 @@ test('participación: el estado se cambia y un cambio ajeno no se pisa', async (
   expect(data.alertas[0].estado).toBe('recibida');
 });
 
+test('participación: publicar, mostrar el nombre y borrar con la contraseña', async ({ page }) => {
+  const data = panelData('admin');
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#participacion');
+  const section = page.locator('#seccion-participacion');
+  const publicada = section.getByRole('switch', { name: 'Publicada en el sitio' });
+  const nombre = section.getByRole('switch', { name: 'Mostrar el nombre' });
+  await expect(publicada).toHaveAttribute('aria-checked', 'false');
+  await expect(nombre).toHaveAttribute('aria-checked', 'false');
+  await publicada.click();
+  await expect(page.locator('[data-notificacion]')).toContainText('Alerta publicada en el sitio');
+  await expect(publicada).toHaveAttribute('aria-checked', 'true');
+  expect(data.alertas[0]).toMatchObject({ publica: true, anonima: true });
+  // Otra persona mostró el nombre mientras tanto: 409 y no se pisa.
+  data.alertas[0].anonima = false;
+  data.alertas[0].publica = false;
+  await nombre.click();
+  await expect(page.locator('#panel-estado')).toContainText('Otra persona cambió la publicación');
+  expect(data.alertas[0]).toMatchObject({ publica: false, anonima: false });
+
+  await page.reload();
+  await section.getByRole('button', { name: 'Borrar alerta' }).click();
+  const dialogo = page.getByRole('dialog', { name: 'Confirma que eres tú' });
+  await expect(dialogo).toContainText('Vas a borrar la alerta de María');
+  await page.locator('#confirmar-valor').fill('equivocada');
+  await dialogo.getByRole('button', { name: 'Borrar' }).click();
+  await expect(dialogo).toContainText('La contraseña no es correcta');
+  await page.locator('#confirmar-valor').fill(CONTRASENIA_PANEL);
+  await dialogo.getByRole('button', { name: 'Borrar' }).click();
+  await expect(page.locator('[data-notificacion]')).toContainText('Alerta borrada');
+  await expect(section).not.toContainText('Fuga de agua en la tubería principal.');
+  expect(data.alertas[0].borrada).toBe(true);
+});
+
+test('redes sociales: WhatsApp acepta el enlace de la comunidad', async ({ page }) => {
+  const data = panelData('admin');
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#textos');
+  await page.locator('#red-whatsapp').fill('https://chat.whatsapp.com/AbCdEf1234567890xyZ?mode=r_c');
+  await page.locator('#redes-form').getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
+  expect(data.draft.textos['enlace.whatsapp']).toBe('https://chat.whatsapp.com/AbCdEf1234567890xyZ');
+  await expect(page.locator('#red-whatsapp')).toHaveValue('https://chat.whatsapp.com/AbCdEf1234567890xyZ');
+});
+
 test('redes sociales: WhatsApp se escribe como número y se guarda en formato internacional', async ({ page }) => {
   const data = panelData('admin');
   const facebook = data.draft.textos['enlace.facebook'];

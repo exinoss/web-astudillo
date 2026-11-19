@@ -13,7 +13,7 @@ const { proposals } = Astro.props;
 const temas = [...proposals.map((p) => ({ valor: p.slug, nombre: p.name, icono: p.icon })), { valor: "otro", nombre: "Otra idea", icono: "idea" }];
 ---
 
-<FormularioParticipacion nombre="sugerencia" titulo="Las ideas empiezan contigo." intro="Elige un tema y comparte tu sugerencia de forma clara." encabezado="Tu sugerencia" historial="Tus sugerencias" temas={JSON.stringify(temas)}>
+<FormularioParticipacion nombre="sugerencia" titulo="Las ideas empiezan contigo." intro="Elige un tema y comparte tu sugerencia de forma clara." encabezado="Tu sugerencia" historial="Sugerencias" temas={JSON.stringify(temas)}>
   <fieldset id="sugerencia-tema" class="m-0 flex min-w-0 flex-wrap gap-2 border-0 p-0 aria-invalid:[&_.opcion]:border-error" aria-describedby="sugerencia-tema-error">
     <legend class:list={[ETIQUETA, "mt-0"]}>¿Sobre qué tema? *</legend>
     {temas.map((t) => (

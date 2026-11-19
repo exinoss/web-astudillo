@@ -8,7 +8,7 @@ import { ETIQUETA, AYUDA, ERROR } from "./estilos";
 import { MENSAJE_CAMPO } from "../../lib/comun/campos";
 ---
 
-<FormularioParticipacion nombre="alerta" titulo="Cuéntanos lo que pasa." intro="Elige el tipo de problema, indica el barrio y, si puedes, añade una foto." encabezado="Nueva alerta" historial="Tus alertas">
+<FormularioParticipacion nombre="alerta" titulo="Cuéntanos lo que pasa." intro="Elige el tipo de problema, indica el barrio y, si puedes, añade una foto." encabezado="Nueva alerta" historial="Alertas">
   <p slot="nota" class="text-[0.82rem] text-base-content mt-[20px]">Este espacio no recibe emergencias ni genera reportes oficiales.</p>
   <fieldset id="alerta-tipo" class="m-0 grid min-w-0 grid-cols-3 gap-2.5 border-0 p-0 max-mobile:grid-cols-2 aria-invalid:[&_.opcion]:border-error" aria-describedby="alerta-tipo-error">
     <legend class:list={[ETIQUETA, "mt-0"]}>¿Qué tipo de problema es? *</legend>

@@ -1,7 +1,7 @@
 import { enviarConCarga } from "../../lib/comun/cambios";
 import { errorText, showStatus } from "../../lib/cuenta/auth/page";
 import { alertRepository } from "../../lib/data/participation";
-import type { AlertType, SentAlert } from "../../lib/data/types";
+import type { AlertType, Published, SentAlert } from "../../lib/data/types";
 import { esc } from "../../lib/comun/html";
 import { iconSvg } from "../../lib/comun/iconos";
 import { borrar, leer, leerFoto } from "../../lib/ciudadania/participacion/borrador";
@@ -99,12 +99,14 @@ function validar() {
 for (const campo of [sector, descripcion]) campo.addEventListener("input", () => campo.hasAttribute("aria-invalid") && marcarError(campo, null));
 tipos.addEventListener("change", () => marcarError(tipos, null));
 
-const cargarHistorial = historial(document.querySelector<HTMLElement>("#historial")!, {
-  cargar: () => alertRepository.mine(),
-  vacio: "Aún no has enviado alertas.",
+const cargarHistorial = historial<SentAlert, Published<SentAlert>>(document.querySelector<HTMLElement>("#historial-titulo")!.parentElement!, {
+  publicas: () => alertRepository.published(),
+  mias: () => alertRepository.mine(),
+  vacio: { publicas: "Aún no hay alertas publicadas.", mias: "Aún no has enviado alertas." },
+  ayuda: { publicas: "Alertas publicadas y en qué estado están.", mias: "Las últimas que enviaste y en qué estado están." },
   icono: "alert",
   sinSesion: "Inicia sesión para ver tus alertas.",
-  fila: (a: SentAlert) => {
+  fila: (a, vista) => {
     const tipo = TIPOS_ALERTA.find((t) => t.valor === a.tipo)!;
     return filaHistorial({
       miniatura: a.foto
@@ -112,6 +114,8 @@ const cargarHistorial = historial(document.querySelector<HTMLElement>("#historia
         : cuadroIcono(tipo.icono),
       titulo: `${iconSvg(tipo.icono, 18)} ${esc(tipo.nombre)}`,
       estado: a.estado, texto: `${a.sector} · ${a.descripcion}`, creadoEn: a.creadoEn,
+      publicada: vista === "publicas" ? a as Published<SentAlert> : undefined,
+      nota: vista === "mias" ? (a.publica ? "Publicada en el sitio" : "Sin publicar") : undefined,
     });
   },
 });
@@ -161,7 +165,7 @@ form.addEventListener("submit", async (e) => {
       form.reset();
       ponerFoto(null);
       form.querySelector<HTMLElement>("#alerta-recuperada")!.hidden = true;
-      showStatus(estado, "Gracias. Recibimos tu alerta; sigue su estado en «Tus alertas».");
+      showStatus(estado, "Gracias. Recibimos tu alerta; sigue su estado en «Mías».");
       void cargarHistorial();
     } catch (error) {
       showStatus(estado, errorText(error), true);
