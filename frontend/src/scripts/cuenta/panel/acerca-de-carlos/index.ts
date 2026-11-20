@@ -1,12 +1,13 @@
 import { vigilarCambios } from "../../../../lib/comun/cambios";
 import { alCambiarAvisos, avisosActuales } from "../../../../lib/comun/avisos";
 import { sinMovimiento } from "../../../../lib/comun/movimiento";
-import { avisoNoInsertable, videoLinkProblem, videoSource } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
+import { videoLinkProblem, videoSource } from "../../../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
+import { marcarNoInsertable, videoRechazado } from "../../../../lib/cuenta/panel/campos-video";
 import { adminApi, type AboutCarlosPageBody, type AboutCarlosSlug, type DraftAboutCarlosPage } from "../../../../lib/data/http/admin-api";
 import type { Editor, Section, SectionEditor } from "./comun";
 import { interview } from "./entrevista";
 import { gallery } from "./galeria";
-import { marcarNoInsertable, video } from "./video";
+import { video } from "./video";
 import { PAGINAS_CARLOS } from "../../../../../../backend/src/contracts/acerca-de-carlos";
 import { acciones, avisarVacios, avisoBorrador, busy, card, esc, guardarYRecargar, iconSvg, isPending, PESTANA, PESTANA_NORMAL, selector, state } from "../ui";
 
@@ -133,10 +134,9 @@ function bind(root: HTMLElement, editor: Editor) {
       try {
         await adminApi.saveAboutCarlosPage(saving, toBody(editor.page), state.draft!.versiones.acercaDeCarlos[saving]);
       } catch (error) {
-        const [, numero, texto] = (error instanceof Error && error.message.match(/^Video (\d+): (.+)$/)) || [];
-        const i = Number(numero) - 1;
-        const source = texto && editor.page.videos[i] ? videoSource(editor.page.videos[i].enlace) : null;
-        if (!source || !(["bloqueado", "no-existe"] as const).some((m) => avisoNoInsertable(source.provider, m) === texto)) throw error;
+        const rechazo = videoRechazado(error, editor.page.videos.map((v) => v.enlace));
+        if (!rechazo) throw error;
+        const { i, texto } = rechazo;
         section = "video";
         renderAboutCarlos(root);
         marcarNoInsertable(root, i, texto);

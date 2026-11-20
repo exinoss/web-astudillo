@@ -1,4 +1,5 @@
 import { expect, test, type Page } from './support/prueba';
+import { mockPanelApi, panelData } from './support/panel-api';
 
 const token = 'A'.repeat(43);
 
@@ -510,6 +511,20 @@ test('la cuenta se usa en móvil y conserva los modos de accesibilidad', async (
     await page.setViewportSize({ width, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
   }
+});
+
+for (const ancho of [320, 390]) test(`con el texto al 125 % y la campana de avisos, la cabecera cabe en ${ancho} px y la cuenta conserva su nombre`, async ({ page }) => {
+  await mockPanelApi(page, panelData('coadmin'));
+  await page.setViewportSize({ width: ancho, height: 844 });
+  await page.goto('/');
+  await expect(page.locator('#avisos-campana')).toBeVisible();
+  await page.getByRole('button', { name: 'Herramientas de accesibilidad' }).click();
+  for (let i = 0; i < 2; i++) await page.getByRole('button', { name: 'Aumentar texto' }).click();
+  await expect(page.locator('html')).toHaveCSS('font-size', '20px');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  await expect(page.getByRole('banner').locator('.account-link')).toHaveAccessibleName('Mi cuenta');
+  const menu = (await page.getByRole('button', { name: 'Abrir menú' }).boundingBox())!;
+  expect(menu.x + menu.width).toBeLessThanOrEqual(ancho);
 });
 
 test('con sesión, el botón de cuenta no muestra «Iniciar sesión» ni un instante al cambiar de página', async ({ page }) => {

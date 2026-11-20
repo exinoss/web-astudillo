@@ -12,6 +12,7 @@ import { TIPOS_ALERTA } from "../../lib/ciudadania/participacion/tipos";
 import { MAX_BYTES_FOTO_ALERTA, MAX_MB_FOTO_ALERTA, MIN_DESCRIPCION_ALERTA } from "../../../../backend/src/contracts/participacion";
 import { AVISO_HEIC, avisoMegapixeles, FORMATOS_FOTO, MAX_PIXELES } from "../../../../backend/src/contracts/media";
 import { medidasArchivo, miniaturaLocal } from "../../lib/comun/foto-local";
+import { montarVisor, visorFotos } from "../../lib/comun/visor-fotos";
 
 const form = document.querySelector<HTMLFormElement>("#alerta-form")!;
 const tipos = form.querySelector<HTMLFieldSetElement>("#alerta-tipo")!;
@@ -99,7 +100,8 @@ function validar() {
 for (const campo of [sector, descripcion]) campo.addEventListener("input", () => campo.hasAttribute("aria-invalid") && marcarError(campo, null));
 tipos.addEventListener("change", () => marcarError(tipos, null));
 
-const cargarHistorial = historial<SentAlert, Published<SentAlert>>(document.querySelector<HTMLElement>("#historial-titulo")!.parentElement!, {
+const columnaHistorial = document.querySelector<HTMLElement>("#historial-titulo")!.parentElement!;
+const cargarHistorial = historial<SentAlert, Published<SentAlert>>(columnaHistorial, {
   publicas: () => alertRepository.published(),
   mias: () => alertRepository.mine(),
   vacio: { publicas: "Aún no hay alertas publicadas.", mias: "Aún no has enviado alertas." },
@@ -110,7 +112,7 @@ const cargarHistorial = historial<SentAlert, Published<SentAlert>>(document.quer
     const tipo = TIPOS_ALERTA.find((t) => t.valor === a.tipo)!;
     return filaHistorial({
       miniatura: a.foto
-        ? `<img class="size-14 rounded-card object-cover" src="${esc(a.foto.miniatura)}" alt="Foto de la alerta" loading="lazy" />`
+        ? `<button type="button" class="block size-14 cursor-zoom-in rounded-card" data-ampliar="${esc(a.foto.grande)}" data-pie="${esc(`${a.sector} · ${a.descripcion}`)}" aria-label="Ampliar la foto de la alerta"><img class="size-14 rounded-card object-cover" src="${esc(a.foto.miniatura)}" alt="" loading="lazy" /></button>`
         : cuadroIcono(tipo.icono),
       titulo: `${iconSvg(tipo.icono, 18)} ${esc(tipo.nombre)}`,
       estado: a.estado, texto: `${a.sector} · ${a.descripcion}`, creadoEn: a.creadoEn,
@@ -118,6 +120,14 @@ const cargarHistorial = historial<SentAlert, Published<SentAlert>>(document.quer
       nota: vista === "mias" ? (a.publica ? "Publicada en el sitio" : "Sin publicar") : undefined,
     });
   },
+});
+
+const visorAlerta = document.body.appendChild(document.createElement("div"));
+columnaHistorial.addEventListener("click", (e) => {
+  const boton = (e.target as Element).closest<HTMLButtonElement>("[data-ampliar]");
+  if (!boton) return;
+  visorAlerta.innerHTML = visorFotos("visor-alerta", "Foto de la alerta", [{ image: { src: boton.dataset.ampliar! }, alt: "Foto de la alerta", caption: boton.dataset.pie! }]);
+  montarVisor(visorAlerta).abrir(0, boton);
 });
 
 /** Rellena el formulario con lo que el votante escribió antes de iniciar sesión. */

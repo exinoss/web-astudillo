@@ -286,9 +286,12 @@ export const tbObraFotos = pgTable("tb_obra_fotos", {
 	idFoto: integer("id_foto").primaryKey().generatedAlwaysAsIdentity(),
 	slug: varchar({ length: 80 }).notNull(),
 	orden: integer().notNull(),
-	idMedio: integer("id_medio").notNull(),
+	idMedio: integer("id_medio"),
 	pie: varchar({ length: 300 }).notNull(),
+	enlace: varchar({ length: 500 }),
+	vertical: boolean(),
 }, (table) => [
+	check("ck_obra_fotos_tipo", sql`(enlace IS NULL) = (vertical IS NULL) AND (enlace IS NOT NULL OR id_medio IS NOT NULL)`),
 	index("idx_obra_fotos_slug").on(table.slug, table.orden),
 	foreignKey({ columns: [table.slug], foreignColumns: [tbObras.slug], name: "tb_obra_fotos_slug_fkey" }).onDelete("cascade"),
 	foreignKey({ columns: [table.idMedio], foreignColumns: [tbMedios.idMedio], name: "tb_obra_fotos_id_medio_fkey" }).onDelete("restrict"),

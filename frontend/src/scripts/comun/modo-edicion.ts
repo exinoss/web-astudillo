@@ -201,7 +201,7 @@ sheet.addEventListener("close", () => {
   sheetTarget = null;
 });
 sheet.addEventListener("click", (e) => {
-  if (e.target === sheet || (e.target as Element).closest("[data-cerrar]")) closeSheet();
+  if ((e.target as Element).closest("[data-cerrar]")) closeSheet();
 });
 sheetSave.addEventListener("click", async () => {
   const el = sheetTarget!;

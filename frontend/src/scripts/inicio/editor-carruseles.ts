@@ -12,7 +12,7 @@ import { campoEnlace, campoFormato, campoPortada, comprobarEnlace } from "../../
 import { piezaVideo } from "../../lib/inicio/pieza-video";
 import { AVISO_GUARDANDO, bloquearMientras, vigilarCambios } from "../../lib/comun/cambios";
 import { desmarcarAlEscribir, marcarVacios } from "../../lib/comun/campos";
-import { BOLA, DANGER, enlazarLista, field, GHOST, HINT, ICON_BUTTON, INTERRUPTOR, LABEL, moveButtons, PISTA, PRINCIPAL, thumb, upload } from "../../lib/cuenta/panel/campos";
+import { BOLA, DANGER, enlazarLista, field, FILA_BOTONES, GHOST, HINT, ICON_BUTTON, INTERRUPTOR, LABEL, moveButtons, PISTA, PRINCIPAL, thumb, upload } from "../../lib/cuenta/panel/campos";
 import { opcionesDePagina } from "../../lib/cuenta/panel/paginas";
 import { atributosBoton, RETRATO } from "../../lib/inicio/segunda-diapositiva";
 import { adminApi, type Draft, type DraftHomeCarousels, type DraftHomeImage, type DraftHomeVideo, type HomeImageBody } from "../../lib/data/http/admin-api";
@@ -70,7 +70,7 @@ const tarjetaBanner = (b: Principal["banners"][number], i: number, total: number
     <div class="grid grid-cols-[minmax(0,260px)_minmax(0,1fr)] items-start gap-4 max-tablet:grid-cols-1">
       <img src="${miniatura(b.imagen)}" alt="" class="aspect-[1947/741] w-full rounded-control bg-base-200 object-cover" />
       <div class="flex flex-col gap-3">
-        ${i === 0 ? `<p class="${HINT} mt-0">Este banner ya tiene su versión para celular.</p>` : `<div class="flex flex-wrap items-center gap-3">
+        ${i === 0 ? `<p class="${HINT} mt-0">Este banner ya tiene su versión para celular.</p>` : `<div class="${FILA_BOTONES}">
           ${b.celular
             ? `<img src="${thumb(b.celular)}" alt="" class="aspect-[4/3] w-[104px] rounded-control bg-base-200 object-cover" />`
             : `<span class="grid aspect-[4/3] w-[104px] place-items-center rounded-control border border-dashed border-field-border px-2 text-center text-[0.68rem] leading-tight text-muted">Sin imagen para celular</span>`}
@@ -404,7 +404,7 @@ dialogo.addEventListener("close", () => {
   origen?.focus();
 });
 dialogo.addEventListener("click", (e) => {
-  if (e.target === dialogo || (e.target as Element).closest("[data-cerrar]")) cerrar();
+  if ((e.target as Element).closest("[data-cerrar]")) cerrar();
 });
 guardar.addEventListener("click", () => void bloquearMientras(guardar, async () => {
   capturar();

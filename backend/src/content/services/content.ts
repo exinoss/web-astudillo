@@ -5,9 +5,11 @@ import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { plainText } from '../../validation/texto';
 import { existingPhotos, saved, type SaveRow } from '../guardado';
-import type { AboutCarlosPage, BiographyItem, ChatAnswer, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent } from '../types';
+import type { AboutCarlosPage, BiographyItem, ChatAnswer, ContentVersions, Kpi, ProposalContent, Snapshot, WorkContent, WorkEvidenceStored } from '../types';
 import { PARROQUIAS } from '../../contracts/parroquias';
-import { videoSource } from '../../contracts/video';
+import { formatoEnEnlace, videoLinkProblem, videoSource } from '../../contracts/video';
+import { AVISO_EVIDENCIAS, MAX_FOTOS_OBRA, MAX_VIDEOS_OBRA } from '../../contracts/obras';
+import { assertInsertable } from '../videos';
 import { PAGINAS_CARLOS, videosDePagina } from '../../contracts/acerca-de-carlos';
 import { LARGOS } from '../../contracts/limites';
 import { TEXTOS, type TextKey } from '../../contracts/textos';
@@ -26,10 +28,7 @@ type BiographyRow = {
   anios: string; titulo: string; texto: string; alt: string | null; id_medio: number | null;
   medio_nombre: string | null; medio_ancho: number | null; medio_alto: number | null; medio_anchos: number[] | null;
 };
-type WorkRow = {
-  slug: string; nota: string; actualizado_en: string; hitos: WorkContent['hitos'];
-  fotos: (Omit<WorkContent['fotos'][number], 'idMedio'> & { idMedio: number })[];
-};
+type WorkRow = { slug: string; nota: string; actualizado_en: string; hitos: WorkContent['hitos']; fotos: WorkContent['fotos'] };
 
 type ChatRow = {
   pregunta: string; palabras_clave: string; respuesta: string;
@@ -41,7 +40,7 @@ interface BiographyInput { anios: string; titulo: string; texto: string; idMedio
 interface WorkInput {
   nota: string;
   hitos: { nombre: string; completado: boolean }[];
-  fotos: { idMedio: number; pie: string }[];
+  fotos: WorkEvidenceStored[];
 }
 
 /** Borrador, publicación y textos del sitio; `checkVideo` permite simular las plataformas de video en las pruebas. */
@@ -154,8 +153,21 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
     async saveWork(access: string | undefined, slug: string, input: WorkInput, version: string) {
       const actor = await authorization.require(access, PERMISSIONS.contentEdit);
       const hitos = input.hitos.map((h, i) => ({ nombre: plainText(h.nombre, `Hito ${i + 1}`, LARGOS.obra.hito), completado: h.completado }));
-      const fotos = input.fotos.map((f, i) => ({ idMedio: f.idMedio, pie: plainText(f.pie, `Foto ${i + 1} · pie`, LARGOS.obra.pie) }));
-      await existingPhotos(sql, fotos.map(f => f.idMedio));
+      const videos = input.fotos.filter(f => 'video' in f).length;
+      if (videos > MAX_VIDEOS_OBRA || input.fotos.length - videos > MAX_FOTOS_OBRA) throw new ApiError(422, AVISO_EVIDENCIAS);
+      // Solo las claves de fn_work_state: la versión es el md5 de lo guardado.
+      let nf = 0, nv = 0;
+      const fotos = input.fotos.map((f): WorkEvidenceStored => {
+        if (!('video' in f)) return { idMedio: f.idMedio, pie: plainText(f.pie, `Foto ${++nf} · pie`, LARGOS.obra.pie) };
+        const campo = `Video ${++nv}`, source = videoSource(f.video.enlace);
+        if (!source) throw new ApiError(422, `${campo}: ${videoLinkProblem(f.video.enlace)}`);
+        return {
+          pie: plainText(f.pie, `${campo} · pie`, LARGOS.obra.pie),
+          video: { enlace: source.url, vertical: formatoEnEnlace(source) ? source.vertical : f.video.vertical, idPortada: f.video.idPortada },
+        };
+      });
+      await existingPhotos(sql, fotos.flatMap(f => ('video' in f ? (f.video.idPortada ? [f.video.idPortada] : []) : [f.idMedio])));
+      await assertInsertable(fotos.flatMap(f => ('video' in f ? [f.video.enlace] : [])).map((enlace, i) => ({ enlace, campo: `Video ${i + 1}` })), checkVideo);
       return saved(await callPg<SaveRow>(sql, 'workSave', [
         actor.id_usuario, slug, plainText(input.nota, 'Nota', LARGOS.obra.nota, { multiline: true }),
         hitos, fotos, version,
@@ -250,8 +262,10 @@ const stable = (value: unknown): string => JSON.stringify(value, (_, v) =>
 export const PAGE_NAMES: Record<string, string> = PAGINAS_CARLOS;
 
 /** Videos de un contenido (borrador o publicación) con su clave de aviso, dónde están y su enlace reconocido. */
-export function contentVideos(s: Pick<Snapshot, 'acercaDeCarlos' | 'inicio'>) {
+export function contentVideos(s: Pick<Snapshot, 'acercaDeCarlos' | 'inicio' | 'obras' | 'propuestas'>) {
   const videos = [
+    ...s.obras.flatMap(o => o.fotos.flatMap(f => ('video' in f ? [{ ...f.video, pie: f.pie }] : [])).map((v, i) =>
+      ({ clave: `video:obra:${o.slug}:${i + 1}`, lugar: `la obra «${s.propuestas.find(p => p.slug === o.slug)?.nombre ?? o.slug}»`, titulo: v.pie, enlace: v.enlace }))),
     ...Object.entries(s.acercaDeCarlos ?? {}).flatMap(([slug, page]) => videosDePagina(page).map((v, i) =>
       ({ clave: `video:${slug}:${i + 1}`, lugar: `«${PAGE_NAMES[slug] ?? slug}»`, titulo: v.titulo, enlace: v.enlace }))),
     ...(s.inicio?.piezas.piezas ?? []).flatMap(p => ('video' in p ? [p.video] : [])).map((v, i) =>

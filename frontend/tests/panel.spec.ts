@@ -411,7 +411,7 @@ test('obras: la foto subida se ve al momento, no se puede guardar mientras sube 
   const section = page.locator('#seccion-obras');
   await expect(section.locator('img')).toHaveCount(1);
   await page.locator('#obra-fotos').setInputFiles('src/assets/pieza-respeto-cuadrada.jpg');
-  const carga = page.locator('#panel-secciones [role="status"]');
+  const carga = page.locator('#panel-secciones [role="status"]').filter({ hasText: 'Subiendo…' });
   await expect(carga).toContainText('Subiendo…');
   const guardar = section.getByRole('button', { name: 'Guardar borrador' });
   await page.locator('#obra-nota').fill('Avance de la zanja');
@@ -421,10 +421,102 @@ test('obras: la foto subida se ve al momento, no se puede guardar mientras sube 
   await expect(guardar).toBeEnabled();
   await expect(section.locator('img')).toHaveCount(2);
   await expect.poll(() => section.locator('img').nth(1).evaluate((img: HTMLImageElement) => img.complete && img.naturalWidth > 0)).toBe(true);
-  await page.locator('#foto-pie-1').fill('Zanja abierta');
+  await page.locator('#evidencia-pie-1').fill('Zanja abierta');
   await section.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
-  expect(data.draft.obras[0].fotos.map(f => [f.idMedio, f.pie])).toEqual([[2, 'Tubería instalada'], [90, 'Zanja abierta']]);
+  expect(data.draft.obras[0].fotos.map(f => ['idMedio' in f ? f.idMedio : null, f.pie])).toEqual([[2, 'Tubería instalada'], [90, 'Zanja abierta']]);
+});
+
+test('obras: un video se añade por su enlace con la portada de su plataforma y se guarda después de las fotos', async ({ page }) => {
+  const data = panelData('coadmin');
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#obras');
+  const section = page.locator('#seccion-obras');
+  const enlace = page.locator('#video-enlace-nuevo');
+  const anadir = section.getByRole('button', { name: 'Añadir video' });
+  await expect(anadir).toBeDisabled();
+  await enlace.fill('https://vm.tiktok.com/ZM123/');
+  await expect(page.locator('#video-detectado-nuevo')).toContainText('Es un enlace corto');
+  await expect(anadir).toBeDisabled();
+  await enlace.fill('https://www.facebook.com/reel/4119395378341161/');
+  await expect(page.locator('#video-detectado-nuevo')).toHaveText('Enlace válido · Facebook');
+  await anadir.click();
+  await expect(section.getByText('Video 1 · Facebook')).toBeVisible();
+  await expect(page.locator('#evidencia-pie-1')).toBeFocused();
+  await expect(enlace).toHaveValue('');
+  await expect(section.getByRole('group', { name: 'Formato' })).toHaveCount(0);
+  await expect.poll(() => data.videoCovers).toEqual(['https://www.facebook.com/reel/4119395378341161/']);
+  await expect(section.locator('li img')).toHaveCount(2);
+  await page.locator('#evidencia-pie-1').fill('Recorrido por la obra');
+  await section.getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
+  expect(data.draft.obras[0].fotos[1]).toMatchObject({ pie: 'Recorrido por la obra',
+    video: { enlace: 'https://www.facebook.com/reel/4119395378341161/', vertical: true, portada: { idMedio: 91 } } });
+});
+
+test('obras: el formato solo se pregunta si el enlace no lo dice, y con 4 videos ya no se pueden añadir más', async ({ page }) => {
+  const data = panelData('coadmin');
+  const video = (enlace: string) => ({ pie: 'Video', video: { enlace, vertical: false, portada: null } });
+  data.draft.obras[0].fotos.push(video('https://vimeo.com/76979871'), ...Array.from({ length: 3 }, () => video('https://www.youtube.com/watch?v=dQw4w9WgXcQ')));
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#obras');
+  const section = page.locator('#seccion-obras');
+  await expect(section.getByRole('group', { name: 'Formato' })).toHaveCount(1);
+  await expect(section.getByText('Ya hay 4 videos.')).toBeVisible();
+  await expect(page.locator('#video-enlace-nuevo')).toHaveCount(0);
+  await section.getByRole('button', { name: 'Quitar video 1' }).click();
+  await expect(section.getByRole('group', { name: 'Formato' })).toHaveCount(0);
+  await expect(page.locator('#video-enlace-nuevo')).toBeVisible();
+});
+
+test('obras: si la plataforma no deja mostrar un video, no se guarda y el video queda marcado en rojo', async ({ page }) => {
+  const data = panelData('coadmin');
+  const reel = 'https://www.facebook.com/reel/4119395378341161/';
+  data.draft.obras[0].fotos.push({ pie: 'Recorrido', video: { enlace: reel, vertical: true, portada: null } });
+  await mockPanelApi(page, data);
+  const aviso = avisoNoInsertable('facebook', 'bloqueado');
+  await page.route(/\/api\/admin\/contenido\/obras\//, (r) => r.request().method() !== 'PUT' ? r.fallback()
+    : r.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ error: `Video 1: ${aviso}` }) }));
+  await page.goto('/cuenta/panel/#obras');
+  await expect(page.locator('#video-detectado-1')).toBeHidden();
+  await page.locator('#obra-nota').fill('Avance de la red.');
+  await page.locator('#seccion-obras').getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.locator('#panel-estado')).toHaveText('Quita el video 1 y añade otro.');
+  await expect(page.locator('#video-detectado-1')).toHaveText(aviso);
+  await expect(page.locator('#video-detectado-1')).toHaveClass(/text-error/);
+});
+
+for (const ancho of [320, 1440]) test(`obras: al pulsar la miniatura de un video se reproduce debajo de su nombre y «Cerrar» lo quita sin dejar un tacho bajo el puntero (${ancho} px)`, async ({ page }) => {
+  await page.setViewportSize({ width: ancho, height: 900 });
+  const data = panelData('coadmin');
+  data.draft.obras[0].fotos.push({ pie: 'Recorrido', video: { enlace: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ', vertical: false, portada: null } });
+  await mockPanelApi(page, data);
+  await page.route(/youtube-nocookie\.com/, route => route.fulfill({ contentType: 'text/html', body: '' }));
+  await page.goto('/cuenta/panel/#obras');
+  const section = page.locator('#seccion-obras');
+  await section.getByRole('button', { name: 'Ver el video 1' }).click();
+  await expect(section.locator('[data-reproductor="1"] iframe')).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/dQw4w9WgXcQ/);
+  // Al cerrarse, la fila se acorta: lo que queda bajo el puntero no puede ser un botón de quitar.
+  const cerrar = (await section.getByRole('button', { name: 'Cerrar' }).boundingBox())!;
+  const scroll = await page.evaluate(() => scrollY);
+  await page.mouse.click(cerrar.x + cerrar.width / 2, cerrar.y + cerrar.height / 2);
+  await expect(section.locator('iframe')).toHaveCount(0);
+  expect(await page.evaluate(() => scrollY)).toBe(scroll);
+  await expect(section.locator('[data-reproductor="1"]')).toBeHidden();
+  await expect(section.getByRole('button', { name: 'Ver el video 1' })).toBeFocused();
+  await page.mouse.click(cerrar.x + cerrar.width / 2, cerrar.y + cerrar.height / 2);
+  await expect(section.getByText('Video 1 · YouTube')).toBeVisible();
+  expect(data.draft.obras[0].fotos).toHaveLength(2);
+});
+
+test('obras: el aviso de un video abre su obra en el panel', async ({ page }) => {
+  const data = panelData('coadmin');
+  data.draft.obras.push({ ...structuredClone(data.draft.obras[0]), slug: 'educacion', nota: 'Escuela nueva.' });
+  data.draft.versiones.obras.educacion = 'f'.repeat(32);
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/?aviso=video%3Aobra%3Aeducacion%3A1#obras');
+  await expect(page.locator('#obra-selector')).toHaveValue('educacion');
+  await expect(page.locator('#obra-nota')).toHaveValue('Escuela nueva.');
 });
 
 test('obras: una foto elegida mientras se guarda no se sube y avisa', async ({ page }) => {

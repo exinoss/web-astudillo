@@ -6,5 +6,5 @@ export type EstadoParticipacion = typeof ESTADOS_PARTICIPACION[number];
 export const MAX_MB_FOTO_ALERTA = 5;
 export const MAX_BYTES_FOTO_ALERTA = MAX_MB_FOTO_ALERTA * 1024 * 1024;
 export const MIN_DESCRIPCION_ALERTA = 10;
-export const MIN_MENSAJE_SUGERENCIA = 15;
+export const MIN_MENSAJE_SUGERENCIA = 10;
 export const LARGOS_PARTICIPACION = { sector: 120, referencia: 180, descripcion: 1500, mensaje: 1500, consulta: 300 } as const;

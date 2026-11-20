@@ -14,8 +14,10 @@ export interface DraftBiographyItem { anios: string; titulo: string; texto: stri
 export interface DraftWork {
   slug: string; nota: string; actualizadoEn: string;
   hitos: { nombre: string; completado: boolean }[];
-  fotos: (Photo & { pie: string })[];
+  fotos: DraftWorkEvidence[];
 }
+export type DraftWorkEvidence = (Photo & { pie: string }) | { video: { enlace: string; vertical: boolean; portada: Photo | null }; pie: string };
+export type WorkEvidenceBody = { idMedio: number; pie: string } | { video: { enlace: string; vertical: boolean; idPortada: number | null }; pie: string };
 /** Pregunta frecuente del chat; `enlaceRuta` es una página del propio sitio. */
 export interface ChatAnswer {
   pregunta: string; palabrasClave: string; respuesta: string;
@@ -107,7 +109,7 @@ export const adminApi = {
     call<Saved>(`/api/admin/contenido/propuestas/${slug}`, 'PUT', { ...body, version }),
   saveBiography: (hitos: { anios: string; titulo: string; texto: string; idMedio: number | null; alt: string | null }[], version: string) =>
     call<Saved>('/api/admin/contenido/biografia', 'PUT', { hitos, version }),
-  saveWork: (slug: string, body: { nota: string; hitos: DraftWork['hitos']; fotos: { idMedio: number; pie: string }[] }, version: string) =>
+  saveWork: (slug: string, body: { nota: string; hitos: DraftWork['hitos']; fotos: WorkEvidenceBody[] }, version: string) =>
     call<Saved>(`/api/admin/contenido/obras/${slug}`, 'PUT', { ...body, version }),
   /** Rechaza antes de enviar una foto de más de `MAX_PIXELES`, como hará el backend. */
   upload: async (file: File) => {

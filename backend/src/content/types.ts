@@ -35,8 +35,12 @@ export interface WorkContent {
   nota: string;
   actualizadoEn: string;
   hitos: { nombre: string; completado: boolean }[];
-  fotos: (Photo & { pie: string })[];
+  fotos: WorkEvidence[];
 }
+
+export type WorkVideoStored = { enlace: string; vertical: boolean; idPortada: number | null };
+export type WorkEvidenceStored = { idMedio: number; pie: string } | { video: WorkVideoStored; pie: string };
+export type WorkEvidence = (Photo & { pie: string }) | { video: Omit<WorkVideoStored, 'idPortada'> & { portada: Photo | null }; pie: string };
 
 /** Pregunta frecuente del chat. `enlaceRuta` es siempre una ruta del propio sitio. */
 export interface ChatAnswer {

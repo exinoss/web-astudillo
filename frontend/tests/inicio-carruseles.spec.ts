@@ -274,7 +274,7 @@ test('si otra persona guardó antes, avisa sin cerrar el editor y no pisa su cam
   expect(data.savedHome).toEqual([]);
 });
 
-test('el editor funciona con teclado, se cierra con Escape y no desborda la página', async ({ page }) => {
+test('el editor funciona con teclado, se cierra con Escape y no con un toque fuera, y no desborda la página', async ({ page }) => {
   await abrirEdicion(page);
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 800 });
@@ -285,6 +285,8 @@ test('el editor funciona con teclado, se cierra con Escape y no desborda la pág
     await expect(dialogo).toBeVisible();
     await expect(dialogo.getByRole('button', { name: 'Cerrar' })).toBeFocused();
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth), `${width}px`).toBeLessThanOrEqual(1);
+    await dialogo.click({ position: { x: 5, y: 5 } });
+    await expect(dialogo).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(dialogo).toBeHidden();
     await expect(boton).toBeFocused();

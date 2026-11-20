@@ -2,6 +2,7 @@ import type { Page } from '@playwright/test';
 import initial from '../../../backend/database/contenido-inicial.json' with { type:'json' };
 import { PARROQUIAS } from '../../../backend/src/contracts/parroquias';
 import type { Aviso } from '../../../backend/src/contracts/avisos';
+import type { DraftWorkEvidence, WorkEvidenceBody } from '../../src/lib/data/http/admin-api';
 
 /** Lo que el panel simulado acepta para confirmar un cambio de rol o de estado. */
 export const CONTRASENIA_PANEL = 'Ab1!xyz';
@@ -30,7 +31,7 @@ export function panelData(rol: 'admin' | 'coadmin') {
       obras: [{
         slug: 'agua-potable', nota: 'Avance de la red principal.', actualizadoEn: '2026-09-01T00:00:00Z',
         hitos: [{ nombre: 'Estudios', completado: true }, { nombre: 'Diseño', completado: false }],
-        fotos: [{ ...photo(2), pie: 'Tubería instalada' }],
+        fotos: [{ ...photo(2), pie: 'Tubería instalada' }] as DraftWorkEvidence[],
       }],
       chat: [
         { pregunta: 'Ver propuestas', palabrasClave: 'propuesta, plan', respuesta: 'Revisa las siete propuestas.',
@@ -126,7 +127,9 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
       const { version, ...fields } = body();
       if (version !== data.draft.versiones.obras[work[1]]) return conflict();
       Object.assign(data.draft.obras.find(o => o.slug === work[1])!, {
-        ...fields, fotos: fields.fotos.map((f: { idMedio: number; pie: string }) => ({ ...photo(f.idMedio), pie: f.pie })),
+        ...fields, fotos: fields.fotos.map((f: WorkEvidenceBody): DraftWorkEvidence => ('video' in f
+          ? { pie: f.pie, video: { enlace: f.video.enlace, vertical: f.video.vertical, portada: f.video.idPortada ? photo(f.video.idPortada) : null } }
+          : { ...photo(f.idMedio), pie: f.pie })),
       });
       data.draft.versiones.obras[work[1]] = nextVersion();
       data.pending.push({ tipo: 'Obra', descripcion: 'Agua potable' });

@@ -1,11 +1,7 @@
 import "./cifras";
 import "../comun/carrusel-fotos";
-import { montarVisor } from "../../lib/comun/visor-fotos";
 import { autoavance, deslizar } from "../../lib/comun/carrusel";
 import { activarVideo, detenerVideo } from "../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
-
-const equipo = document.querySelector<HTMLElement>('[data-carrusel-editable="equipo"] [data-carrusel]');
-if (equipo?.querySelector("[data-visor]")) montarVisor(equipo);
 
 // Las listas se vuelven a leer y los clics se delegan: el modo edición cambia diapositivas y puntos (carruseles:cambiados).
 const slides = () => [...document.querySelectorAll<HTMLElement>("[data-slide]")];

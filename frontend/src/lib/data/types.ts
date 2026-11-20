@@ -113,11 +113,9 @@ interface WorkMilestone {
   done: boolean;
 }
 
-export interface WorkEvidence {
-  image: UploadedPicture;
-  alt: string;
-  caption: string;
-}
+export type WorkEvidence =
+  | { image: UploadedPicture; alt: string; caption: string }
+  | { video: Pick<AboutCarlosVideo, "url" | "vertical" | "cover">; caption: string };
 
 /**
  * Obra asociada a una propuesta; `updatedAt` en formato ISO. El porcentaje y la etapa no se

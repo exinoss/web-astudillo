@@ -8,6 +8,7 @@ import { testApp } from "./helpers";
 import initial from '../database/contenido-inicial.json';
 import { seedContent } from '../src/db/seed';
 import { AVISO_HEIC } from '../src/contracts/media';
+import { AVISO_EVIDENCIAS } from '../src/contracts/obras';
 import { TEXTOS } from '../src/contracts/textos';
 import { formatProblem, savePhoto } from '../src/content/services/media';
 import { readdir } from 'node:fs/promises';
@@ -212,6 +213,53 @@ test("el pie y la descripción de una foto admiten 300 caracteres y no más", as
   const c = await (await call("/api/admin/contenido", "GET", undefined, cookies.coadmin)).json();
   expect(c.biografia[0].alt).toHaveLength(300);
   expect(c.obras.find((o: { slug: string }) => o.slug === "agua-potable").fotos[0].pie).toHaveLength(300);
+});
+
+const OBRA_VIDEOS = "/api/admin/contenido/obras/mercado-local";
+const TIKTOK = "https://www.tiktok.com/@scout2015/video/6718335390845095173?lang=es";
+const videoObra = (extra: object = {}, pie = "Así avanza la obra.") => ({ video: { enlace: TIKTOK, vertical: false, idPortada: null, ...extra }, pie });
+const guardarEvidencias = async (fotos: unknown[], version?: string) =>
+  call(OBRA_VIDEOS, "PUT", { nota: "Avanza.", hitos: [], fotos, version: version ?? (await versiones()).obras["mercado-local"] }, cookies.coadmin);
+
+test("una obra guarda fotos y videos en orden, con su portada, y repetirlo no duplica nada", async () => {
+  const [foto, portada] = await Promise.all([upload(await png()), upload(await png(1280, 720))].map(async r => (await r).json()));
+  const fotos = [
+    { idMedio: foto.idMedio, pie: "Tubería nueva" },
+    videoObra({ idPortada: portada.idMedio }, "  Recorrido con los vecinos  "),
+    videoObra({ enlace: "https://cdn.ejemplo.com/obra.mp4", vertical: true }, "Entrega de la obra"),
+  ];
+  const version = (await versiones()).obras["mercado-local"];
+  const [first, again] = [await guardarEvidencias(fotos, version), await guardarEvidencias(fotos, version)];
+  expect([first.status, again.status]).toEqual([200, 200]);
+  expect((await again.json()).version).toBe((await first.json()).version);
+  expect((await sql`SELECT count(*)::int AS n FROM tb_obra_fotos WHERE slug = 'mercado-local'`)[0].n).toBe(3);
+  const guardadas = (await draft()).obras.find((o: { slug: string }) => o.slug === "mercado-local").fotos;
+  expect(guardadas[0]).toMatchObject({ idMedio: foto.idMedio, pie: "Tubería nueva" });
+  // TikTok dice el formato del video; un MP4 no, y se respeta el elegido.
+  expect(guardadas[1]).toEqual({ pie: "Recorrido con los vecinos", video: {
+    enlace: "https://www.tiktok.com/@scout2015/video/6718335390845095173", vertical: true,
+    portada: { idMedio: portada.idMedio, nombre: portada.nombre, ancho: 1280, alto: 720, anchos: portada.anchos } } });
+  expect(guardadas[2]).toEqual({ pie: "Entrega de la obra", video: { enlace: "https://cdn.ejemplo.com/obra.mp4", vertical: true, portada: null } });
+});
+
+test("dos personas cambiando a la vez los videos de una obra: una gana y la otra recibe 409 sin pisarla", async () => {
+  const loaded = (await versiones()).obras["mercado-local"];
+  const replies = await Promise.all(["Primer video", "Segundo video"].map(pie => guardarEvidencias([videoObra({}, pie)], loaded)));
+  expect(replies.map(r => r.status).sort()).toEqual([200, 409]);
+  const winner = replies[0].status === 200 ? "Primer video" : "Segundo video";
+  expect((await draft()).obras.find((o: { slug: string }) => o.slug === "mercado-local").fotos.map((f: { pie: string }) => f.pie)).toEqual([winner]);
+});
+
+test("una obra admite hasta 4 videos, valida cada uno y no cambia al rechazarlos", async () => {
+  const antes = (await draft()).obras.find((o: { slug: string }) => o.slug === "mercado-local").fotos;
+  const rechazo = async (fotos: unknown[]) => { const r = await guardarEvidencias(fotos); return [r.status, (await r.json()).error]; };
+  expect(await rechazo(Array.from({ length: 5 }, () => videoObra()))).toEqual([422, AVISO_EVIDENCIAS]);
+  expect(await rechazo([videoObra({ enlace: "https://ejemplo.com/video" })])).toEqual([422, "Video 1: Pega el enlace de un video de Facebook, TikTok, YouTube o Vimeo."]);
+  expect((await rechazo([videoObra({ idPortada: 999999 })]))[0]).toBe(422);
+  expect((await rechazo([videoObra({}, "   ")]))[0]).toBe(422);
+  expect((await rechazo([{ ...videoObra(), idMedio: 1 }]))[0]).toBe(422);
+  expect((await draft()).obras.find((o: { slug: string }) => o.slug === "mercado-local").fotos).toEqual(antes);
+  expect((await guardarEvidencias(Array.from({ length: 4 }, () => videoObra()))).status).toBe(200);
 });
 
 test("publicar congela el contenido, calcula lo pendiente y agrupa la cola", async () => {

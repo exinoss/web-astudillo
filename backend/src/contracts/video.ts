@@ -83,6 +83,9 @@ export function videoSource(value: string): VideoSource | null {
   return null;
 }
 
+/** Si el enlace dice el formato del video; si no (Facebook sin «reel», Vimeo y MP4), lo elige quien lo añade. */
+export const formatoEnEnlace = (s: VideoSource) => s.provider === 'youtube' || s.provider === 'tiktok' || (s.provider === 'facebook' && s.vertical);
+
 /** Por qué una plataforma no deja mostrar un video en el sitio. */
 export type MotivoNoInsertable = 'bloqueado' | 'no-existe';
 

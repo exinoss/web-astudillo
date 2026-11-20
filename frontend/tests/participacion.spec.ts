@@ -333,6 +333,22 @@ test('la foto de la alerta: zona grande, formatos válidos y hasta 5 MB', async 
   }
 });
 
+test('la foto de una alerta del historial se abre en grande y al cerrar vuelve el foco', async ({ page }) => {
+  const api = mockApi(page);
+  const png = `data:image/png;base64,${(await sharp({ create: { width: 800, height: 600, channels: 3, background: '#2e86c1' } }).png().toBuffer()).toString('base64')}`;
+  api.publicas.alertas.push({ id: 1, tipo: 'baches', sector: 'Barrio Central', referencia: null, descripcion: 'Bache en la esquina', estado: 'recibida',
+    creadoEn: '2026-09-20T15:00:00Z', foto: { miniatura: png, grande: png }, autor: null, mia: false });
+  await page.goto('/ciudadania/alerta-ciudadana/');
+  const ampliar = page.getByRole('button', { name: 'Ampliar la foto de la alerta' });
+  await ampliar.click();
+  const visor = page.getByRole('dialog', { name: 'Foto de la alerta' });
+  await expect(visor.getByRole('img', { name: 'Foto de la alerta' })).toBeVisible();
+  await expect(visor).toContainText('Barrio Central · Bache en la esquina');
+  await page.keyboard.press('Escape');
+  await expect(visor).toBeHidden();
+  await expect(ampliar).toBeFocused();
+});
+
 test('las sugerencias eligen el tema con fichas y llegan sin nombre', async ({ page }) => {
   const api = mockApi(page, { loggedIn: true });
   await page.goto('/ciudadania/sugerencias/?tema=agua-potable');
@@ -341,7 +357,7 @@ test('las sugerencias eligen el tema con fichas y llegan sin nombre', async ({ p
   await expect(page.locator('input[name="tema"][value="agua-potable"]')).toBeChecked();
   await page.locator('#sugerencia-mensaje').fill('corta');
   await page.getByRole('button', { name: 'Enviar sugerencia' }).click();
-  await expect(page.locator('#sugerencia-mensaje-error')).toContainText('al menos 15 caracteres');
+  await expect(page.locator('#sugerencia-mensaje-error')).toContainText('al menos 10 caracteres');
   await page.getByRole('radio', { name: 'Otra idea' }).check();
   await page.locator('#sugerencia-mensaje').fill('Más pozos de agua en las comunidades rurales.');
   await page.getByRole('button', { name: 'Enviar sugerencia' }).click();

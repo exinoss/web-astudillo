@@ -90,7 +90,7 @@ test("el historial muestra solo lo propio", async () => {
   expect(mine.alertas).toEqual([]);
 });
 
-test("sugerencias: idempotentes, con tema válido y mínimo de 15 caracteres", async () => {
+test("sugerencias: idempotentes, con tema válido y mínimo de 10 caracteres", async () => {
   const body = { idempotencia: crypto.randomUUID(), tema: "agua-potable", mensaje: "Más pozos en las comunidades" };
   const a = await (await call("/api/participacion/sugerencias", "POST", body, cookies.votante)).json();
   const b = await (await call("/api/participacion/sugerencias", "POST", body, cookies.votante)).json();

@@ -146,3 +146,35 @@ test('un video de la portada que su plataforma no deja mostrar no se guarda, avi
     bloqueado = false;
   }
 });
+
+test('un video de una obra que su plataforma no deja mostrar no se guarda, avisa con su clave y lleva a la pestaña Obras', async () => {
+  const contenido = async () => (await (await call('/api/admin/contenido', 'GET', undefined, cookies.admin)).json());
+  expect((await call('/api/admin/contenido/inicio/piezas', 'PUT', { piezas: [{ imagen: { original: 'pieza-ferrocarril' }, alt: 'Pieza' }],
+    version: (await contenido()).versiones.inicio.piezas }, cookies.admin)).status).toBe(200);
+  const guardarObra = async () => call('/api/admin/contenido/obras/agua-potable', 'PUT', {
+    nota: 'Avanza la red.', hitos: [], fotos: [{ video: { enlace: REEL, vertical: true, idPortada: null }, pie: 'Recorrido por la obra' }],
+    version: (await contenido()).versiones.obras['agua-potable'],
+  }, cookies.admin);
+  bloqueado = true;
+  try {
+    const rechazo = await guardarObra();
+    expect(rechazo.status).toBe(422);
+    expect((await rechazo.json()).error).toBe(`Video 1: ${avisoNoInsertable('facebook', 'bloqueado')}`);
+    bloqueado = false;
+    expect((await guardarObra()).status).toBe(200);
+    expect((await publicar()).status).toBe(200);
+    bloqueado = true;
+    expect(await avisos()).toEqual([{
+      clave: 'video:obra:agua-potable:1', tipo: 'error', icono: 'alert', cantidad: 1, ruta: '/cuenta/panel/?aviso=video%3Aobra%3Aagua-potable%3A1#obras',
+      texto: 'El video «Recorrido por la obra» de la obra «Agua potable» ya no se puede ver en el sitio.', accion: 'Cambiar el video',
+      detalle: avisoNoInsertable('facebook', 'bloqueado'), valor: REEL,
+    }]);
+    const texto = { valor: 'Por San Lorenzo.', version: (await contenido()).versiones.textos['pie.linea-1'] ?? null };
+    expect((await call('/api/admin/contenido/textos/pie.linea-1', 'PUT', texto, cookies.admin)).status).toBe(200);
+    const r = await call('/api/admin/publicaciones', 'POST', undefined, cookies.admin);
+    expect(r.status).toBe(422);
+    expect((await r.json()).error).toBe('No se publicó: el video «Recorrido por la obra» de la obra «Agua potable» no se puede ver en el sitio. Cámbialo y vuelve a publicar.');
+  } finally {
+    bloqueado = false;
+  }
+});

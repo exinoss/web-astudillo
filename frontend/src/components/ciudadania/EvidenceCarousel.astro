@@ -9,6 +9,7 @@ interface Props {
   name: string;
 }
 const { id, evidence, name } = Astro.props;
+const conVideos = evidence.some((e) => "video" in e);
 ---
 
 {evidence.length ? (
@@ -21,15 +22,16 @@ const { id, evidence, name } = Astro.props;
   >
     <span class="flex items-center gap-2.5">
       <Icon name="image" size={20} />
-      Fotos del avance ({evidence.length})
+      {conVideos ? "Fotos y videos" : "Fotos"} del avance ({evidence.length})
     </span>
     <span class="transition-transform duration-200 group-[.is-abierto]:rotate-180"><Icon name="chevron" size={18} /></span>
   </button>
   <CarruselFotos
     id={`evidencias-${id}`}
     label={`Evidencias del avance de ${name}`}
-    photos={evidence}
+    diapositivas={evidence}
     sizes="(max-width: 760px) 90vw, 620px"
+    ampliable
     class="h-full min-h-[340px] max-tablet:mt-2 max-tablet:hidden max-tablet:h-auto max-tablet:min-h-0 max-tablet:group-[.is-abierto]:block"
     zona="min-h-[286px] shrink-0 grow basis-(--alto-foto) max-tablet:h-[calc(75cqw-54px)] max-tablet:min-h-0 max-tablet:flex-none max-tablet:basis-auto max-mobile:h-[calc(100cqw-54px)]"
   />
@@ -37,7 +39,7 @@ const { id, evidence, name } = Astro.props;
 ) : (
   <div class="flex h-full min-h-[340px] flex-col items-center justify-center gap-3 rounded-card border border-dashed border-base-300 bg-base-100/60 p-6 text-center text-[0.85rem] text-primary max-tablet:min-h-0 max-tablet:flex-row max-tablet:justify-start max-tablet:p-4 max-tablet:text-left">
     <Icon name="obras" size={30} />
-    Aún no hay imágenes del avance de esta obra.
+    Aún no hay fotos ni videos del avance de esta obra.
   </div>
 )}
 

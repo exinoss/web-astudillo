@@ -1,8 +1,6 @@
 ---
 import CarruselFotos from "../comun/CarruselFotos.astro";
 import Icon from "../comun/Icon.astro";
-import { imageView } from "../../lib/comun/fotos";
-import { visorFotos } from "../../lib/comun/visor-fotos";
 import type { Parish } from "../../lib/data/types";
 
 interface Props { parish: Parish; number: number }
@@ -21,15 +19,14 @@ const fotos = parish.photos.map((p) => ({ image: p.image, alt: p.alt, caption: p
     {conTexto && <div class="text-[0.95rem] leading-[1.7]">{parish.paragraphs.map((p) => <p class="m-0 mb-3 last:mb-0">{p}</p>)}</div>}
     {fotos.length ? (
       <CarruselFotos
+        id={`fotos-${parish.slug}`}
         label={`Fotos de ${parish.name}`}
-        photos={fotos}
+        diapositivas={fotos}
         sizes={conTexto ? "(max-width: 1100px) 90vw, 520px" : "(max-width: 1100px) 90vw, 1000px"}
         zona={conTexto ? "h-[calc(75cqw-54px)] max-mobile:h-[calc(100cqw-54px)]" : "h-[calc(56.25cqw-54px)] max-mobile:h-[calc(100cqw-54px)]"}
         ampliable
-        automatico
-      >
-        <Fragment set:html={visorFotos(`visor-${parish.slug}`, `Fotos de ${parish.name}`, fotos.map((f) => ({ ...f, image: imageView(f.image) })))} />
-      </CarruselFotos>
+        automatico={3000}
+      />
     ) : (
       <p class:list={["m-0 grid w-full place-items-center rounded-card border border-dashed border-neutral/35 bg-neutral/8 p-4 text-center text-[0.8rem] text-neutral", conTexto ? "aspect-[4/3] max-laptop:aspect-auto max-laptop:min-h-[160px]" : "min-h-[160px]"]}>
         Aún no hay fotos de esta parroquia.

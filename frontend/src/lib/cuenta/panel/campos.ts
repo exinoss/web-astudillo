@@ -25,6 +25,7 @@ export const PISTA = "inline-flex h-6 w-[42px] shrink-0 items-center rounded-ful
 export const BOLA = "size-[18px] rounded-full max-tablet:size-4";
 export const GRUPO = "min-w-0 rounded-control border border-base-300 p-4";
 export const LEYENDA = "px-1 text-[0.82rem] font-bold";
+export const FILA_BOTONES = "flex flex-wrap items-center gap-3";
 
 const UPLOAD = `${GHOST} relative cursor-pointer focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral`;
 
