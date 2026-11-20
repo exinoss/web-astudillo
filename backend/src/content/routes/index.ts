@@ -4,6 +4,7 @@ import type { Authorization } from '../../auth/types';
 import { MAX_PRESENTACION, MAX_PUNTO_TRAYECTORIA, MAX_TRAYECTORIA, PUESTOS } from '../../contracts/equipo';
 import { MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_IMAGENES_PIEZAS, MAX_VIDEOS_PIEZAS, ORIGINALES } from '../../contracts/inicio';
 import { MAX_FOTOS_PARROQUIA } from '../../contracts/parroquias';
+import { MAX_FOTOS_OBRA, MAX_VIDEOS_OBRA } from '../../contracts/obras';
 import { MAX_ENLACE_RED } from '../../contracts/redes';
 import { LARGOS } from '../../contracts/limites';
 import { VIDEO_URL_MAX } from '../../contracts/video';
@@ -62,7 +63,10 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
       body: t.Object({
         nota: text(LARGOS.obra.nota),
         hitos: t.Array(t.Object({ nombre: text(LARGOS.obra.hito), completado: t.Boolean() }, strict), { maxItems: 20 }),
-        fotos: t.Array(t.Object({ idMedio: t.Integer({ minimum: 1 }), pie: text(LARGOS.obra.pie) }, strict), { maxItems: 24 }),
+        fotos: t.Array(t.Union([
+          t.Object({ idMedio: mediaId, pie: text(LARGOS.obra.pie) }, strict),
+          t.Object({ video: t.Object({ enlace: video.enlace, vertical: video.vertical, idPortada: video.idPortada }, strict), pie: text(LARGOS.obra.pie) }, strict),
+        ]), { maxItems: MAX_FOTOS_OBRA + MAX_VIDEOS_OBRA }),
         version,
       }, strict),
     })

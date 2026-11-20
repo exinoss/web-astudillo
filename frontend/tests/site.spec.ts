@@ -379,7 +379,7 @@ test('la propuesta con sitio propio lo enlaza en una tarjeta que abre otra pesta
   await expect(tarjeta).toHaveAttribute('target', '_blank');
   await expect(tarjeta).toHaveAttribute('rel', 'noopener noreferrer');
   await expect(page.locator('.model-3d')).toHaveCount(0);
-  await expect(page.getByText('Aún no hay imágenes del avance de esta obra.')).toBeVisible();
+  await expect(page.getByText('Aún no hay fotos ni videos del avance de esta obra.')).toBeVisible();
   await expect(page.getByRole('progressbar', { name: 'Avance de Mercado local' })).toHaveAttribute('aria-valuenow', '20');
 });
 
@@ -392,14 +392,62 @@ test('cada obra muestra su progreso junto a un carrusel de evidencias', async ({
   expect(c.left).toBeGreaterThan(t.right);
   expect(Math.round(c.top)).toBe(Math.round(t.top));
   await expect(carrusel.locator('[data-diapositiva]:visible')).toHaveCount(1);
-  await expect(carrusel.getByText('1 / 3')).toBeVisible();
+  await expect(carrusel.locator('[data-posicion]')).toHaveText('1 / 3');
   await carrusel.getByRole('button', { name: 'Foto siguiente' }).click();
   await expect(carrusel.getByText('2 / 3')).toBeVisible();
   await expect(carrusel.getByText('Foto de prueba 2', { exact: true })).toBeVisible();
   await carrusel.getByRole('button', { name: 'Foto anterior' }).click();
   await carrusel.getByRole('button', { name: 'Foto anterior' }).click();
   await expect(carrusel.getByText('3 / 3')).toBeVisible();
-  await expect(page.getByText('Aún no hay imágenes del avance de esta obra.')).toHaveCount(7);
+  await expect(page.getByText('Aún no hay fotos ni videos del avance de esta obra.')).toHaveCount(6);
+  const ampliar = carrusel.getByRole('button', { name: 'Ampliar: Foto de prueba 3' });
+  await ampliar.click();
+  const visor = page.getByRole('dialog', { name: 'Evidencias del avance de Agua potable' });
+  await expect(visor.locator('[data-visor-contador]')).toHaveText('3 / 3');
+  await page.keyboard.press('Escape');
+  await expect(visor).toBeHidden();
+  await expect(ampliar).toBeFocused();
+});
+
+test('los videos de una obra van entre sus fotos, se reproducen en su caja y se detienen al cambiar de diapositiva', async ({ page }) => {
+  await page.route(/youtube-nocookie\.com|tiktok\.com/, route => route.fulfill({ contentType: 'text/html', body: '' }));
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/ciudadania/obras-en-ejecucion/');
+  const carrusel = page.getByRole('region', { name: 'Evidencias del avance de Mercado municipal' });
+  await expect(carrusel.locator('[data-posicion]')).toHaveText('1 / 3');
+  await expect(carrusel.locator('[data-visor-abrir]')).toHaveCount(1);
+  await carrusel.getByRole('button', { name: 'Foto siguiente' }).click();
+  const reproducir = carrusel.getByRole('button', { name: 'Reproducir el video: Recorrido por el mercado' });
+  await expect(reproducir).toContainText('Ver video · YouTube');
+  await expect(carrusel.getByText('Recorrido por el mercado', { exact: true })).toBeVisible();
+  const caja = carrusel.locator('[data-diapositiva]:not([hidden]) [data-video-stage]');
+  const antes = await caja.boundingBox();
+  expect(antes!.width / antes!.height).toBeCloseTo(16 / 9, 1);
+  await reproducir.click();
+  await expect(caja.locator('iframe')).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/dQw4w9WgXcQ/);
+  const reproduciendo = await caja.boundingBox();
+  expect([reproduciendo!.width, reproduciendo!.height]).toEqual([antes!.width, antes!.height]);
+  await carrusel.getByRole('button', { name: 'Foto siguiente' }).click();
+  await expect(carrusel.locator('iframe')).toHaveCount(0);
+  const vertical = await carrusel.locator('[data-diapositiva]:not([hidden]) [data-video-stage]').boundingBox();
+  expect(vertical!.width / vertical!.height).toBeCloseTo(9 / 16, 1);
+  await carrusel.getByRole('button', { name: 'Foto anterior' }).click();
+  await expect(reproducir).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+});
+
+test('en celular, el acordeón de una obra con videos dice «Fotos y videos», y la propuesta también los muestra', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 700 });
+  await page.goto('/ciudadania/obras-en-ejecucion/');
+  await page.getByRole('button', { name: 'Fotos y videos del avance (3)' }).click();
+  const carrusel = page.getByRole('region', { name: 'Evidencias del avance de Mercado municipal' });
+  await carrusel.getByRole('button', { name: 'Foto siguiente' }).press('Enter');
+  const caja = await carrusel.locator('[data-diapositiva]:not([hidden]) [data-video-stage]').boundingBox();
+  const marco = await carrusel.boundingBox();
+  expect(caja!.width).toBeLessThanOrEqual(marco!.width + 1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+  await page.goto('/propuestas/mercado-municipal/');
+  await expect(page.locator('[data-carrusel] [data-video-preview]')).toHaveCount(2);
 });
 
 test('en móvil las fotos de cada obra se despliegan desde un acordeón', async ({ page }) => {

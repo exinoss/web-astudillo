@@ -14,17 +14,25 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - Panel, Redes sociales: WhatsApp acepta también el enlace de una comunidad (https://chat.whatsapp.com/…). En la portada, la tarjeta dice entonces «Únete a la comunidad».
 - «Por qué quiero ser alcalde» y «Conoce más sobre mí»: hasta seis videos por página, uno debajo de otro, cada uno con su título y su texto.
 - Portada: el carrusel de piezas admite también videos de Facebook, TikTok, YouTube o Vimeo, mezclados con las imágenes (hasta 4 imágenes y 4 videos). Cada video se ve con su portada y su título, y se reproduce dentro del carrusel; mientras suena, el carrusel no avanza. Al pegar el enlace se usa la imagen del video como portada.
+- Obras en ejecución y páginas de cada propuesta: las evidencias del avance admiten también videos de Facebook, TikTok, YouTube o Vimeo (hasta 4 por obra), mezclados con las fotos. Cada video se ve en su formato con su pie, se reproduce dentro del carrusel y se detiene al pasar a otra foto. En el panel, las fotos y los videos se añaden desde un solo cuadro y se listan debajo, cada uno con su pie; un video se reproduce al pulsar su miniatura, y si su plataforma no deja mostrarlo, no se guarda y queda marcado en rojo.
 - Portada, modo edición: el botón de la segunda diapositiva («Conoce a Carlos») se puede cambiar. Su texto se edita pulsándolo, y en «Cambiar imágenes» se elige a dónde lleva: una página del sitio o un enlace de Facebook, TikTok, Instagram o YouTube, que se abre en otra pestaña. Sin enlace, el botón se ve apagado.
 
 ### Fixed
 
+- Celular con el texto aumentado al máximo: la cabecera ya no se sale de la pantalla cuando aparece la campana de avisos. El botón de la cuenta muestra solo su ícono.
 - Panel, videos: al cambiar el enlace de un video, su portada ya no se queda con la imagen del video anterior. Al pegar un enlace se usa la imagen del video si su plataforma la ofrece, y al volver a un enlace anterior vuelve su imagen.
 - Panel y modo edición: los botones para quitar se ven en rojo: los de las listas (preguntas, fotos, banners, personas) y «Quitar foto» de Biografía y Mi equipo y «Quitar» de la imagen para celular de un banner, que además llevan un tacho.
 - Portada, modo edición: el carrusel principal ya no cambia de diapositiva mientras se edita uno de sus textos.
+- Obras en ejecución y páginas de cada propuesta: las fotos del avance de una obra se abren en grande al pulsarlas, como las de las parroquias.
+- Alerta ciudadana: la foto de una alerta del historial se abre en grande al pulsarla.
+- Modo edición: la ventana para editar un carrusel de la portada y la de «Editar texto» en celular ya no se cierran al tocar fuera de ellas, así no se pierde lo escrito. Se cierran con «Cancelar» o la X.
 - Portada (modo edición) y panel (Biografía, Obras, Mi equipo, parroquias y páginas de Carlos): mientras sube una foto, «Guardar borrador» sigue desactivado aunque se escriba, así ya no se guarda sin la foto nueva. Si se elige una foto mientras se guarda, se pide esperar y volver a elegirla. En la portada, la descripción del retrato escrita durante la subida ya no se borra.
 
 ### Changed
 
+- Mi equipo: las fotos de cada parroquia cambian cada 3 segundos (antes, 5).
+- Sugerencias: la idea pide al menos 10 caracteres (antes, 15).
+- Registro, alertas, sugerencias y chat: la casilla de aceptación es más corta: «Tengo 16 años o más y acepto los Términos y condiciones y la Política de privacidad, incluida la publicación de mis sugerencias y de las alertas aprobadas.»
 - Obras en ejecución, propuestas y Mi equipo: el pie de cada foto ya no la tapa. Si es largo, la franja azul de abajo se alarga y la foto queda donde estaba. En celular las fotos se pasan deslizando, sin flechas.
 - Galerías: al ampliar una foto, su pie ocupa el ancho de la foto; en celular se muestran tres líneas y «Ver más…» abre el texto completo.
 - Panel: los pies y las descripciones de las fotos admiten hasta 300 caracteres (antes 200).

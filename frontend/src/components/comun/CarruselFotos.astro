@@ -1,23 +1,33 @@
 ---
 import Foto from "./Foto.astro";
 import Icon from "./Icon.astro";
-import type { UploadedPicture } from "../../lib/data/types";
-import { medidasFoto } from "../../lib/comun/fotos";
+import type { WorkEvidence } from "../../lib/data/types";
+import { imageView, medidasFoto } from "../../lib/comun/fotos";
+import { visorFotos } from "../../lib/comun/visor-fotos";
+import { PROVIDER_NAMES, videoSource } from "../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
+import { portadaReproducible } from "../../lib/acerca-de-nosotros/acerca-de-carlos/video";
+import { defaultCover } from "../../lib/acerca-de-nosotros/acerca-de-carlos/vista";
 
 interface Props {
   id?: string;
   label: string;
-  photos: { image: UploadedPicture; alt: string; caption: string }[];
+  diapositivas: WorkEvidence[];
   sizes: string;
   class?: string;
   zona: string;
   ampliable?: boolean;
-  automatico?: boolean;
+  automatico?: number;
 }
-const { id, label, photos, sizes, class: className, zona, ampliable = false, automatico = false } = Astro.props;
+const { id, label, diapositivas, sizes, class: className, zona, ampliable = false, automatico } = Astro.props;
 // En celular se pasa de foto deslizando: las flechas solo quedan para lectores de pantalla y teclado.
 const flecha = "boton-redondo text-primary-content hover:bg-primary-content/15 celular:sr-only celular:focus-visible:not-sr-only";
 const imagen = "block aspect-(--proporcion) h-auto w-[min(100cqw,var(--ancho-foto),100cqh*var(--proporcion))]";
+const fotos = diapositivas.filter((d) => "image" in d);
+const videos = await Promise.all(diapositivas.map(async (d) => {
+  const source = "video" in d && videoSource(d.video.url);
+  if (!source || !("video" in d)) return null;
+  return { source, cover: d.video.cover ? imageView(d.video.cover) : await defaultCover(d.video.vertical) };
+}));
 ---
 
 <div
@@ -27,21 +37,28 @@ const imagen = "block aspect-(--proporcion) h-auto w-[min(100cqw,var(--ancho-fot
   aria-roledescription="carrusel"
   aria-label={label}
   data-carrusel
-  data-automatico={automatico ? "" : undefined}
+  data-automatico={automatico}
 >
-  {photos.map((foto, i) => (
+  {diapositivas.map((foto, i) => {
+    const video = videos[i];
+    return (
     <figure
       class="m-0 flex flex-1 flex-col"
-      style={medidasFoto(foto.image)}
+      style={"image" in foto ? medidasFoto(foto.image) : `--ancho-foto: ${foto.video.vertical ? 1080 : 1280}px; --proporcion: ${foto.video.vertical ? 9 / 16 : 16 / 9}`}
       role="group"
       aria-roledescription="diapositiva"
-      aria-label={`${i + 1} de ${photos.length}`}
+      aria-label={`${i + 1} de ${diapositivas.length}`}
       data-diapositiva
+      data-video-preview={video ? "" : undefined}
+      data-embed={video?.source.embed}
+      data-provider={video?.source.provider}
       hidden={i !== 0}
     >
       <div class:list={["@container-[size] flex items-center justify-center", zona]}>
-        {ampliable ? (
-          <button type="button" class="block cursor-zoom-in" data-visor-abrir={i} aria-label={`Ampliar: ${foto.alt}`}>
+        {!("image" in foto) ? (
+          video && <div data-video-stage class:list={["relative overflow-hidden", imagen]} set:html={portadaReproducible(video.source, foto.caption, `Ver video · ${PROVIDER_NAMES[video.source.provider]}`, video.cover, sizes)} />
+        ) : ampliable ? (
+          <button type="button" class="block cursor-zoom-in" data-visor-abrir={fotos.indexOf(foto)} aria-label={`Ampliar: ${foto.alt}`}>
             <Foto class={imagen} picture={foto.image} alt={foto.alt} sizes={sizes} />
           </button>
         ) : (
@@ -52,21 +69,21 @@ const imagen = "block aspect-(--proporcion) h-auto w-[min(100cqw,var(--ancho-fot
         {foto.caption}
       </figcaption>
     </figure>
-  ))}
-  {photos.length > 1 && (
+  ); })}
+  {diapositivas.length > 1 && (
     <div class="absolute right-1.5 bottom-[5px] flex items-center gap-1 text-primary-content">
       <button class={flecha} type="button" data-paso="-1" aria-label="Foto anterior">
         <Icon name="chevronLeft" size={20} />
       </button>
       <span class="min-w-10 text-center text-[0.75rem] font-bold" aria-live="polite" data-posicion>
-        1 / {photos.length}
+        1 / {diapositivas.length}
       </span>
       <button class={flecha} type="button" data-paso="1" aria-label="Foto siguiente">
         <Icon name="chevronRight" size={20} />
       </button>
     </div>
   )}
-  <slot />
+  {ampliable && <Fragment set:html={visorFotos(`${id}-visor`, label, fotos.map((f) => ({ ...f, image: imageView(f.image) })))} />}
 </div>
 
 <script src="../../scripts/comun/carrusel-fotos.ts"></script>

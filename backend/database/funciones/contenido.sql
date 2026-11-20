@@ -36,7 +36,9 @@ RETURNS jsonb LANGUAGE sql STABLE AS $$
   SELECT jsonb_build_object('nota', o.nota,
     'hitos', COALESCE((SELECT jsonb_agg(jsonb_build_object('nombre', h.nombre, 'completado', h.completado) ORDER BY h.orden)
       FROM tb_obra_hitos h WHERE h.slug = o.slug), '[]'::jsonb),
-    'fotos', COALESCE((SELECT jsonb_agg(jsonb_build_object('idMedio', f.id_medio, 'pie', f.pie) ORDER BY f.orden)
+    'fotos', COALESCE((SELECT jsonb_agg(CASE WHEN f.enlace IS NULL THEN jsonb_build_object('idMedio', f.id_medio, 'pie', f.pie)
+        ELSE jsonb_build_object('pie', f.pie, 'video', jsonb_build_object('enlace', f.enlace, 'vertical', f.vertical, 'idPortada', f.id_medio)) END
+        ORDER BY f.orden)
       FROM tb_obra_fotos f WHERE f.slug = o.slug), '[]'::jsonb))
   FROM tb_obras o WHERE o.slug = p_slug;
 $$;
@@ -244,21 +246,25 @@ BEGIN
 END;
 $$;
 
--- Obras con hitos y fotos agregados en JSON, en el orden de las propuestas.
+-- Obras con hitos, fotos y videos agregados en JSON, en el orden de las propuestas.
 CREATE OR REPLACE FUNCTION fn_works_list()
 RETURNS TABLE(slug varchar, nota varchar, actualizado_en timestamptz, hitos jsonb, fotos jsonb)
 LANGUAGE sql STABLE AS $$
   SELECT o.slug, o.nota, o.actualizado_en,
     COALESCE((SELECT jsonb_agg(jsonb_build_object('nombre', h.nombre, 'completado', h.completado) ORDER BY h.orden)
       FROM tb_obra_hitos h WHERE h.slug = o.slug), '[]'::jsonb),
-    COALESCE((SELECT jsonb_agg(jsonb_build_object('idMedio', m.id_medio, 'nombre', m.nombre, 'ancho', m.ancho,
-        'alto', m.alto, 'anchos', to_jsonb(m.anchos), 'pie', f.pie) ORDER BY f.orden)
-      FROM tb_obra_fotos f JOIN tb_medios m ON m.id_medio = f.id_medio WHERE f.slug = o.slug), '[]'::jsonb)
+    COALESCE((SELECT jsonb_agg(CASE WHEN f.enlace IS NULL THEN d.foto || jsonb_build_object('pie', f.pie)
+        ELSE jsonb_build_object('pie', f.pie, 'video', jsonb_build_object('enlace', f.enlace, 'vertical', f.vertical, 'portada', d.foto)) END
+        ORDER BY f.orden)
+      FROM tb_obra_fotos f LEFT JOIN tb_medios m ON m.id_medio = f.id_medio
+      CROSS JOIN LATERAL (SELECT CASE WHEN m.id_medio IS NOT NULL THEN jsonb_build_object('idMedio', m.id_medio, 'nombre', m.nombre,
+        'ancho', m.ancho, 'alto', m.alto, 'anchos', to_jsonb(m.anchos)) END AS foto) d
+      WHERE f.slug = o.slug), '[]'::jsonb)
   FROM tb_obras o JOIN tb_propuestas p ON p.slug = o.slug
   ORDER BY p.orden;
 $$;
 
--- Reemplaza nota, hitos y fotos de una obra en una sola transacción. Sin filas: no existe.
+-- Reemplaza nota, hitos, fotos y videos de una obra en una sola transacción. Sin filas: no existe.
 DROP FUNCTION IF EXISTS fn_work_save(integer, text, text, jsonb, jsonb);
 CREATE OR REPLACE FUNCTION fn_work_save(p_actor integer, p_slug text, p_note text,
   p_milestones jsonb, p_photos jsonb, p_version text)
@@ -279,8 +285,9 @@ BEGIN
   SELECT p_slug, e.orden, e.item->>'nombre', (e.item->>'completado')::boolean
   FROM jsonb_array_elements(p_milestones) WITH ORDINALITY AS e(item, orden);
   DELETE FROM tb_obra_fotos f WHERE f.slug = p_slug;
-  INSERT INTO tb_obra_fotos (slug, orden, id_medio, pie)
-  SELECT p_slug, e.orden, (e.item->>'idMedio')::integer, e.item->>'pie'
+  INSERT INTO tb_obra_fotos (slug, orden, id_medio, pie, enlace, vertical)
+  SELECT p_slug, e.orden, COALESCE(e.item->>'idMedio', e.item#>>'{video,idPortada}')::integer, e.item->>'pie',
+    e.item#>>'{video,enlace}', (e.item#>>'{video,vertical}')::boolean
   FROM jsonb_array_elements(p_photos) WITH ORDINALITY AS e(item, orden);
   INSERT INTO tb_auditoria (id_actor, accion, entidad, cambios)
   VALUES (p_actor, 'obra_guardada', 'tb_obras', jsonb_build_object('slug', p_slug));

@@ -8,16 +8,6 @@ import { bindListActions, MAX_ITEMS, onFiles, type Editor, type SectionEditor } 
 
 type Video = DraftAboutCarlosPage["videos"][number];
 
-/** Marca el enlace del video `i` con el aviso de la plataforma que no deja mostrarlo; cambiar el enlace lo quita. */
-export function marcarNoInsertable(root: ParentNode, i: number, mensaje: string) {
-  const input = root.querySelector<HTMLInputElement>(`#video-enlace-${i}`), status = root.querySelector<HTMLElement>(`#video-detectado-${i}`);
-  if (!input || !status) return;
-  status.textContent = mensaje;
-  status.classList.add("text-error");
-  input.removeAttribute("data-valido");
-  input.setAttribute("aria-invalid", "true");
-}
-
 /** Recuadro de un video: sus campos, su portada y su vista previa. */
 function videoHtml(v: Video, i: number, total: number) {
   return `

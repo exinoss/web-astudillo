@@ -1,4 +1,6 @@
 import { autoavance, deslizar } from "../../lib/comun/carrusel";
+import { montarVisor } from "../../lib/comun/visor-fotos";
+import { activarVideo, detenerVideo } from "../../lib/acerca-de-nosotros/acerca-de-carlos/reproductor";
 
 for (const carrusel of document.querySelectorAll<HTMLElement>("[data-carrusel]")) {
   // Se leen en cada paso: el modo edición de la portada vuelve a pintar las diapositivas y los puntos.
@@ -11,7 +13,10 @@ for (const carrusel of document.querySelectorAll<HTMLElement>("[data-carrusel]")
   const mostrar = (siguiente: number, anunciar = true) => {
     const fotos = diapositivas();
     actual = (siguiente + fotos.length) % fotos.length;
-    fotos.forEach((foto, i) => (foto.hidden = i !== actual));
+    fotos.forEach((foto, i) => {
+      foto.hidden = i !== actual;
+      if (foto.hidden && foto.matches("[data-video-preview]")) detenerVideo(foto);
+    });
     puntos().forEach((punto, i) => {
       punto.classList.toggle("is-active", i === actual);
       punto.setAttribute("aria-current", String(i === actual));
@@ -26,7 +31,9 @@ for (const carrusel of document.querySelectorAll<HTMLElement>("[data-carrusel]")
   const sincronizar = carrusel.hasAttribute("data-automatico") ? autoavance(() => {
     if (carrusel.getClientRects().length > 0 && !carrusel.matches(":hover") && !carrusel.querySelector(":focus-visible") && !document.querySelector("dialog[open]"))
       mostrar(actual + 1, false);
-  }, 5000, () => diapositivas().length > 1) : () => {};
+  }, Number(carrusel.dataset.automatico) || 5000, () => diapositivas().length > 1) : () => {};
+  if (carrusel.querySelector("[data-visor]")) montarVisor(carrusel);
+  carrusel.querySelectorAll<HTMLElement>("[data-video-preview]").forEach(activarVideo);
   const paso = (cuanto: number) => {
     mostrar(actual + cuanto);
     sincronizar();

@@ -79,8 +79,8 @@
 }
 
 @media (width <= 480px) {
-  .text-large .account-link { white-space: normal; }
-  .text-large .account-label { max-width: 6ch; text-align: center; line-height: 1.25; }
+  /* Con el texto grande la cabecera no cabe en un celular: «Mi cuenta» queda solo para lectores de pantalla. */
+  .text-large .account-label { @apply sr-only; }
 }
 
 .underline-links a {

@@ -58,6 +58,8 @@ test('«Editar en el sitio» abre el texto pedido y en móvil se edita en una ho
   await expect(sheet.getByRole('textbox')).toHaveValue('ESTAMOS PARA ESCUCHARTE');
   expect(new URL(page.url()).search).toBe('');
   await sheet.getByRole('textbox').fill('TE ESCUCHAMOS');
+  await sheet.click({ position: { x: 5, y: 5 } });
+  await expect(sheet.getByRole('textbox')).toHaveValue('TE ESCUCHAMOS');
   await sheet.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(sheet).toBeHidden();
   // El aviso que salió con la hoja abierta sigue visible tras cerrarla.

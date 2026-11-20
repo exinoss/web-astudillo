@@ -107,7 +107,7 @@ test('el carrusel de una parroquia avanza solo, se para con el puntero y con «R
   const posicion = carrusel.locator('[data-posicion]');
   await page.mouse.move(0, 0);
   await expect(posicion).toHaveText('1 / 3');
-  await page.clock.runFor(5100);
+  await page.clock.runFor(3100);
   await expect(posicion).toHaveText('2 / 3');
   // Lo que avanza solo no se anuncia al lector de pantalla; lo que pide la persona, sí.
   await expect(posicion).toHaveAttribute('aria-live', 'off');

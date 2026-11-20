@@ -9,7 +9,7 @@ import { renderBiography } from "./biografia";
 import { abrirVideo, renderAboutCarlos } from "./acerca-de-carlos";
 import { renderMyTeam } from "./mi-equipo";
 import { renderChat } from "./chat";
-import { renderWorks } from "./obras";
+import { abrirObra, renderWorks } from "./obras";
 import { filtrarParticipacion, renderParticipation } from "./participacion";
 import { renderProposals } from "./propuestas";
 import { publish, renderPublications } from "./publicaciones";
@@ -75,7 +75,8 @@ function prepararAviso(clave: string | null) {
   if (!clave) return;
   history.replaceState(null, "", location.pathname + location.hash);
   const [tipo, valor, numero] = clave.split(":");
-  if (tipo === "video") abrirVideo(valor, Number(numero));
+  if (tipo === "video" && valor === "obra") abrirObra(numero);
+  else if (tipo === "video") abrirVideo(valor, Number(numero));
   else if (tipo === "alertas" || tipo === "sugerencias") filtrarParticipacion(tipo, valor);
 }
 

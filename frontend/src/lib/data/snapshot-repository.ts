@@ -21,7 +21,8 @@ export interface Snapshot {
   originales?: Record<string, string>;
   propuestas: { slug: string; nombre: string; categoria: string; introduccion: string; kpis: { etiqueta: string; valor: string }[] }[];
   biografia: { anios: string; titulo: string; texto: string; alt: string | null; foto: UploadedPicture | null }[];
-  obras: { slug: string; nota: string; actualizadoEn: string; hitos: { nombre: string; completado: boolean }[]; fotos: (UploadedPicture & { pie: string })[] }[];
+  obras: { slug: string; nota: string; actualizadoEn: string; hitos: { nombre: string; completado: boolean }[];
+    fotos: ((UploadedPicture & { pie: string }) | { video: { enlace: string; vertical: boolean; portada: UploadedPicture | null }; pie: string })[] }[];
   chat?: { pregunta: string; destacada: boolean }[];
   acercaDeCarlos?: Record<string, ApiAboutCarlosPage>;
   miEquipo?: {
@@ -59,7 +60,9 @@ export abstract class SnapshotRepository implements ContentRepository {
     return (await this.load()).obras.map(o => ({
       proposalSlug: o.slug, updatedAt: o.actualizadoEn.slice(0,10), note: o.nota,
       milestones: o.hitos.map(h => ({ name:h.nombre, done:h.completado })),
-      evidence: o.fotos.map(f => ({ image:f, alt:f.pie, caption:f.pie })),
+      evidence: o.fotos.map(f => ('video' in f
+        ? { video: { url: f.video.enlace, vertical: f.video.vertical, cover: f.video.portada }, caption: f.pie }
+        : { image: f, alt: f.pie, caption: f.pie })),
     }));
   }
   async getTexts() { return (await this.load()).textos; }

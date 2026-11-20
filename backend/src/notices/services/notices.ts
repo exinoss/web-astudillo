@@ -32,7 +32,7 @@ export function createNotices(sql: SQL, authorization: Authorization, checkVideo
         const motivo = await checkVideo(source);
         // Los de la portada se cambian en ella, con el modo edición.
         return motivo ? [{
-          clave, tipo: 'error', icono: 'alert', cantidad: 1, ruta: clave.startsWith('video:inicio:') ? '/' : ruta(clave, 'acerca-de-carlos'),
+          clave, tipo: 'error', icono: 'alert', cantidad: 1, ruta: clave.startsWith('video:inicio:') ? '/' : ruta(clave, clave.startsWith('video:obra:') ? 'obras' : 'acerca-de-carlos'),
           texto: `El video «${titulo}» de ${lugar} ya no se puede ver en el sitio.`, accion: 'Cambiar el video',
           detalle: avisoNoInsertable(source.provider, motivo), valor: source.url,
         }] : [];

@@ -57,8 +57,3 @@ const TITULO = "m-0 text-[2rem] max-tablet:text-[1.6rem]";
     </div>
   </section>
 </Layout>
-
-<script>
-  import { montarVisor } from "../lib/comun/visor-fotos";
-  document.querySelectorAll<HTMLElement>("[data-carrusel]").forEach((carrusel) => { if (carrusel.querySelector("[data-visor]")) montarVisor(carrusel); });
-</script>
