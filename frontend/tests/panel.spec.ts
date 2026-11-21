@@ -300,22 +300,42 @@ test('participación: el estado se cambia y un cambio ajeno no se pisa', async (
 test('participación: publicar, mostrar el nombre y borrar con la contraseña', async ({ page }) => {
   const data = panelData('admin');
   await mockPanelApi(page, data);
+  let patches = 0, listas = 0, release = () => {};
+  const gate = new Promise<void>((r) => { release = r; });
+  page.on('request', (r) => { if (new URL(r.url()).pathname === '/api/admin/participacion/alertas') listas++; });
+  await page.route('**/api/admin/participacion/alertas/*/visibilidad', async (route) => {
+    patches++;
+    await gate;
+    return route.fallback();
+  });
   await page.goto('/cuenta/panel/#participacion');
   const section = page.locator('#seccion-participacion');
   const publicada = section.getByRole('switch', { name: 'Publicada en el sitio' });
   const nombre = section.getByRole('switch', { name: 'Mostrar el nombre' });
   await expect(publicada).toHaveAttribute('aria-checked', 'false');
   await expect(nombre).toHaveAttribute('aria-checked', 'false');
-  await publicada.click();
-  await expect(page.locator('[data-notificacion]')).toContainText('Alerta publicada en el sitio');
+  const listasAlCargar = listas;
+  await publicada.focus();
+  await page.keyboard.press('Enter');
+  // Cambia antes de que responda la API y queda bloqueado mientras tanto.
   await expect(publicada).toHaveAttribute('aria-checked', 'true');
+  await expect(publicada.locator('span').first()).toHaveClass(/justify-end bg-primary/);
+  await expect(publicada).toBeDisabled();
+  release();
+  await expect(page.locator('[data-notificacion]')).toContainText('Alerta publicada en el sitio');
+  await expect(publicada).toBeEnabled();
+  await expect(publicada).toBeFocused();
+  expect(patches).toBe(1);
+  expect(listas).toBe(listasAlCargar);
   expect(data.alertas[0]).toMatchObject({ publica: true, anonima: true });
-  // Otra persona mostró el nombre mientras tanto: 409 y no se pisa.
-  data.alertas[0].anonima = false;
+  // Otra persona la retiró del sitio mientras tanto: 409, el interruptor vuelve y la lista muestra el valor real.
   data.alertas[0].publica = false;
   await nombre.click();
   await expect(page.locator('#panel-estado')).toContainText('Otra persona cambió la publicación');
-  expect(data.alertas[0]).toMatchObject({ publica: false, anonima: false });
+  await expect(nombre).toHaveAttribute('aria-checked', 'false');
+  await expect(publicada).toHaveAttribute('aria-checked', 'false');
+  expect(listas).toBe(listasAlCargar + 1);
+  expect(data.alertas[0]).toMatchObject({ publica: false, anonima: true });
 
   await page.reload();
   await section.getByRole('button', { name: 'Borrar alerta' }).click();

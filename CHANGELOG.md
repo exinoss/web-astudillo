@@ -6,6 +6,8 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-21
+
 ### Added
 
 - Sugerencias y Alerta ciudadana: la caja del historial tiene dos pestañas, «Públicas» y «Mías». En «Públicas» se ven las sugerencias de todos los vecinos y las alertas que el equipo publicó, con el nombre de quien la envió (o «Anónimo») y la marca «Tuya» en las propias. Se ven también sin iniciar sesión.
@@ -19,6 +21,8 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ### Fixed
 
+- Panel, Participación: los interruptores «Mostrar el nombre» y «Publicada en el sitio» cambian al instante y la lista ya no salta ni pierde el lugar donde estabas. Si otra persona lo cambió mientras tanto, el interruptor vuelve a su posición y la lista se actualiza.
+- Panel: al guardar con el teclado, el foco se queda en el botón pulsado.
 - Celular con el texto aumentado al máximo: la cabecera ya no se sale de la pantalla cuando aparece la campana de avisos. El botón de la cuenta muestra solo su ícono.
 - Panel, videos: al cambiar el enlace de un video, su portada ya no se queda con la imagen del video anterior. Al pegar un enlace se usa la imagen del video si su plataforma la ofrece, y al volver a un enlace anterior vuelve su imagen.
 - Panel y modo edición: los botones para quitar se ven en rojo: los de las listas (preguntas, fotos, banners, personas) y «Quitar foto» de Biografía y Mi equipo y «Quitar» de la imagen para celular de un banner, que además llevan un tacho.
