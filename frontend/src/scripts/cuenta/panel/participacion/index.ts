@@ -2,6 +2,7 @@ import { vigilarCambios } from "../../../../lib/comun/cambios";
 import {
   adminApi, type ParticipationKind, type ParticipationPage, type ParticipationState, type ParticipationVisibility, type ReviewedAlert, type ReviewedSuggestion,
 } from "../../../../lib/data/http/admin-api";
+import { ApiError } from "../../../../lib/data/http/api-client";
 import { BOLA, INTERRUPTOR, PISTA } from "../../../../lib/cuenta/panel/campos";
 import { confirmarIdentidad } from "../confirmacion";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
@@ -26,11 +27,20 @@ const stateControl = (id: number, current: ParticipationState, que: string) => c
     <button type="button" class="${ICON_DANGER}" data-borrar="${id}" aria-label="Borrar ${que}" title="Borrar ${que}">${iconSvg("trash", 18)}</button>
   </span>` : `<span class="pildora ${ESTADOS[current].clases}">${ESTADOS[current].nombre}</span>`;
 
-/** Interruptor encendido/apagado: pista gris apagada y azul encendida. */
+/** Clases de la pista del interruptor: gris apagada y azul encendida. */
+const pista = (activo: boolean) => `${PISTA} ${activo ? "justify-end bg-primary" : "bg-base-300"}`;
+
+/** Interruptor encendido/apagado de la visibilidad de una fila. */
 const interruptor = (campo: "publica" | "nombre", id: number, texto: string, activo: boolean) => `
   <button type="button" role="switch" aria-checked="${activo}" data-${campo}="${id}" class="${INTERRUPTOR} whitespace-nowrap">
-    <span class="${PISTA} ${activo ? "justify-end bg-primary" : "bg-base-300"}"><span class="${BOLA} bg-primary-content"></span></span>${texto}
+    <span class="${pista(activo)}"><span class="${BOLA} bg-primary-content"></span></span>${texto}
   </button>`;
+
+/** Enciende o apaga un interruptor ya pintado. */
+function pintarInterruptor(boton: HTMLButtonElement, activo: boolean) {
+  boton.setAttribute("aria-checked", String(activo));
+  boton.firstElementChild!.className = pista(activo);
+}
 
 /** «Publicada en el sitio» (solo alertas) y «Mostrar el nombre», bajo el texto de la fila. */
 const visibilityControls = (id: number, v: ParticipationVisibility) => can("participacion.gestionar") ? `
@@ -124,8 +134,16 @@ function bind(section: HTMLElement, data: ParticipationPage<unknown>) {
   const cambiar = (button: HTMLButtonElement, id: number, cambio: Partial<ParticipationVisibility>, aviso: string) =>
     void busy(button, async () => {
       const antes = visibilidad(id);
-      await adminApi.changeParticipationVisibility(view.tipo, id, { ...antes, ...cambio }, antes);
-      await renderParticipation(section);
+      const activo = button.getAttribute("aria-checked") !== "true";
+      pintarInterruptor(button, activo);
+      try {
+        await adminApi.changeParticipationVisibility(view.tipo, id, { ...antes, ...cambio }, antes);
+      } catch (error) {
+        pintarInterruptor(button, !activo);
+        if (error instanceof ApiError && error.status === 409) cargar(renderParticipation(section));
+        throw error;
+      }
+      Object.assign(items.find((i) => i.id === id)!, cambio);
       confirmarCambio({ tipo: "exito", titulo: aviso });
     });
   section.querySelectorAll<HTMLButtonElement>("[data-publica]").forEach((b) => b.addEventListener("click", () => {

@@ -29,6 +29,7 @@ export async function bloquearMientras(boton: HTMLButtonElement, accion: () => P
   const k = clave(boton);
   if (enCurso.has(k)) return false;
   enCurso.add(k);
+  const conFoco = document.activeElement === boton;
   boton.disabled = true;
   try {
     await accion();
@@ -41,6 +42,8 @@ export async function bloquearMientras(boton: HTMLButtonElement, accion: () => P
       // `data-bloqueo` lo pone el límite de intentos (`bloqueo.ts`), que lo reactiva al acabar la cuenta atrás.
       else vigente.disabled = vigente.dataset.bloqueo !== undefined;
     }
+    // Chromium quita el foco al botón desactivado: se le devuelve si nadie lo llevó a otro sitio.
+    if (conFoco && document.activeElement === document.body) boton.focus();
   }
   return true;
 }
