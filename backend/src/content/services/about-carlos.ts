@@ -1,7 +1,7 @@
 import type { SQL } from 'bun';
 import { PERMISSIONS } from '../../auth/permissions';
 import type { Authorization } from '../../auth/types';
-import { videosDePagina } from '../../contracts/acerca-de-carlos';
+import { MAX_ENTREVISTAS_VIDEO, MAX_VIDEOS_CARLOS, videosDePagina } from '../../contracts/acerca-de-carlos';
 import { LARGOS } from '../../contracts/limites';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
@@ -31,7 +31,7 @@ export async function listAboutCarlosPages(sql: SQL): Promise<Record<string, Abo
   });
   return Object.fromEntries(rows.map(({ slug, contenido: c, videos }) => [slug, {
     videos: videos.map(v => ({
-      titulo: v.titulo, descripcion: v.descripcion, enlace: v.enlace, vertical: v.vertical,
+      titulo: v.titulo, descripcion: v.descripcion, enlace: v.enlace, vertical: v.vertical, medio: v.medio ?? null,
       portada: v.idPortada ? media.get(v.idPortada) ?? null : null,
     })),
     entrevista: c.entrevista,
@@ -42,10 +42,15 @@ export async function listAboutCarlosPages(sql: SQL): Promise<Record<string, Abo
 function clean(slug: AboutCarlosSlug, input: AboutCarlosPageInput): AboutCarlosPageStored {
   if (slug !== 'conoce-mas' && (input.entrevista.length || input.galeria.length))
     throw new ApiError(422, 'Esta página solo tiene videos');
+  const entrevistas = input.videos.filter(v => v.medio?.trim()).length;
+  if (entrevistas && slug !== 'por-que-quiero-ser-alcalde') throw new ApiError(422, 'Esta página no tiene entrevistas');
+  if (entrevistas > MAX_ENTREVISTAS_VIDEO) throw new ApiError(422, `Hasta ${MAX_ENTREVISTAS_VIDEO} entrevistas`);
+  if (input.videos.length - entrevistas > MAX_VIDEOS_CARLOS) throw new ApiError(422, `Hasta ${MAX_VIDEOS_CARLOS} videos, sin contar las entrevistas`);
   return {
     videos: input.videos.map((v, i) => ({
       ...cleanVideo(v, `Video ${i + 1}`),
       descripcion: optional(v.descripcion, `Video ${i + 1} · texto breve`, LARGOS.acercaDeCarlos.descripcionVideo, { multiline: true }),
+      medio: optional(v.medio, `Video ${i + 1} · medio`, LARGOS.acercaDeCarlos.medio),
     })),
     entrevista: input.entrevista.map((e, i) => ({
       pregunta: plainText(e.pregunta, `Pregunta ${i + 1}`, LARGOS.acercaDeCarlos.pregunta),

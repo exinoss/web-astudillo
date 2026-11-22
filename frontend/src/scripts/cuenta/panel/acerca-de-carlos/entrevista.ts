@@ -1,5 +1,6 @@
 import { field, GHOST, GRUPO, HINT, iconSvg, LARGOS, moveButtons, value } from "../ui";
-import { bindListActions, MAX_ITEMS, type Editor, type SectionEditor } from "./comun";
+import { MAX_PREGUNTAS, PREGUNTAS_ARRIBA, PREGUNTAS_PORTADA } from "../../../../../../backend/src/contracts/acerca-de-carlos";
+import { bindListActions, type Editor, type SectionEditor } from "./comun";
 
 export const interview: SectionEditor = {
   html(editor: Editor) {
@@ -12,8 +13,8 @@ export const interview: SectionEditor = {
         <div class="flex flex-wrap gap-1">${moveButtons("pregunta", i, list.length, `pregunta ${i + 1}`)}</div>
       </fieldset>`).join("");
     return `<div class="flex max-w-[760px] flex-col gap-5">${rows || '<p class="m-0 text-[0.9rem]">Aún no hay preguntas.</p>'}
-      ${list.length < MAX_ITEMS ? `<button type="button" data-question-add class="${GHOST} self-start">${iconSvg("plus", 17)} Añadir pregunta</button>` : ""}
-      <p class="${HINT}">Hasta ${MAX_ITEMS} preguntas. No repitas lo que ya dicen las tarjetas o la biografía.</p></div>`;
+      ${list.length < MAX_PREGUNTAS ? `<button type="button" data-question-add class="${GHOST} self-start">${iconSvg("plus", 17)} Añadir pregunta</button>` : ""}
+      <p class="${HINT}">Hasta ${MAX_PREGUNTAS} preguntas. Las ${PREGUNTAS_ARRIBA} primeras se ven arriba en «Conoce más sobre mí» y las ${PREGUNTAS_PORTADA} primeras, en la portada. No repitas lo que ya dicen las tarjetas o la biografía.</p></div>`;
   },
   capture(form: HTMLElement, editor: Editor) {
     editor.page.entrevista.forEach((e, i) => {

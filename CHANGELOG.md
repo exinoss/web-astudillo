@@ -6,6 +6,18 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ## [Unreleased]
 
+### Added
+
+- Portada: nueva sección «Lo que San Lorenzo quiere saber», antes de las redes, con las 12 primeras preguntas de «Conoce más sobre mí» en tarjetas numeradas de dos columnas y el botón «Ver todas las preguntas». Su título y su texto se editan como los demás.
+- «Conoce más sobre mí»: hasta 20 preguntas. Las 6 primeras siguen en «Una conversación con Carlos» y el resto va al final de la página, en «Más preguntas a Carlos».
+- «Por qué quiero ser alcalde»: nueva sección «Entrevistas», con hasta 8 entrevistas en tarjetas que muestran la portada, el medio y el título, y se reproducen dentro de la tarjeta. Las verticales (TikTok, reels) muestran su portada completa y al reproducirse la tarjeta crece a formato vertical. En el panel, las entrevistas tienen su propia pestaña, «Entrevistas», junto a «Videos», donde se escribe el medio de cada una.
+
+### Changed
+
+- Portada: las redes se muestran en una franja azul con el título, el texto y un botón redondeado por red, con el color de cada una. Ya no llevan la descripción ni el usuario de cada red.
+- «Conoce más sobre mí»: las preguntas se ven como tarjetas numeradas que se abren al pulsarlas.
+- Panel, «Conoce más sobre mí»: la pestaña «Entrevista» se llama ahora «Preguntas».
+
 ## [1.5.0] - 2026-11-21
 
 ### Added

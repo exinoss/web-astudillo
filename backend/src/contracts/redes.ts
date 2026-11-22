@@ -42,14 +42,3 @@ export function valorWhatsapp(texto: string) {
   const numero = normalizarWhatsapp(texto);
   return comunidadWhatsapp(texto) ?? (whatsappValido(numero) ? numero : null);
 }
-
-// Rutas de las redes que no son el nombre de una cuenta.
-const NO_USUARIO = /^(profile\.php|people|pages|groups|p|reel|reels|share|watch|video|videos|explore)$/i;
-
-/** «@usuario» sacado del enlace del perfil; null si el enlace no lo lleva (por ejemplo, profile.php?id=…). */
-export function usuarioRed(red: RedSocial, valor: string): string | null {
-  const primero = enlaceRed(red, valor)?.pathname.split('/').filter(Boolean)[0];
-  if (!primero || NO_USUARIO.test(primero)) return null;
-  const nombre = decodeURIComponent(primero).replace(/^@/, '');
-  return /^[\w.]{1,60}$/.test(nombre) ? `@${nombre}` : null;
-}

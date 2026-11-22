@@ -1,6 +1,7 @@
 import { afterAll, beforeAll, expect, test } from 'bun:test';
 import { readdir, rm } from 'node:fs/promises';
 import sharp from 'sharp';
+import { MAX_ENTREVISTAS_VIDEO, MAX_PREGUNTAS, MAX_VIDEOS_CARLOS } from '../src/contracts/acerca-de-carlos';
 import { avisoNoInsertable } from '../src/contracts/video';
 import { diff } from '../src/content/services/content';
 import { migrate } from '../src/db/migrate';
@@ -61,7 +62,7 @@ test('guardar normaliza los videos en su orden y repetir es seguro; subir una fo
   expect(again.status).toBe(200);
   expect((await again.json()).version).toBe((await first.json()).version);
   const page = (await draft()).acercaDeCarlos['por-que-quiero-ser-alcalde'];
-  expect(page.videos[0]).toEqual({ titulo: 'Te cuento mis razones', descripcion: null, enlace: REEL, vertical: true, portada: null });
+  expect(page.videos[0]).toEqual({ titulo: 'Te cuento mis razones', descripcion: null, enlace: REEL, vertical: true, medio: null, portada: null });
   expect(page.videos[1]).toMatchObject({ titulo: 'Entrevista', vertical: false, portada: { idMedio: foto.idMedio } });
   expect((await readdir(MEDIA)).filter(name => name.endsWith('.tmp'))).toEqual([]);
   const [{ n }] = await sql`SELECT count(*)::int AS n FROM tb_auditoria WHERE accion = 'pagina_acerca_de_carlos_guardada'`;
@@ -88,6 +89,33 @@ test('la página personal guarda entrevista y galería; la de motivaciones las r
   expect(page.entrevista[0].respuesta).toBe('Mi casa.\nY mi gente.');
   expect((await call(ALCALDE, 'PUT', { ...personal, version: await version('por-que-quiero-ser-alcalde') }, cookies.coadmin)).status).toBe(422);
   expect((await call(CONOCE, 'PUT', { ...personal, retrato: null, version: await version('conoce-mas') }, cookies.coadmin)).status).toBe(422);
+});
+
+test('la entrevista admite hasta 20 preguntas en su orden; repetir es seguro y la 21 se rechaza', async () => {
+  const preguntas = (n: number) => Array.from({ length: n }, (_, i) => ({ pregunta: `¿Pregunta ${i + 1}?`, respuesta: `Respuesta ${i + 1}.` }));
+  const body = { ...empty, entrevista: preguntas(MAX_PREGUNTAS), version: await version('conoce-mas') };
+  const first = await call(CONOCE, 'PUT', body, cookies.coadmin);
+  expect(first.status).toBe(200);
+  const again = await call(CONOCE, 'PUT', body, cookies.coadmin);
+  expect((await again.json()).version).toBe((await first.json()).version);
+  expect((await draft()).acercaDeCarlos['conoce-mas'].entrevista.map((e: { pregunta: string }) => e.pregunta).at(-1)).toBe('¿Pregunta 20?');
+  expect((await call(CONOCE, 'PUT', { ...body, entrevista: preguntas(MAX_PREGUNTAS + 1), version: await version('conoce-mas') }, cookies.coadmin)).status).toBe(422);
+});
+
+test('«Por qué quiero ser alcalde» admite 6 videos y 8 entrevistas con su medio; «Conoce más» no tiene entrevistas', async () => {
+  const videos = (n: number, medio?: string) => Array.from({ length: n }, (_, i) => ({ ...VIDEO, titulo: `${medio ?? 'Video'} ${i + 1}`, ...(medio ? { medio } : {}) }));
+  const body = { ...empty, videos: [...videos(MAX_VIDEOS_CARLOS), ...videos(MAX_ENTREVISTAS_VIDEO, '  Bambero TV  ')], version: await version('por-que-quiero-ser-alcalde') };
+  const first = await call(ALCALDE, 'PUT', body, cookies.coadmin);
+  expect(first.status).toBe(200);
+  const again = await call(ALCALDE, 'PUT', body, cookies.coadmin);
+  expect((await again.json()).version).toBe((await first.json()).version);
+  const page = (await draft()).acercaDeCarlos['por-que-quiero-ser-alcalde'];
+  expect(page.videos.map((v: { medio: string | null }) => v.medio)).toEqual([...Array(MAX_VIDEOS_CARLOS).fill(null), ...Array(MAX_ENTREVISTAS_VIDEO).fill('Bambero TV')]);
+  const put = async (lista: object[], path = ALCALDE, slug = 'por-que-quiero-ser-alcalde') =>
+    call(path, 'PUT', { ...empty, videos: lista, version: await version(slug) }, cookies.coadmin);
+  expect((await put([...videos(MAX_VIDEOS_CARLOS + 1)])).status).toBe(422);
+  expect((await put([...videos(MAX_ENTREVISTAS_VIDEO + 1, 'Radio')])).status).toBe(422);
+  expect((await put(videos(1, 'Radio'), CONOCE, 'conoce-mas')).status).toBe(422);
 });
 
 test('valida enlaces, permisos y páginas, y rechaza las tarjetas, que ya no se editan', async () => {

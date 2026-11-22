@@ -5,7 +5,7 @@ export const LARGOS = {
   obra: { nota: 600, hito: 120, pie: 300 },
   chat: { pregunta: 160, palabrasClave: 300, respuesta: 1000, textoEnlace: 60, rutaEnlace: 200 },
   acercaDeCarlos: {
-    tituloVideo: 80, descripcionVideo: 200,
+    tituloVideo: 80, descripcionVideo: 200, medio: 60,
     pregunta: 160, respuesta: 1000, pie: 300,
   },
   equipo: { nombre: 80, textoParroquia: 3000 },

@@ -13,7 +13,7 @@ export interface AboutCarlosPageView {
   slug: AboutCarlosSlug;
   texts: Record<string, string>;
   cards: CardView[];
-  videos: { title: string; description: string | null; url: string; vertical: boolean; cover: ImageView }[];
+  videos: { title: string; description: string | null; url: string; vertical: boolean; cover: ImageView; medium: string | null }[];
   interview: { question: string; answer: string }[];
   gallery: { image: ImageView; alt: string; caption: string }[];
 }
@@ -43,7 +43,7 @@ export async function publishedPageView(slug: AboutCarlosSlug): Promise<AboutCar
     texts: Object.fromEntries(await Promise.all(TEXT_KEYS[slug].map(async (key) => [key, await texto(key)]))),
     cards: await fixedCards(slug),
     videos: await Promise.all(page.videos.map(async (v) => ({
-      title: v.title, description: v.description, url: v.url, vertical: v.vertical,
+      title: v.title, description: v.description, url: v.url, vertical: v.vertical, medium: v.medium ?? null,
       cover: v.cover ? imageView(v.cover) : await defaultCover(v.vertical),
     }))),
     interview: page.interview,

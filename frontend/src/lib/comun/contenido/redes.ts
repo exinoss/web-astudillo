@@ -1,7 +1,7 @@
 // Se guardan como textos con clave `enlace.*`. Sin dependencias: también lo usa el panel en el navegador.
 import { comunidadWhatsapp, REDES_SOCIALES } from "../../../../../backend/src/contracts/redes";
 
-export { comunidadWhatsapp, enlaceRed as enlaceRedValido, MAX_ENLACE_RED, normalizarWhatsapp, REDES_SOCIALES, type RedSocial, usuarioRed, valorWhatsapp, whatsappValido } from "../../../../../backend/src/contracts/redes";
+export { comunidadWhatsapp, enlaceRed as enlaceRedValido, MAX_ENLACE_RED, normalizarWhatsapp, REDES_SOCIALES, type RedSocial, valorWhatsapp, whatsappValido } from "../../../../../backend/src/contracts/redes";
 
 export const REDES = {
   ...REDES_SOCIALES,

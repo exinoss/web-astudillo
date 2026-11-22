@@ -6,6 +6,8 @@ export async function seedContent(sql: Pick<SQL, 'unsafe'>) {
   const data = initial;
   await sql.unsafe(`INSERT INTO tb_textos_iniciales (clave, valor)
     SELECT key, value FROM jsonb_each_text($1::jsonb->'textos') ON CONFLICT DO NOTHING`, [data]);
+  await sql.unsafe(`DELETE FROM tb_textos_iniciales i
+    WHERE NOT EXISTS (SELECT 1 FROM jsonb_object_keys($1::jsonb->'textos') k WHERE k = i.clave)`, [data]);
   await sql.unsafe(`INSERT INTO tb_propuestas (slug, nombre, categoria, introduccion, orden)
     SELECT p->>'slug', p->>'nombre', p->>'categoria', p->>'introduccion', n
     FROM jsonb_array_elements($1::jsonb->'propuestas') WITH ORDINALITY AS v(p,n)

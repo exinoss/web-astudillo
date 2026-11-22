@@ -24,6 +24,7 @@ export function activarVideo(root: HTMLElement) {
     error.hidden = true;
     mountPlayer(stage, source, title).addEventListener("error", () => { error.hidden = false; });
     play.hidden = true;
+    root.toggleAttribute("data-reproduciendo", true);
   };
   play.addEventListener("click", start);
   root.querySelector("[data-video-retry]")!.addEventListener("click", start);
@@ -34,4 +35,5 @@ export function detenerVideo(root: HTMLElement) {
   root.querySelector("[data-video-stage]")?.querySelector("iframe, video")?.remove();
   root.querySelector<HTMLElement>("[data-video-play]")!.hidden = false;
   root.querySelector<HTMLElement>("[data-video-error]")!.hidden = true;
+  root.removeAttribute("data-reproduciendo");
 }

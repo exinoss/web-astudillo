@@ -1229,12 +1229,7 @@
       "texto": "tiktok: \"bg-[#111]\",",
       "motivo": "Existente al congelar la lista; pendiente de corregir."
     },
-    {
-      "regla": "color-a-mano",
-      "archivo": "frontend/src/pages/index.astro",
-      "texto": "fondo: \"bg-[#25d366]\", clave: \"inicio.contacto.whatsapp.texto\" as TextKey, etiqueta: \"Escribir por WhatsApp a Carlos Astudillo (abre en otra pestaña)\",",
-      "motivo": "Existente al congelar la lista; pendiente de corregir."
-    },
+    
     {
       "regla": "comentario-de-funcion",
       "archivo": "frontend/src/pages/robots.txt.ts",

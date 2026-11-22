@@ -1,7 +1,0 @@
-/* Pseudo-elemento que inserta un espacio al ocultar el <br> del titular. */
-
-@media (max-width: 1100px) {
-  .contact-intro h2 span:before {
-    content: " ";
-  }
-}
