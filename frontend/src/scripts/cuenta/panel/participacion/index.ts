@@ -167,6 +167,7 @@ function bind(section: HTMLElement, data: ParticipationPage<unknown>) {
     const item = items.find((i) => i.id === id)!;
     const que = view.tipo === "alertas" ? "la alerta" : "la sugerencia";
     const hecho = await confirmarIdentidad({
+      perfil: state.profile!,
       resumen: `Vas a borrar ${que} de <strong>${esc(item.autor ?? item.correo)}</strong>. Dejará de verse en el sitio y en el panel.`,
       boton: "Borrar", peligro: true,
       enviar: (confirmacion) => adminApi.deleteParticipation(view.tipo, id, confirmacion),

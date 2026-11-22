@@ -210,8 +210,9 @@ Su forma está definida en [`backend/src/content/types.ts`](../backend/src/conte
 
 ```ts
 // backend/src/content/services/content.ts (simplificado)
-async publish(access) {
+async publish(access, confirmacion, ip) {
   const actor = await authorization.require(access, PERMISSIONS.contentPublish);
+  await confirmation.require(actor.id_usuario, confirmacion, ip); // contraseña o código (D-038)
   const actual = await snapshot();                         // lee TODO el borrador
   const ultima = await ultimaPublicada();
   if (ultima && diff(ultima, actual).length === 0)

@@ -195,7 +195,7 @@ test("el chat responde con lo publicado y anota lo que no sabe", async () => {
   await sql`TRUNCATE tb_publicaciones RESTART IDENTITY`;
   // Sin publicación: no se usan los borradores del panel para responder.
   expect((await ask("¿Dónde están las PROPUESTAS?")).enlaceRuta).toBe("/#contacto");
-  const pub = await call("/api/admin/publicaciones", "POST", undefined, cookies.admin);
+  const pub = await call("/api/admin/publicaciones", "POST", { confirmacion: PASSWORD }, cookies.admin);
   expect(pub.status).toBe(200);
   await sql`UPDATE tb_publicaciones SET estado = 'publicada'`; // lo que haría el publicador
   expect(await ask("¿Dónde están las PROPUESTAS?")).toMatchObject({ enlaceRuta: "/#propuestas" });

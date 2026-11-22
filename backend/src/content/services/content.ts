@@ -1,6 +1,6 @@
 import type { SQL } from 'bun';
 import { PERMISSIONS } from '../../auth/permissions';
-import type { Authorization } from '../../auth/types';
+import type { Authorization, Confirmation } from '../../auth/types';
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 import { plainText } from '../../validation/texto';
@@ -44,7 +44,7 @@ interface WorkInput {
 }
 
 /** Borrador, publicación y textos del sitio; `checkVideo` permite simular las plataformas de video en las pruebas. */
-export function createContent(sql: SQL, authorization: Authorization, checkVideo = videoInsertable) {
+export function createContent(sql: SQL, authorization: Authorization, confirmation: Confirmation, checkVideo = videoInsertable) {
   /** Lee el borrador actual completo, con la misma forma que se congela al publicar. */
   async function snapshot(): Promise<Snapshot> {
     // En una transacción REPEATABLE READ las ocho lecturas ven el mismo instante; sueltas, dos guardados
@@ -212,8 +212,9 @@ export function createContent(sql: SQL, authorization: Authorization, checkVideo
     },
 
     /** Publica el borrador; es idempotente y la base lo repite con un bloqueo por si dos personas publican a la vez. */
-    async publish(access: string | undefined) {
+    async publish(access: string | undefined, confirmacion: string, ip: string) {
       const actor = await authorization.require(access, PERMISSIONS.contentPublish);
+      await confirmation.require(actor.id_usuario, confirmacion, ip);
       const { last, current, cambios } = await pendingChanges();
       if (last && !cambios.length) {
         if (last.estado === 'publicada') throw new ApiError(409, 'No hay cambios para publicar');

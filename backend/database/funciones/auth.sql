@@ -372,9 +372,9 @@ RETURNS void LANGUAGE sql AS $$
   VALUES (p_user, p_hash, now() + make_interval(secs => p_seconds));
 $$;
 
--- Cambia el refresh de una sesión vigente por uno nuevo y le da otros `p_seconds` segundos de vida.
-DROP FUNCTION IF EXISTS fn_session_rotate(text, text);
-CREATE OR REPLACE FUNCTION fn_session_rotate(p_old_hash text, p_new_hash text, p_seconds integer)
+-- Cambia el refresh de una sesión vigente por uno nuevo sin alargar su vencimiento.
+DROP FUNCTION IF EXISTS fn_session_rotate(text, text, integer);
+CREATE OR REPLACE FUNCTION fn_session_rotate(p_old_hash text, p_new_hash text)
 RETURNS SETOF tb_usuarios LANGUAGE plpgsql AS $$
 DECLARE v_user tb_usuarios%ROWTYPE;
 BEGIN
@@ -384,7 +384,7 @@ BEGIN
     AND s.expira_en > now() AND u.estado = 'activo' FOR UPDATE OF s;
   IF NOT FOUND THEN RETURN; END IF;
   UPDATE tb_sesiones SET token_hash = p_new_hash, token_hash_anterior = p_old_hash, rotado_en = now(),
-    expira_en = now() + make_interval(secs => p_seconds), ultimo_uso_en = now()
+    ultimo_uso_en = now()
   WHERE token_hash = p_old_hash;
   RETURN NEXT v_user;
 END;
@@ -396,6 +396,13 @@ RETURNS SETOF tb_usuarios LANGUAGE sql STABLE AS $$
   SELECT u.* FROM tb_sesiones s JOIN tb_usuarios u ON u.id_usuario = s.id_usuario
   WHERE s.token_hash_anterior = p_old_hash AND s.rotado_en > now() - interval '30 seconds'
     AND s.revocado_en IS NULL AND s.expira_en > now() AND u.estado = 'activo';
+$$;
+
+-- Revoca la sesión cuyo refresh anterior vuelve a usarse pasado el margen; repetirlo no cambia nada.
+CREATE OR REPLACE FUNCTION fn_session_revoke_reused(p_old_hash text)
+RETURNS void LANGUAGE sql AS $$
+  UPDATE tb_sesiones SET revocado_en = now()
+  WHERE token_hash_anterior = p_old_hash AND revocado_en IS NULL;
 $$;
 
 -- Revoca la sesión de esa huella; repetirlo no cambia nada.

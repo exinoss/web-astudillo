@@ -9,6 +9,7 @@ import { sinMovimiento } from "../../lib/comun/movimiento";
 import { iconSvg } from "../../lib/comun/iconos";
 import { BOLA, BOTON, INTERRUPTOR, PISTA, PRINCIPAL } from "../../lib/cuenta/panel/campos";
 import { seguirPublicacion } from "../../lib/comun/avisos";
+import { confirmarPublicacion } from "../cuenta/panel/confirmacion";
 import { BORRADOR_GUARDADO, notificar } from "../../lib/comun/notificacion";
 
 const STORAGE = "modo-edicion";
@@ -281,7 +282,8 @@ export async function startEditMode(profile: Profile) {
   publishButton.addEventListener("click", async () => {
     publishButton.disabled = true;
     try {
-      seguirPublicacion((await adminApi.publish()).id);
+      const publicada = await confirmarPublicacion(profile, pending);
+      if (publicada) seguirPublicacion(publicada.id);
     } catch (error) {
       avisar(error instanceof Error ? error.message : "No se pudo publicar.", true);
     }

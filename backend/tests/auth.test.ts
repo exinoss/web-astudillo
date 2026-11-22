@@ -161,17 +161,18 @@ test("registro, perfil, Google, sesiones y recuperación", async () => {
   expect(otherTab.status).toBe(200);
   expect(cookieFrom(otherTab, "access")).toBeDefined();
   expect(cookieFrom(otherTab, "refresh")).toBeUndefined();
-  // Pasado el margen de 30 s, el refresh anterior ya no sirve.
-  await sql`UPDATE tb_sesiones SET rotado_en = now() - interval '1 minute' WHERE id_sesion = ${session.id_sesion}`;
-  expect((await call("/api/auth/refresh", "POST", undefined, [refresh])).status).toBe(401);
   const refresh2 = cookieFrom(renewed, "refresh")!;
   const [rotatedSession] = await sql`
     SELECT token_hash, expira_en, ultimo_uso_en FROM tb_sesiones
     WHERE id_sesion = ${session.id_sesion}`;
   expect(rotatedSession.token_hash).toBe(tokenHash(refresh2.slice("refresh=".length)));
-  expect(new Date(rotatedSession.expira_en).getTime())
-    .toBeGreaterThan(new Date(beforeRenewal.expira_en).getTime() + 5 * 24 * 60 * 60 * 1000);
+  expect(new Date(rotatedSession.expira_en).getTime()).toBe(new Date(beforeRenewal.expira_en).getTime());
   expect(rotatedSession.ultimo_uso_en).not.toBeNull();
+  await sql`UPDATE tb_sesiones SET rotado_en = now() - interval '1 minute' WHERE id_sesion = ${session.id_sesion}`;
+  expect((await call("/api/auth/refresh", "POST", undefined, [refresh])).status).toBe(401);
+  expect((await call("/api/auth/refresh", "POST", undefined, [refresh])).status).toBe(401);
+  expect((await call("/api/auth/refresh", "POST", undefined, [refresh2])).status).toBe(401);
+  expect((await call("/api/auth/refresh", "POST", undefined, [cookieFrom(gmail, "refresh")!])).status).toBe(200);
   const logout = await call("/api/auth/logout", "POST", undefined, [refresh2]);
   expect(logout.status).toBe(200);
   const clearedRefresh = logout.headers.getSetCookie().find(value => value.startsWith('refresh='))!;

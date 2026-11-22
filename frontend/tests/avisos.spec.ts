@@ -1,5 +1,5 @@
 import { expect, test, type Page } from './support/prueba';
-import { mockPanelApi, panelData } from './support/panel-api';
+import { confirmarConContrasenia, mockPanelApi, panelData } from './support/panel-api';
 import { avisoNoInsertable } from '../../backend/src/contracts/video';
 import type { Aviso } from '../../backend/src/contracts/avisos';
 
@@ -143,6 +143,7 @@ test('al terminar la publicación sale la notificación: la de éxito se cierra 
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/cuenta/panel/#textos');
   await page.locator('#panel-publicar').click();
+  await confirmarConContrasenia(page);
   await expect(page.locator('#panel-estado')).toContainText('Publicación en cola');
   const exito = notificacion(page);
   await expect(exito).toContainText('Sitio publicado');
@@ -159,6 +160,7 @@ test('si la publicación falla, la notificación lo dice y ofrece ver las public
   data.publishResult = 'fallida';
   await page.goto('/cuenta/panel/#textos');
   await page.locator('#panel-publicar').click();
+  await confirmarConContrasenia(page);
   const fallida = notificacion(page);
   await expect(fallida).toHaveAttribute('role', 'alert');
   await expect(fallida).toContainText('No se pudo publicar');

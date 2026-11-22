@@ -4,7 +4,7 @@ import { join } from "node:path";
 import sharp from "sharp";
 import { callPg } from "../src/db/call";
 import { migrate } from "../src/db/migrate";
-import { testApp } from "./helpers";
+import { PASSWORD, testApp } from "./helpers";
 import initial from '../database/contenido-inicial.json';
 import { seedContent } from '../src/db/seed';
 import { AVISO_HEIC } from '../src/contracts/media';
@@ -13,6 +13,8 @@ import { TEXTOS } from '../src/contracts/textos';
 import { formatProblem, savePhoto } from '../src/content/services/media';
 import { readdir } from 'node:fs/promises';
 import { createAuthorization } from '../src/auth/services/authorization';
+import { createConfirmation } from '../src/auth/services/confirmation';
+import { createAttempts } from '../src/auth/services/limits';
 import { createContent } from '../src/content/services/content';
 import { createSecurity } from '../src/security';
 
@@ -265,9 +267,12 @@ test("una obra admite hasta 4 videos, valida cada uno y no cambia al rechazarlos
 test("publicar congela el contenido, calcula lo pendiente y agrupa la cola", async () => {
   const pendientes = async () => (await (await call("/api/admin/publicaciones/pendientes", "GET", undefined, cookies.coadmin)).json()).cambios;
   expect(await pendientes()).toEqual(expect.arrayContaining([{ tipo: 'Propuesta', descripcion: 'Agua potable' }]));
-  expect((await call("/api/admin/publicaciones", "POST", undefined, cookies.votante)).status).toBe(403);
-  const primera = await (await call("/api/admin/publicaciones", "POST", undefined, cookies.coadmin)).json();
-  const segunda = await (await call("/api/admin/publicaciones", "POST", undefined, cookies.admin)).json();
+  expect((await call("/api/admin/publicaciones", "POST", { confirmacion: PASSWORD }, cookies.votante)).status).toBe(403);
+  expect((await call("/api/admin/publicaciones", "POST", {}, cookies.coadmin)).status).toBe(422);
+  expect((await call("/api/admin/publicaciones", "POST", { confirmacion: "no-es-la-clave" }, cookies.coadmin)).status).toBe(403);
+  expect(await pendientes()).toEqual(expect.arrayContaining([{ tipo: 'Propuesta', descripcion: 'Agua potable' }]));
+  const primera = await (await call("/api/admin/publicaciones", "POST", { confirmacion: PASSWORD }, cookies.coadmin)).json();
+  const segunda = await (await call("/api/admin/publicaciones", "POST", { confirmacion: PASSWORD }, cookies.admin)).json();
   expect(segunda.id).toBe(primera.id); // sigue en cola: se reemplaza, no se compila dos veces
   expect(await pendientes()).toEqual([]); // lo enviado a publicar ya no cuenta como pendiente
   // En cola todavía no es público; al compilarse sí, sin sesión.
@@ -277,7 +282,7 @@ test("publicar congela el contenido, calcula lo pendiente y agrupa la cola", asy
   expect(tomada.contenido.propuestas).toHaveLength(8);
   expect(await callPg(sql, "publicationClaim")).toEqual([]);
   // Mientras compila, pulsar «Publicar» otra vez devuelve la misma publicación en vez de crear otra.
-  const repetida = await call("/api/admin/publicaciones", "POST", undefined, cookies.admin);
+  const repetida = await call("/api/admin/publicaciones", "POST", { confirmacion: PASSWORD }, cookies.admin);
   expect(repetida.status).toBe(200);
   expect(await repetida.json()).toEqual({ id: primera.id, estado: "publicando" });
   const publicado = await call("/api/contenido/publicado");
@@ -285,11 +290,11 @@ test("publicar congela el contenido, calcula lo pendiente y agrupa la cola", asy
   expect((await publicado.json()).propuestas).toHaveLength(8);
   await callPg(sql, "publicationFinish", [tomada.id_publicacion, true, null]);
   expect(await pendientes()).toEqual([]);
-  expect((await call("/api/admin/publicaciones", "POST", undefined, cookies.coadmin)).status).toBe(409);
+  expect((await call("/api/admin/publicaciones", "POST", { confirmacion: PASSWORD }, cookies.coadmin)).status).toBe(409);
   await call("/api/admin/contenido/textos/inicio.contacto.texto", "PUT", { valor: "Escríbenos.", version: null }, cookies.coadmin);
   expect(await pendientes()).toEqual([{ tipo: "Texto", descripcion: "inicio.contacto.texto" }]);
   // Una publicación fallida no reemplaza a la vigente, y el borrador nunca es público.
-  const fallida = await (await call("/api/admin/publicaciones", "POST", undefined, cookies.coadmin)).json();
+  const fallida = await (await call("/api/admin/publicaciones", "POST", { confirmacion: PASSWORD }, cookies.coadmin)).json();
   await callPg(sql, "publicationClaim");
   await callPg(sql, "publicationFinish", [fallida.id, false, "error"]);
   expect((await (await call("/api/contenido/publicado")).json()).textos).toEqual(initial.textos);
@@ -334,7 +339,7 @@ test("dos personas editando lo mismo: gana la primera y la segunda recibe 409; r
   // Cinco «Publicar» simultáneos (varias pestañas o personas): una sola publicación.
   const antes = (await sql`SELECT count(*)::int AS n FROM tb_publicaciones`)[0].n;
   const respuestas = await Promise.all(Array.from({ length: 5 }, (_, i) =>
-    call("/api/admin/publicaciones", "POST", undefined, cookies[i % 2 ? "admin" : "coadmin"])));
+    call("/api/admin/publicaciones", "POST", { confirmacion: PASSWORD }, cookies[i % 2 ? "admin" : "coadmin"])));
   expect(respuestas.map(r => r.status)).toEqual([200, 200, 200, 200, 200]);
   const ids = new Set(await Promise.all(respuestas.map(async r => (await r.json()).id)));
   expect(ids.size).toBe(1);
@@ -375,7 +380,8 @@ test('lo que se publica no mezcla dos guardados hechos mientras se lee el borrad
     },
   });
   const authorization = createAuthorization(sql, createSecurity(config));
-  const { id } = await createContent(intercept(sql), authorization).publish(cookies.coadmin.split("=")[1]);
+  const confirmation = createConfirmation(sql, createAttempts(sql), { async send() {} });
+  const { id } = await createContent(intercept(sql), authorization, confirmation).publish(cookies.coadmin.split("=")[1], PASSWORD, "127.0.0.1");
   expect(armed).toBe(false);
   const after = await draft();
   expect([after.textos["pie.nombre"], after.propuestas.find((p: { slug: string }) => p.slug === slug).nombre]).toEqual([marca, marca]);

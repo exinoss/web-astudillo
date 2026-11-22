@@ -18,11 +18,13 @@ export function createSessions(sql: SQL, security: Security) {
     async renew(refresh: string | undefined) {
       if (!refresh) throw new ApiError(401, "Sesión no válida");
       const next = randomToken();
-      const rows = await callPg<Account>(sql, "sessionRotate", [tokenHash(refresh), tokenHash(next), SEVEN_DAYS]);
+      const rows = await callPg<Account>(sql, "sessionRotate", [tokenHash(refresh), tokenHash(next)]);
       if (rows.length) return { access: await security.sign(rows[0]), refresh: next as string | null, user: rows[0] };
       const [recent] = await callPg<Account>(sql, "sessionRecentlyRotated", [tokenHash(refresh)]);
-      if (!recent) throw new ApiError(401, "Sesión no válida");
-      return { access: await security.sign(recent), refresh: null, user: recent };
+      if (recent) return { access: await security.sign(recent), refresh: null, user: recent };
+      // Un refresh ya rotado que vuelve fuera del margen pudo ser robado: se cierra la sesión en todos los equipos que lo usan.
+      await callPg(sql, "sessionRevokeReused", [tokenHash(refresh)]);
+      throw new ApiError(401, "Sesión no válida");
     },
     async revoke(refresh: string | undefined) {
       if (refresh) await callPg(sql, "sessionRevoke", [tokenHash(refresh)]);

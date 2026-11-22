@@ -1,6 +1,7 @@
 import { adminApi, type Publication } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { seguirPublicacion } from "../../../../lib/comun/avisos";
+import { confirmarPublicacion } from "../confirmacion";
 import { busy, card, cargar, esc, fechaHora, iconSvg, notify, reloadPending, state, syncPublishButton } from "../ui";
 
 const STATES: Record<Publication["estado"], [string, string]> = {
@@ -41,11 +42,13 @@ export async function renderPublications(section: HTMLElement) {
 /** Publica y vuelve a pintar; lo usa también el botón de la cabecera. */
 export async function publish(button: HTMLButtonElement | null, section: HTMLElement) {
   await busy(button, async () => {
-    seguirPublicacion((await adminApi.publish()).id);
+    const publicada = await confirmarPublicacion(state.profile!, state.pending.length);
+    if (!publicada) return;
+    seguirPublicacion(publicada.id);
     notify("Publicación en cola. El sitio se actualizará en cerca de un minuto.");
     page = 1;
     await renderPublications(section);
-  }, "Publicando…");
+  });
   // `busy` reactiva el botón al terminar; se vuelve a ajustar a lo que queda pendiente.
   syncPublishButton();
 }

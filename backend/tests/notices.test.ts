@@ -3,7 +3,7 @@ import { VERSION_LEGAL } from '../src/contracts/legal';
 import { avisoNoInsertable } from '../src/contracts/video';
 import { callPg } from '../src/db/call';
 import { migrate } from '../src/db/migrate';
-import { testApp } from './helpers';
+import { PASSWORD, testApp } from './helpers';
 
 const { sql, ids, cookies, call, account, resetAccounts } = testApp('medios-pruebas-avisos');
 const ALCALDE = '/api/admin/contenido/acerca-de-carlos/por-que-quiero-ser-alcalde';
@@ -29,7 +29,7 @@ const guardarVideo = async (enlace: string) => call(ALCALDE, 'PUT', { entrevista
   videos: [{ titulo: 'Te cuento mis razones', descripcion: null, enlace, vertical: true, idPortada: null }], version: await version() }, cookies.admin);
 /** Publica el borrador y da la publicación por terminada, como el publicador. */
 async function publicar() {
-  const res = await call('/api/admin/publicaciones', 'POST', undefined, cookies.admin);
+  const res = await call('/api/admin/publicaciones', 'POST', { confirmacion: PASSWORD }, cookies.admin);
   if (res.status !== 200) return res;
   const [claimed] = await callPg<{ id_publicacion: number }>(sql, 'publicationClaim');
   await callPg(sql, 'publicationFinish', [claimed.id_publicacion, true, null]);
@@ -90,7 +90,7 @@ test('un video publicado que su plataforma ya no deja mostrar es un aviso; se re
   // Con el video bloqueado en el borrador no se publica ningún otro cambio, y repetir tampoco crea publicaciones.
   expect((await call('/api/admin/contenido/textos/pie.linea-1', 'PUT', { valor: 'Por ti, San Lorenzo.', version: null }, cookies.admin)).status).toBe(200);
   const antes = await publicaciones();
-  const rechazos = await Promise.all([1, 2].map(() => call('/api/admin/publicaciones', 'POST', undefined, cookies.admin)));
+  const rechazos = await Promise.all([1, 2].map(() => call('/api/admin/publicaciones', 'POST', { confirmacion: PASSWORD }, cookies.admin)));
   for (const r of rechazos) {
     expect(r.status).toBe(422);
     expect((await r.json()).error).toBe('No se publicó: el video «Te cuento mis razones» de «Por qué quiero ser alcalde» no se puede ver en el sitio. Cámbialo y vuelve a publicar.');
@@ -138,7 +138,7 @@ test('un video de la portada que su plataforma no deja mostrar no se guarda, avi
     const texto = { valor: 'Por ti, San Lorenzo, siempre.', version: (await contenido()).versiones.textos['pie.linea-1'] ?? null };
     expect((await call('/api/admin/contenido/textos/pie.linea-1', 'PUT', texto, cookies.admin)).status).toBe(200);
     const antes = await publicaciones();
-    const r = await call('/api/admin/publicaciones', 'POST', undefined, cookies.admin);
+    const r = await call('/api/admin/publicaciones', 'POST', { confirmacion: PASSWORD }, cookies.admin);
     expect(r.status).toBe(422);
     expect((await r.json()).error).toBe('No se publicó: el video «Mensaje a San Lorenzo» de la portada no se puede ver en el sitio. Cámbialo y vuelve a publicar.');
     expect(await publicaciones()).toBe(antes);
@@ -171,7 +171,7 @@ test('un video de una obra que su plataforma no deja mostrar no se guarda, avisa
     }]);
     const texto = { valor: 'Por San Lorenzo.', version: (await contenido()).versiones.textos['pie.linea-1'] ?? null };
     expect((await call('/api/admin/contenido/textos/pie.linea-1', 'PUT', texto, cookies.admin)).status).toBe(200);
-    const r = await call('/api/admin/publicaciones', 'POST', undefined, cookies.admin);
+    const r = await call('/api/admin/publicaciones', 'POST', { confirmacion: PASSWORD }, cookies.admin);
     expect(r.status).toBe(422);
     expect((await r.json()).error).toBe('No se publicó: el video «Recorrido por la obra» de la obra «Agua potable» no se puede ver en el sitio. Cámbialo y vuelve a publicar.');
   } finally {

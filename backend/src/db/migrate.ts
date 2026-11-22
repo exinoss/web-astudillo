@@ -103,7 +103,7 @@ export async function assertMigrated(sql: SQL) {
       AND to_regclass('public.tb_mi_equipo') IS NOT NULL
       AND to_regclass('public.tb_inicio_carruseles') IS NOT NULL
       AND to_regclass('public.tb_vista_previa') IS NOT NULL
-      AND to_regclass('public.tb_visitas_dia') IS NOT NULL AS schema_ready,
+      AND to_regclass('public.tb_visitantes_activos') IS NOT NULL AS schema_ready,
     to_regprocedure('public.fn_authorized_user(integer, text)') IS NOT NULL
       AND to_regprocedure('public.fn_texts_initial()') IS NOT NULL
       AND to_regprocedure('public.fn_account_methods(integer)') IS NOT NULL

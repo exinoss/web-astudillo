@@ -1,5 +1,5 @@
 import { expect, test } from './support/prueba';
-import { mockPanelApi, panelData } from './support/panel-api';
+import { CONTRASENIA_PANEL, confirmarConContrasenia, mockPanelApi, panelData } from './support/panel-api';
 
 test('un visitante no descarga el editor', async ({ page }) => {
   const scripts: string[] = [];
@@ -40,6 +40,8 @@ test('un coadmin edita un texto en el sitio, cancela con Escape y publica', asyn
   expect(new URL(page.url()).pathname).toBe('/');
 
   await page.getByRole('button', { name: 'Publicar' }).click();
+  await expect(page.getByRole('dialog', { name: 'Confirma que eres tú' })).toContainText('Vas a publicar 1 cambio en el sitio.');
+  await confirmarConContrasenia(page);
   await expect(page.getByRole('status').filter({ hasText: 'Sitio publicado' })).toBeVisible();
   expect(data.publications).toHaveLength(1);
 
@@ -100,8 +102,16 @@ test('pulsar «Publicar» varias veces seguidas no crea publicaciones repetidas'
   await mockPanelApi(page, data);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
-  const publish = page.getByRole('button', { name: 'Publicar' });
+  const publish = page.locator('#edicion-publicar');
   await publish.click();
+  await expect(publish).toBeDisabled();
+  const dialogo = page.getByRole('dialog', { name: 'Confirma que eres tú' });
+  await page.locator('#confirmar-valor').fill('otra');
+  await page.locator('#confirmar-valor').press('Enter');
+  await expect(dialogo).toContainText('La contraseña no es correcta');
+  expect(data.publications).toHaveLength(0);
+  await page.locator('#confirmar-valor').fill(CONTRASENIA_PANEL);
+  await page.locator('#confirmar-valor').press('Enter');
   // El botón se bloquea mientras se envía y, sin nada pendiente, queda deshabilitado.
   await expect(page.getByRole('status').filter({ hasText: 'Sitio publicado' })).toBeVisible();
   await expect(publish).toBeDisabled();

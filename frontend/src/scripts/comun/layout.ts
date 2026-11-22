@@ -8,6 +8,8 @@ import { guardarClave, leerClave } from '../../lib/comun/almacen';
 import { sinMovimiento } from '../../lib/comun/movimiento';
 
 registrarVisita();
+// Volver con «Atrás» puede restaurar la página sin cargarla de nuevo: también es actividad.
+addEventListener('pageshow', (e) => { if (e.persisted) registrarVisita(); });
 
 if (location.pathname !== '/cuenta/') {
   authRepository.getProfile()

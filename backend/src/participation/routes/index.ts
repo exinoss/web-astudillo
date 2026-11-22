@@ -23,7 +23,7 @@ const PHOTO_FILE = /^(a[0-9a-f]{40})-(480|1280)\.webp$/;
 export function participationRoutes(sql: SQL, authorization: Authorization, confirmation: Confirmation, photoDir: string, trustProxyIp: boolean) {
   const limit = createLimiter();
   const participation = createParticipation(sql, authorization, limit, photoDir, confirmation);
-  const chat = createChat(sql, authorization, limit, createContent(sql, authorization));
+  const chat = createChat(sql, authorization, limit, createContent(sql, authorization, confirmation));
   const admin = new Elysia({ prefix: '/api/admin/participacion', normalize: false })
     .get('/:tipo', ({ cookie, params, query }) =>
       participation.list(access(cookie), params.tipo, query.estado, query.pagina ?? 1), {

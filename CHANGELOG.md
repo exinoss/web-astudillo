@@ -14,12 +14,17 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 
 ### Changed
 
+- Política de privacidad y Términos y condiciones: escritos en un lenguaje más simple y corto. No cambia qué datos se usan ni para qué.
+- Publicar (desde el panel o desde el modo edición) pide tu contraseña, o un código enviado a tu correo si entras solo con Google, como al cambiar el rol de una cuenta.
+- La sesión dura 7 días desde que inicias sesión, aunque sigas usando el sitio; después hay que volver a entrar.
+- Si alguien usa una copia de tu sesión desde otro equipo, esa sesión se cierra y hay que volver a entrar en ella. Las de tus otros equipos siguen abiertas.
 - Portada: las redes se muestran en una franja azul con el título, el texto y un botón redondeado por red, con el color de cada una. Ya no llevan la descripción ni el usuario de cada red.
 - «Conoce más sobre mí»: las preguntas se ven como tarjetas numeradas que se abren al pulsarlas.
 - Panel, «Conoce más sobre mí»: la pestaña «Entrevista» se llama ahora «Preguntas».
 
 ### Fixed
 
+- Contador de visitas de la portada: las personas que comparten wifi o red móvil cuentan por separado, una persona que vuelve al sitio tras 30 minutos sin actividad cuenta otra visita, y una visita que no se pudo enviar se reintenta.
 - Panel, Participación: al pulsar la foto de una alerta se abre en grande dentro de la página, como en el historial público, en lugar de abrir su dirección en otra pestaña.
 - Los enlaces a páginas del sitio (respuestas del chat, botones de la portada) ya no aceptan direcciones internas que no son una página.
 

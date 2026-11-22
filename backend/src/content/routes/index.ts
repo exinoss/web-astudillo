@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia';
 import type { SQL } from 'bun';
-import type { Authorization } from '../../auth/types';
+import { ipOf } from '../../auth/routes/common';
+import type { Authorization, Confirmation } from '../../auth/types';
 import { MAX_ENTREVISTAS_VIDEO, MAX_PREGUNTAS, MAX_VIDEOS_CARLOS } from '../../contracts/acerca-de-carlos';
 import { MAX_PRESENTACION, MAX_PUNTO_TRAYECTORIA, MAX_TRAYECTORIA, PUESTOS } from '../../contracts/equipo';
 import { MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_IMAGENES_PIEZAS, MAX_VIDEOS_PIEZAS, ORIGINALES } from '../../contracts/inicio';
@@ -15,7 +16,7 @@ import { createHomeCarousels } from '../services/home-carousels';
 import { createMedia } from '../services/media';
 import { createMyTeam } from '../services/my-team';
 import { access } from '../../http';
-import { literals, pagina, slugText, strict, text } from '../../validation/esquemas';
+import { confirmacion, literals, pagina, slugText, strict, text } from '../../validation/esquemas';
 
 const slug = t.Object({ slug: slugText });
 // Versión que el panel cargó (md5); con ella se detecta si otra persona guardó antes.
@@ -27,8 +28,8 @@ const video = {
 };
 
 /** Rutas del contenido público y de su edición en el panel. */
-export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: string) {
-  const content = createContent(sql, authorization);
+export function contentRoutes(sql: SQL, authorization: Authorization, confirmation: Confirmation, mediaDir: string, trustProxyIp: boolean) {
+  const content = createContent(sql, authorization, confirmation);
   const media = createMedia(sql, authorization, mediaDir);
   const aboutCarlosPages = createAboutCarlosPages(sql, authorization);
   const myTeam = createMyTeam(sql, authorization);
@@ -152,7 +153,10 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
     .get('/publicaciones', ({ cookie, query }) => content.publications(access(cookie), query.pagina ?? 1), {
       query: t.Object({ pagina }, strict),
     })
-    .post('/publicaciones', ({ cookie }) => content.publish(access(cookie)));
+    .post('/publicaciones', ({ body, cookie, request, server }) =>
+      content.publish(access(cookie), body.confirmacion, ipOf(server, request, trustProxyIp)), {
+      body: t.Object({ confirmacion }, strict),
+    });
   // Lectura pública del contenido publicado: la usa el frontend al compilar y en desarrollo.
   return new Elysia({ normalize: false })
     .get('/api/contenido/publicado', () => content.current())

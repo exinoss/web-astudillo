@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { expect, test, type Locator } from './support/prueba';
-import { CODIGO_PANEL, CONTRASENIA_PANEL, mockPanelApi, panelData } from './support/panel-api';
+import { CODIGO_PANEL, CONTRASENIA_PANEL, confirmarConContrasenia, mockPanelApi, panelData } from './support/panel-api';
 import { avisoNoInsertable } from '../../backend/src/contracts/video';
 
 test('un visitante sin permiso no ve el panel ni el enlace en su cuenta', async ({ page }) => {
@@ -33,6 +33,8 @@ test('un coadmin edita y publica, pero no ve Usuarios', async ({ page }) => {
   await page.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(page.locator('#panel-publicar')).toContainText('Publicar cambios (1)');
   await page.locator('#panel-publicar').click();
+  await expect(page.getByRole('dialog', { name: 'Confirma que eres tú' })).toContainText('Vas a publicar 1 cambio en el sitio.');
+  await confirmarConContrasenia(page);
   await expect(page.getByRole('tab', { name: 'Publicaciones' })).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#historial')).toContainText('Publicada');
   await expect(page.locator('#panel-publicar')).toBeDisabled();

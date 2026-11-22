@@ -166,7 +166,7 @@ const htmlEquipo = (e: Equipo) => `
   <p class="${HINT} mt-0 mb-3">Hasta ${MAX_FOTOS_EQUIPO} · imágenes horizontales · 2000 × 761 px · ${LIMITE}</p>
   <ol class="m-0 flex list-none flex-col gap-3 p-0">${e.fotos.map((x, i) => `
     <li class="flex gap-3 rounded-control border border-base-300 p-3 max-mobile:flex-col">
-      <img src="${thumb(x.foto)}" alt="" class="aspect-[1947/741] w-[200px] shrink-0 self-start rounded-control bg-accent object-contain max-mobile:w-full" />
+      <img src="${esc(thumb(x.foto))}" alt="" class="aspect-[1947/741] w-[200px] shrink-0 self-start rounded-control bg-accent object-contain max-mobile:w-full" />
       <div class="flex min-w-0 flex-1 flex-col gap-2">
         <div class="flex items-center justify-between gap-2">
           <strong class="text-[0.85rem]">Imagen ${i + 1}</strong>
