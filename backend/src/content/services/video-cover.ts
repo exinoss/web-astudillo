@@ -7,6 +7,7 @@ const BROWSER = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (K
 // Facebook y TikTok solo publican la imagen del video (og:image) para su propio rastreador.
 const CRAWLER = 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)';
 
+/** Indica si la dirección es https y de un dominio permitido. */
 const allowed = (url: string, hosts: RegExp[]) => {
   const { protocol, hostname } = new URL(url);
   return protocol === 'https:' && hosts.some(host => host.test(hostname));
@@ -26,6 +27,7 @@ async function get(url: string, hosts: RegExp[], headers: Record<string, string>
   return response?.ok ? response : null;
 }
 
+/** Descarga una imagen de un dominio permitido si no pasa de `maxBytes`. */
 async function image(url: string | undefined, maxBytes: number) {
   if (!url) return null;
   const response = await get(url, IMAGE_HOSTS);
@@ -34,6 +36,7 @@ async function image(url: string | undefined, maxBytes: number) {
   return bytes.length && bytes.length <= maxBytes ? bytes : null;
 }
 
+/** Imagen `og:image` de la página de un video. */
 const ogImage = async (pageUrl: string) => {
   const html = await (await get(pageUrl, PAGE_HOSTS, { 'user-agent': CRAWLER }))?.text();
   return html?.match(/<meta property="og:image" content="([^"]+)"/)?.[1]?.replaceAll('&amp;', '&');

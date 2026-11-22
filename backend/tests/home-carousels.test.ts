@@ -4,7 +4,7 @@ import { diff } from '../src/content/services/content';
 import { HOME_CAROUSELS_SEED } from '../src/content/services/home-carousels';
 import { AVISO_ENLACE_BOTON, AVISO_HORIZONTAL, AVISO_PIEZAS } from '../src/contracts/inicio';
 import { migrate } from '../src/db/migrate';
-import { testApp } from './helpers';
+import { PASSWORD, testApp } from './helpers';
 
 const MEDIA = 'medios-pruebas-inicio';
 const { sql, cookies, call, account, resetAccounts, draft, uploadPhoto } = testApp(MEDIA);
@@ -282,7 +282,7 @@ test('publicar congela los carruseles, los pendientes los nombran y un snapshot 
   const pending = await (await call('/api/admin/publicaciones/pendientes', 'GET', undefined, cookies.admin)).json();
   expect(pending.cambios).toContainEqual({ tipo: 'Portada', descripcion: 'Carrusel principal' });
   expect(pending.cambios).toContainEqual({ tipo: 'Portada', descripcion: 'Carrusel del equipo' });
-  expect((await call('/api/admin/publicaciones', 'POST', undefined, cookies.admin)).status).toBe(200);
+  expect((await call('/api/admin/publicaciones', 'POST', { confirmacion: PASSWORD }, cookies.admin)).status).toBe(200);
   const [{ contenido }] = await sql`SELECT contenido FROM tb_publicaciones ORDER BY id_publicacion DESC LIMIT 1`;
   expect(contenido.inicio.principal.banners).toHaveLength(2);
   const current = await draft();

@@ -5,6 +5,7 @@ import { ApiError } from '../../http';
 import type { Security } from '../../security/types';
 import type { Permission } from '../permissions';
 
+/** Servicio que comprueba la sesión y el permiso de cada petición. */
 export function createAuthorization(sql: SQL, security: Security) {
   return {
     /** Devuelve el usuario autorizado o distingue sesión inválida de permiso denegado. */

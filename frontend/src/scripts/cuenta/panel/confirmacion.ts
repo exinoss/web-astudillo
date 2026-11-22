@@ -1,13 +1,18 @@
 import "../campos";
 import { BOTON_MOSTRAR, marcarError, MENSAJE_CAMPO } from "../../../lib/comun/campos";
 import { bloquearMientras } from "../../../lib/comun/cambios";
-import { adminApi } from "../../../lib/data/http/admin-api";
+import { adminApi, type Publication } from "../../../lib/data/http/admin-api";
 import { ApiError } from "../../../lib/data/http/api-client";
-import { DANGER, esc, GHOST, HINT, LABEL, LARGOS, state } from "./ui";
+import { DANGER, GHOST, HINT, LABEL } from "../../../lib/cuenta/panel/campos";
+import { esc } from "../../../lib/comun/html";
+import type { Profile } from "../../../lib/data/auth-repository";
+import { LARGOS } from "../../../../../backend/src/contracts/limites";
 
 const ESPERA_REENVIO = 60;
+type Publicada = Pick<Publication, "id" | "estado">;
 
 interface Confirmacion {
+  perfil: Pick<Profile, "tieneContrasenia" | "correo">;
   /** HTML ya escapado: qué va a pasar si se confirma. */
   resumen: string;
   boton: string;
@@ -17,7 +22,7 @@ interface Confirmacion {
 
 /** Pide la contraseña (o un código por correo) y ejecuta `enviar`; resuelve false si se cancela. */
 export function confirmarIdentidad(o: Confirmacion): Promise<boolean> {
-  const conContrasenia = state.profile!.tieneContrasenia;
+  const conContrasenia = o.perfil.tieneContrasenia;
   const dialogo = document.createElement("dialog");
   dialogo.setAttribute("aria-labelledby", "confirmar-titulo");
   dialogo.dataset.confirmacion = "";
@@ -29,7 +34,7 @@ export function confirmarIdentidad(o: Confirmacion): Promise<boolean> {
         <input id="confirmar-valor" type="password" autocomplete="current-password" maxlength="${LARGOS.cuenta.contrasenia}" required aria-describedby="confirmar-valor-error" class="campo pr-[90px]" />
         <button type="button" class="${BOTON_MOSTRAR}" data-target="confirmar-valor" aria-label="Mostrar tu contraseña" aria-pressed="false">Mostrar</button>
       </div>`
-    : `<p class="m-0 mb-3 text-[0.88rem]" data-aviso-codigo>Te enviaremos un código a <strong class="wrap-anywhere">${esc(state.profile!.correo)}</strong>.</p>
+    : `<p class="m-0 mb-3 text-[0.88rem]" data-aviso-codigo>Te enviaremos un código a <strong class="wrap-anywhere">${esc(o.perfil.correo)}</strong>.</p>
       <button type="button" class="${GHOST} w-full disabled:cursor-not-allowed disabled:opacity-60" data-enviar-codigo>Enviar código</button>
       <div data-con-codigo hidden>
         <label for="confirmar-valor" class="${LABEL} mt-4">Código</label>
@@ -101,4 +106,15 @@ export function confirmarIdentidad(o: Confirmacion): Promise<boolean> {
     dialogo.showModal();
     (enviarCodigo ?? valor).focus();
   });
+}
+
+/** Pide la identidad y publica el borrador; devuelve la publicación o null si se cancela. */
+export async function confirmarPublicacion(perfil: Confirmacion["perfil"], cambios: number): Promise<Publicada | null> {
+  let publicada: Publicada | null = null;
+  await confirmarIdentidad({
+    perfil, boton: "Publicar",
+    resumen: `Vas a publicar ${cambios} ${cambios === 1 ? "cambio" : "cambios"} en el sitio.`,
+    enviar: async (confirmacion) => { publicada = await adminApi.publish(confirmacion); },
+  });
+  return publicada;
 }

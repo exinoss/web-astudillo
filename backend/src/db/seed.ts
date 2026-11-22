@@ -1,6 +1,7 @@
 import type { SQL } from 'bun';
 import initial from '../../database/contenido-inicial.json';
 
+/** Carga la semilla de `contenido-inicial.json` sin pisar lo que ya existe. */
 export async function seedContent(sql: Pick<SQL, 'unsafe'>) {
   await sql.unsafe(`SELECT pg_advisory_xact_lock(hashtext('contenido:semilla'))`);
   const data = initial;

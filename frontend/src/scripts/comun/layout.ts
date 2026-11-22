@@ -8,6 +8,8 @@ import { guardarClave, leerClave } from '../../lib/comun/almacen';
 import { sinMovimiento } from '../../lib/comun/movimiento';
 
 registrarVisita();
+// Volver con «Atrás» puede restaurar la página sin cargarla de nuevo: también es actividad.
+addEventListener('pageshow', (e) => { if (e.persisted) registrarVisita(); });
 
 if (location.pathname !== '/cuenta/') {
   authRepository.getProfile()
@@ -48,6 +50,7 @@ function setDropdown(el: HTMLElement, open: boolean) {
   el.querySelector<HTMLElement>(".dropdown-panel")!.hidden = !open;
 }
 
+/** Cierra todos los menús desplegables. */
 function closeDropdowns() {
   dropdowns.forEach((el) => setDropdown(el, false));
 }
@@ -123,6 +126,7 @@ const access = document.querySelector<HTMLElement>("#access-panel")!;
 const accessToggle =
   document.querySelector<HTMLButtonElement>(".access-toggle")!;
 
+/** Abre o cierra el panel de accesibilidad. */
 const setAccess = (open: boolean) => {
   access.hidden = !open;
   accessToggle.setAttribute("aria-expanded", String(open));

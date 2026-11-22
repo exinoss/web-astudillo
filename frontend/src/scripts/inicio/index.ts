@@ -5,6 +5,7 @@ import { activarVideo, detenerVideo } from "../../lib/acerca-de-nosotros/acerca-
 
 // Las listas se vuelven a leer y los clics se delegan: el modo edición cambia diapositivas y puntos (carruseles:cambiados).
 const slides = () => [...document.querySelectorAll<HTMLElement>("[data-slide]")];
+/** Indicadores del carrusel principal. */
 const slideDots = () => [...document.querySelectorAll<HTMLButtonElement>(".slide-dot")];
 let index = 0;
 /** Selecciona una diapositiva del carrusel principal y actualiza sus indicadores. */
@@ -40,7 +41,9 @@ deslizar(carousel, (cuanto) => {
   showSlide(index + cuanto);
   syncAutoplay();
 });
+/** Imágenes del carrusel del perfil. */
 const profileImages = () => [...document.querySelectorAll<HTMLElement>("[data-profile-image]")];
+/** Indicadores del carrusel del perfil. */
 const profileDots = () => [...document.querySelectorAll<HTMLButtonElement>(".profile-dot")];
 let profileIndex = 0;
 /** Selecciona una imagen del carrusel del perfil y actualiza sus indicadores. */

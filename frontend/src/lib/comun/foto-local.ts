@@ -6,8 +6,10 @@ type Medidas = { ancho: number; alto: number };
 // El SOF de una JPEG va después de los metadatos (EXIF, ICC), que pueden ocupar varios cientos de KB.
 const CABECERA = 1024 * 1024;
 
+/** Indica si los bytes desde `i` forman ese texto ASCII. */
 const ascii = (b: Uint8Array, i: number, texto: string) => [...texto].every((c, j) => b[i + j] === c.charCodeAt(0));
 
+/** Medidas de una JPEG leídas de su cabecera. */
 function jpeg(b: Uint8Array, v: DataView): Medidas | null {
   let i = 2;
   while (i + 9 < b.length) {
@@ -21,6 +23,7 @@ function jpeg(b: Uint8Array, v: DataView): Medidas | null {
   return null;
 }
 
+/** Medidas de una WebP leídas de su cabecera. */
 function webp(b: Uint8Array, v: DataView): Medidas | null {
   if (ascii(b, 12, "VP8X")) return { ancho: 1 + (b[24] | (b[25] << 8) | (b[26] << 16)), alto: 1 + (b[27] | (b[28] << 8) | (b[29] << 16)) };
   if (ascii(b, 12, "VP8 ")) return { ancho: v.getUint16(26, true) & 0x3fff, alto: v.getUint16(28, true) & 0x3fff };

@@ -41,6 +41,7 @@ async function preguntar(texto: string, oculto = false): Promise<string> {
   });
 }
 
+/** Indica si el texto tiene forma de correo y no pasa de 320 caracteres. */
 const correoValido = (correo: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correo) && correo.length <= 320;
 
 /** Repite el paso hasta que `validar` no lance error; sin terminal, el primer error termina el comando. */
@@ -57,6 +58,7 @@ async function hastaQueSeaValido<T>(paso: () => Promise<T>, validar: (valor: T) 
   }
 }
 
+/** Crea el admin maestro con los datos que se piden en la terminal. */
 async function crear(sql: SQL) {
   const correo = await hastaQueSeaValido(async () => (await preguntar('Correo del admin maestro:')).trim(), valor => {
     if (!correoValido(valor)) throw new Error('Correo no válido');
@@ -78,6 +80,7 @@ async function crear(sql: SQL) {
   console.log(`Admin maestro creado (${correo}). Ya puede iniciar sesión en el sitio.`);
 }
 
+/** Pasa el rol de admin maestro a otra cuenta, tras confirmarlo. */
 async function transferir(sql: SQL, correo: string | undefined) {
   if (!correo || !correoValido(correo)) throw new Error('Uso: bun run admin:transferir <correo>');
   const confirmacion = await preguntar(`¿Pasar el rol de admin maestro a ${correo}? El actual quedará como admin (s/N):`);

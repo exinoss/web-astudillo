@@ -14,7 +14,9 @@ import { plainText } from '../../validation/texto';
 
 type AboutCarlosPageInput = AboutCarlosPageStored;
 
+/** Indica si el slug es de una página «Acerca de Carlos». */
 const isSlug = (slug: string): slug is AboutCarlosSlug => (ABOUT_CARLOS_PAGES as readonly string[]).includes(slug);
+/** Texto plano validado, o null si llega vacío. */
 const optional = (value: string | null | undefined, field: string, max: number, options?: { multiline?: boolean }) =>
   value?.trim() ? plainText(value, field, max, options) : null;
 
@@ -39,6 +41,7 @@ export async function listAboutCarlosPages(sql: SQL): Promise<Record<string, Abo
   } satisfies AboutCarlosPage]));
 }
 
+/** Valida y limpia el contenido de una página «Acerca de Carlos» antes de guardarlo. */
 function clean(slug: AboutCarlosSlug, input: AboutCarlosPageInput): AboutCarlosPageStored {
   if (slug !== 'conoce-mas' && (input.entrevista.length || input.galeria.length))
     throw new ApiError(422, 'Esta página solo tiene videos');

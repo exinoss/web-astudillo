@@ -7,6 +7,7 @@ const formato = new Intl.NumberFormat("es-EC");
 const banda = document.querySelector<HTMLElement>("[data-cifras]");
 const cifras = [...document.querySelectorAll<HTMLElement>("[data-cifra]")];
 
+/** Anima la cifra hasta su valor final. */
 function contar(el: HTMLElement, final: number) {
   if (sinMovimiento()) {
     el.textContent = formato.format(final);

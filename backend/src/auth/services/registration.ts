@@ -18,6 +18,7 @@ import { LARGOS } from '../../contracts/limites';
 // El correo lo anuncia: «El enlace vence en 30 minutos» (mail/plantilla.ts).
 const LINK_SECONDS = 1800;
 
+/** Servicio del registro con correo y su enlace de confirmación. */
 export function createRegistration(sql: SQL, mailer: Mailer, config: Config) {
   return {
     /** Guarda la solicitud temporal y envía el enlace sin reservar el correo; el enlace vale en cualquier navegador. */

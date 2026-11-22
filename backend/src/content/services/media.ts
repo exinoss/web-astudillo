@@ -20,6 +20,7 @@ const WRONG_FORMAT = `Sube una foto ${FORMATOS_FOTO}`;
 
 type MediaRow = { id_medio: number; nombre: string; ancho: number; alto: number; anchos: number[] };
 
+/** Convierte una fila de medios en la foto que entrega la API. */
 export const toPhoto = (row: MediaRow): Photo => ({
   idMedio: row.id_medio, nombre: row.nombre, ancho: row.ancho, alto: row.alto, anchos: row.anchos,
 });
@@ -78,6 +79,7 @@ export async function savePhoto(input: Buffer, dir: string, name: string, sizes:
   return { width, height, widths };
 }
 
+/** Servicio para subir fotos y guardar las portadas de los videos. */
 export function createMedia(sql: SQL, authorization: Authorization, mediaDir: string, fetchCover = fetchVideoCover) {
   async function store(actor: number, input: Buffer): Promise<Photo> {
     // Idempotente: la misma foto otra vez (reintento, doble envío) devuelve la ya guardada.

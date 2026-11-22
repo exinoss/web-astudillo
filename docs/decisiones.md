@@ -124,3 +124,9 @@ Por qué: aprobar cómo se ve un prototipo no garantizaba que el código siguier
 
 **D-025 · 2026-11-07 · Al iniciar la sesión se inyecta una memoria corta: `PROJECT_MEMORY.md` resumido, solo los títulos de este registro y el resumen del mapa. El detalle, lo terminado y las lecciones especializadas van a `PROJECT_MEMORY-detalle.md` (fuera de Git, no se inyecta).**
 Por qué: lo inyectado ocupaba unos 56 KB en cada sesión y la mayor parte no hacía falta para empezar; ahora son unos 20 KB. Con el título basta para detectar una contradicción, y el porqué se lee cuando hace falta. Regla «Memoria y contexto del proyecto» en `AGENTS.md`/`CLAUDE.md`.
+
+**D-038 · 2026-11-22 · Publicar exige confirmar la identidad como en D-020, y una sesión dura 7 días desde que se inicia: renovarla no la alarga, y reusar un refresh ya rotado la cierra.**
+Por qué: con un token robado se pueden tocar los borradores, pero nada llega al sitio sin la contraseña o el código de quien publica (OWASP ASVS V3.7.1). Antes, cada renovación sumaba otros 7 días, así que una sesión robada que se siguiera usando no vencía nunca. Un refresh ya rotado que vuelve pasados los 30 s de margen entre pestañas solo puede venir de una copia: se revoca esa sesión (las de otros equipos siguen) y el acceso robado muere en 10 minutos como máximo (RFC 9700). Se descartó atar la sesión a la IP: en celulares cambia a menudo y no frena un malware en el propio equipo.
+
+**D-039 · 2026-11-22 · Las visitas se cuentan por navegador con un número aleatorio en `localStorage`, no por IP: una visita nueva al cargar o navegar tras 30 minutos sin actividad.**
+Por qué: con la IP, las personas detrás de un mismo wifi o de la red móvil (CGNAT) contaban como una sola cada 30 minutos, y la visita no se reintentaba si fallaba. La IP solo pone un tope generoso contra scripts. El número no identifica a nadie y su huella se borra a los 30 minutos. Detalle y comparación con Cloudflare en `docs/visitas-y-cloudflare.md`.

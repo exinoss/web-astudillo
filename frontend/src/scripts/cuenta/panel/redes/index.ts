@@ -4,15 +4,17 @@ import { adminApi } from "../../../../lib/data/http/admin-api";
 import { avisoBorrador, busy, card, field, guardarYRecargar, isPending, state } from "../ui";
 
 const RED_LIST = Object.keys(REDES) as Red[];
+/** Valor guardado de una red en el borrador. */
 const guardado = (red: Red) => state.draft!.textos[REDES[red].clave] ?? "";
 /** El valor guardado como se escribe en el campo: el enlace tal cual o el número con «+». */
 const whatsappVisible = (valor: string) => valor.startsWith("https://") ? valor : `+${valor}`;
 /** Lo que se guardaría para cada red con lo escrito ahora (WhatsApp ya como 593… o enlace); lo no válido va tal cual y la API lo explica. */
-const leer = (form: HTMLElement) => Object.fromEntries(RED_LIST.map((red) => {
+const valoresEscritos = (form: HTMLElement) => Object.fromEntries(RED_LIST.map((red) => {
   const valor = form.querySelector<HTMLInputElement>(`#red-${red}`)!.value.trim();
   return [red, red === "whatsapp" ? valorWhatsapp(valor) ?? valor : valor];
 })) as Record<Red, string>;
 
+/** Pinta el formulario de las redes sociales. */
 export function renderSocial(container: HTMLElement) {
   const pendiente = RED_LIST.some((red) => isPending("Texto", REDES[red].clave));
   container.innerHTML = card("Redes sociales", `
@@ -29,10 +31,10 @@ export function renderSocial(container: HTMLElement) {
   const form = container.querySelector<HTMLFormElement>("#redes-form")!;
   const boton = form.querySelector<HTMLButtonElement>("button[type=submit]")!;
   const base = Object.fromEntries(RED_LIST.map((red) => [red, guardado(red)]));
-  vigilarCambios(form, boton, base, () => leer(form));
+  vigilarCambios(form, boton, base, () => valoresEscritos(form));
   form.addEventListener("submit", (e) => {
     e.preventDefault();
-    const valores = leer(form);
+    const valores = valoresEscritos(form);
     // Solo se guardan las redes que cambiaron, cada una con su versión (409 si otra persona la cambió).
     const cambios = RED_LIST.filter((red) => valores[red] !== guardado(red));
     void busy(boton, () => guardarYRecargar(async () => {

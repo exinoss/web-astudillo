@@ -41,7 +41,7 @@ export function visorFotos(id: string, titulo: string, fotos: FotoDelVisor[]) {
   const varias = fotos.length > 1;
   const paso = (cuanto: -1 | 1, clase = "") => `<button data-visor-paso="${cuanto}" type="button" class="${REDONDO} ${clase}" aria-label="${cuanto < 0 ? "Foto anterior" : "Foto siguiente"}">${iconSvg(cuanto < 0 ? "chevronLeft" : "chevronRight", 24)}</button>`;
   return `
-  <dialog data-visor aria-labelledby="${id}-titulo" class="m-0 h-dvh max-h-none w-screen max-w-none overscroll-contain bg-[#021530]/97 p-0 text-white backdrop:bg-transparent">
+  <dialog data-visor aria-labelledby="${id}-titulo" class="m-0 h-dvh max-h-none w-screen max-w-none overscroll-contain bg-viewer-backdrop/97 p-0 text-white backdrop:bg-transparent">
     <div class="flex h-full flex-col">
       <div class="flex items-center justify-between gap-3 px-5 pt-4 pb-2 max-tablet:px-3">
         <h2 id="${id}-titulo" class="sr-only">${esc(titulo)}</h2>
@@ -65,6 +65,17 @@ export function visorFotos(id: string, titulo: string, fotos: FotoDelVisor[]) {
     ${img(foto.image, foto.alt, "mx-auto aspect-[4/3] max-h-[65dvh] w-full object-contain", "(max-width: 760px) calc(100vw - 40px), 900px", "eager")}
     <figcaption class="mt-2 text-[0.8rem] leading-normal">${esc(foto.caption)}</figcaption>
   </template>`).join("")}`;
+}
+
+/** Abre en el visor la foto de cada botón `data-ampliar` (con su pie en `data-pie`) que se pulse dentro de `contenedor`. */
+export function ampliarAlPulsar(contenedor: HTMLElement, id: string, titulo: string) {
+  const visor = document.body.appendChild(document.createElement("div"));
+  contenedor.addEventListener("click", (e) => {
+    const boton = (e.target as Element).closest<HTMLButtonElement>("[data-ampliar]");
+    if (!boton) return;
+    visor.innerHTML = visorFotos(id, titulo, [{ image: { src: boton.dataset.ampliar! }, alt: titulo, caption: boton.dataset.pie ?? "" }]);
+    montarVisor(visor).abrir(0, boton);
+  });
 }
 
 /** Hace funcionar el visor de `root`; `alCambiar` recibe la foto elegida cada vez que cambia, también al montarse. */

@@ -14,6 +14,7 @@ export const PROVIDER_NAMES: Record<VideoProvider, string> = {
   youtube: 'YouTube', facebook: 'Facebook', tiktok: 'TikTok', vimeo: 'Vimeo', mp4: 'el enlace',
 };
 
+/** Dominio del enlace sin `www.` ni los prefijos de las versiones móviles. */
 const host = (url: URL) => url.hostname.toLowerCase().replace(/^(www|m|web|mobile)\./, '');
 
 /** Reconoce un enlace de video admitido; null si no es de un proveedor admitido o no es seguro. */

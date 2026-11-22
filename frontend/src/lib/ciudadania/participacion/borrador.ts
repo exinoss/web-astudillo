@@ -44,10 +44,12 @@ export async function guardar(datos: Omit<Borrador, "guardadoEn" | "conFoto">, f
   }
 }
 
+/** Foto guardada del borrador, o null si no hay. */
 export async function leerFoto(): Promise<File | null> {
   return fotos<File | undefined>("readonly", (s) => s.get("foto")).then((f) => f ?? null, () => null);
 }
 
+/** Borra el borrador y su foto. */
 export function borrar() {
   guardarClave("local", CLAVE, null);
   void fotos("readwrite", (s) => s.delete("foto")).catch(() => {});

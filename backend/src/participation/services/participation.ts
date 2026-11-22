@@ -48,12 +48,14 @@ type Visibility = { publica?: boolean; anonima: boolean };
 /** Ruta de la foto en la API: la de una alerta publicada la ve cualquiera; si no, solo su autor y quien revisa la participación. */
 const photoUrl = (name: string | null, width: number) => (name ? `/api/participacion/fotos/${name}-${width}.webp` : null);
 
+/** Alerta tal como la entrega la API. */
 const toAlert = (r: AlertRow) => ({
   id: r.id_alerta, tipo: r.tipo, sector: r.sector, referencia: r.referencia, descripcion: r.descripcion,
   estado: r.estado, creadoEn: r.creado_en,
   foto: r.foto ? { miniatura: photoUrl(r.foto, 480)!, grande: photoUrl(r.foto, 1280)! } : null,
   ...visibilityOf(r),
 });
+/** Sugerencia tal como la entrega la API. */
 const toSuggestion = (r: SuggestionRow) => ({
   id: r.id_sugerencia, tema: r.tema, mensaje: r.mensaje, estado: r.estado, creadoEn: r.creado_en,
   ...visibilityOf(r),

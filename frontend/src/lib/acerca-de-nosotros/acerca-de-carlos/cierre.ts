@@ -1,5 +1,6 @@
 import { iconSvg } from "../../comun/iconos";
 
+/** Recuadro final con un texto y un botón hacia otra página. */
 export const closingSection = (text: string, href: string, label: string) => `
 <div class="mt-9 flex flex-wrap items-center justify-between gap-4 rounded-control border border-base-300 bg-base-100 px-5 py-4 max-tablet:mt-8">
   <p class="m-0 text-[0.95rem]">${text}</p>

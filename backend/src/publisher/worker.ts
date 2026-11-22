@@ -17,11 +17,13 @@ const siteDir = resolve(process.env.SITE_DIR ?? frontendDir);
 const appVersion = process.env.APP_VERSION?.trim();
 const sql = new SQL(url);
 
+/** Espera los milisegundos indicados. */
 const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 
-interface Target { dist: string; next: string; previous: string; buildDir: string }
 // Cada salida vive en el mismo disco o volumen que su versión nueva y anterior: el cambio final es un rename atómico.
 // Astro mueve archivos desde su caché (frontend/.astro) a la salida: compila en el mismo disco que ella.
+interface Target { dist: string; next: string; previous: string; buildDir: string }
+/** Rutas de una salida: la publicada, la nueva, la anterior y la de compilación. */
 const target = (name: string): Target => ({
   dist: join(siteDir, name), next: join(siteDir, `${name}-nueva`), previous: join(siteDir, `${name}-anterior`),
   buildDir: join(frontendDir, `${name}-nueva`),
@@ -52,6 +54,7 @@ async function compile(out: Target, env: Record<string, string> = {}): Promise<s
   return null;
 }
 
+/** Compila y publica el sitio de una publicación y registra el resultado. */
 async function build(id: number) {
   const started = Date.now();
   const log = await compile(site);

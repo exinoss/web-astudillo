@@ -88,5 +88,7 @@ async function hashSlot<T>(work: () => Promise<T>): Promise<T> {
   }
 }
 
+/** Hash Argon2id de una contraseña, dentro del cupo de cálculos simultáneos. */
 export const passwordHash = (password: string) => hashSlot(() => Bun.password.hash(password, "argon2id"));
+/** Comprueba una contraseña contra su hash, dentro del mismo cupo. */
 export const passwordVerify = (password: string, hash: string) => hashSlot(() => Bun.password.verify(password, hash));

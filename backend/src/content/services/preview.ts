@@ -8,6 +8,7 @@ import type { createContent } from './content';
 
 type PreviewState = 'en_cola' | 'compilando' | 'lista' | 'fallida';
 
+/** Servicio de la vista previa del borrador. */
 export function createPreview(sql: SQL, authorization: Authorization, security: Security, content: ReturnType<typeof createContent>) {
   return {
     async request(access: string | undefined) {

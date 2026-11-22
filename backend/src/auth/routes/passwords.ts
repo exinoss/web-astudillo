@@ -5,6 +5,7 @@ import { access } from '../../http';
 import { clearSession, email, googleCredential, ipOf, password, redirectToAccount, strict, token, type AuthContext } from './common';
 import { LARGOS } from '../../contracts/limites';
 
+/** Rutas para recuperar, cambiar y añadir la contraseña. */
 export function passwordRoutes(context: AuthContext) {
   const { passwords, limit, authorization, config } = context;
   return new Elysia({ prefix: '/api/auth', normalize: false })

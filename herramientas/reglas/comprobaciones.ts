@@ -19,7 +19,9 @@ function porLinea(a: Archivo, regla: string, patron: RegExp, mensaje: string): F
 function colorAMano(a: Archivo) {
   if (!FRONT.test(a.ruta)) return [];
   return porLinea(a, "color-a-mano", /(?<![\w&])#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?\b|\[#[0-9a-fA-F]{3,4}\]|:\s*#[0-9a-fA-F]{3,4}\b(?![\w-])/,
-    "Color escrito a mano: usa un token de @theme (global.css).");
+    "Color escrito a mano: usa un token de @theme (global.css).")
+    // El navegador lee el meta theme-color fuera del CSS: no admite var(--color-…).
+    .filter((f) => !f.texto.startsWith('<meta name="theme-color"'));
 }
 
 /** Breakpoints que no son las variantes propias de `global.css`. */
@@ -49,9 +51,11 @@ function comentarioDeFuncion(a: Archivo) {
   });
 }
 
-/** Peticiones de red fuera de los repositorios de `src/lib/data/`. */
+/** Peticiones a la API fuera de los repositorios de `src/lib/data/`; las de recursos estáticos (`?url`) no cuentan. */
 function fetchFueraDeDatos(a: Archivo) {
   if (!FRONT.test(a.ruta) || a.ruta.startsWith("frontend/src/lib/data/")) return [];
+  // Un archivo que pide datos nombra la API (`/api/…`, la constante `API`) o importa de lib/data/.
+  if (!/\/api\b|\bAPI\b|lib\/data\//.test(a.contenido)) return [];
   return porLinea(a, "fetch-fuera-de-datos", /\bfetch\(/, "Los datos pasan por los repositorios de src/lib/data/, no por un fetch directo.");
 }
 

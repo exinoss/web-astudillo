@@ -1,6 +1,7 @@
 import { adminApi, type Publication } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { seguirPublicacion } from "../../../../lib/comun/avisos";
+import { confirmarPublicacion } from "../confirmacion";
 import { busy, card, cargar, esc, fechaHora, iconSvg, notify, reloadPending, state, syncPublishButton } from "../ui";
 
 const STATES: Record<Publication["estado"], [string, string]> = {
@@ -12,9 +13,11 @@ const STATES: Record<Publication["estado"], [string, string]> = {
 let page = 1;
 let poll = 0;
 
+/** Duración de una publicación en segundos. */
 const duration = (p: Publication) => p.iniciadoEn && p.terminadoEn
   ? `${Math.max(1, Math.round((Date.parse(p.terminadoEn) - Date.parse(p.iniciadoEn)) / 1000))} s` : "—";
 
+/** Pinta los cambios pendientes y el historial de publicaciones. */
 export async function renderPublications(section: HTMLElement) {
   clearTimeout(poll);
   await reloadPending();
@@ -39,15 +42,18 @@ export async function renderPublications(section: HTMLElement) {
 /** Publica y vuelve a pintar; lo usa también el botón de la cabecera. */
 export async function publish(button: HTMLButtonElement | null, section: HTMLElement) {
   await busy(button, async () => {
-    seguirPublicacion((await adminApi.publish()).id);
+    const publicada = await confirmarPublicacion(state.profile!, state.pending.length);
+    if (!publicada) return;
+    seguirPublicacion(publicada.id);
     notify("Publicación en cola. El sitio se actualizará en cerca de un minuto.");
     page = 1;
     await renderPublications(section);
-  }, "Publicando…");
+  });
   // `busy` reactiva el botón al terminar; se vuelve a ajustar a lo que queda pendiente.
   syncPublishButton();
 }
 
+/** Pinta el historial de publicaciones. */
 async function drawHistory(section: HTMLElement) {
   const data = await adminApi.publications(page);
   const box = section.querySelector<HTMLElement>("#historial");

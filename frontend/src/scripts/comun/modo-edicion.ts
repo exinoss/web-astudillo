@@ -9,6 +9,7 @@ import { sinMovimiento } from "../../lib/comun/movimiento";
 import { iconSvg } from "../../lib/comun/iconos";
 import { BOLA, BOTON, INTERRUPTOR, PISTA, PRINCIPAL } from "../../lib/cuenta/panel/campos";
 import { seguirPublicacion } from "../../lib/comun/avisos";
+import { confirmarPublicacion } from "../cuenta/panel/confirmacion";
 import { BORRADOR_GUARDADO, notificar } from "../../lib/comun/notificacion";
 
 const STORAGE = "modo-edicion";
@@ -19,6 +20,7 @@ const IDLE = ["outline-1", "outline-dashed", "outline-current/40", "outline-offs
 const ACTIVE = ["outline-2", "outline-solid", "outline-secondary", "bg-accent-soft", "text-primary"];
 const mobile = matchMedia("(width <= 760px)");
 
+/** Elementos editables de la página. */
 const elements = () => [...document.querySelectorAll<HTMLElement>("[data-editable]")];
 const published = new Map<HTMLElement, string>(); // HTML publicado, para restaurarlo al salir del modo
 let texts: Record<string, string> = {};
@@ -30,7 +32,9 @@ let canPublish = false;
 let canUpload = false;
 let carruseles: typeof import("../inicio/editor-carruseles") | null = null;
 
+/** Definición del texto de un elemento editable. */
 const definition = (el: HTMLElement) => TEXTOS[el.dataset.editable as TextKey];
+/** Valor de un texto en el borrador. */
 const current = (key: string) => texts[key] ?? "";
 
 /** Pinta un valor como lo hace Editable.astro: cada salto de línea es un <br>. */
@@ -59,6 +63,7 @@ bar.innerHTML = `
 const toggle = bar.querySelector<HTMLButtonElement>("#edicion-interruptor")!;
 const publishButton = bar.querySelector<HTMLButtonElement>("#edicion-publicar")!;
 
+/** Pinta la barra del modo edición según su estado. */
 function drawBar() {
   toggle.setAttribute("aria-checked", String(on));
   const track = bar.querySelector<HTMLElement>(".edicion-pista")!;
@@ -76,6 +81,7 @@ function drawBar() {
   publishButton.disabled = !pending;
 }
 
+/** Actualiza cuántos cambios faltan por publicar. */
 async function refreshPending() {
   if (canPublish) pending = (await adminApi.pending()).cambios.length;
   drawBar();
@@ -83,7 +89,7 @@ async function refreshPending() {
 
 
 /** Avisa con la notificación global; un guardado en el borrador usa la de «Guardado como borrador». */
-function notify(message: string, error = false) {
+function avisar(message: string, error = false) {
   notificar(error ? { tipo: "error", titulo: message } : message === GUARDADO ? BORRADOR_GUARDADO : { tipo: "exito", titulo: message });
 }
 
@@ -93,6 +99,7 @@ chip.className = "pointer-events-none fixed z-[940] flex items-center gap-2 roun
 chip.innerHTML = `${iconSvg("edit", 14)} Editando · Enter guarda · Esc cancela`;
 chip.hidden = true;
 
+/** Coloca la etiqueta «Editando» sobre el texto en edición. */
 function placeChip() {
   if (!editing || chip.hidden) return;
   const rect = editing.el.getBoundingClientRect();
@@ -109,8 +116,8 @@ async function save(el: HTMLElement, raw: string, before: string) {
   const def = definition(el);
   const value = clean(raw);
   if (value === current(key)) return true;
-  if (!value) { notify("El texto no puede quedar vacío.", true); paint(el, before); return false; }
-  if (value.length > def.max) { notify(`Máximo ${def.max} caracteres.`, true); paint(el, before); return false; }
+  if (!value) { avisar("El texto no puede quedar vacío.", true); paint(el, before); return false; }
+  if (value.length > def.max) { avisar(`Máximo ${def.max} caracteres.`, true); paint(el, before); return false; }
   try {
     const saved = await adminApi.saveText(key, value, versions[key] ?? null);
     texts[key] = value;
@@ -118,15 +125,16 @@ async function save(el: HTMLElement, raw: string, before: string) {
     // Los textos compartidos (el lema, por ejemplo) cambian en todos los sitios de la página.
     for (const other of elements()) if (other.dataset.editable === key) paint(other, value);
     await refreshPending();
-    notify(GUARDADO);
+    avisar(GUARDADO);
     return true;
   } catch (error) {
     paint(el, before);
-    notify(error instanceof Error ? error.message : "No se pudo guardar.", true);
+    avisar(error instanceof Error ? error.message : "No se pudo guardar.", true);
     return false;
   }
 }
 
+/** Empieza a editar un texto en su sitio. */
 function startInline(el: HTMLElement) {
   if (editing?.el === el) return;
   if (editing) finishInline(true);
@@ -143,6 +151,7 @@ function startInline(el: HTMLElement) {
   placeChip();
 }
 
+/** Termina la edición en su sitio, guardando o descartando lo escrito. */
 function finishInline(keep: boolean) {
   if (!editing) return;
   const { el, before } = editing;
@@ -178,9 +187,11 @@ const sheetField = sheet.querySelector<HTMLTextAreaElement>("#edicion-hoja-campo
 const sheetSave = sheet.querySelector<HTMLButtonElement>("#edicion-hoja-guardar")!;
 let sheetTarget: HTMLElement | null = null;
 
+/** Activa «Guardar» de la hoja solo si el texto cambió. */
 const syncSheet = () => { sheetSave.disabled = !sheetTarget || clean(sheetField.value) === current(sheetTarget.dataset.editable!); };
 sheetField.addEventListener("input", syncSheet);
 
+/** Abre la hoja de edición para celular con un texto. */
 function openSheet(el: HTMLElement) {
   sheetTarget = el;
   const def = definition(el);
@@ -192,6 +203,7 @@ function openSheet(el: HTMLElement) {
   sheetField.focus();
 }
 
+/** Cierra la hoja de edición. */
 function closeSheet() {
   sheet.close();
 }
@@ -212,8 +224,10 @@ sheetSave.addEventListener("click", async () => {
 });
 
 
+/** Edita un texto con la hoja en celular o en su sitio en pantallas mayores. */
 const edit = (el: HTMLElement) => (mobile.matches ? openSheet(el) : startInline(el));
 
+/** Marca como editables los textos dentro de `raiz`. */
 function decorar(raiz: ParentNode) {
   for (const el of raiz.querySelectorAll<HTMLElement>("[data-editable]")) {
     paint(el, current(el.dataset.editable!));
@@ -225,9 +239,10 @@ function decorar(raiz: ParentNode) {
 
 /** Si falla la descarga, el modo edición sigue funcionando con los textos. */
 const cargarCarruseles = () => import("../inicio/editor-carruseles")
-  .then((m) => { m.iniciarCarruseles({ avisar: notify, alGuardar: refreshPending, decorar }); return m; })
+  .then((m) => { m.iniciarCarruseles({ avisar, alGuardar: refreshPending, decorar }); return m; })
   .catch(() => null);
 
+/** Activa o desactiva el modo edición. */
 async function setMode(value: boolean) {
   if (value && !on) {
     // Se muestra el borrador, no lo publicado, para ver lo pendiente mientras se edita.
@@ -262,14 +277,15 @@ export async function startEditMode(profile: Profile) {
   document.querySelector(".site-header")!.append(bar);
   document.body.append(chip, sheet);
 
-  toggle.addEventListener("click", () => void setMode(!on).catch(() => notify("No se pudo activar el modo edición.", true)));
+  toggle.addEventListener("click", () => void setMode(!on).catch(() => avisar("No se pudo activar el modo edición.", true)));
   // Bloqueado mientras se envía; la API además es idempotente, así que un segundo envío no duplica.
   publishButton.addEventListener("click", async () => {
     publishButton.disabled = true;
     try {
-      seguirPublicacion((await adminApi.publish()).id);
+      const publicada = await confirmarPublicacion(profile, pending);
+      if (publicada) seguirPublicacion(publicada.id);
     } catch (error) {
-      notify(error instanceof Error ? error.message : "No se pudo publicar.", true);
+      avisar(error instanceof Error ? error.message : "No se pudo publicar.", true);
     }
     await refreshPending().catch(() => drawBar());
   });

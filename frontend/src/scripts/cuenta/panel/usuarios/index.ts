@@ -3,16 +3,18 @@ import { NOMBRES_ROL, nombreRol, ROLES } from "../../../../../../backend/src/con
 import { adminApi, type AdminUser } from "../../../../lib/data/http/admin-api";
 import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { confirmarIdentidad } from "../confirmacion";
-import { busy, cargar, confirmarCambio, DANGER, esc, filtro, GHOST, iconSvg, LARGOS, notify } from "../ui";
+import { busy, cargar, confirmarCambio, DANGER, esc, filtro, GHOST, iconSvg, LARGOS, notify, state } from "../ui";
 
 const ROLE_CLASSES: Record<string, string> = { admin: "bg-neutral text-neutral-content", coadmin: "bg-accent text-primary", analista: "border border-base-300", votante: "border border-base-300" };
 const filters = { q: "", rol: "", estado: "", pagina: 1 };
 
 /** Pastilla con el nombre del rol de la cuenta. */
 const rolePill = (u: AdminUser) => `<span class="pildora ${ROLE_CLASSES[u.rol] ?? ""}">${esc(nombreRol(u.rol))}</span>`;
+/** Píldora del estado de una cuenta. */
 const statePill = (u: AdminUser) => u.estado === "activo"
   ? `<span class="pildora bg-success-soft text-success-ink">Activa</span>`
   : `<span class="pildora bg-error-soft text-error">Desactivada</span>`;
+/** Nombre de la cuenta o, si no tiene, su correo. */
 const nombre = (u: AdminUser) => u.nombresCompletos ?? u.correo;
 
 /** Acciones de una cuenta; si la jerarquía no lo permite, el motivo genérico que da la API. */
@@ -31,6 +33,7 @@ function actions(u: AdminUser) {
     </span>`;
 }
 
+/** Pinta la administración de cuentas con sus filtros. */
 export function renderUsers(section: HTMLElement) {
   section.innerHTML = `
     <div class="mb-[18px] flex items-end gap-3.5 max-tablet:grid max-tablet:grid-cols-2 max-tablet:gap-2.5">
@@ -65,6 +68,7 @@ export function renderUsers(section: HTMLElement) {
   cargar(load(section));
 }
 
+/** Carga y pinta la lista de cuentas. */
 async function load(section: HTMLElement) {
   const data = await adminApi.users(filters);
   const list = section.querySelector<HTMLElement>("#usuarios-lista");
@@ -98,6 +102,7 @@ async function load(section: HTMLElement) {
   renderPagination(section.querySelector("#usuarios-paginas")!, data, (p) => { filters.pagina = p; cargar(load(section)); });
 }
 
+/** Conecta los controles de cada cuenta. */
 function bind(section: HTMLElement, list: HTMLElement) {
   list.querySelectorAll<HTMLButtonElement>("[data-guardar-rol]").forEach((b) => {
     // Tabla y tarjetas repiten el selector: vale el que está junto al botón pulsado.
@@ -106,6 +111,7 @@ function bind(section: HTMLElement, list: HTMLElement) {
     // Se envía el rol que muestra la lista: si otro admin lo cambió mientras tanto, la API responde 409.
     b.addEventListener("click", () => void busy(b, async () => {
       const hecho = await confirmarIdentidad({
+        perfil: state.profile!,
         resumen: `Vas a cambiar el rol de <strong>${esc(b.dataset.nombre!)}</strong> a <strong>${esc(nombreRol(select.value))}</strong>.`,
         boton: "Cambiar rol",
         enviar: (confirmacion) => adminApi.changeRole(Number(b.dataset.guardarRol), select.value, b.dataset.rolActual!, confirmacion),
@@ -121,9 +127,9 @@ function bind(section: HTMLElement, list: HTMLElement) {
       const anterior = b.dataset.estadoActual as "activo" | "bloqueado";
       const quien = `<strong>${esc(b.dataset.nombre!)}</strong>`;
       const hecho = await confirmarIdentidad(estado === "bloqueado"
-        ? { resumen: `Vas a desactivar la cuenta de ${quien}. Se cerrarán sus sesiones.`, boton: "Desactivar", peligro: true,
+        ? { perfil: state.profile!, resumen: `Vas a desactivar la cuenta de ${quien}. Se cerrarán sus sesiones.`, boton: "Desactivar", peligro: true,
             enviar: (c) => adminApi.changeState(Number(b.dataset.cuenta), estado, anterior, c) }
-        : { resumen: `Vas a reactivar la cuenta de ${quien}.`, boton: "Reactivar",
+        : { perfil: state.profile!, resumen: `Vas a reactivar la cuenta de ${quien}.`, boton: "Reactivar",
             enviar: (c) => adminApi.changeState(Number(b.dataset.cuenta), estado, anterior, c) });
       if (!hecho) return;
       await load(section);

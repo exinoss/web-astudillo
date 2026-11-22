@@ -18,6 +18,7 @@ import { profileRoutes } from "./profile/routes";
 import type { Security } from "./security";
 import { statsRoutes } from "./stats/routes";
 
+/** Arma la aplicación con sus módulos y las comprobaciones comunes a todas las rutas. */
 export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; security: Security }) {
   const { sql, config, mailer, security } = deps;
   const authorization = createAuthorization(sql, security);
@@ -39,8 +40,8 @@ export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; secu
     .use(authRoutes(sql, config, mailer, security, authorization))
     .use(profileRoutes(sql, authorization))
     .use(adminRoutes(sql, authorization, confirmation, config.trustProxyIp))
-    .use(contentRoutes(sql, authorization, config.mediaDir))
-    .use(previewRoutes(sql, config, security, authorization))
+    .use(contentRoutes(sql, authorization, confirmation, config.mediaDir, config.trustProxyIp))
+    .use(previewRoutes(sql, config, security, authorization, confirmation))
     .use(participationRoutes(sql, authorization, confirmation, config.privateMediaDir, config.trustProxyIp))
     .use(noticesRoutes(sql, authorization))
     .use(statsRoutes(sql, config))

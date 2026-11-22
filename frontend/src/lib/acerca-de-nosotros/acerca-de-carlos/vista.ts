@@ -36,6 +36,7 @@ export async function defaultCover(vertical: boolean): Promise<ImageView> {
   return { src: image.src, srcset: image.srcSet.attribute, width: picture.width, height: picture.height };
 }
 
+/** Vista de una página «Acerca de Carlos» con el contenido publicado. */
 export async function publishedPageView(slug: AboutCarlosSlug): Promise<AboutCarlosPageView> {
   const page = await contentRepository.getAboutCarlosPage(slug);
   return {

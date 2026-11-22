@@ -20,10 +20,12 @@ const kpiRow = (k: { etiqueta: string; valor: string }, i: number, total: number
     </div>
   </div>`;
 
+/** Cifras escritas en el formulario. */
 const readKpis = (form: HTMLElement) => [...form.querySelectorAll<HTMLElement>(".kpi")].map((row) => ({
   etiqueta: value(row, '[name="etiqueta"]'), valor: value(row, '[name="valor"]'),
 }));
 
+/** Pinta el editor de la propuesta elegida. */
 export function renderProposals(section: HTMLElement) {
   const proposals = state.draft!.propuestas;
   selected ||= proposals[0]?.slug ?? "";

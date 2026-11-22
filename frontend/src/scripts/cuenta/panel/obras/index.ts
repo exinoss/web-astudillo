@@ -16,6 +16,7 @@ let enlaceNuevo = "";
 // Una copia por obra: cambiar de obra no pierde lo escrito.
 const trabajo: Record<string, DraftWork> = {};
 
+/** Nombre de la propuesta de una obra. */
 const nameOf = (slug: string) => state.draft!.propuestas.find((p) => p.slug === slug)?.nombre ?? slug;
 
 /** Una foto o un video tal como lo recibe la API. */
@@ -101,6 +102,7 @@ function capture(form: HTMLElement) {
   enlaceNuevo = form.querySelector<HTMLInputElement>("#video-enlace-nuevo")?.value ?? enlaceNuevo;
 }
 
+/** Pinta el editor de la obra elegida. */
 export function renderWorks(section: HTMLElement) {
   const works = state.draft!.obras;
   if (!works.some((w) => w.slug === selected)) selected = works[0]?.slug ?? "";
@@ -146,6 +148,7 @@ export function renderWorks(section: HTMLElement) {
   }
 }
 
+/** Conecta los controles del editor de obras. */
 function bind(section: HTMLElement) {
   const form = section.querySelector<HTMLFormElement>("#obra-form")!;
   const edit = (change: () => void) => { capture(form); change(); renderWorks(section); };

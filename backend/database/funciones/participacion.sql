@@ -1,3 +1,4 @@
+-- Respuestas del chat, en orden.
 CREATE OR REPLACE FUNCTION fn_chat_list()
 RETURNS TABLE(pregunta varchar, palabras_clave varchar, respuesta varchar, enlace_texto varchar,
   enlace_ruta varchar, destacada boolean) LANGUAGE sql STABLE AS $$
@@ -34,6 +35,7 @@ RETURNS void LANGUAGE sql AS $$
   ON CONFLICT (texto_normalizado) DO UPDATE SET veces = tb_chat_sin_respuesta.veces + 1, ultima_vez = now();
 $$;
 
+-- Responde una consulta del chat una sola vez por clave de idempotencia.
 DROP FUNCTION IF EXISTS fn_chat_send(integer, uuid, text, jsonb, text, text);
 CREATE OR REPLACE FUNCTION fn_chat_send(
   p_user integer, p_key uuid, p_hash text, p_response jsonb, p_unanswered text, p_example text, p_version text)
@@ -67,6 +69,7 @@ RETURNS TABLE(mensaje_hash varchar, respuesta jsonb) LANGUAGE sql STABLE AS $$
   WHERE e.id_usuario = p_user AND e.clave_idempotencia = p_key AND fn_has_permission(p_user, 'participacion.enviar');
 $$;
 
+-- Preguntas que el chat no supo responder, de más a menos repetidas.
 CREATE OR REPLACE FUNCTION fn_chat_unanswered_list(p_actor integer, p_limit integer)
 RETURNS TABLE(texto_normalizado varchar, ejemplo varchar, veces integer, ultima_vez timestamptz)
 LANGUAGE sql STABLE AS $$
@@ -88,6 +91,7 @@ $$;
 -- Crear es idempotente por (usuario, clave): repetir el envío devuelve la misma fila con
 -- `nueva = false`. La base repite la comprobación del permiso aunque la API ya lo hiciera.
 
+-- Crea una alerta; repetirla con la misma clave devuelve la ya creada.
 DROP FUNCTION IF EXISTS fn_alert_create(integer, uuid, text, text, text, text, text);
 CREATE OR REPLACE FUNCTION fn_alert_create(p_user integer, p_key uuid, p_type text, p_sector text,
   p_reference text, p_description text, p_photo text, p_version text)
@@ -129,6 +133,7 @@ LANGUAGE sql STABLE AS $$
   FROM tb_alertas a WHERE a.id_usuario = p_user ORDER BY a.id_alerta DESC LIMIT p_limit;
 $$;
 
+-- Crea una sugerencia; repetirla con la misma clave devuelve la ya creada.
 DROP FUNCTION IF EXISTS fn_suggestion_create(integer, uuid, text, text);
 CREATE OR REPLACE FUNCTION fn_suggestion_create(p_user integer, p_key uuid, p_topic text, p_message text, p_version text)
 RETURNS TABLE(id_sugerencia integer, tema varchar, mensaje varchar, estado varchar, creado_en timestamptz, nueva boolean)
@@ -155,6 +160,7 @@ LANGUAGE sql STABLE AS $$
   FROM tb_sugerencias s WHERE s.id_usuario = p_user AND s.clave_idempotencia = p_key;
 $$;
 
+-- Últimas sugerencias enviadas por la cuenta.
 CREATE OR REPLACE FUNCTION fn_suggestions_mine(p_user integer, p_limit integer)
 RETURNS TABLE(id_sugerencia integer, tema varchar, mensaje varchar, estado varchar, creado_en timestamptz)
 LANGUAGE sql STABLE AS $$
@@ -176,6 +182,7 @@ LANGUAGE sql STABLE AS $$
   ORDER BY a.id_alerta DESC LIMIT p_limit OFFSET p_offset;
 $$;
 
+-- Sugerencias del panel sin las borradas, por estado (nulo = todos), con quien la envió.
 DROP FUNCTION IF EXISTS fn_suggestions_list(integer, text, integer, integer);
 CREATE OR REPLACE FUNCTION fn_suggestions_list(p_actor integer, p_state text, p_limit integer, p_offset integer)
 RETURNS TABLE(id_sugerencia integer, tema varchar, mensaje varchar, estado varchar, creado_en timestamptz,
@@ -188,6 +195,7 @@ LANGUAGE sql STABLE AS $$
   ORDER BY s.id_sugerencia DESC LIMIT p_limit OFFSET p_offset;
 $$;
 
+-- Cuántas alertas y sugerencias hay en cada estado, sin las borradas.
 CREATE OR REPLACE FUNCTION fn_participation_counts(p_actor integer)
 RETURNS TABLE(tipo text, estado varchar, total integer) LANGUAGE sql STABLE AS $$
   SELECT 'alertas', a.estado, count(*)::integer FROM tb_alertas a
@@ -241,6 +249,7 @@ BEGIN
 END;
 $$;
 
+-- Cambia el estado de una sugerencia si nadie lo cambió antes, y lo audita.
 CREATE OR REPLACE FUNCTION fn_suggestion_state_change(p_actor integer, p_id integer, p_state text, p_expected text)
 RETURNS TABLE(resultado text, estado varchar) LANGUAGE plpgsql AS $$
 #variable_conflict use_column

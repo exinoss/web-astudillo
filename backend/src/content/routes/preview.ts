@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia';
 import type { SQL } from 'bun';
-import type { Authorization } from '../../auth/types';
+import type { Authorization, Confirmation } from '../../auth/types';
 import type { Config } from '../../config';
 import { access, clearCookie, cookieOptions } from '../../http';
 import { strict } from '../../validation/esquemas';
@@ -13,8 +13,8 @@ import { createPreview } from '../services/preview';
 const SITE_PATH = /^\/(?![\/\\])[^\s\\]*$/;
 
 // `/api/vista-previa/*` va sin el prefijo admin: nginx las usa en las páginas, donde no llega la cookie de acceso.
-export function previewRoutes(sql: SQL, config: Config, security: Security, authorization: Authorization) {
-  const preview = createPreview(sql, authorization, security, createContent(sql, authorization));
+export function previewRoutes(sql: SQL, config: Config, security: Security, authorization: Authorization, confirmation: Confirmation) {
+  const preview = createPreview(sql, authorization, security, createContent(sql, authorization, confirmation));
   const pass = (cookie: Record<string, { value?: unknown }>) => cookie.vista_previa?.value as string | undefined;
   return new Elysia({ normalize: false })
     .post('/api/admin/vista-previa', ({ cookie }) => preview.request(access(cookie)))

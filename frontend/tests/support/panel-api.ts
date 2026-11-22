@@ -7,6 +7,12 @@ import type { DraftWorkEvidence, WorkEvidenceBody } from '../../src/lib/data/htt
 /** Lo que el panel simulado acepta para confirmar un cambio de rol o de estado. */
 export const CONTRASENIA_PANEL = 'Ab1!xyz';
 export const CODIGO_PANEL = '482913';
+
+/** Escribe la contraseña en «Confirma que eres tú» y confirma con Enter. */
+export async function confirmarConContrasenia(page: Page) {
+  await page.locator('#confirmar-valor').fill(CONTRASENIA_PANEL);
+  await page.locator('#confirmar-valor').press('Enter');
+}
 const photo = (id: number) => ({ idMedio: id, nombre: `foto-${id}`, ancho: 1600, alto: 1200, anchos: [480, 960, 1600] });
 
 export function panelData(rol: 'admin' | 'coadmin') {
@@ -107,6 +113,7 @@ export async function mockPanelApi(page: Page, data: ReturnType<typeof panelData
     if (path === '/api/admin/publicaciones' && method === 'GET')
       return json({ total: data.publications.length, pagina: 1, porPagina: 10, publicaciones: data.publications });
     if (path === '/api/admin/publicaciones') {
+      if (body().confirmacion !== CONTRASENIA_PANEL) return json({ error: 'La contraseña no es correcta' }, 403);
       data.publications.unshift({ id: data.publications.length + 1, estado: data.publishResult, creadoEn: new Date().toISOString(),
         iniciadoEn: null, terminadoEn: null, autor: 'Ana Torres', detalle: null });
       data.pending = [];

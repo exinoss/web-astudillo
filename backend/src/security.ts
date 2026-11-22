@@ -6,14 +6,17 @@ import type {
 } from "./security/types";
 import { ApiError } from "./http";
 
+/** Token aleatorio de 32 bytes en base64url. */
 export const randomToken = () => randomBytes(32).toString("base64url");
 /** Huella SHA-256 en hexadecimal. */
 export const sha256 = (value: string | Uint8Array) => createHash("sha256").update(value).digest("hex");
 export const tokenHash = sha256;
 export const PREVIEW_SECONDS = 2 * 60 * 60;
+/** Correo sin espacios y en minúsculas. */
 export const normalizeEmail = (value: string) => value.trim().toLowerCase();
 export type { Account, GoogleIdentity, Security } from './security/types';
 
+/** Firma y verifica los JWT propios y valida los de Google. */
 export function createSecurity(config: Config): SecurityContract {
   const key = new TextEncoder().encode(config.jwtSecret);
   const googleKeys = createRemoteJWKSet(new URL("https://www.googleapis.com/oauth2/v3/certs"));

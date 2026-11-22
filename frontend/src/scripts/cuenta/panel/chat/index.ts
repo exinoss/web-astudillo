@@ -18,9 +18,11 @@ function capture(form: HTMLElement) {
   }));
 }
 
+/** Vista previa de una respuesta del chat con su enlace. */
 const vistaChat = (c: Pick<ChatAnswer, "respuesta" | "enlaceTexto" | "enlaceRuta">) =>
   `${esc(c.respuesta || "La respuesta aparecerá aquí.")}${c.enlaceTexto && c.enlaceRuta ? ` <a href="${esc(c.enlaceRuta)}">${esc(c.enlaceTexto)}</a>` : ""}`;
 
+/** Fila editable de una pregunta frecuente. */
 const row = (c: ChatAnswer, i: number, total: number) => `
   <details class="faq border-t border-t-base-300 py-3 first:border-t-0" ${i === open ? "open" : ""}>
     <summary class="flex min-h-11 cursor-pointer items-center justify-between gap-2.5 text-[0.9rem] font-bold">
@@ -54,6 +56,7 @@ const row = (c: ChatAnswer, i: number, total: number) => `
     </div>
   </details>`;
 
+/** Pinta el editor de las preguntas frecuentes. */
 export async function renderChat(section: HTMLElement) {
   items ??= structuredClone(state.draft!.chat);
   section.innerHTML = `${card("Preguntas frecuentes", `
@@ -72,6 +75,7 @@ export async function renderChat(section: HTMLElement) {
   await drawUnanswered(section);
 }
 
+/** Conecta los controles del editor del chat. */
 function bind(section: HTMLElement) {
   const form = section.querySelector<HTMLFormElement>("#chat-form-panel")!;
   const edit = (change: () => void) => { capture(form); change(); void renderChat(section); };
@@ -114,6 +118,7 @@ function bind(section: HTMLElement) {
   });
 }
 
+/** Pinta las preguntas sin respuesta. */
 async function drawUnanswered(section: HTMLElement) {
   const container = section.querySelector<HTMLElement>("#sin-respuesta")!;
   const { preguntas } = await adminApi.unanswered();

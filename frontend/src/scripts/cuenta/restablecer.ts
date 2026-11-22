@@ -1,5 +1,5 @@
 import { authRepository } from '../../lib/data/auth';
-import { errorText, readToken, showStatus, validateFields, value } from '../../lib/cuenta/auth/page';
+import { errorText, readToken, showStatus, validateFields, formValue } from '../../lib/cuenta/auth/page';
 import { enviarConCarga } from '../../lib/comun/cambios';
 
 const form = document.querySelector<HTMLFormElement>('#reset-form')!;
@@ -21,7 +21,7 @@ form.addEventListener('submit', event => {
         showStatus(status, 'Revisa los campos marcados.', true);
         return;
       }
-      const contrasenia = value(form, 'contrasenia');
+      const contrasenia = formValue(form, 'contrasenia');
       await authRepository.resetPassword(token, contrasenia);
       form.hidden = true;
       done.hidden = false;

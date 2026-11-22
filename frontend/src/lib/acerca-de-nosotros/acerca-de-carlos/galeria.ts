@@ -3,6 +3,7 @@ import { iconSvg } from "../../comun/iconos";
 import { visorFotos } from "../../comun/visor-fotos";
 import type { AboutCarlosPageView } from "./vista";
 
+/** Galería de fotos de la página con sus controles. */
 export function gallerySection(photos: AboutCarlosPageView["gallery"]) {
   if (!photos.length) return "";
   const control = "grid size-11 shrink-0 place-items-center rounded-control border border-base-300 bg-base-100 text-primary disabled:opacity-40";

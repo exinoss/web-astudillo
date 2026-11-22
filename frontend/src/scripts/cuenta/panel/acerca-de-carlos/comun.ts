@@ -13,6 +13,7 @@ export interface SectionEditor {
 
 export const MAX_ITEMS = 6;
 
+/** Sube las fotos elegidas (hasta `limit`) y añade cada una con `use`. */
 export function onFiles(input: HTMLInputElement | null, limit: number, use: (foto: Photo) => void, editor: Editor, capture: () => void) {
   input?.addEventListener("change", () => {
     const files = [...(input.files ?? [])].slice(0, limit);

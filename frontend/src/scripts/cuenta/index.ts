@@ -1,7 +1,7 @@
 import { clearGoogleSelection, showGoogleButton } from '../../lib/cuenta/auth/google';
 import { showFormError } from '../../lib/cuenta/auth/bloqueo';
 import { setAccountNav } from '../../lib/cuenta/auth/navigation';
-import { errorText, showStatus, validateFields, value } from '../../lib/cuenta/auth/page';
+import { errorText, showStatus, validateFields, formValue } from '../../lib/cuenta/auth/page';
 import { authRepository } from '../../lib/data/auth';
 import type { Profile } from '../../lib/data/auth-repository';
 import { ApiError } from '../../lib/data/http/api-client';
@@ -34,6 +34,7 @@ let signingWithGoogle = false;
 /** Todo inicio de sesión correcto lleva a la portada o, si quedó un envío a medias, a su formulario. */
 const afterLogin = () => location.assign(destinoTrasAcceso());
 
+/** Pone el título y la entradilla de la sección de la cuenta. */
 function heading(title: string, lead: string) {
   document.title = `${title} · Carlos Astudillo`;
   document.querySelector<HTMLElement>('#account-title')!.textContent = title;
@@ -116,6 +117,7 @@ async function showProfile(profile: Profile) {
   passwordGoogleStep.hidden = true;
 }
 
+/** Carga y muestra el perfil. */
 async function loadProfile() {
   const profile = await authRepository.getProfile();
   status.hidden = true;
@@ -131,14 +133,14 @@ loginForm.addEventListener('submit', event => {
         showStatus(status, 'Revisa los campos marcados.', true);
         return;
       }
-      const result = await authRepository.login(value(loginForm, 'correo'), value(loginForm, 'contrasenia'));
+      const result = await authRepository.login(formValue(loginForm, 'correo'), formValue(loginForm, 'contrasenia'));
       if (result === 'link') {
         showStatus(status, 'Por seguridad te enviamos un enlace a tu correo para terminar de entrar. Revisa también la carpeta de spam.');
         return;
       }
       afterLogin();
     } catch (error) {
-      if (error instanceof ApiError && error.status === 429) showFormError(status, error, submit, value(loginForm, 'correo'));
+      if (error instanceof ApiError && error.status === 429) showFormError(status, error, submit, formValue(loginForm, 'correo'));
       else showAccountError(error);
     }
   });
@@ -165,7 +167,7 @@ const profileSubmit = profileForm.querySelector<HTMLButtonElement>('button[type=
 /** Activa «Guardar» solo cuando el nombre o la dirección difieren de los guardados. */
 const vigilarPerfil = () => vigilarCambios(profileForm, profileSubmit,
   { nombresCompletos: current?.nombresCompletos ?? '', direccion: current?.direccion ?? '' },
-  () => ({ nombresCompletos: value(profileForm, 'nombresCompletos').trim(), direccion: value(profileForm, 'direccion').trim() }));
+  () => ({ nombresCompletos: formValue(profileForm, 'nombresCompletos').trim(), direccion: formValue(profileForm, 'direccion').trim() }));
 
 profileForm.addEventListener('submit', event => {
   event.preventDefault();
@@ -181,8 +183,8 @@ profileForm.addEventListener('submit', event => {
         return;
       }
       const updated = await authRepository.updateProfile({
-        nombresCompletos: value(profileForm, 'nombresCompletos'),
-        direccion: value(profileForm, 'direccion'),
+        nombresCompletos: formValue(profileForm, 'nombresCompletos'),
+        direccion: formValue(profileForm, 'direccion'),
         versionPerfil: current!.versionPerfil,
       });
       current = { ...current!, ...updated };
@@ -215,7 +217,7 @@ async function saveGooglePassword(credential: string) {
   }
   await enviarConCarga(passwordForm.querySelector<HTMLButtonElement>('button[type="submit"]')!, passwordForm, async () => {
     try {
-      await authRepository.addPassword(credential, value(passwordForm, 'contrasenia'));
+      await authRepository.addPassword(credential, formValue(passwordForm, 'contrasenia'));
       passwordForm.reset();
       const updated = await authRepository.getProfile();
       await showProfile(updated);
@@ -245,9 +247,9 @@ changePasswordForm.addEventListener('submit', event => {
         showStatus(status, 'Revisa los campos marcados.', true);
         return;
       }
-      const contraseniaActual = value(changePasswordForm, 'contraseniaActual');
-      const contraseniaNueva = value(changePasswordForm, 'contraseniaNueva');
-      const confirmarContrasenia = value(changePasswordForm, 'confirmarContrasenia');
+      const contraseniaActual = formValue(changePasswordForm, 'contraseniaActual');
+      const contraseniaNueva = formValue(changePasswordForm, 'contraseniaNueva');
+      const confirmarContrasenia = formValue(changePasswordForm, 'confirmarContrasenia');
       await authRepository.changePassword({ contraseniaActual, contraseniaNueva, confirmarContrasenia });
       changePasswordForm.reset();
       await showLogin();

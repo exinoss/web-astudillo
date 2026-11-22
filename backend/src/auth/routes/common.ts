@@ -33,6 +33,7 @@ export function redirectToAccount(origin: string, path: string, tokenValue: stri
   } });
 }
 
+/** Borra las cookies de la sesión. */
 export function clearSession(context: AuthContextType, cookie: Record<string, Cookie<unknown>>) {
   clearCookie(cookie.access, context.config, '/api');
   clearCookie(cookie.refresh, context.config, '/api/auth');

@@ -2,6 +2,7 @@ import { Elysia, t } from 'elysia';
 import { publicAccount } from '../../http';
 import { acceptance, googleCredential, ipOf, setSession, strict, type AuthContext } from './common';
 
+/** Ruta del acceso con Google. */
 export function googleRoutes(context: AuthContext) {
   const { config, google, limit } = context;
   return new Elysia({ prefix: '/api/auth', normalize: false })

@@ -2,6 +2,7 @@ import type { VideoSource } from "../../../../../backend/src/contracts/video";
 
 export { avisoNoInsertable, PROVIDER_NAMES, videoLinkProblem, videoSource, type VideoSource } from "../../../../../backend/src/contracts/video";
 
+/** Pone el reproductor del video en su escenario. */
 export function mountPlayer(stage: HTMLElement, source: VideoSource, title: string) {
   stage.querySelector("iframe, video")?.remove();
   const player = source.provider === "mp4"

@@ -14,9 +14,11 @@ import { photosById } from './media';
 interface TeamInput { personas: TeamMemberStored[] }
 interface ParishInput { texto: string; fotos: { idMedio: number; alt: string }[] }
 
+/** Indica si el slug es de una parroquia. */
 const isParish = (slug: string): slug is ParroquiaSlug => PARROQUIAS.some(p => p.slug === slug);
 const EMPTY_PARISH: ParishStored = { texto: '', fotos: [] };
 
+/** «Mi equipo» sin personas y con las parroquias vacías. */
 export const emptyMyTeam = (): MyTeam => ({ equipo: [], parroquias: PARROQUIAS.map(p => ({ slug: p.slug, texto: '', fotos: [] })) });
 
 /** Una foto borrada deja a la persona sin foto y quita la foto de la parroquia. */
@@ -35,6 +37,7 @@ export async function listMyTeam(sql: SQL): Promise<MyTeam> {
   };
 }
 
+/** Servicio para guardar el equipo y las parroquias. */
 export function createMyTeam(sql: SQL, authorization: Authorization) {
   async function save(actor: { id_usuario: number }, key: string, content: TeamStored | ParishStored, ids: number[], version: string | null) {
     await existingPhotos(sql, ids);

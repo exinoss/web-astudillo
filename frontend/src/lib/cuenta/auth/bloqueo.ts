@@ -36,6 +36,7 @@ function lockButton(button: HTMLButtonElement, seconds: number, onEnd: () => voi
   tick();
 }
 
+/** Enlace a recuperar la contraseña con el correo ya escrito. */
 function recoveryLink(text: string, correo: string, alone: boolean) {
   const link = document.createElement('a');
   link.href = `/cuenta/recuperar/${correo ? `?correo=${encodeURIComponent(correo)}` : ''}`;

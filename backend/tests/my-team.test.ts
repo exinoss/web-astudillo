@@ -3,7 +3,7 @@ import { rm } from 'node:fs/promises';
 import { PARROQUIAS } from '../src/contracts/parroquias';
 import { diff } from '../src/content/services/content';
 import { migrate } from '../src/db/migrate';
-import { testApp } from './helpers';
+import { PASSWORD, testApp } from './helpers';
 
 const MEDIA = 'medios-pruebas-mi-equipo';
 const { sql, cookies, call, account, resetAccounts, draft, uploadPhoto } = testApp(MEDIA);
@@ -141,7 +141,7 @@ test('publicar congela «Mi equipo», los pendientes lo nombran y un snapshot an
   expect(pending.cambios).toContainEqual({ tipo: 'Mi equipo', descripcion: 'Equipo' });
   expect(pending.cambios).toContainEqual({ tipo: 'Mi equipo', descripcion: 'Alto Tambo' });
   expect(pending.cambios).not.toContainEqual({ tipo: 'Mi equipo', descripcion: 'Carondelet' });
-  expect((await call('/api/admin/publicaciones', 'POST', undefined, cookies.admin)).status).toBe(200);
+  expect((await call('/api/admin/publicaciones', 'POST', { confirmacion: PASSWORD }, cookies.admin)).status).toBe(200);
   const [{ contenido }] = await sql`SELECT contenido FROM tb_publicaciones ORDER BY id_publicacion DESC LIMIT 1`;
   expect(contenido.miEquipo.equipo[0].nombre).toBe('Rosa Valencia');
   const current = await draft();

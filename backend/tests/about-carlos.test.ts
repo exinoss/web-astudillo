@@ -5,7 +5,7 @@ import { MAX_ENTREVISTAS_VIDEO, MAX_PREGUNTAS, MAX_VIDEOS_CARLOS } from '../src/
 import { avisoNoInsertable } from '../src/contracts/video';
 import { diff } from '../src/content/services/content';
 import { migrate } from '../src/db/migrate';
-import { testApp } from './helpers';
+import { PASSWORD, testApp } from './helpers';
 
 const MEDIA = 'medios-pruebas-paginas';
 const { sql, cookies, call, account, resetAccounts, draft, uploadPhoto } = testApp(MEDIA);
@@ -150,7 +150,7 @@ test('el texto breve del video conserva sus saltos de línea; el título no los 
 test('publicar congela las páginas y un snapshot anterior sin ellas no cuenta como cambio', async () => {
   const pending = await (await call('/api/admin/publicaciones/pendientes', 'GET', undefined, cookies.admin)).json();
   expect(pending.cambios).toContainEqual({ tipo: 'Página', descripcion: 'Por qué quiero ser alcalde' });
-  expect((await call('/api/admin/publicaciones', 'POST', undefined, cookies.admin)).status).toBe(200);
+  expect((await call('/api/admin/publicaciones', 'POST', { confirmacion: PASSWORD }, cookies.admin)).status).toBe(200);
   const [{ contenido }] = await sql`SELECT contenido FROM tb_publicaciones ORDER BY id_publicacion DESC LIMIT 1`;
   expect(contenido.acercaDeCarlos['por-que-quiero-ser-alcalde'].videos[0].enlace).toBe(REEL);
   const current = await (await call('/api/admin/contenido', 'GET', undefined, cookies.coadmin)).json();

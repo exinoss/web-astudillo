@@ -12,6 +12,7 @@ let navegando = false;
 let temporizadores: number[] = [];
 let destruir: (() => void) | undefined;
 
+/** Oculta la capa de transición y cancela lo pendiente. */
 function ocultar() {
   temporizadores.forEach(clearTimeout);
   temporizadores = [];

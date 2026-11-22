@@ -46,6 +46,7 @@ export const card = (title: string, inner: string, extra = "") => `
     ${inner}
   </section>`;
 
+/** Valor sin espacios a los lados de un campo del panel. */
 export const value = (root: ParentNode, selector: string) =>
   (root.querySelector<HTMLInputElement | HTMLTextAreaElement>(selector)?.value ?? "").trim();
 
@@ -81,6 +82,7 @@ export function avisarVacios(raiz: ParentNode, message: string) {
   marcarVacios(raiz);
 }
 
+/** Indica si la cuenta tiene ese permiso. */
 export const can = (permission: string) => state.profile?.permisos.includes(permission) ?? false;
 
 /** Actualiza lo pendiente de publicar y el contador del botón de la cabecera. */
@@ -101,6 +103,7 @@ export async function guardarYRecargar(guardar: () => Promise<unknown>, despues:
   confirmarCambio(BORRADOR_GUARDADO);
 }
 
+/** Actualiza el botón «Publicar» y los de vista previa. */
 export function syncPublishButton() {
   publishButton.querySelector("span")!.textContent = state.pending.length
     ? `Publicar cambios (${state.pending.length})` : "Sin cambios por publicar";
@@ -108,6 +111,7 @@ export function syncPublishButton() {
   document.querySelectorAll<HTMLButtonElement>("[data-vista-previa]").forEach((b) => { b.disabled = nothingToPreview(); });
 }
 
+/** Indica si ese cambio está pendiente de publicar. */
 export const isPending = (tipo: string, descripcion: string) =>
   state.pending.some((c) => c.tipo === tipo && c.descripcion === descripcion);
 

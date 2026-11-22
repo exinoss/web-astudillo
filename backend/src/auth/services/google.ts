@@ -22,6 +22,7 @@ function isGoogleMailbox(identity: GoogleIdentity) {
   );
 }
 
+/** Servicio del acceso con Google: verifica la credencial y vincula o crea la cuenta. */
 export function createGoogleAuth(sql: SQL, security: Security, sessions: Sessions) {
   /** Vincula un sub verificado al usuario del mismo correo dentro de una transacción. */
   async function link(identity: GoogleIdentity, acceptance?: AceptacionLegal) {

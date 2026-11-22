@@ -32,6 +32,7 @@ const TEXTO_SUAVE = '#50617d', PIE_SUAVE = '#d5e0f2';
 const DISPLAY = "'Barlow Condensed','Arial Narrow','Roboto Condensed',Arial,sans-serif";
 const CUERPO = "'DM Sans',Arial,Helvetica,sans-serif";
 
+/** Escapa un texto para insertarlo en el HTML del correo. */
 const esc = (s: string) => s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 /** HTML del correo: cabecera con la marca, foto, título, botón y pie con #lanuevahistoria. */

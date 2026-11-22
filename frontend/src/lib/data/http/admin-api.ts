@@ -149,7 +149,7 @@ export const adminApi = {
   leavePreview: () => fetch(PREVIEW_EXIT, { redirect: 'manual', credentials: 'same-origin' }).catch(() => {}),
   pending: () => call<{ cambios: { tipo: string; descripcion: string }[] }>('/api/admin/publicaciones/pendientes'),
   /** Idempotente: si lo mismo ya está en cola o compilándose, devuelve esa publicación. */
-  publish: () => call<{ id: number; estado: Publication['estado'] }>('/api/admin/publicaciones', 'POST'),
+  publish: (confirmacion: string) => call<{ id: number; estado: Publication['estado'] }>('/api/admin/publicaciones', 'POST', { confirmacion }),
   publications: (pagina: number) => call<Page & { publicaciones: Publication[] }>(`/api/admin/publicaciones?pagina=${pagina}`),
   avisos: () => call<{ avisos: Aviso[] }>('/api/admin/avisos'),
   users: (filtros: { q?: string; rol?: string; estado?: string; pagina: number }) => {

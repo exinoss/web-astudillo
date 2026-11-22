@@ -6,14 +6,14 @@ Las reglas de `CLAUDE.md` y `AGENTS.md` que se pueden comprobar de forma mecáni
 
 | Regla | Qué detecta |
 | --- | --- |
-| `color-a-mano` | Colores escritos a mano (`#1e7a3c`, `bg-[#06317618]`) en `frontend/src`, en lugar de tokens de `@theme` |
+| `color-a-mano` | Colores escritos a mano (`#1e7a3c`, `bg-[#06317618]`) en `frontend/src`, en lugar de tokens de `@theme`. No cuenta `<meta name="theme-color">`, que el navegador lee fuera del CSS y no admite variables |
 | `breakpoint-a-mano` | `@min-[…]:`, `max-[…]:`, `md:`, `@media` en `.ts`/`.astro`, en lugar de las variantes de `global.css` |
 | `clases-repetidas` | El mismo conjunto de 4 o más clases en tres archivos o más |
 | `funcion-repetida` | Una función de nivel superior con el nombre de otra que ya se exporta desde otro archivo del mismo paquete (`frontend`, `backend` o `herramientas`): o es una copia que debe importarse, o necesita un nombre que diga lo que hace. No cuenta los nombres que exige Astro (`GET`, `getStaticPaths`…) |
 | `comentario-de-funcion` | Funciones de TypeScript (nivel superior) y SQL sin una sola línea de comentario encima |
-| `fetch-fuera-de-datos` | `fetch(` en `frontend/src` fuera de `src/lib/data/` |
+| `fetch-fuera-de-datos` | `fetch(` en `frontend/src` fuera de `src/lib/data/`, en archivos que nombran la API (`/api`, `API`) o importan de `lib/data/`. La descarga de recursos estáticos del propio sitio (animaciones, decodificador y modelos 3D importados con `?url`) no cuenta |
 | `imagen-sin-assets` | Imágenes locales enlazadas con una ruta escrita a mano |
-| `dependencia-nueva` | Dependencias que no estaban en el `package.json` del último commit |
+| `dependencia-nueva` | Dependencias que no estaban en el `package.json` del último commit (también con `--todo`) |
 
 Lo que exige criterio (si un texto revela la seguridad, si el resultado se ve idéntico, si se reutilizó lo que ya existía) no lo ve el script: sigue en manos de las capturas y de la revisión del usuario.
 
@@ -40,7 +40,7 @@ El hook `Stop` no repite la verificación si los archivos no cambiaron desde la 
 
 `herramientas/reglas/excepciones.json` lista las faltas permitidas, identificadas por regla, archivo y texto (no por número de línea).
 
-- Las que tienen el motivo «Existente al congelar la lista» son el código que ya incumplía las reglas el 2026-11-06: no bloquean, pero no se puede añadir nada nuevo. Es el inventario de lo que queda por corregir; al corregir una, se borra su entrada.
+- Desde el 2026-11-21 está vacía: se corrigió todo lo que se había congelado el 2026-11-06.
 - Una excepción nueva la añade solo el usuario, con su motivo.
 
 ## Quién puede cambiar los controles

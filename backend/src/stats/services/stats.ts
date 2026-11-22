@@ -1,27 +1,42 @@
 import type { SQL } from 'bun';
 import { callPg } from '../../db/call';
+import { sha256 } from '../../security';
 
-const SAME_VISIT_MS = 30 * 60_000;
 const CACHE_MS = 60_000;
-const MAX_TRACKED = 100_000;
+const NUEVAS_POR_IP = 120;
+const HORA_MS = 60 * 60_000;
+const MAX_IPS = 10_000;
+const AUTOMATIZADO = /bot[/;)]|crawl|spider|slurp|headless|lighthouse|pagespeed|facebookexternalhit|curl\/|wget|python-|go-http-client|node-fetch|axios/i;
 
 export interface SiteStats { visitas: number; voces: number; personas: number }
 
+/** Servicio que cuenta las visitas y calcula las cifras del sitio. */
 export function createStats(sql: SQL) {
-  // La IP solo se recuerda en memoria, para no contar dos veces la misma visita; nunca se guarda.
-  const recent = new Map<string, number>();
+  // La IP solo se recuerda en memoria, para el tope de visitas nuevas; nunca se guarda.
+  const nuevasPorIp = new Map<string, { count: number; until: number }>();
   let cache: { until: number; value: Promise<SiteStats> } | null = null;
 
+  /** Indica si esa IP aún puede sumar visitas nuevas en la hora en curso. */
+  function bajoElTope(ip: string, now: number) {
+    const entry = nuevasPorIp.get(ip);
+    return !entry || entry.until <= now || entry.count < NUEVAS_POR_IP;
+  }
+
+  /** Anota una visita nueva de esa IP. */
+  function anotar(ip: string, now: number) {
+    if (nuevasPorIp.size >= MAX_IPS) for (const [key, e] of nuevasPorIp) if (e.until <= now) nuevasPorIp.delete(key);
+    const entry = nuevasPorIp.get(ip);
+    nuevasPorIp.set(ip, !entry || entry.until <= now ? { count: 1, until: now + HORA_MS } : { ...entry, count: entry.count + 1 });
+  }
+
   return {
-    async visit(ip: string) {
+    /** Registra la actividad de un navegador; suma una visita si es nuevo o volvió tras 30 minutos sin actividad. */
+    async visit(visitante: string, ip: string, agente: string) {
+      if (!agente || AUTOMATIZADO.test(agente)) return false;
       const now = Date.now();
-      if ((recent.get(ip) ?? 0) > now) return;
-      if (recent.size >= MAX_TRACKED) {
-        for (const [key, until] of recent) if (until <= now) recent.delete(key);
-        if (recent.size >= MAX_TRACKED) recent.clear();
-      }
-      recent.set(ip, now + SAME_VISIT_MS);
-      await callPg(sql, 'visitAdd');
+      const [row] = await callPg<{ nueva: boolean }>(sql, 'visitRegister', [sha256(visitante), bajoElTope(ip, now)]);
+      if (row?.nueva) anotar(ip, now);
+      return !!row?.nueva;
     },
 
     /** Se recalcula como mucho una vez por minuto: la portada la pide en cada visita. */

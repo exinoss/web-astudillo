@@ -23,10 +23,13 @@ type HomeTeamInput = HomeCarouselsStored['equipo'];
 export const HOME_CAROUSELS_SEED = initial.inicio as Pick<HomeCarousels & HomeCarouselsStored, 'principal' | 'piezas'>;
 
 const BANNER_FIJO = 'portada';
+/** Id de la foto subida de una imagen, si lo tiene. */
 const ids = (image: HomeImageStored) => ('idMedio' in image ? [image.idMedio] : []);
+/** Fotos que usa el carrusel principal: banners, sus versiones para celular y el retrato. */
 const mainIds = ({ banners, retrato }: HomeMainInput) => [...banners.flatMap(b => [...ids(b.imagen), ...(b.celular ? [b.celular] : [])]), ...ids(retrato.imagen)];
 /** Fotos que usa el carrusel de piezas: las imágenes subidas y las portadas de los videos. */
 const piecesIds = ({ piezas }: HomePiecesInput) => piezas.flatMap(p => ('video' in p ? (p.video.idPortada ? [p.video.idPortada] : []) : ids(p.imagen)));
+/** Imagen lista para mostrar, o null si su foto se borró. */
 const resolve = (image: HomeImageStored, media: Map<number, Photo>): HomeImage | null =>
   'original' in image ? { original: image.original } : media.has(image.idMedio) ? { foto: media.get(image.idMedio)! } : null;
 

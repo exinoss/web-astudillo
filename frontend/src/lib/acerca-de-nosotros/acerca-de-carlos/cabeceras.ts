@@ -1,5 +1,6 @@
 import { editable } from "./html";
 
+/** Cabecera de «Por qué quiero ser alcalde» con sus textos editables. */
 export function alcaldeHeader(t: Record<string, string>) {
   return `
 <header class="max-w-[760px]">

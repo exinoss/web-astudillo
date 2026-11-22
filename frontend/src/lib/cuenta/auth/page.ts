@@ -32,8 +32,8 @@ export function validateFields(form: HTMLFormElement) {
   }
   const passwordName = form.dataset.newPassword;
   if (passwordName) {
-    const password = value(form, passwordName);
-    const confirmation = value(form, 'confirmarContrasenia');
+    const password = formValue(form, passwordName);
+    const confirmation = formValue(form, 'confirmarContrasenia');
     if (password && confirmation) {
       try { requirePassword(password, confirmation); }
       catch (error) {
@@ -47,6 +47,7 @@ export function validateFields(form: HTMLFormElement) {
   return !first;
 }
 
+/** Cantidad con su unidad en singular o en plural. */
 const plural = (amount: number, unit: string) => `${amount} ${unit}${amount === 1 ? '' : 's'}`;
 
 /** Espera legible: «45 segundos», «5 minutos», «6 horas», «2 días y 23 horas». */
@@ -58,6 +59,7 @@ export function waitText(seconds: number) {
   return hours ? `${plural(days, 'día')} y ${plural(hours, 'hora')}` : plural(days, 'día');
 }
 
+/** Mensaje para mostrar de un error, con la espera si hubo demasiados intentos. */
 export function errorText(error: unknown) {
   if (error instanceof ApiError && error.status === 429 && error.retryAfter)
     return `Demasiados intentos. Podrás intentarlo de nuevo en ${waitText(error.retryAfter)}.`;
@@ -77,6 +79,7 @@ export function readToken() {
   return token && /^[A-Za-z0-9_-]{43}$/.test(token) ? token : null;
 }
 
-export function value(form: HTMLFormElement, name: string) {
+/** Valor de un campo del formulario por su nombre. */
+export function formValue(form: HTMLFormElement, name: string) {
   return String(new FormData(form).get(name) ?? '');
 }

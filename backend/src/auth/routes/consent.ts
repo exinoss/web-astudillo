@@ -6,6 +6,7 @@ import { acceptance, strict } from './common';
 import type { SQL } from 'bun';
 import type { Authorization } from '../types';
 
+/** Ruta para aceptar las condiciones vigentes. */
 export function consentRoutes(sql: SQL, authorization: Authorization) {
   return new Elysia({ prefix: '/api/auth', normalize: false })
     .post('/accept-terms', async ({ cookie, body }) => {

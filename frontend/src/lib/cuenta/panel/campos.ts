@@ -29,7 +29,9 @@ export const FILA_BOTONES = "flex flex-wrap items-center gap-3";
 
 const UPLOAD = `${GHOST} relative cursor-pointer focus-within:outline-3 focus-within:outline-offset-2 focus-within:outline-neutral`;
 
+/** Dirección de la miniatura de una foto subida. */
 export const thumb = (foto: Photo) => uploadedUrl(foto, foto.anchos[0]);
+/** Botón para subir fotos con su campo de archivo. */
 export const upload = (id: string, label: string, multiple = false) =>
   `<label class="${UPLOAD}">${iconSvg("upload", 17)} ${esc(label)}<input id="${id}" type="file" accept="${ACEPTA_FOTOS}" ${multiple ? "multiple" : ""} class="sr-only" /></label>`;
 /** Botones para subir y bajar el elemento `i` de una lista; los `fijos` primeros no se mueven. */

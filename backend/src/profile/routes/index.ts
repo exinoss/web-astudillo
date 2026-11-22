@@ -6,6 +6,7 @@ import { LARGOS } from "../../contracts/limites";
 import { access } from "../../http";
 import { strict } from "../../validation/esquemas";
 
+/** Rutas del perfil de la cuenta. */
 export function profileRoutes(sql: SQL, authorization: Authorization) {
   const profile = createProfile(sql, authorization);
   return new Elysia({ prefix: "/api/me", normalize: false })

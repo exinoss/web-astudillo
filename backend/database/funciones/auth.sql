@@ -1,7 +1,9 @@
+-- Borra los tokens de autenticación vencidos.
 CREATE OR REPLACE FUNCTION fn_cleanup_tokens() RETURNS void LANGUAGE sql AS $$
   DELETE FROM tb_token_autenticacion WHERE expira_en < now();
 $$;
 
+-- Busca la cuenta por su correo ya normalizado.
 CREATE OR REPLACE FUNCTION fn_user_by_email(p_email text)
 RETURNS SETOF tb_usuarios LANGUAGE sql STABLE AS $$
   SELECT * FROM tb_usuarios WHERE lower(correo) = p_email;
@@ -13,6 +15,7 @@ RETURNS SETOF tb_usuarios LANGUAGE sql VOLATILE AS $$
   SELECT * FROM tb_usuarios WHERE lower(correo) = p_email FOR UPDATE;
 $$;
 
+-- Devuelve la cuenta si está activa.
 CREATE OR REPLACE FUNCTION fn_active_user(p_user integer)
 RETURNS SETOF tb_usuarios LANGUAGE sql STABLE AS $$
   SELECT * FROM tb_usuarios WHERE id_usuario = p_user AND estado = 'activo';
@@ -45,11 +48,13 @@ LANGUAGE sql STABLE AS $$
       WHERE id_usuario = p_user AND proveedor = 'google');
 $$;
 
+-- Indica si la cuenta aceptó esa versión de las condiciones.
 CREATE OR REPLACE FUNCTION fn_legal_accepted(p_user integer, p_version text)
 RETURNS TABLE(aceptado boolean) LANGUAGE sql STABLE AS $$
   SELECT EXISTS (SELECT 1 FROM tb_aceptaciones_legales a WHERE a.id_usuario = p_user AND a.version = p_version);
 $$;
 
+-- Registra la aceptación de las condiciones; repetirla conserva la primera fecha.
 CREATE OR REPLACE FUNCTION fn_legal_accept(p_user integer, p_version text, p_text text)
 RETURNS TABLE(resultado text, aceptado_en timestamptz) LANGUAGE plpgsql AS $$
 DECLARE v_accept tb_aceptaciones_legales%ROWTYPE;
@@ -131,6 +136,7 @@ RETURNS TABLE(verificado boolean) LANGUAGE sql STABLE AS $$
   );
 $$;
 
+-- Crea la cuenta de un registro pendiente cuyo token sigue vigente.
 CREATE OR REPLACE FUNCTION fn_registration_complete(p_token integer)
 RETURNS TABLE(id_usuario integer) LANGUAGE plpgsql AS $$
 DECLARE v_token record; v_user integer;
@@ -158,6 +164,7 @@ BEGIN
 END;
 $$;
 
+-- Busca la cuenta vinculada a un sub de Google.
 CREATE OR REPLACE FUNCTION fn_google_user(p_sub text)
 RETURNS SETOF tb_usuarios LANGUAGE sql STABLE AS $$
   SELECT u.* FROM tb_identidades_autenticacion i
@@ -195,6 +202,7 @@ BEGIN
 END;
 $$;
 
+-- Devuelve la cuenta dueña de un sub de Google, esté activa o no.
 CREATE OR REPLACE FUNCTION fn_google_identity_owner(p_sub text)
 RETURNS TABLE(id_usuario integer) LANGUAGE sql STABLE AS $$
   SELECT i.id_usuario FROM tb_identidades_autenticacion i
@@ -231,12 +239,14 @@ BEGIN
 END;
 $$;
 
+-- Busca y bloquea un token por su huella y su propósito.
 CREATE OR REPLACE FUNCTION fn_auth_token_get(p_hash text, p_purpose text)
 RETURNS SETOF tb_token_autenticacion LANGUAGE sql VOLATILE AS $$
   SELECT * FROM tb_token_autenticacion
   WHERE token_hash = p_hash AND proposito = p_purpose FOR UPDATE;
 $$;
 
+-- Marca un token como usado; repetirlo no cambia nada.
 CREATE OR REPLACE FUNCTION fn_auth_token_consume(p_token integer)
 RETURNS void LANGUAGE sql AS $$
   UPDATE tb_token_autenticacion SET consumido_en = now()
@@ -257,6 +267,7 @@ RETURNS TABLE(correo varchar(320), contrasenia_hash text) LANGUAGE sql STABLE AS
   WHERE u.id_usuario = p_user AND u.estado = 'activo';
 $$;
 
+-- Huella del último código de confirmación vigente de la cuenta.
 CREATE OR REPLACE FUNCTION fn_confirmation_code(p_user integer)
 RETURNS TABLE(token_hash text) LANGUAGE sql STABLE AS $$
   SELECT t.token_hash FROM tb_token_autenticacion t
@@ -265,6 +276,7 @@ RETURNS TABLE(token_hash text) LANGUAGE sql STABLE AS $$
   ORDER BY t.creado_en DESC LIMIT 1;
 $$;
 
+-- Cuenta con contraseña buscada por correo, con su hash.
 CREATE OR REPLACE FUNCTION fn_password_user(p_email text)
 RETURNS TABLE(
   id_usuario integer, correo varchar(320), nombres_completos varchar(200),
@@ -360,9 +372,9 @@ RETURNS void LANGUAGE sql AS $$
   VALUES (p_user, p_hash, now() + make_interval(secs => p_seconds));
 $$;
 
--- Cambia el refresh de una sesión vigente por uno nuevo y le da otros `p_seconds` segundos de vida.
-DROP FUNCTION IF EXISTS fn_session_rotate(text, text);
-CREATE OR REPLACE FUNCTION fn_session_rotate(p_old_hash text, p_new_hash text, p_seconds integer)
+-- Cambia el refresh de una sesión vigente por uno nuevo sin alargar su vencimiento.
+DROP FUNCTION IF EXISTS fn_session_rotate(text, text, integer);
+CREATE OR REPLACE FUNCTION fn_session_rotate(p_old_hash text, p_new_hash text)
 RETURNS SETOF tb_usuarios LANGUAGE plpgsql AS $$
 DECLARE v_user tb_usuarios%ROWTYPE;
 BEGIN
@@ -372,7 +384,7 @@ BEGIN
     AND s.expira_en > now() AND u.estado = 'activo' FOR UPDATE OF s;
   IF NOT FOUND THEN RETURN; END IF;
   UPDATE tb_sesiones SET token_hash = p_new_hash, token_hash_anterior = p_old_hash, rotado_en = now(),
-    expira_en = now() + make_interval(secs => p_seconds), ultimo_uso_en = now()
+    ultimo_uso_en = now()
   WHERE token_hash = p_old_hash;
   RETURN NEXT v_user;
 END;
@@ -386,6 +398,14 @@ RETURNS SETOF tb_usuarios LANGUAGE sql STABLE AS $$
     AND s.revocado_en IS NULL AND s.expira_en > now() AND u.estado = 'activo';
 $$;
 
+-- Revoca la sesión cuyo refresh anterior vuelve a usarse pasado el margen; repetirlo no cambia nada.
+CREATE OR REPLACE FUNCTION fn_session_revoke_reused(p_old_hash text)
+RETURNS void LANGUAGE sql AS $$
+  UPDATE tb_sesiones SET revocado_en = now()
+  WHERE token_hash_anterior = p_old_hash AND revocado_en IS NULL;
+$$;
+
+-- Revoca la sesión de esa huella; repetirlo no cambia nada.
 CREATE OR REPLACE FUNCTION fn_session_revoke(p_hash text)
 RETURNS void LANGUAGE sql AS $$
   UPDATE tb_sesiones SET revocado_en = now()
@@ -445,6 +465,7 @@ RETURNS TABLE(total integer) LANGUAGE sql STABLE AS $$
     AND l.bloqueado_hasta > now() + interval '1 day';
 $$;
 
+-- Borra el contador de intentos de una clave.
 CREATE OR REPLACE FUNCTION fn_limit_clear(p_key text)
 RETURNS void LANGUAGE sql AS $$
   DELETE FROM tb_limites_intentos WHERE clave = p_key;

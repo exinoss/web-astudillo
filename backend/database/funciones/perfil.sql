@@ -1,3 +1,4 @@
+-- Guarda el nombre y la dirección del perfil con control de versión.
 DROP FUNCTION IF EXISTS fn_profile_update(integer, text, text);
 CREATE OR REPLACE FUNCTION fn_profile_update(p_user integer, p_name text, p_address text, p_version integer)
 RETURNS TABLE(resultado text, usuario jsonb, version_perfil integer) LANGUAGE plpgsql AS $$

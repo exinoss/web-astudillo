@@ -4,6 +4,8 @@ import { fotoDePrueba } from './fotos';
 
 // Solo para las pruebas aisladas (`--mode test`): una persona por puesto, con y sin foto, y una parroquia por caso
 // (texto y fotos, solo texto, solo fotos); el resto queda vacío.
+
+/** Fotos de prueba numeradas a partir de `desde`. */
 const fotos = (desde: number, cantidad: number) => Array.from({ length: cantidad }, (_, i) => ({ foto: fotoDePrueba(desde + i), alt: `Foto de prueba ${i + 1}` }));
 
 export const miEquipo: NonNullable<Snapshot['miEquipo']> = {

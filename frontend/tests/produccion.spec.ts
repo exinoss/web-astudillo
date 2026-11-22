@@ -10,7 +10,8 @@ let server: Server;
 let origin: string;
 let output: string;
 let stats = { visitas: 240, voces: 18 };
-let visits = 0;
+let visits: string[] = [];
+let fallosVisita = 0;
 const MIME: Record<string, string> = {
   '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json',
   '.webp': 'image/webp', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.woff2': 'font/woff2',
@@ -30,7 +31,14 @@ test.beforeAll(async () => {
       if (path === '/api/contenido/publicado') return response.end(JSON.stringify({ ...initial, version: 1, originales: initial.textos }));
       if (path === '/api/estadisticas') return response.end(JSON.stringify(stats));
       if (path === '/api/visitas' && request.method === 'POST') {
-        visits++;
+        let body = '';
+        for await (const chunk of request) body += chunk;
+        if (fallosVisita > 0) {
+          fallosVisita--;
+          response.writeHead(503).end();
+          return;
+        }
+        visits.push(JSON.parse(body).visitante);
         response.writeHead(204).end();
         return;
       }
@@ -82,14 +90,32 @@ test('la portada de producción actualiza las cifras y registra la visita en el 
   await page.locator('[data-cifras]').scrollIntoViewIfNeeded();
   await expect(page.locator('[data-cifra="visitas"]')).toHaveText('3.456');
   await expect(page.locator('[data-cifra="voces"]')).toHaveText('29');
-  await expect.poll(() => visits).toBe(1);
+  await expect.poll(() => visits.length).toBe(1);
+  expect(visits[0]).toMatch(/^[a-f0-9]{32}$/);
   expect(requests).toContain(origin + '/api/estadisticas');
   expect(requests).toContain(origin + '/api/visitas');
   expect(requests.every(url => new URL(url).origin === origin)).toBe(true);
   await page.reload();
   await expect(page.locator('[data-cifra="visitas"]')).toHaveAttribute('data-valor', '240');
-  expect(visits).toBe(1);
+  await expect.poll(() => visits.length).toBe(2);
+  expect(visits[1]).toBe(visits[0]);
   expect(errors).toEqual([]);
+});
+
+test('cada navegador tiene su identificador, sus pestañas lo comparten y un envío fallido se reintenta', async ({ browser }) => {
+  visits = [];
+  const dispositivos = await Promise.all([browser.newContext(), browser.newContext()]);
+  for (const contexto of dispositivos) await contexto.addInitScript(() => Object.defineProperty(navigator, 'webdriver', { get: () => false }));
+  const [a, b] = dispositivos;
+  await (await a.newPage()).goto(origin);
+  await (await b.newPage()).goto(origin);
+  await expect.poll(() => visits.length).toBe(2);
+  expect(visits[1]).not.toBe(visits[0]);
+  fallosVisita = 1;
+  await (await a.newPage()).goto(`${origin}/acerca-de-nosotros/biografia/`);
+  await expect.poll(() => visits.length, { timeout: 10_000 }).toBe(3);
+  expect(visits[2]).toBe(visits[0]);
+  await Promise.all(dispositivos.map((c) => c.close()));
 });
 
 test('si falla la API de cifras, la portada de producción conserva las cifras publicadas', async ({ page }) => {

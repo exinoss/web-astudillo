@@ -481,3 +481,12 @@ export const tbVisitasDia = pgTable("tb_visitas_dia", {
 }, () => [
 	check("ck_visitas_dia_total", sql`total >= 0`),
 ]);
+
+// Huella del identificador anónimo de cada navegador con actividad en los últimos 30 minutos; después se borra.
+export const tbVisitantesActivos = pgTable("tb_visitantes_activos", {
+	visitante: text().primaryKey(),
+	ultimaActividad: timestamp("ultima_actividad", { withTimezone: true, mode: 'string' }).notNull(),
+}, (table) => [
+	index("idx_visitantes_actividad").using("btree", table.ultimaActividad.asc().nullsLast().op("timestamptz_ops")),
+	check("ck_visitante_huella", sql`visitante ~ '^[a-f0-9]{64}$'`),
+]);
