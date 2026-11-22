@@ -32,6 +32,7 @@ export interface Snapshot {
   inicio?: ApiHomeCarousels;
 }
 
+/** Imagen de la portada que entrega la API, en la forma que usa el sitio. */
 const homeImage = (image: ApiHomeImage): HomeImage => ('foto' in image ? { photo: image.foto } : { original: image.original });
 
 export abstract class SnapshotRepository implements ContentRepository {

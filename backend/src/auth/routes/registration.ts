@@ -3,6 +3,7 @@ import { normalizeEmail } from '../../security';
 import { acceptance, email, ipOf, password, redirectToAccount, strict, token, type AuthContext } from './common';
 import { LARGOS } from '../../contracts/limites';
 
+/** Rutas del registro con correo. */
 export function registrationRoutes({ config, registration, limit }: AuthContext) {
   return new Elysia({ prefix: '/api/auth', normalize: false })
     .post('/register', async ({ body, request, server }) => {

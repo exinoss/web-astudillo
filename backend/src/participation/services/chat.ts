@@ -42,6 +42,7 @@ function bestAnswer(question: string, answers: ChatAnswer[]) {
   return best;
 }
 
+/** Servicio del chat: responde las consultas con las preguntas frecuentes. */
 export function createChat(sql: SQL, authorization: Authorization, limit: Limiter, content: Content) {
   const sending = compartirEnCurso<ChatResponse>();
   return {

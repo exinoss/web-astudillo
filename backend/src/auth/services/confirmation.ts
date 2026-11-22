@@ -13,12 +13,14 @@ const VIGENCIA_CODIGO = 600;
 
 // Sal propia por código: con solo 6 dígitos, dos códigos iguales darían el mismo hash y chocarían en su índice único.
 const cifrar = (codigo: string, sal = randomToken()) => `${sal}.${tokenHash(`${sal}:${codigo}`)}`;
+/** Compara en tiempo constante un código con su huella guardada. */
 const coincide = (codigo: string, guardado: string) => {
   const calculado = Buffer.from(cifrar(codigo, guardado.split(".")[0]));
   const esperado = Buffer.from(guardado);
   return calculado.length === esperado.length && timingSafeEqual(calculado, esperado);
 };
 
+/** Servicio que confirma la identidad con la contraseña o con un código por correo. */
 export function createConfirmation(sql: SQL, attempts: Attempts, mailer: Mailer) {
   async function metodo(userId: number) {
     const [row] = await callPg<{ correo: string; contrasenia_hash: string | null }>(sql, "confirmationMethod", [userId]);

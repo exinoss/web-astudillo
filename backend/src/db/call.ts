@@ -125,14 +125,19 @@ type Row = Record<string, unknown>;
 
 /** Ejecuta una función PostgreSQL del catálogo con parámetros enlazados; las listas de números van como texto «1,2,3». */
 export function callPg<T extends object = Row>(db: SQL, functionName: 'alertByKey', values: Params['alertByKey']): Promise<T[]>;
+/** Firma de `fn_alert_create`, con sus valores en orden. */
 export function callPg<T extends object = Row>(db: SQL, functionName: 'alertCreate', values: Params['alertCreate']): Promise<T[]>;
 /** Firma de `fn_alert_visibility_change`: lo nuevo y lo que veía el panel, en ese orden. */
 export function callPg<T extends object = Row>(db: SQL, functionName: 'alertVisibilityChange', values: Params['alertVisibilityChange']): Promise<T[]>;
 /** Firma de `fn_pending_create`, que recibe ocho valores en orden. */
 export function callPg<T extends object = Row>(db: SQL, functionName: 'pendingCreate', values: Params['pendingCreate']): Promise<T[]>;
+/** Firma de `fn_suggestion_by_key`: cuenta y clave de idempotencia. */
 export function callPg<T extends object = Row>(db: SQL, functionName: 'suggestionByKey', values: Params['suggestionByKey']): Promise<T[]>;
+/** Firma de `fn_suggestion_create`, con sus valores en orden. */
 export function callPg<T extends object = Row>(db: SQL, functionName: 'suggestionCreate', values: Params['suggestionCreate']): Promise<T[]>;
+/** Firma de las funciones del catálogo que no tienen una propia en `Params`. */
 export function callPg<T extends object = Row>(db: SQL, functionName: Exclude<PgFunction, keyof Params>, values?: unknown[]): Promise<T[]>;
+/** Comprueba que la función esté en el catálogo y la ejecuta. */
 export function callPg<T extends object = Row>(db: SQL, functionName: PgFunction, values: unknown[] = []): Promise<T[]> {
   if (!Object.hasOwn(names, functionName)) throw new Error('Función PostgreSQL no permitida');
   const placeholders = values.map((_, index) => `$${index + 1}`).join(', ');

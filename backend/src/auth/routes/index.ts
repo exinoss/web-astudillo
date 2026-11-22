@@ -17,6 +17,7 @@ import { registrationRoutes } from './registration';
 import { sessionRoutes } from './sessions';
 import { consentRoutes } from './consent';
 
+/** Reúne las rutas de autenticación con los servicios que comparten. */
 export function authRoutes(sql: SQL, config: Config, mailer: Mailer,
   security: Security, authorization: Authorization) {
   const sessions = createSessions(sql, security);

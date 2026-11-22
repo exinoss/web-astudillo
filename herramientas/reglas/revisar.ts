@@ -67,7 +67,7 @@ export function revisar(rutas: string[], modo: Modo, conExcepciones = true): Fal
     ...comprobarArchivo(a),
     ...clasesRepetidas(a, clases),
     ...funcionesRepetidas(a, exportadas),
-    ...dependenciasNuevas(a, modo === "todo" ? null : git("show", `HEAD:${a.ruta}`)),
+    ...dependenciasNuevas(a, git("show", `HEAD:${a.ruta}`)),
   ]);
   if (!conExcepciones) return faltas;
   const permitidas = new Set(leerExcepciones().map(claveDe));

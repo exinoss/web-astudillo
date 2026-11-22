@@ -10,14 +10,20 @@ interface Persona { clave: string; puesto: Puesto | null; nombre: string; presen
 let personas: Persona[] | null = null;
 let marcarSinTipo = false;
 
+/** Grupo de un puesto. */
 const grupoDe = (puesto: Puesto | null) => PUESTOS.find((p) => p.clave === puesto)?.grupo;
+/** Cuántos puestos tiene un grupo. */
 const cuantos = (grupo: Grupo) => PUESTOS.filter((p) => p.grupo === grupo).length;
+/** Puestos que ocupan las demás personas. */
 const ocupados = (salvo: Persona) => new Set(personas!.flatMap((p) => (p !== salvo && p.puesto ? [p.puesto] : [])));
 // Se asignan primero los principales y después los suplentes: 1er, 2do y 3er concejal, y luego sus suplentes.
 const delGrupo = (grupo: Grupo) => PUESTOS.filter((p) => p.grupo === grupo).sort((a, b) => a.fila - b.fila || a.columna - b.columna);
+/** Puestos libres de un grupo, en orden de asignación. */
 const libres = (grupo: Grupo, salvo: Persona) => delGrupo(grupo).filter((p) => !ocupados(salvo).has(p.clave));
 
+/** Personas del borrador, cada una con una clave para la lista. */
 const desdeBorrador = (): Persona[] => state.draft!.miEquipo.equipo.map(({ foto, ...p }) => ({ clave: crypto.randomUUID(), ...p, foto }));
+/** Personas tal como las recibe la API. */
 const paraGuardar = (lista: (Omit<Persona, "clave" | "puesto"> & { puesto: Puesto | null })[]) =>
   lista.map(({ foto, ...p }) => ({
     idMedio: foto?.idMedio ?? null, puesto: p.puesto, nombre: p.nombre,
@@ -25,6 +31,7 @@ const paraGuardar = (lista: (Omit<Persona, "clave" | "puesto"> & { puesto: Puest
     trayectoria: p.puesto === "prefecto" ? p.trayectoria.map((x) => x.trim()).filter(Boolean) : [],
   }));
 
+/** Pasa a la copia de trabajo lo escrito en el formulario. */
 function capturar(form: HTMLElement) {
   personas!.forEach((p, i) => {
     p.nombre = value(form, `#persona-nombre-${i}`);
@@ -92,6 +99,7 @@ function tarjeta(p: Persona, i: number) {
   </li>`;
 }
 
+/** Pinta el editor del equipo. */
 export function renderTeam(body: HTMLElement, rerender: () => void) {
   personas ??= desdeBorrador();
   body.innerHTML = `

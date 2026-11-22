@@ -12,8 +12,10 @@ const status = document.querySelector<HTMLElement>('#account-status')!;
 const retry = document.querySelector<HTMLButtonElement>('#vista-previa-reintentar')!;
 const requested = new URLSearchParams(location.search).get('ruta') ?? '';
 const path = SITE_PATH.test(requested) ? requested : '/';
+/** Espera los milisegundos indicados. */
 const wait = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+/** Pide la vista previa, espera a que esté lista y la abre. */
 async function open() {
   retry.hidden = true;
   showStatus(status, 'Preparando la vista previa…');

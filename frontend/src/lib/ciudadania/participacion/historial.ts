@@ -32,6 +32,7 @@ export const filaHistorial = (o: {
   </li>`;
 };
 
+/** Cuadro con el ícono de una fila sin foto. */
 export const cuadroIcono = (icono: string) =>
   `<span class="grid size-14 place-items-center rounded-card bg-neutral-soft text-neutral">${iconSvg(icono, 26)}</span>`;
 

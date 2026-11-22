@@ -12,6 +12,7 @@ import { requireConfirmation, requireNewPassword } from '../password-policy';
 import { passwordHash, passwordVerify } from './limits';
 import { accountLink, sendTokenMail, usableToken } from './tokens';
 
+/** Servicio para recuperar, cambiar y añadir la contraseña. */
 export function createPasswords(sql: SQL, security: Security, attempts: Attempts, mailer: Mailer, config: Config) {
   /** Indica si `password` ya es la contraseña de la cuenta; permite repetir una operación sin error. */
   async function isCurrentPassword(correo: string, password: string) {

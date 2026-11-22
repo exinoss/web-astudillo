@@ -15,6 +15,7 @@ type WorkingItem = DraftBiographyItem & { clave: string };
 let items: WorkingItem[] | null = null;
 let selected = 0;
 
+/** Miniatura de la foto del hito, o su hueco si no tiene. */
 const photoPreview = (item: DraftBiographyItem, big = false) => item.foto
   ? `<img src="${esc(uploadedUrl(item.foto, item.foto.anchos[0]))}" alt="" class="${big ? "aspect-[4/3] w-full rounded-[12px]" : "h-11 w-16 rounded-card"} object-cover" />`
   : `<span class="${big ? "aspect-[4/3] w-full rounded-[12px] text-[0.8rem]" : "h-11 w-16 rounded-card text-[0.6rem]"} grid place-items-center border border-dashed border-neutral/35 bg-neutral/8 font-bold text-neutral">Sin foto</span>`;
@@ -33,6 +34,7 @@ function capture(form: HTMLElement) {
   };
 }
 
+/** Pinta el editor de la biografía. */
 export function renderBiography(section: HTMLElement) {
   items ??= structuredClone(state.draft!.biografia).map((h) => ({ ...h, clave: crypto.randomUUID() }));
   selected = Math.min(selected, Math.max(0, items.length - 1));
@@ -97,6 +99,7 @@ export function renderBiography(section: HTMLElement) {
   bind(section);
 }
 
+/** Conecta los controles del editor de la biografía. */
 function bind(section: HTMLElement) {
   const form = section.querySelector<HTMLFormElement>("#hito-form");
   const go = (next: () => void) => { if (form) capture(form); next(); renderBiography(section); };

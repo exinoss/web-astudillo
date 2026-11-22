@@ -1,6 +1,6 @@
 import { authRepository } from '../../lib/data/auth';
 import { showFormError } from '../../lib/cuenta/auth/bloqueo';
-import { showStatus, validateFields, value } from '../../lib/cuenta/auth/page';
+import { showStatus, validateFields, formValue } from '../../lib/cuenta/auth/page';
 import { enviarConCarga } from '../../lib/comun/cambios';
 
 const form = document.querySelector<HTMLFormElement>('#recovery-form')!;
@@ -18,7 +18,7 @@ form.addEventListener('submit', event => {
         showStatus(status, 'Escribe un correo válido.', true);
         return;
       }
-      await authRepository.requestReset(value(form, 'correo'));
+      await authRepository.requestReset(formValue(form, 'correo'));
       form.hidden = true;
       showStatus(status, 'Si existe una cuenta con contraseña, recibirás un enlace para restablecerla.');
     } catch (error) {

@@ -18,6 +18,7 @@ import { profileRoutes } from "./profile/routes";
 import type { Security } from "./security";
 import { statsRoutes } from "./stats/routes";
 
+/** Arma la aplicación con sus módulos y las comprobaciones comunes a todas las rutas. */
 export function createApp(deps: { sql: SQL; config: Config; mailer: Mailer; security: Security }) {
   const { sql, config, mailer, security } = deps;
   const authorization = createAuthorization(sql, security);

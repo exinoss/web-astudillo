@@ -7,8 +7,10 @@ import { busy, DRAFT_PILL, esc, filtro, GHOST, guardarYRecargar, iconSvg, isPend
 const PAGE_SIZE = 20;
 const filters = { q: "", lugar: "", estado: "", pagina: 1 };
 const places = [...new Set(Object.values(TEXTOS).map((t) => t.lugar))];
+/** Texto sin tildes y en minúsculas, para buscar. */
 const normalize = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 
+/** Pinta el editor de textos con su buscador. */
 export function renderTexts(section: HTMLElement) {
   section.innerHTML = `
     <div id="panel-redes" class="mb-7"></div>
@@ -40,6 +42,7 @@ export function renderTexts(section: HTMLElement) {
   drawList(section);
 }
 
+/** Pinta la lista de textos filtrada. */
 function drawList(section: HTMLElement) {
   const overrides = state.draft!.textos;
   const q = normalize(filters.q.trim());

@@ -30,6 +30,7 @@ const activas = new Set<Activa>();
 const cargarReproductor = reintentable((conReintento) =>
   cargarScript(conReintento(reproductorUrl)).then(() => (window as any).lottie as LottiePlayer));
 
+/** Descarga una sola vez los datos de una animación. */
 function cargarDatos(animacion: Animacion) {
   let promesa = datos.get(animacion);
   if (!promesa) {
@@ -144,6 +145,7 @@ export async function reproducirEnHilo(contenedor: HTMLElement, animacion: Anima
   }
 }
 
+/** Reproduce la animación o la deja quieta según el modo sin movimiento. */
 function aplicarMovimiento({ item, quieto, bucle }: Activa) {
   if (sinMovimiento()) item.goToAndStop(quieto, true);
   // Cualquier cambio de clase en <html> llega aquí: sin comprobar la pausa, la entrada se cortaría.

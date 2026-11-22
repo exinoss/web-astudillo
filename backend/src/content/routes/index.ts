@@ -26,6 +26,7 @@ const video = {
   titulo: text(LARGOS.acercaDeCarlos.tituloVideo), enlace: t.String({ maxLength: VIDEO_URL_MAX }), vertical: t.Boolean(), idPortada: t.Union([mediaId, t.Null()]),
 };
 
+/** Rutas del contenido público y de su edición en el panel. */
 export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: string) {
   const content = createContent(sql, authorization);
   const media = createMedia(sql, authorization, mediaDir);

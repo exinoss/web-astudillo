@@ -5,6 +5,7 @@ import { LARGOS } from '../../contracts/limites';
 
 const LINK_SENT = 'Por seguridad te enviamos un enlace a tu correo para terminar de entrar';
 
+/** Rutas para iniciar, renovar y cerrar la sesión. */
 export function sessionRoutes(context: AuthContext) {
   const { login, sessions, config } = context;
   return new Elysia({ prefix: '/api/auth', normalize: false })

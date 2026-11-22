@@ -6,6 +6,7 @@ export const MAX_BYTES_FOTO = MAX_MB_FOTO * 1024 * 1024;
 // Tope de píxeles por debajo del de sharp: una imagen «bomba» pequeña en bytes no agota la memoria del servidor
 // ni la del navegador que la muestra (una JPEG de 100 MP puede pesar 4 MB).
 export const MAX_PIXELES = 40_000_000;
+/** Aviso para una foto que pasa del máximo de megapíxeles. */
 export const avisoMegapixeles = (pixeles: number) =>
   `La foto mide ${(pixeles / 1e6).toLocaleString('es', { maximumFractionDigits: 1 })} megapíxeles; `
   + `el máximo es ${MAX_PIXELES / 1e6} (por ejemplo, 8000 × 5000 px). Redúcela y vuelve a subirla.`;

@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { contentRepository } from '../lib/data';
 import { absoluteUrl, publicPaths } from '../lib/comun/seo';
 import { esc } from '../lib/comun/html';
+/** Mapa del sitio con las páginas públicas, las propuestas y las de ciudadanía. */
 export const GET: APIRoute = async () => {
   const [proposals,citizens]=await Promise.all([contentRepository.getProposals(),contentRepository.getCitizenLinks()]);
   const paths=[...publicPaths,...proposals.map(p=>`/propuestas/${p.slug}/`),...citizens.map(p=>`/ciudadania/${p.slug}/`)];

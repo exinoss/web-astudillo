@@ -297,6 +297,23 @@ test('participación: el estado se cambia y un cambio ajeno no se pisa', async (
   expect(data.alertas[0].estado).toBe('recibida');
 });
 
+test('participación: la foto de una alerta se amplía en el visor, sin abrir su dirección', async ({ page }) => {
+  const data = panelData('admin');
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+  Object.assign(data.alertas[0], { foto: { miniatura: png, grande: png } });
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#participacion');
+  const ampliar = page.locator('#seccion-participacion').getByRole('button', { name: 'Ampliar la foto de la alerta' });
+  await ampliar.click();
+  const visor = page.getByRole('dialog', { name: 'Foto de la alerta' });
+  await expect(visor.getByRole('img', { name: 'Foto de la alerta' })).toBeVisible();
+  await expect(visor).toContainText('Barrio Central · Fuga de agua en la tubería principal.');
+  expect(page.context().pages()).toHaveLength(1);
+  await page.keyboard.press('Escape');
+  await expect(visor).toBeHidden();
+  await expect(ampliar).toBeFocused();
+});
+
 test('participación: publicar, mostrar el nombre y borrar con la contraseña', async ({ page }) => {
   const data = panelData('admin');
   await mockPanelApi(page, data);

@@ -15,6 +15,7 @@ export interface Config {
   privateMediaDir: string;
 }
 
+/** Lee y valida la configuración de las variables de entorno. */
 export function loadConfig(env = process.env): Config {
   const required = (key: string) => {
     const value = env[key]?.trim();

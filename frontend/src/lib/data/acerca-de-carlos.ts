@@ -11,6 +11,7 @@ export interface ApiAboutCarlosPage<F extends UploadedPicture = UploadedPicture>
   galeria: { foto: F; alt: string; pie: string }[];
 }
 
+/** Convierte la página que entrega la API en la que usa el sitio. */
 export const toAboutCarlosPage = (page?: ApiAboutCarlosPage): AboutCarlosPage => ({
   videos: videosDePagina(page).map(v => ({ title: v.titulo, description: v.descripcion, url: v.enlace, vertical: v.vertical, cover: v.portada, medium: v.medio ?? null })),
   interview: (page?.entrevista ?? []).map(e => ({ question: e.pregunta, answer: e.respuesta })),

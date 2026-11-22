@@ -7,6 +7,7 @@ const MAX_TRACKED = 100_000;
 
 export interface SiteStats { visitas: number; voces: number; personas: number }
 
+/** Servicio que cuenta las visitas y calcula las cifras del sitio. */
 export function createStats(sql: SQL) {
   // La IP solo se recuerda en memoria, para no contar dos veces la misma visita; nunca se guarda.
   const recent = new Map<string, number>();

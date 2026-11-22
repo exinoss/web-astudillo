@@ -70,7 +70,7 @@ import EnlaceCuenta from '../../components/cuenta/EnlaceCuenta.astro';
             <AccountField id="confirm-new-password" name="confirmarContrasenia" label="Repite la nueva contraseña" type="password" placeholder="Escribe tu contraseña" autocomplete="new-password" required maxLength={LARGOS.cuenta.contrasenia} />
             <button type="submit" class="button w-full">Actualizar contraseña</button>
           </form>
-          <p class="m-0 mt-[18px] border border-[#d9e0ea] bg-[#f8f9fc] px-4 py-3 text-[0.82rem] leading-normal">Al cambiarla, se cerrarán tus sesiones y tendrás que ingresar otra vez.</p>
+          <p class="m-0 mt-[18px] border border-note-border bg-note px-4 py-3 text-[0.82rem] leading-normal">Al cambiarla, se cerrarán tus sesiones y tendrás que ingresar otra vez.</p>
           <AccountSignOut id="logout-button" />
         </AccountCard>
       </div>

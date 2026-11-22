@@ -1,7 +1,9 @@
 import type { UploadedPicture } from "../data/types";
 
+/** Dirección de una foto subida en ese ancho. */
 export const uploadedUrl = (picture: UploadedPicture, width: number) => `/medios/${picture.nombre}-${width}.webp`;
 
+/** `srcset` con todos los anchos de una foto subida. */
 export const uploadedSrcset = (picture: UploadedPicture) =>
   picture.anchos.map((w) => `${uploadedUrl(picture, w)} ${w}w`).join(", ");
 
@@ -11,6 +13,7 @@ export const medidasFoto = (picture: UploadedPicture) =>
 
 export interface ImageView { src: string; srcset?: string; width?: number; height?: number }
 
+/** Foto subida lista para pintarse con `img()`. */
 export const imageView = (picture: UploadedPicture): ImageView => ({
   src: uploadedUrl(picture, picture.anchos.at(-1)!), srcset: uploadedSrcset(picture), width: picture.ancho, height: picture.alto,
 });

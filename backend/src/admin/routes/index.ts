@@ -9,6 +9,7 @@ import { createAdminUsers } from '../services/users';
 import { LARGOS } from '../../contracts/limites';
 import { ROLES } from '../../contracts/roles';
 
+/** Rutas del panel para administrar las cuentas. */
 export function adminRoutes(sql: SQL, authorization: Authorization, confirmation: Confirmation, trustProxyIp: boolean) {
   const users = createAdminUsers(sql, authorization, confirmation);
   return new Elysia({ prefix: '/api/admin', normalize: false })

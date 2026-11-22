@@ -11,5 +11,6 @@ export const escLines = (value: string) => value.split("\n").map(esc).join("<br>
 /** Separa un texto en párrafos por las líneas en blanco, sin los vacíos. */
 export const parrafos = (text: string) => text.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
 
+/** Etiqueta `<img>` con su `srcset`, sus medidas y carga diferida. */
 export const img = (image: ImageView, alt: string, className: string, sizes: string, loading: "lazy" | "eager" = "lazy") =>
   `<img class="${className}" src="${esc(image.src)}"${image.srcset ? ` srcset="${esc(image.srcset)}" sizes="${sizes}"` : ""}${image.width ? ` width="${image.width}" height="${image.height}"` : ""} alt="${esc(alt)}" loading="${loading}" decoding="async" />`;

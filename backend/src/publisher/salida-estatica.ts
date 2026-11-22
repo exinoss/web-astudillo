@@ -5,6 +5,7 @@ interface Output { dist: string; next: string; previous: string }
 const ASSET_RETENTION_MS = 7 * 86_400_000;
 const ASSET_MANIFEST = '.recursos-retenidos.json';
 
+/** Indica si existe la ruta; cualquier otro error se lanza. */
 async function exists(path: string) {
   return stat(path).then(() => true, (error: NodeJS.ErrnoException) => {
     if (error.code === 'ENOENT') return false;
@@ -12,6 +13,7 @@ async function exists(path: string) {
   });
 }
 
+/** Copia a la salida nueva los recursos de `_astro` de la anterior que aún no caducaron. */
 async function preserveAssets(dist: string, next: string) {
   const assets = join(next, '_astro');
   if (!await exists(assets)) return;
@@ -50,6 +52,7 @@ async function renameRetrying(from: string, to: string) {
   }
 }
 
+/** Pone la salida nueva en lugar de la publicada y guarda esta como anterior. */
 export async function swap({ dist, next, previous }: Output) {
   await stat(next);
   await preserveAssets(dist, next);

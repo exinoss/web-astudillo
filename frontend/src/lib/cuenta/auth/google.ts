@@ -65,6 +65,7 @@ export async function showGoogleButton(
   observers.set(element, observer);
 }
 
+/** Evita que Google vuelva a elegir la cuenta solo tras cerrar sesión. */
 export function clearGoogleSelection() {
   window.google?.accounts.id.disableAutoSelect();
 }

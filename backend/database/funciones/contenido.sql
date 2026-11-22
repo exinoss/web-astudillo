@@ -1,9 +1,11 @@
+-- Textos del sitio: el editado o, si no lo hay, el de la semilla.
 CREATE OR REPLACE FUNCTION fn_texts_list()
 RETURNS TABLE(clave varchar, valor text, actualizado_en timestamptz) LANGUAGE sql STABLE AS $$
   SELECT COALESCE(t.clave, i.clave), COALESCE(t.valor, i.valor), t.actualizado_en
   FROM tb_textos_iniciales i FULL JOIN tb_textos t USING (clave) ORDER BY 1;
 $$;
 
+-- Textos de la semilla.
 CREATE OR REPLACE FUNCTION fn_texts_initial()
 RETURNS TABLE(clave varchar, valor text) LANGUAGE sql STABLE AS $$
   SELECT i.clave, i.valor FROM tb_textos_iniciales i ORDER BY i.clave;
@@ -16,6 +18,7 @@ $$;
 --   3) si la versión que trae no es la actual, responde 'conflicto' y no escribe;
 --   4) si no, guarda y devuelve la versión nueva.
 
+-- Estado editable de una propuesta (datos y cifras) en JSON.
 CREATE OR REPLACE FUNCTION fn_proposal_state(p_slug text)
 RETURNS jsonb LANGUAGE sql STABLE AS $$
   SELECT jsonb_build_object('nombre', p.nombre, 'categoria', p.categoria, 'introduccion', p.introduccion,
@@ -24,6 +27,7 @@ RETURNS jsonb LANGUAGE sql STABLE AS $$
   FROM tb_propuestas p WHERE p.slug = p_slug;
 $$;
 
+-- Hitos de la biografía en JSON, en orden.
 CREATE OR REPLACE FUNCTION fn_biography_state()
 RETURNS jsonb LANGUAGE sql STABLE AS $$
   SELECT COALESCE(jsonb_agg(jsonb_build_object('anios', h.anios, 'titulo', h.titulo, 'texto', h.texto,
@@ -31,6 +35,7 @@ RETURNS jsonb LANGUAGE sql STABLE AS $$
   FROM tb_biografia_hitos h;
 $$;
 
+-- Estado editable de una obra (nota, hitos, fotos y videos) en JSON.
 CREATE OR REPLACE FUNCTION fn_work_state(p_slug text)
 RETURNS jsonb LANGUAGE sql STABLE AS $$
   SELECT jsonb_build_object('nota', o.nota,
@@ -43,6 +48,7 @@ RETURNS jsonb LANGUAGE sql STABLE AS $$
   FROM tb_obras o WHERE o.slug = p_slug;
 $$;
 
+-- Preguntas frecuentes del chat en JSON, en orden.
 CREATE OR REPLACE FUNCTION fn_chat_state()
 RETURNS jsonb LANGUAGE sql STABLE AS $$
   SELECT COALESCE(jsonb_agg(jsonb_build_object('pregunta', c.pregunta, 'palabrasClave', c.palabras_clave,
@@ -51,6 +57,7 @@ RETURNS jsonb LANGUAGE sql STABLE AS $$
   FROM tb_chat_respuestas c;
 $$;
 
+-- Contenido de una página «Acerca de Carlos»; vacío si aún no se guardó.
 CREATE OR REPLACE FUNCTION fn_about_carlos_state(p_slug text)
 RETURNS jsonb LANGUAGE sql STABLE AS $$
   SELECT CASE WHEN p_slug IN ('por-que-quiero-ser-alcalde', 'conoce-mas') THEN COALESCE(
@@ -58,6 +65,7 @@ RETURNS jsonb LANGUAGE sql STABLE AS $$
     '{"videos": [], "entrevista": [], "galeria": []}'::jsonb) END;
 $$;
 
+-- Las dos páginas «Acerca de Carlos» con su contenido, en orden.
 CREATE OR REPLACE FUNCTION fn_about_carlos_list()
 RETURNS TABLE(slug text, contenido jsonb) LANGUAGE sql STABLE AS $$
   SELECT s.slug, fn_about_carlos_state(s.slug)
@@ -85,6 +93,7 @@ BEGIN
 END;
 $$;
 
+-- Partes guardadas de «Mi equipo».
 CREATE OR REPLACE FUNCTION fn_my_team_list()
 RETURNS TABLE(clave varchar, contenido jsonb) LANGUAGE sql STABLE AS $$
   SELECT m.clave, m.contenido FROM tb_mi_equipo m ORDER BY m.clave;
@@ -110,6 +119,7 @@ BEGIN
 END;
 $$;
 
+-- Carruseles guardados de la portada.
 CREATE OR REPLACE FUNCTION fn_home_carousels_list()
 RETURNS TABLE(clave varchar, contenido jsonb) LANGUAGE sql STABLE AS $$
   SELECT c.clave, c.contenido FROM tb_inicio_carruseles c ORDER BY c.clave;
@@ -174,6 +184,7 @@ BEGIN
 END;
 $$;
 
+-- Propuestas con sus cifras, en orden.
 CREATE OR REPLACE FUNCTION fn_proposals_list()
 RETURNS TABLE(slug varchar, nombre varchar, categoria varchar, introduccion varchar,
   kpis jsonb, actualizado_en timestamptz) LANGUAGE sql STABLE AS $$
@@ -324,6 +335,7 @@ LANGUAGE sql STABLE AS $$
   SELECT m.id_medio, m.nombre, m.ancho, m.alto, to_jsonb(m.anchos) FROM tb_medios m WHERE m.hash_contenido = p_hash;
 $$;
 
+-- Medidas y anchos de las fotos pedidas (ids separados por comas).
 CREATE OR REPLACE FUNCTION fn_media_details(p_ids text)
 RETURNS TABLE(id_medio integer, nombre varchar, ancho integer, alto integer, anchos jsonb)
 LANGUAGE sql STABLE AS $$

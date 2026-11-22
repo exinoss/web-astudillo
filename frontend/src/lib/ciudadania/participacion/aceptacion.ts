@@ -4,6 +4,7 @@ import { marcarError } from '../../comun/campos';
 
 const controls = new WeakMap<HTMLFormElement, ReturnType<typeof crearControl>>();
 
+/** Prepara la casilla de aceptación de un formulario y el texto de su botón. */
 function crearControl(form: HTMLFormElement) {
   const block = form.querySelector<HTMLElement>('[data-aceptacion]')!;
   const checkbox = block.querySelector<HTMLInputElement>('input')!;
@@ -58,6 +59,7 @@ function crearControl(form: HTMLFormElement) {
   };
 }
 
+/** Control de aceptación del formulario, creado una sola vez. */
 export function prepararAceptacion(form: HTMLFormElement) {
   let control = controls.get(form);
   if (!control) { control = crearControl(form); controls.set(form, control); }

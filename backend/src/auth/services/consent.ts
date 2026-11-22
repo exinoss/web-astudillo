@@ -3,16 +3,19 @@ import { TEXTO_ACEPTACION, VERSION_LEGAL, type AceptacionLegal } from '../../con
 import { callPg } from '../../db/call';
 import { ApiError } from '../../http';
 
+/** Exige que se haya marcado la versión vigente de las condiciones. */
 export function requireAcceptance(input: AceptacionLegal) {
   if (input?.aceptada !== true) throw new ApiError(422, 'Marca la casilla para continuar');
   if (input.version !== VERSION_LEGAL) throw new ApiError(409, 'Las condiciones cambiaron. Recarga la página para revisarlas');
 }
 
+/** Indica si la cuenta aceptó las condiciones vigentes. */
 export async function hasAcceptance(sql: SQL, user: number) {
   const [row] = await callPg<{ aceptado: boolean }>(sql, 'legalAccepted', [user, VERSION_LEGAL]);
   return row?.aceptado === true;
 }
 
+/** Registra la aceptación de las condiciones vigentes. */
 export async function acceptTerms(sql: SQL, user: number, input: AceptacionLegal) {
   requireAcceptance(input);
   const [row] = await callPg<{ resultado: string }>(sql, 'legalAccept', [user, VERSION_LEGAL, TEXTO_ACEPTACION]);
@@ -21,6 +24,7 @@ export async function acceptTerms(sql: SQL, user: number, input: AceptacionLegal
   return { terminosAceptados: true };
 }
 
+/** Exige haber aceptado las condiciones vigentes antes de participar. */
 export async function requireParticipationAcceptance(sql: SQL, user: number) {
   if (!await hasAcceptance(sql, user)) throw new ApiError(428, 'Confirma tu aceptación para continuar', { requiereAceptacion: true });
 }

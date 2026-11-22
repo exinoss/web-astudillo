@@ -37,6 +37,7 @@ const tablist = document.querySelector<HTMLElement>("#panel-pestanias")!;
 const tabs = [...tablist.querySelectorAll<HTMLButtonElement>("[data-pestania]")];
 const publishButton = document.querySelector<HTMLButtonElement>("#panel-publicar")!;
 
+/** Pestañas visibles para la cuenta. */
 const available = () => tabs.filter((t) => !t.hidden).map((t) => t.dataset.pestania!);
 
 /** Muestra la pestaña pedida (o la primera disponible) y la vuelve a pintar con el borrador actual. */
@@ -80,6 +81,7 @@ function prepararAviso(clave: string | null) {
   else if (tipo === "alertas" || tipo === "sugerencias") filtrarParticipacion(tipo, valor);
 }
 
+/** Conecta las pestañas al clic y al teclado. */
 function bindTabs() {
   tabs.forEach((tab) => tab.addEventListener("click", () => open(tab.dataset.pestania!)));
   // Teclado del patrón de pestañas: flechas, Inicio y Fin (también se puede usar Tab y clic).
@@ -104,6 +106,7 @@ function bindTabs() {
   });
 }
 
+/** Carga el perfil y el borrador y abre el panel. */
 async function start() {
   const done = mostrarCarga(loading, "Cargando el panel…");
   try {

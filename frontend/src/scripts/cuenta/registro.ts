@@ -1,6 +1,6 @@
 import { authRepository } from '../../lib/data/auth';
 import { showFormError } from '../../lib/cuenta/auth/bloqueo';
-import { showStatus, validateFields, value } from '../../lib/cuenta/auth/page';
+import { showStatus, validateFields, formValue } from '../../lib/cuenta/auth/page';
 import { enviarConCarga } from '../../lib/comun/cambios';
 import { acceptanceOf } from '../../lib/cuenta/auth/acceptance';
 
@@ -15,12 +15,12 @@ form.addEventListener('submit', event => {
         showStatus(status, 'Revisa los campos marcados antes de continuar.', true);
         return;
       }
-      const contrasenia = value(form, 'contrasenia');
-      const confirmarContrasenia = value(form, 'confirmarContrasenia');
+      const contrasenia = formValue(form, 'contrasenia');
+      const confirmarContrasenia = formValue(form, 'confirmarContrasenia');
       await authRepository.register({
-        nombresCompletos: value(form, 'nombresCompletos'),
-        direccion: value(form, 'direccion'),
-        correo: value(form, 'correo'),
+        nombresCompletos: formValue(form, 'nombresCompletos'),
+        direccion: formValue(form, 'direccion'),
+        correo: formValue(form, 'correo'),
         contrasenia, confirmarContrasenia,
         aceptacion: acceptanceOf(form)!,
       });

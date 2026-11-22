@@ -98,17 +98,20 @@ BEGIN
 END;
 $$;
 
+-- Estado de la vista previa.
 CREATE OR REPLACE FUNCTION fn_preview_state()
 RETURNS TABLE(estado varchar) LANGUAGE sql STABLE AS $$
   SELECT v.estado FROM tb_vista_previa v WHERE v.id = 1;
 $$;
 
+-- Toma la vista previa en cola para compilarla y devuelve su contenido.
 CREATE OR REPLACE FUNCTION fn_preview_claim()
 RETURNS TABLE(contenido jsonb) LANGUAGE sql AS $$
   UPDATE tb_vista_previa v SET estado = 'compilando' WHERE v.id = 1 AND v.estado = 'en_cola'
   RETURNING v.contenido;
 $$;
 
+-- Marca la vista previa en compilación como lista o fallida.
 CREATE OR REPLACE FUNCTION fn_preview_finish(p_ok boolean, p_detail text)
 RETURNS void LANGUAGE sql AS $$
   UPDATE tb_vista_previa SET estado = CASE WHEN p_ok THEN 'lista' ELSE 'fallida' END,

@@ -12,9 +12,11 @@ const STATES: Record<Publication["estado"], [string, string]> = {
 let page = 1;
 let poll = 0;
 
+/** Duración de una publicación en segundos. */
 const duration = (p: Publication) => p.iniciadoEn && p.terminadoEn
   ? `${Math.max(1, Math.round((Date.parse(p.terminadoEn) - Date.parse(p.iniciadoEn)) / 1000))} s` : "—";
 
+/** Pinta los cambios pendientes y el historial de publicaciones. */
 export async function renderPublications(section: HTMLElement) {
   clearTimeout(poll);
   await reloadPending();
@@ -48,6 +50,7 @@ export async function publish(button: HTMLButtonElement | null, section: HTMLEle
   syncPublishButton();
 }
 
+/** Pinta el historial de publicaciones. */
 async function drawHistory(section: HTMLElement) {
   const data = await adminApi.publications(page);
   const box = section.querySelector<HTMLElement>("#historial");

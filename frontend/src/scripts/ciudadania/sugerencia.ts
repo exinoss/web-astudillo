@@ -32,8 +32,10 @@ const cargarHistorial = historial<SentSuggestion, Published<SentSuggestion>>(doc
 });
 let idempotencia = "";
 
+/** Marca el tema indicado, si existe. */
 const marcarTema = (valor: string | null | undefined) =>
   valor && form.querySelector<HTMLInputElement>(`input[name="tema"][value="${CSS.escape(valor)}"]`)?.click();
+/** Tema marcado. */
 const temaElegido = () => form.querySelector<HTMLInputElement>('input[name="tema"]:checked')?.value;
 
 // «Compartir una sugerencia» desde una propuesta llega con su tema (?tema=agua-potable).

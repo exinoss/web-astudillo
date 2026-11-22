@@ -9,11 +9,15 @@ import { renderPagination } from "../../../../lib/cuenta/panel/paginacion";
 import { PESTANA_SUBRAYADA } from "../../../../lib/comun/pestanas";
 import { ESTADOS, TIPOS_ALERTA } from "../../../../lib/ciudadania/participacion/tipos";
 import { busy, can, card, cargar, confirmarCambio, esc, fechaHora, ICON_DANGER, iconSvg, state } from "../ui";
+import { ampliarAlPulsar } from "../../../../lib/comun/visor-fotos";
 
 const view = { tipo: "alertas" as ParticipationKind, estado: "" as ParticipationState | "", pagina: 1 };
+// La sección es fija aunque su contenido se repinte: el clic se escucha una sola vez.
+ampliarAlPulsar(document.querySelector<HTMLElement>("#seccion-participacion")!, "visor-alerta-panel", "Foto de la alerta");
 const STATES = Object.keys(ESTADOS) as ParticipationState[];
 const CHIP = "min-h-11 rounded-full border border-base-300 bg-base-100 px-3.5 text-[0.78rem] font-bold aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-content";
 
+/** Nombre del tema de una sugerencia. */
 const topicName = (slug: string) => slug === "otro" ? "Otra idea" : state.draft!.propuestas.find((p) => p.slug === slug)?.nombre ?? slug;
 
 /** Selector de estado con «Guardar» y la papelera; quien solo consulta ve la píldora del estado. */
@@ -48,10 +52,11 @@ const visibilityControls = (id: number, v: ParticipationVisibility) => can("part
     ${v.publica === undefined ? "" : interruptor("publica", id, "Publicada en el sitio", v.publica)}${interruptor("nombre", id, "Mostrar el nombre", !v.anonima)}
   </div>` : "";
 
+/** Fila de una alerta en el panel. */
 function alertItem(a: ReviewedAlert) {
   const tipo = TIPOS_ALERTA.find((t) => t.valor === a.tipo)!;
   const thumb = a.foto
-    ? `<a href="${esc(a.foto.grande)}" target="_blank" rel="noopener" aria-label="Ver la foto en grande"><img class="size-[72px] rounded-card object-cover max-tablet:size-14" src="${esc(a.foto.miniatura)}" alt="Foto enviada con la alerta" loading="lazy" /></a>`
+    ? `<button type="button" class="block cursor-zoom-in rounded-card" data-ampliar="${esc(a.foto.grande)}" data-pie="${esc(`${a.sector} · ${a.descripcion}`)}" aria-label="Ampliar la foto de la alerta"><img class="size-[72px] rounded-card object-cover max-tablet:size-14" src="${esc(a.foto.miniatura)}" alt="Foto enviada con la alerta" loading="lazy" /></button>`
     : `<span class="grid size-[72px] place-items-center rounded-card bg-neutral-soft text-neutral max-tablet:size-14">${iconSvg(tipo.icono, 28)}</span>`;
   return `<li class="grid grid-cols-[72px_minmax(0,1fr)_auto] items-start gap-3.5 border-t border-t-base-300 py-4 first:border-t-0 max-tablet:grid-cols-[56px_minmax(0,1fr)]">
     ${thumb}
@@ -65,6 +70,7 @@ function alertItem(a: ReviewedAlert) {
   </li>`;
 }
 
+/** Fila de una sugerencia en el panel. */
 function suggestionItem(s: ReviewedSuggestion) {
   return `<li class="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3.5 border-t border-t-base-300 py-4 first:border-t-0 max-tablet:grid-cols-1">
     <div class="min-w-0">
@@ -82,6 +88,7 @@ export function filtrarParticipacion(tipo: ParticipationKind, estado: string) {
   if (STATES.includes(estado as ParticipationState)) Object.assign(view, { tipo, estado, pagina: 1 });
 }
 
+/** Pinta la lista de alertas o sugerencias con sus filtros. */
 export async function renderParticipation(section: HTMLElement) {
   const data = await adminApi.participation<ReviewedAlert | ReviewedSuggestion>(view.tipo, view.pagina, view.estado || undefined);
   const counts = data.conteo[view.tipo];
@@ -103,6 +110,7 @@ export async function renderParticipation(section: HTMLElement) {
   bind(section, data);
 }
 
+/** Conecta los filtros, la paginación y los controles de la lista. */
 function bind(section: HTMLElement, data: ParticipationPage<unknown>) {
   const reload = () => cargar(renderParticipation(section));
   section.querySelectorAll<HTMLButtonElement>("[data-tipo]").forEach((b) => b.addEventListener("click", () => {

@@ -8,15 +8,20 @@ let elegida: string = PARROQUIAS[0].slug;
 // Una copia por parroquia: cambiar de parroquia o de sección no pierde lo escrito.
 const trabajo: Record<string, Parroquia> = {};
 
+/** Nombre de una parroquia. */
 const nombre = (slug: string) => PARROQUIAS.find((p) => p.slug === slug)!.nombre;
+/** Parroquia tal como está en el borrador. */
 const delBorrador = (slug: string) => state.draft!.miEquipo.parroquias.find((p) => p.slug === slug)!;
+/** Parroquia tal como la recibe la API. */
 const paraGuardar = (p: Parroquia) => ({ texto: p.texto, fotos: p.fotos.map((f) => ({ idMedio: f.foto.idMedio, alt: f.alt })) });
 
+/** Pasa a la copia de trabajo lo escrito en el formulario. */
 function capturar(form: HTMLElement) {
   const p = trabajo[elegida];
   trabajo[elegida] = { ...p, texto: value(form, "#parroquia-texto"), fotos: p.fotos.map((f, i) => ({ ...f, alt: value(form, `#parroquia-foto-${i}`) })) };
 }
 
+/** Pinta el editor de la parroquia elegida. */
 export function renderParishes(body: HTMLElement, rerender: () => void) {
   const p = (trabajo[elegida] ??= structuredClone(delBorrador(elegida)));
   const fotos = p.fotos.map((f, i) => `

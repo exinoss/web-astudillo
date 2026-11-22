@@ -18,6 +18,7 @@ interface UserFilters {
   pagina: number;
 }
 
+/** Servicio para listar las cuentas y cambiar su rol o su estado. */
 export function createAdminUsers(sql: SQL, authorization: Authorization, confirmation: Confirmation) {
   /** Carga la cuenta objetivo y aplica la jerarquía antes de tocar la base. */
   async function target(actor: UserRow, targetId: number) {

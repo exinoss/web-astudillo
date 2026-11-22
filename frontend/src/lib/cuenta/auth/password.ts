@@ -5,6 +5,7 @@ const MESSAGES = {
   sucesion: 'Evita secuencias de 4 o más letras o números, como abcd o 1234.',
 };
 
+/** Valida la contraseña nueva y su confirmación. */
 export function requirePassword(password: string, confirmation: string) {
   const problem = passwordProblem(password);
   if (problem) throw new Error(MESSAGES[problem]);

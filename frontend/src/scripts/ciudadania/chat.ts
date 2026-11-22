@@ -18,6 +18,7 @@ let pendiente: { mensaje: string; idempotencia: string } | undefined;
 const botones = form.querySelectorAll<HTMLButtonElement>('button');
 const respuestasRapidas = document.querySelectorAll<HTMLButtonElement>('[data-chat]');
 
+/** Bloquea o libera los botones mientras se espera la respuesta. */
 function bloquear(activo: boolean) {
   ocupado = activo;
   for (const boton of [...botones, ...respuestasRapidas]) boton.disabled = activo;
@@ -98,6 +99,7 @@ if (borrador) {
 
 const sintesis = "speechSynthesis" in window ? window.speechSynthesis : null;
 
+/** Activa o silencia la lectura en voz alta y, con `recordar`, lo guarda. */
 function activarVoz(activa: boolean, recordar = true) {
   voz.setAttribute("aria-pressed", String(activa));
   voz.querySelector<HTMLElement>(".voz-activa")!.hidden = !activa;
@@ -106,6 +108,7 @@ function activarVoz(activa: boolean, recordar = true) {
   if (recordar) guardarClave("local", PREFERENCIA, String(activa));
 }
 
+/** Lee el texto en voz alta si la voz está activada. */
 function leerEnVozAlta(texto: string) {
   if (!sintesis || voz.getAttribute("aria-pressed") !== "true") return;
   sintesis.cancel();

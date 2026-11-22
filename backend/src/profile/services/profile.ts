@@ -9,6 +9,7 @@ import { hasAcceptance } from '../../auth/services/consent';
 import { plainText } from '../../validation/texto';
 import { LARGOS } from '../../contracts/limites';
 
+/** Servicio para ver y editar el perfil. */
 export function createProfile(sql: SQL, authorization: Authorization) {
   return {
     /** Devuelve datos públicos del perfil e indicadores de métodos de acceso. */

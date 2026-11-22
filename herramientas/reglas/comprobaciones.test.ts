@@ -9,6 +9,8 @@ test("colores y breakpoints a mano", () => {
   expect(reglas(TS, '/** a */\nconst c = "#1e7a3c";')).toContain("color-a-mano");
   expect(reglas(TS, 'const html = `<p class="bg-[#06317618]">`;')).toContain("color-a-mano");
   expect(reglas(TS, 'document.querySelector("#kpis");\nlocation.hash = "#add";')).not.toContain("color-a-mano");
+  expect(reglas("frontend/src/layouts/a.astro", '<meta name="theme-color" content="#063176" />')).not.toContain("color-a-mano");
+  expect(reglas("frontend/src/layouts/a.astro", '<meta name="x" content="#063176" />')).toContain("color-a-mano");
   expect(reglas(TS, 'const c = "@min-[35rem]:grid-cols-2 md:flex";')).toContain("breakpoint-a-mano");
   expect(reglas(TS, 'const c = "max-tablet:flex contenedor-estrecho:grid min-h-[110px] max-w-[300px]";')).not.toContain("breakpoint-a-mano");
 });
@@ -27,6 +29,8 @@ test("una sola línea de comentario encima de cada función", () => {
 test("fetch, imágenes y dependencias", () => {
   expect(reglas("frontend/src/pages/a.astro", "await fetch('/api/x')")).toContain("fetch-fuera-de-datos");
   expect(reglas("frontend/src/lib/data/http/a.ts", "/** Pide. */\nconst pedir = () => fetch('/api/x');")).not.toContain("fetch-fuera-de-datos");
+  expect(reglas(TS, 'import { API } from "../data/http/api";\nawait fetch(`${API}/contenido`);')).toContain("fetch-fuera-de-datos");
+  expect(reglas(TS, 'import modeloUrl from "./modelo.glb?url";\nawait fetch(modeloUrl);')).not.toContain("fetch-fuera-de-datos");
   expect(reglas("frontend/src/pages/a.astro", '<img src="/fotos/a.jpg" alt="" />')).toContain("imagen-sin-assets");
   expect(reglas("frontend/src/pages/a.astro", "<img src={foto.src} alt='' />")).not.toContain("imagen-sin-assets");
   const nuevas = dependenciasNuevas({ ruta: "frontend/package.json", contenido: '{"dependencies":{"astro":"1","react":"1"}}' }, '{"dependencies":{"astro":"1"}}');

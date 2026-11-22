@@ -62,12 +62,14 @@ alCambiarAvisos((avisos) => {
 /** El borrador con los videos antes que las entrevistas, el orden en que se guardan. */
 const conVideosOrdenados = (p: DraftAboutCarlosPage) => ({ ...p, videos: ordenarVideos(p.videos) });
 
+/** Página del borrador tal como la recibe la API. */
 const toBody = (p: DraftAboutCarlosPage): AboutCarlosPageBody => ({
   videos: ordenarVideos(p.videos).map((v) => ({ titulo: v.titulo, descripcion: v.descripcion, enlace: v.enlace, vertical: v.vertical, idPortada: v.portada?.idMedio ?? null, medio: v.medio ?? null })),
   entrevista: p.entrevista,
   galeria: p.galeria.map(({ foto, ...g }) => ({ ...g, idMedio: foto.idMedio })),
 });
 
+/** Primer problema que impide guardar la página, si lo hay. */
 function problem(p: DraftAboutCarlosPage) {
   const sinTitulo = p.videos.findIndex((v) => !v.titulo);
   if (sinTitulo >= 0) return `Escribe el título ${delVideo(p.videos, sinTitulo)}.`;
@@ -80,6 +82,7 @@ function problem(p: DraftAboutCarlosPage) {
   return null;
 }
 
+/** Pinta el editor de la página «Acerca de Carlos» elegida. */
 export function renderAboutCarlos(root: HTMLElement) {
   const info = PAGES[slug];
   const page = (working[slug] ??= conVideosOrdenados(structuredClone(state.draft!.acercaDeCarlos[slug])));
@@ -114,6 +117,7 @@ export function renderAboutCarlos(root: HTMLElement) {
   enlace?.focus({ preventScroll: true });
 }
 
+/** Conecta los controles del editor. */
 function bind(root: HTMLElement, editor: Editor) {
   const form = root.querySelector<HTMLFormElement>("#acerca-form")!;
   const capture = () => SECTIONS[section].capture(form, editor);

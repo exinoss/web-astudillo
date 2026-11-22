@@ -1,5 +1,6 @@
 import type { AceptacionLegal } from '../../legal/legal';
 
+/** Aceptación de las condiciones marcada en el formulario, si la hay. */
 export function acceptanceOf(form: HTMLFormElement): AceptacionLegal | undefined {
   const checkbox = form.querySelector<HTMLInputElement>('input[name="aceptacion"]');
   if (!checkbox?.checked) return;

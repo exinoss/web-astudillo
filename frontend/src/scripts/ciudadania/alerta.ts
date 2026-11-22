@@ -12,7 +12,7 @@ import { TIPOS_ALERTA } from "../../lib/ciudadania/participacion/tipos";
 import { MAX_BYTES_FOTO_ALERTA, MAX_MB_FOTO_ALERTA, MIN_DESCRIPCION_ALERTA } from "../../../../backend/src/contracts/participacion";
 import { AVISO_HEIC, avisoMegapixeles, FORMATOS_FOTO, MAX_PIXELES } from "../../../../backend/src/contracts/media";
 import { medidasArchivo, miniaturaLocal } from "../../lib/comun/foto-local";
-import { montarVisor, visorFotos } from "../../lib/comun/visor-fotos";
+import { ampliarAlPulsar } from "../../lib/comun/visor-fotos";
 
 const form = document.querySelector<HTMLFormElement>("#alerta-form")!;
 const tipos = form.querySelector<HTMLFieldSetElement>("#alerta-tipo")!;
@@ -31,6 +31,7 @@ let vistaUrl = "";
 // Clave del envío en curso: se conserva entre reintentos para que la API no lo duplique.
 let idempotencia = "";
 
+/** Tipo de alerta marcado. */
 const tipoElegido = () => form.querySelector<HTMLInputElement>('input[name="tipo"]:checked')?.value as AlertType | undefined;
 
 const NO_ABRE = "No se pudo abrir esta foto. Elige otra.";
@@ -122,13 +123,7 @@ const cargarHistorial = historial<SentAlert, Published<SentAlert>>(columnaHistor
   },
 });
 
-const visorAlerta = document.body.appendChild(document.createElement("div"));
-columnaHistorial.addEventListener("click", (e) => {
-  const boton = (e.target as Element).closest<HTMLButtonElement>("[data-ampliar]");
-  if (!boton) return;
-  visorAlerta.innerHTML = visorFotos("visor-alerta", "Foto de la alerta", [{ image: { src: boton.dataset.ampliar! }, alt: "Foto de la alerta", caption: boton.dataset.pie! }]);
-  montarVisor(visorAlerta).abrir(0, boton);
-});
+ampliarAlPulsar(columnaHistorial, "visor-alerta", "Foto de la alerta");
 
 /** Rellena el formulario con lo que el votante escribió antes de iniciar sesión. */
 async function recuperarBorrador() {

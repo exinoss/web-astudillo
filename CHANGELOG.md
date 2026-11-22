@@ -18,6 +18,11 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1
 - «Conoce más sobre mí»: las preguntas se ven como tarjetas numeradas que se abren al pulsarlas.
 - Panel, «Conoce más sobre mí»: la pestaña «Entrevista» se llama ahora «Preguntas».
 
+### Fixed
+
+- Panel, Participación: al pulsar la foto de una alerta se abre en grande dentro de la página, como en el historial público, en lugar de abrir su dirección en otra pestaña.
+- Los enlaces a páginas del sitio (respuestas del chat, botones de la portada) ya no aceptan direcciones internas que no son una página.
+
 ## [1.5.0] - 2026-11-21
 
 ### Added

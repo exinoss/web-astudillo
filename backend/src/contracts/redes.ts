@@ -18,8 +18,8 @@ export function enlaceRed(red: RedSocial, valor: string): URL | null {
   return valido ? url : null;
 }
 
-/** Indica si el valor es una ruta del sitio (`/propuestas/agua-potable/`, `/#contacto`), nunca un `//dominio`. */
-export const esRutaDelSitio = (ruta: string) => /^\/[a-z0-9/#-]*$/.test(ruta) && !ruta.startsWith('//');
+/** Indica si el valor es una ruta del sitio (`/propuestas/agua-potable/`, `/#contacto`), nunca un `//dominio` ni la API. */
+export const esRutaDelSitio = (ruta: string) => /^\/[a-z0-9/#-]*$/.test(ruta) && !ruta.startsWith('//') && !/^\/api(?:[/#]|$)/.test(ruta);
 
 /** Número de WhatsApp como lo escribe una persona (0985658595, +593 98 565 8595) en formato 593…, el que espera wa.me. */
 export const normalizarWhatsapp = (texto: string) =>
