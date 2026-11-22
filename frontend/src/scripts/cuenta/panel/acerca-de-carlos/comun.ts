@@ -1,7 +1,7 @@
 import { type AboutCarlosSlug, type DraftAboutCarlosPage, type Photo } from "../../../../lib/data/http/admin-api";
 import { enlazarLista, notify, subirFotos } from "../ui";
 
-export type Section = "video" | "entrevista" | "galeria";
+export type Section = "video" | "entrevistas" | "preguntas" | "galeria";
 
 export interface Editor { slug: AboutCarlosSlug; page: DraftAboutCarlosPage; rerender(): void }
 

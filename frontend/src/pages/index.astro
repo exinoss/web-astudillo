@@ -15,8 +15,10 @@ import { defaultCover } from "../lib/acerca-de-nosotros/acerca-de-carlos/vista";
 import fondoPublico from "../assets/fondo-publico-equipo.jpg";
 import { contentRepository } from "../lib/data";
 import { statsRepository } from "../lib/data/stats";
-import { enlaceRed, type TextKey } from "../lib/comun/contenido";
-import { comunidadWhatsapp, enlaceRedValido, REDES, type RedSocial, usuarioRed, whatsappEtiqueta } from "../lib/comun/contenido/redes";
+import { enlaceRed } from "../lib/comun/contenido";
+import { enlaceRedValido, REDES, type RedSocial, whatsappEtiqueta } from "../lib/comun/contenido/redes";
+import { preguntasTarjetas } from "../lib/acerca-de-nosotros/acerca-de-carlos/entrevista";
+import { PREGUNTAS_PORTADA } from "../../../backend/src/contracts/acerca-de-carlos";
 
 const { banners, portrait, link, pieces, team } = await contentRepository.getHomeCarousels();
 const slides = banners.length + 1;
@@ -63,15 +65,10 @@ const whatsapp = await enlaceRed("whatsapp");
 const contactos = [
   ...(Object.keys(FONDOS) as RedSocial[])
     .filter((red) => enlaceRedValido(red, textos[REDES[red].clave] ?? ""))
-    .map((red) => ({
-      red, nombre: REDES[red].nombre, url: textos[REDES[red].clave], usuario: usuarioRed(red, textos[REDES[red].clave]),
-      fondo: FONDOS[red], clave: `inicio.contacto.${red}.texto` as TextKey, etiqueta: `${REDES[red].nombre} de Carlos Astudillo (abre en otra pestaña)`,
-    })),
-  {
-    red: "whatsapp", nombre: "WhatsApp", url: whatsapp, usuario: comunidadWhatsapp(whatsapp) ? "Únete a la comunidad" : "Mensaje directo",
-    fondo: "bg-whatsapp", clave: "inicio.contacto.whatsapp.texto" as TextKey, etiqueta: whatsappEtiqueta(whatsapp),
-  },
+    .map((red) => ({ red, nombre: REDES[red].nombre, url: textos[REDES[red].clave], fondo: FONDOS[red], etiqueta: `${REDES[red].nombre} de Carlos Astudillo (abre en otra pestaña)` })),
+  { red: "whatsapp", nombre: "WhatsApp", url: whatsapp, fondo: "bg-whatsapp", etiqueta: whatsappEtiqueta(whatsapp) },
 ];
+const preguntas = (await contentRepository.getAboutCarlosPage("conoce-mas")).interview.slice(0, PREGUNTAS_PORTADA);
 ---
 
 <Layout>
@@ -412,46 +409,44 @@ const contactos = [
       </div>
     </div>
   </section>
-  <section
-    id="contacto"
-    class="contact-section bg-secondary py-section"
-    aria-labelledby="contact-title"
-  >
-    <div class="site-container grid grid-cols-[0.8fr_1.35fr] items-center gap-[72px] max-laptop:grid-cols-[1fr] max-laptop:gap-8">
-      <div class="contact-intro">
-        <Editable clave="inicio.contacto.antetitulo" class="eyebrow text-[0.85rem] tracking-[0.1em]" />
-        <h2
-          id="contact-title"
-          class="mx-0 mt-4 mb-[22px] font-display text-[clamp(3.6rem,5vw,5.2rem)] leading-[1.08] font-semibold tracking-[-0.01em] text-neutral max-tablet:mt-3 max-tablet:mb-[18px] max-tablet:text-[3.5rem]"
-        >
-          <Editable clave="inicio.contacto.titulo" />
-          <br class="max-laptop:hidden" />
-          <Editable clave="inicio.contacto.destacado" class="text-inherit" />
-        </h2>
-        <Editable as="p" clave="inicio.contacto.texto" class="mb-[26px] max-w-[370px] text-[1.125rem] leading-[1.8] font-medium text-primary max-laptop:max-w-[640px] max-tablet:mb-0" />
-        <Editable clave="global.lema" class="inline-block border-t-2 border-t-primary pt-[15px] text-[1rem] font-bold max-tablet:hidden" />
+  {preguntas.length > 0 && (
+    <section id="preguntas" class="bg-base-100 py-section" aria-labelledby="preguntas-titulo">
+      <div class="site-container">
+        <div class="mb-10 max-tablet:mb-[25px]">
+          <h2 id="preguntas-titulo" class="m-0 text-[3.3rem] max-nav:text-[2.8rem]">
+            <Editable clave="inicio.preguntas.titulo" />{" "}
+            <Editable clave="inicio.preguntas.destacado" class="text-neutral" />
+          </h2>
+          <span aria-hidden="true" class="short-line mt-4 block bg-accent"></span>
+          <Editable as="p" clave="inicio.preguntas.texto" class="mt-5 mb-0 max-w-[560px] text-[1.125rem] leading-[1.8] font-medium text-primary" />
+        </div>
+        <Fragment set:html={preguntasTarjetas(preguntas, 0, true)} />
+        <a class="button mt-8" href="/acerca-de-nosotros/conoce-mas/">Ver todas las preguntas <Icon name="arrow" size={18} /></a>
       </div>
-      <div class="">
-        <div class="grid grid-cols-[repeat(2,minmax(0,1fr))] gap-5 max-laptop:gap-[15px] max-mobile:grid-cols-[1fr]">
+    </section>
+  )}
+  <section id="contacto" class="bg-base-100 py-section" aria-labelledby="contact-title">
+    <div class="site-container">
+      <div class="rounded-[12px] bg-primary px-7 py-10 text-center text-white max-tablet:px-4 max-tablet:py-[30px]">
+        <h2 id="contact-title" class="m-0 text-[3.3rem] text-white max-nav:text-[2.8rem]">
+          <Editable clave="inicio.contacto.titulo" />{" "}
+          <Editable clave="inicio.contacto.destacado" class="text-accent" />
+        </h2>
+        <span aria-hidden="true" class="short-line mx-auto mt-4 block bg-accent"></span>
+        <Editable as="p" clave="inicio.contacto.texto" class="mx-auto mt-5 mb-0 max-w-[700px] text-[1.125rem] leading-[1.8] font-medium text-white" />
+        <div class="mt-8 flex flex-wrap justify-center gap-3">
           {contactos.map((s) => (
             <a
-              class="group flex flex-col rounded-[10px] border-2 border-transparent bg-base-100 p-7 text-primary [box-shadow:0_6px_0_#06317614] [transition:transform_0.18s,border-color_0.18s,box-shadow_0.18s] hover:-translate-y-1 hover:border-primary hover:[box-shadow:0_10px_0_#06317614] max-laptop:p-[22px] max-tablet:p-5 max-mobile:p-6"
+              class="inline-flex min-h-12 items-center gap-2.5 rounded-full bg-base-100 p-2 pr-6 text-[1rem] font-bold text-primary [box-shadow:0_6px_0_#06317614] [transition:transform_0.18s] hover:-translate-y-1"
               href={s.url}
               target="_blank"
               rel="noopener noreferrer"
               aria-label={s.etiqueta}
             >
-              <div class="network-card-top mb-[26px] flex items-center justify-between max-tablet:mb-5 max-mobile:mb-[18px]">
-                <span class:list={["network-icon grid h-[52px] w-[52px] place-items-center rounded-[50%] text-primary-content", s.fondo]}>
-                  <Icon name={s.red} size={32} class="size-[27px]" />
-                </span>
-                <Icon name="external" size={22} class="text-primary" />
-              </div>
-              <h3 class="mb-2 font-sans text-[1.65rem] leading-[1.3] font-bold tracking-[-0.025em] max-tablet:text-[1.6rem]">
-                {s.nombre}
-              </h3>
-              {s.usuario && <span class="text-[0.95rem] font-medium text-neutral wrap-anywhere">{s.usuario}</span>}
-              <Editable as="p" clave={s.clave} class="mx-0 mt-[18px] mb-0 text-[1rem] leading-[1.75] text-primary max-tablet:mt-3.5" />
+              <span class:list={["grid size-9 shrink-0 place-items-center rounded-full text-primary-content", s.fondo]}>
+                <Icon name={s.red} size={20} />
+              </span>
+              {s.nombre}
             </a>
           ))}
         </div>

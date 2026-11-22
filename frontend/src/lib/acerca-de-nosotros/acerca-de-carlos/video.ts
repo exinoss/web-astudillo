@@ -36,6 +36,35 @@ export function videoSection(v: AboutCarlosPageView["videos"][number], i: number
 </section>`;
 }
 
+/** Entrevistas en tarjetas con su portada, su medio y su título; cada una se reproduce dentro de su tarjeta. */
+export function mediaInterviewsSection(videos: AboutCarlosPageView["videos"]) {
+  const cards = videos.flatMap((v) => {
+    const source = videoSource(v.url);
+    if (!source) return [];
+    // El reproductor de TikTok y de los reels no cabe en 16:9: la portada se ve completa sobre el azul y, al reproducir, la caja pasa a 9:16.
+    const marco = v.vertical ? "grid aspect-video place-items-center bg-primary group-data-[reproduciendo]:aspect-auto" : "";
+    const caja = v.vertical ? "h-full aspect-[9/16] group-data-[reproduciendo]:h-auto group-data-[reproduciendo]:w-full group-data-[reproduciendo]:max-w-[300px]" : "aspect-video";
+    return [`<article data-video-preview data-embed="${esc(source.embed)}" data-provider="${source.provider}" class="group overflow-hidden rounded-[10px] border border-base-300 bg-base-100 [box-shadow:0_6px_0_#06317614]">
+      <div class="${marco}">
+        <div data-video-stage class="relative overflow-hidden bg-primary ${caja}">${portadaReproducible(source, v.title, v.vertical ? "" : `Ver video · ${PROVIDER_NAMES[source.provider]}`, v.cover, v.vertical ? "300px" : "(max-width: 760px) calc(100vw - 40px), 420px")}
+        </div>
+      </div>
+      <div class="p-4">
+        <span class="pildora bg-accent text-primary">${esc(v.medium)}</span>
+        <h3 class="mt-2 mb-0 font-sans text-[1rem] leading-snug font-bold">${esc(v.title)}</h3>
+      </div>
+    </article>`];
+  });
+  if (!cards.length) return "";
+  return `
+<section aria-labelledby="entrevistas-titulo" class="mt-9 max-tablet:mt-8">
+  <h2 id="entrevistas-titulo" class="m-0 text-[2rem]">Entrevistas</h2>
+  <span aria-hidden="true" class="short-line mt-3 block bg-accent"></span>
+  <p class="mt-4 mb-0 max-w-[560px] text-[1rem] leading-[1.7]">Lo que Carlos ha contado en los medios sobre San Lorenzo.</p>
+  <div class="mt-6 grid grid-cols-2 items-start gap-[18px] max-tablet:grid-cols-1">${cards.join("")}</div>
+</section>`;
+}
+
 /** Aviso sobre la portada cuando el reproductor no carga, con «Reintentar» y el enlace a su plataforma. */
 export const videoError = (source: VideoSource) => `
       <div data-video-error hidden class="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-primary px-5 text-center text-white">

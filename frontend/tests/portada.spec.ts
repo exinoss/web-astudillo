@@ -54,17 +54,25 @@ test('el botón flotante de WhatsApp aparece al pasar el primer banner y no est�
   await expect(page.locator('.whatsapp-flotante')).toHaveCount(0);
 });
 
-test('las tarjetas de redes muestran el usuario sacado del enlace y no llevan línea inferior', async ({ page }) => {
+test('la franja de redes muestra un botón por cada red con enlace, de 44 px o más, sin desplazamiento en 320 px', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 800 });
   await page.goto('/#contacto');
-  const contacto = page.locator('#contacto');
-  const tarjeta = (nombre: string) => contacto.getByRole('link', { name: new RegExp(nombre) });
-  await expect(tarjeta('Facebook')).toContainText('@carlosastudillo7');
-  await expect(tarjeta('TikTok')).toContainText('@carlosastudillo01');
-  await expect(tarjeta('WhatsApp')).toContainText('Mensaje directo');
-  await expect(tarjeta('Instagram')).toHaveCount(0);
-  await expect(contacto.getByText('Ir a Facebook')).toHaveCount(0);
-  await expect(contacto.getByText('Ver en TikTok')).toHaveCount(0);
+  const botones = page.locator('#contacto').getByRole('link');
+  await expect(botones).toHaveText(['Facebook', 'TikTok', 'WhatsApp']);
+  await expect(botones.first()).toHaveAttribute('aria-label', /abre en otra pestaña/);
+  for (const boton of await botones.all()) expect((await boton.boundingBox())!.height).toBeGreaterThanOrEqual(44);
   expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+});
+
+test('la portada muestra, antes de las redes, las primeras preguntas de «Conoce más» numeradas', async ({ page }) => {
+  await page.goto('/');
+  const seccion = page.locator('#preguntas');
+  await expect(seccion.getByRole('heading', { level: 2 })).toHaveText('Lo que San Lorenzo quiere saber.');
+  await expect(seccion.locator('summary')).toHaveText([/^\s*01\s*¿Qué significa San Lorenzo para ti\?/, /^\s*02\s*¿Cómo es un día tuyo\?/]);
+  await seccion.getByText('¿Cómo es un día tuyo?').click();
+  await expect(seccion.getByText('Otra respuesta de prueba.')).toBeVisible();
+  await expect(seccion.getByRole('link', { name: 'Ver todas las preguntas' })).toHaveAttribute('href', '/acerca-de-nosotros/conoce-mas/');
+  expect(await page.evaluate(() => document.querySelector('#preguntas')!.nextElementSibling?.id)).toBe('contacto');
 });
 
 test('el banner 1 amplía al candidato bajo el ratón, sin moverse con «Reducir movimiento», y no pasa de diapositiva', async ({ page }) => {

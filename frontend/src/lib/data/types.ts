@@ -136,6 +136,7 @@ interface AboutCarlosVideo {
   url: string;
   vertical: boolean;
   cover: UploadedPicture | null;
+  medium?: string | null;
 }
 
 export interface AboutCarlosPage {

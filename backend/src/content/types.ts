@@ -56,7 +56,7 @@ export const ABOUT_CARLOS_PAGES = SLUGS_CARLOS;
 export type AboutCarlosSlug = PaginaCarlos;
 
 /** `enlace` llega ya normalizado por contracts/video.ts. */
-export type VideoStored = { titulo: string; descripcion: string | null; enlace: string; vertical: boolean; idPortada: number | null };
+export type VideoStored = { titulo: string; descripcion: string | null; enlace: string; vertical: boolean; idPortada: number | null; medio?: string | null };
 
 export interface AboutCarlosPageStored {
   videos: VideoStored[];
@@ -84,7 +84,7 @@ export interface MyTeam {
 
 export type HomeImageStored = { original: Original } | { idMedio: number };
 export type HomeImage = { original: Original } | { foto: Photo };
-export type HomeVideoStored = Omit<VideoStored, 'descripcion'>;
+export type HomeVideoStored = Omit<VideoStored, 'descripcion' | 'medio'>;
 export type HomePieceStored = { imagen: HomeImageStored; alt: string } | { video: HomeVideoStored };
 export type HomePiece = { imagen: HomeImage; alt: string } | { video: Omit<HomeVideoStored, 'idPortada'> & { portada: Photo | null } };
 

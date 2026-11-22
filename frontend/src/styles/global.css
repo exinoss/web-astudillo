@@ -7,7 +7,6 @@
 @import "./detail.css";
 @import "./bloqueo.css";
 @import "./chat.css";
-@import "./contact.css";
 @import "./accessibility.css";
 
 /* De mayor a menor: Tailwind las emite en el orden declarado y gana la última. */

@@ -102,7 +102,6 @@
 .light-bg body,
 .light-bg .site-header,
 .light-bg .about-section,
-.light-bg .contact-section,
 .light-bg .proposals-section,
 .light-bg .detail-banner,
 .light-bg .citizen-form,
@@ -110,20 +109,11 @@
 .high-contrast body,
 .high-contrast .site-header,
 .high-contrast .about-section,
-.high-contrast .contact-section,
 .high-contrast .proposals-section,
 .high-contrast .detail-banner,
 .high-contrast .citizen-form,
 .high-contrast .proposal-card {
   background: var(--color-base-100);
-}
-
-.high-contrast .contact-intro h2 {
-  color: var(--color-primary);
-}
-
-.high-contrast .contact-intro h2 span {
-  color: var(--color-primary);
 }
 
 .light-bg [data-carlos-background],

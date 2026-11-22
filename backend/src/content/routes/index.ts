@@ -1,6 +1,7 @@
 import { Elysia, t } from 'elysia';
 import type { SQL } from 'bun';
 import type { Authorization } from '../../auth/types';
+import { MAX_ENTREVISTAS_VIDEO, MAX_PREGUNTAS, MAX_VIDEOS_CARLOS } from '../../contracts/acerca-de-carlos';
 import { MAX_PRESENTACION, MAX_PUNTO_TRAYECTORIA, MAX_TRAYECTORIA, PUESTOS } from '../../contracts/equipo';
 import { MAX_BANNERS, MAX_FOTOS_EQUIPO, MAX_IMAGENES_PIEZAS, MAX_VIDEOS_PIEZAS, ORIGINALES } from '../../contracts/inicio';
 import { MAX_FOTOS_PARROQUIA } from '../../contracts/parroquias';
@@ -83,8 +84,9 @@ export function contentRoutes(sql: SQL, authorization: Authorization, mediaDir: 
       aboutCarlosPages.save(access(cookie), params.slug, body, body.version), {
       params: slug,
       body: t.Object({
-        videos: t.Array(t.Object({ ...video, descripcion: t.Union([text(LARGOS.acercaDeCarlos.descripcionVideo), t.Null()]) }, strict), { maxItems: 6 }),
-        entrevista: t.Array(t.Object({ pregunta: text(LARGOS.acercaDeCarlos.pregunta), respuesta: text(LARGOS.acercaDeCarlos.respuesta) }, strict), { maxItems: 6 }),
+        videos: t.Array(t.Object({ ...video, descripcion: t.Union([text(LARGOS.acercaDeCarlos.descripcionVideo), t.Null()]),
+          medio: t.Optional(t.Union([text(LARGOS.acercaDeCarlos.medio), t.Null()])) }, strict), { maxItems: MAX_VIDEOS_CARLOS + MAX_ENTREVISTAS_VIDEO }),
+        entrevista: t.Array(t.Object({ pregunta: text(LARGOS.acercaDeCarlos.pregunta), respuesta: text(LARGOS.acercaDeCarlos.respuesta) }, strict), { maxItems: MAX_PREGUNTAS }),
         galeria: t.Array(t.Object({ idMedio: mediaId, alt: text(LARGOS.descripcionFoto), pie: text(LARGOS.acercaDeCarlos.pie) }, strict), { maxItems: 6 }),
         version,
       }, strict),

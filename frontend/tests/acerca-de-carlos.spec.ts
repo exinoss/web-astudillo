@@ -33,8 +33,7 @@ test('cada página muestra sus seis tarjetas fijas con su título editable y su 
 
 test('cada video se carga solo al pulsar, dentro de la página, y van en su orden', async ({ page }) => {
   await page.goto(ALCALDE);
-  await expect(page.locator('[data-public-video] h2')).toHaveText(['Te cuento mis razones', 'Entrevista en Bambero TV']);
-  await expect(page.locator('[data-public-video]').nth(1).getByRole('button', { name: 'Reproducir el video: Entrevista en Bambero TV' })).toBeVisible();
+  await expect(page.locator('[data-public-video] h2')).toHaveText(['Te cuento mis razones']);
   const video = page.locator('[data-public-video]').first();
   await expect(video.getByRole('heading', { name: 'Te cuento mis razones' })).toBeVisible();
   expect(await video.locator('h2 + p').innerHTML()).toBe('Texto breve de prueba.<br>#LaNuevaHistoria');
@@ -44,12 +43,32 @@ test('cada video se carga solo al pulsar, dentro de la página, y van en su orde
   await expect(page.getByRole('link', { name: 'Ver propuestas' })).toHaveAttribute('href', '/#propuestas');
 });
 
+test('las entrevistas van en tarjetas con su medio, y un video vertical crece a 9:16 al reproducirse', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto(ALCALDE);
+  const seccion = page.locator('section[aria-labelledby="entrevistas-titulo"]');
+  await expect(seccion.locator('article h3')).toHaveText(['El agua potable para los barrios altos', 'Un día de recorrido con Carlos']);
+  await expect(seccion.locator('article .pildora')).toHaveText(['Bambero TV', 'Voces del Norte']);
+  const vertical = seccion.locator('article').nth(1);
+  const caja = vertical.locator('[data-video-stage]');
+  const alto = (await caja.boundingBox())!.height;
+  await vertical.getByRole('button', { name: 'Reproducir el video: Un día de recorrido con Carlos' }).click();
+  await expect(caja.locator('iframe')).toHaveAttribute('src', /tiktok\.com/);
+  const reproduciendo = (await caja.boundingBox())!;
+  expect(reproduciendo.width).toBeLessThanOrEqual(300);
+  expect(Math.round(reproduciendo.height / reproduciendo.width * 9)).toBe(16);
+  expect(reproduciendo.height).toBeGreaterThan(alto);
+  await page.setViewportSize({ width: 320, height: 800 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBeLessThanOrEqual(1);
+});
+
 test('la página personal muestra entrevista y una galería accesible, sin retrato', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto(CONOCE);
   await expect(page.locator('main header img')).toHaveCount(0);
   await page.getByText('¿Qué significa San Lorenzo para ti?').click();
   await expect(page.getByText('Respuesta de prueba.', { exact: true })).toBeVisible();
+  await expect(page.locator('#mas-preguntas-titulo')).toHaveCount(0);
   const open = page.getByRole('button', { name: 'Ver todas (4)' });
   await open.click();
   const dialog = page.getByRole('dialog', { name: 'Momentos en imágenes' });
@@ -175,7 +194,7 @@ test('el panel ya no ofrece tarjetas ni retrato, añade y quita videos, valida e
 
   await page.goto('/cuenta/panel/#acerca-de-carlos');
   await section.getByLabel('Página', { exact: true }).selectOption('conoce-mas');
-  await expect(section.locator('[data-acerca-seccion]')).toHaveText(['Videos', 'Entrevista', 'Galería']);
+  await expect(section.locator('[data-acerca-seccion]')).toHaveText(['Videos', 'Preguntas', 'Galería']);
   await section.getByLabel('Página', { exact: true }).selectOption('por-que-quiero-ser-alcalde');
   await expect(section.locator('#video-titulo-0')).toHaveValue('Te cuento mis razones');
 
@@ -183,11 +202,38 @@ test('el panel ya no ofrece tarjetas ni retrato, añade y quita videos, valida e
   await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.savedPages.at(-1)).toMatchObject({
     slug: 'por-que-quiero-ser-alcalde',
-    videos: [{ titulo: 'Te cuento mis razones', enlace: 'https://www.tiktok.com/@scout2015/video/6718335390845095173', vertical: true, idPortada: null }],
+    videos: [{ titulo: 'Te cuento mis razones', enlace: 'https://www.tiktok.com/@scout2015/video/6718335390845095173', vertical: true, idPortada: null, medio: null }],
   });
   expect(data.savedPages.at(-1)).not.toHaveProperty('retrato');
   expect(data.savedPages.at(-1)).not.toHaveProperty('tarjetas');
   await expect(page.locator('#panel-publicar')).toContainText('Publicar cambios (1)');
+});
+
+test('las entrevistas tienen su pestaña: piden el medio, no el texto breve, y se guardan después de los videos', async ({ page }) => {
+  const data = panelData('coadmin');
+  data.draft.acercaDeCarlos['por-que-quiero-ser-alcalde'].videos = [
+    { titulo: 'Te cuento mis razones', descripcion: null, enlace: 'https://www.facebook.com/reel/28327883403549284/', vertical: true, portada: null },
+  ];
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#acerca-de-carlos');
+  const section = page.locator('#seccion-acerca-de-carlos');
+  await expect(section.locator('[data-acerca-seccion]')).toHaveText(['Videos', 'Entrevistas']);
+  await expect(section.getByLabel('Medio')).toHaveCount(0);
+  await section.getByRole('button', { name: 'Entrevistas' }).click();
+  await expect(section.getByText('Aún no hay entrevistas.')).toBeVisible();
+  await section.getByRole('button', { name: 'Añadir entrevista' }).click();
+  await expect(section.getByLabel('Medio')).toBeFocused();
+  await expect(section.locator('legend')).toContainText(['Entrevista 1']);
+  await expect(section.getByLabel('Texto breve (opcional)')).toHaveCount(0);
+  await section.getByLabel('Enlace del video').fill('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+  await section.getByLabel('Título', { exact: true }).fill('El agua potable');
+  await expect(page.locator('#panel-estado')).toContainText('Sube una portada.');
+  await section.getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.locator('#panel-estado')).toContainText('Escribe el medio de la entrevista 1.');
+  await section.getByLabel('Medio').fill('Bambero TV');
+  await section.getByRole('button', { name: 'Guardar borrador' }).click();
+  await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
+  expect(data.savedPages.at(-1)).toMatchObject({ videos: [{ titulo: 'Te cuento mis razones', medio: null }, { titulo: 'El agua potable', medio: 'Bambero TV' }] });
 });
 
 test('el panel de la página personal añade entrevista y exige completar los campos', async ({ page }) => {
@@ -197,7 +243,7 @@ test('el panel de la página personal añade entrevista y exige completar los ca
   const section = page.locator('#seccion-acerca-de-carlos');
   await section.getByLabel('Página', { exact: true }).selectOption('conoce-mas');
   await expect(section.getByRole('button', { name: 'Galería' })).toBeVisible();
-  await section.getByRole('button', { name: 'Entrevista' }).click();
+  await section.getByRole('button', { name: 'Preguntas' }).click();
   await section.getByRole('button', { name: 'Añadir pregunta' }).click();
   await section.getByLabel('Pregunta', { exact: true }).fill('¿Qué significa San Lorenzo para ti?');
   await section.getByRole('button', { name: 'Guardar borrador' }).click();
@@ -206,6 +252,19 @@ test('el panel de la página personal añade entrevista y exige completar los ca
   await section.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(page.locator('[data-notificacion]')).toContainText('Guardado como borrador');
   expect(data.savedPages.at(-1)).toMatchObject({ slug: 'conoce-mas', entrevista: [{ pregunta: '¿Qué significa San Lorenzo para ti?', respuesta: 'Mi casa.' }] });
+});
+
+test('el panel admite hasta 20 preguntas y dice cuáles se ven arriba y en la portada', async ({ page }) => {
+  const data = panelData('coadmin');
+  data.draft.acercaDeCarlos['conoce-mas'].entrevista = Array.from({ length: 19 }, (_, i) => ({ pregunta: `¿Pregunta ${i + 1}?`, respuesta: 'Sí.' }));
+  await mockPanelApi(page, data);
+  await page.goto('/cuenta/panel/#acerca-de-carlos');
+  const section = page.locator('#seccion-acerca-de-carlos');
+  await section.getByLabel('Página', { exact: true }).selectOption('conoce-mas');
+  await section.getByRole('button', { name: 'Preguntas' }).click();
+  await expect(section).toContainText('Hasta 20 preguntas. Las 6 primeras se ven arriba en «Conoce más sobre mí» y las 12 primeras, en la portada.');
+  await section.getByRole('button', { name: 'Añadir pregunta' }).click();
+  await expect(section.getByRole('button', { name: 'Añadir pregunta' })).toHaveCount(0);
 });
 
 test('la portada sigue al enlace: se toma al pegarlo, se quita al cambiarlo y vuelve con el enlace anterior', async ({ page }) => {
