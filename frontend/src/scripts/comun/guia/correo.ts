@@ -31,7 +31,6 @@ export function ajustarCorreo(caja: HTMLElement, escenario: HTMLElement) {
   const alto = boton.bottom + 76;
   const arriba = altoCabecera() + 12;
   const c = caja.getBoundingClientRect();
-  // Los subtítulos se deslizan al cambiar de lado: se mide con su destino, no con su posición a mitad del movimiento.
   const derecha = (parseFloat(caja.style.left) || c.left) + c.width;
   const lado = innerWidth - derecha - 24 >= 320;
   const anchoLibre = lado ? innerWidth - derecha - 36 : innerWidth - 24;

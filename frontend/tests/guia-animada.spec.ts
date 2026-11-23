@@ -89,6 +89,22 @@ test('si el navegador bloquea el audio al cambiar de página, la guía pide «Co
   await expect(caja(page).getByRole('button', { name: 'Pausar la guía' })).toBeHidden();
 });
 
+test('en el acceso, el foco pasa por el correo, la contraseña y Google aunque su botón no haya cargado', async ({ page }) => {
+  await page.route('**/accounts.google.com/**', (route) => route.abort());
+  await seguirEn(page, '/cuenta/', 10);
+  const continuar = caja(page).getByRole('button', { name: 'Continuar' });
+  await page.waitForFunction(() => !document.querySelector<HTMLElement>('[data-guia-continuar]')?.hidden || !!document.querySelector('[data-guia-texto]')?.textContent?.startsWith('Aquí entras'));
+  if (await continuar.isVisible()) await continuar.click();
+  const encierra = (sel: string) => page.waitForFunction((s) => {
+    const f = document.querySelector('.foco')?.getBoundingClientRect();
+    const e = [...document.querySelectorAll(s)].find((x) => x.getClientRects().length)?.getBoundingClientRect();
+    return !!f && !!e && Math.abs(f.left + 8 - e.left) < 3 && Math.abs(f.top + 8 - e.top) < 3 && Math.abs(f.width - 16 - e.width) < 3;
+  }, sel, { timeout: 12000 });
+  await encierra('#login-correo');
+  await encierra('#login-contrasenia');
+  await encierra('#google-login-button > *, #google-login-button:empty, #google-login-unavailable');
+});
+
 test('con la sesión iniciada se saltan los pasos de crear la cuenta', async ({ page }) => {
   await page.route('**/api/me', (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({
     id: 1, correo: 'maria@example.com', rol: 'votante', nombresCompletos: 'María', direccion: '', tieneContrasenia: true, tieneGoogle: false, permisos: [],
@@ -128,7 +144,6 @@ test('con «Reducir movimiento» no aparece el cursor fantasma', async ({ page }
 test('el panel de accesibilidad queda cerrado al pasar el paso que lo abre', async ({ page }) => {
   await seguirEn(page, '/', 4);
   const panel = page.locator('#access-panel');
-  // Sin un clic previo, el navegador de pruebas puede bloquear el audio: entonces la guía pide «Continuar».
   const continuar = caja(page).getByRole('button', { name: 'Continuar' });
   await page.waitForFunction(() => !document.querySelector<HTMLElement>('[data-guia-continuar]')?.hidden || !document.querySelector<HTMLElement>('#access-panel')?.hidden);
   if (await continuar.isVisible()) await continuar.click();

@@ -159,7 +159,6 @@
   }
 }
 
-/* Guía animada: velo con hueco y cursor fantasma, creados por JS (scripts/comun/guia/). */
 .foco {
   position: fixed;
   z-index: 85;

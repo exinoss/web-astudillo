@@ -21,7 +21,6 @@ const conSesion = () => document.documentElement.hasAttribute("data-sesion");
 
 let avatar: Avatar | null = null;
 let ctx: AudioContext | null = null;
-// Un elemento solo puede conectarse a un AudioContext: cada guía usa uno nuevo.
 let audio = new Audio();
 let conectado = false;
 let conAudio = true;
@@ -245,20 +244,22 @@ function seguir(paso: Paso, i: number) {
 
 /** Lleva el cursor a los elementos de la visita, mueve el foco con él y, si toca, los pulsa. */
 async function visitar(visita: Visita, paso: Paso, i: number, alFoco: (f: () => Rect | null) => void) {
-  for (const el of visibles(visita.sel).slice(0, visita.max ?? 6)) {
+  const elementos = visibles(visita.sel).slice(0, visita.max ?? 6);
+  for (const el of elementos) {
     if (indice !== i) return;
     alFoco(() => (visita.foco ? rectDe(visita.foco) : null) ?? rectEl(el.closest("details") ?? el));
     await asegurarVisible(el);
     const r = rectEl(el);
     if (!paso.gesto && posicion !== ladoPara(r, innerWidth, posicion)) moverAvatar(paso, r, posicion);
     moverCursorA(r.x + Math.min(r.w / 2, 60), r.y + Math.min(r.h / 2, 40));
+    if (!visita.clic && elementos.length === 1) continue;
     await espera(sinMovimiento() || !hayCursor() ? 250 : 650);
     if (visita.clic && indice === i) {
       pulsarCursor();
       el.click();
       abiertos.push(el);
     }
-    if ((visita.max ?? 1) > 1) await espera(350);
+    if (elementos.length > 1) await espera(350);
   }
 }
 

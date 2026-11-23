@@ -365,7 +365,6 @@ const REEL = 'https://www.facebook.com/reel/28327883403549284/';
 
 test('añade un video al carrusel de piezas con la portada de su plataforma, lo guarda una vez y se reproduce sin el efecto de vidrio', async ({ page }) => {
   await page.route(/facebook\.com|tiktok\.com|youtube/, route => route.fulfill({ contentType: 'text/html', body: '<p>video</p>' }));
-  // Con el reloj simulado, el bucle de animación de Carlos en la invitación adelanta el carrusel.
   await page.addInitScript(() => localStorage.setItem('guia-vista', '1'));
   const data = await abrirEdicion(page);
   await page.clock.install();

@@ -1,7 +1,6 @@
 export type Posicion = "centro" | "izquierda" | "derecha";
 export type Gesto = "idle" | "sonrisa" | "explicar" | "apuntar_usuario" | "senalar_ui" | "senalar_izquierda" | "aprobacion";
 
-/** Elemento que el cursor visita cuando la voz dice `en`. */
 export interface Visita {
   en: string;
   sel: string;
@@ -32,7 +31,6 @@ export const SALUDO = { id: "00-guia", texto: "¡Hola! ¿Te enseño a usar la p�
 
 const NAV = "#main-nav";
 
-// Los textos son los de los audios de `assets/audio/tutorial/`: si cambia uno, se vuelve a grabar.
 export const PASOS: Paso[] = [
   { id: "01-bienvenida", pagina: "/", posicion: "centro", gesto: "apuntar_usuario", arriba: true,
     texto: "¡Hola! Soy Carlos Astudillo. Te enseño rápido cómo usar esta página. ¡Vamos!" },
@@ -90,7 +88,8 @@ export const PASOS: Paso[] = [
   { id: "11-acceso", pagina: "/cuenta/", foco: ["#login-panel"], posicion: "izquierda", soloSinSesion: true, esperar: "#login-panel:not(.invisible)", focoSigue: true,
     recorrido: [
       { en: "correo", sel: "#login-correo" },
-      { en: "Google", sel: "#google-login-button > *, #google-login-unavailable" },
+      { en: "contraseña", sel: "#login-contrasenia" },
+      { en: "Google", sel: "#google-login-button > *, #google-login-button:empty, #google-login-unavailable", max: 1 },
       { en: "crea una cuenta", sel: '#login-panel a[href="/cuenta/registro/"]' },
     ],
     pulsar: '#login-panel a[href="/cuenta/registro/"]',

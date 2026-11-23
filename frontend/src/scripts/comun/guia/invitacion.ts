@@ -42,7 +42,6 @@ function saludarAlTocar(personaje: Avatar) {
     if (avatar !== personaje || (evento.target as Element).closest?.("[data-guia-ver], [data-guia-no], [data-guia-abrir]")) return dejarDeEsperar();
     if (intentando) return;
     intentando = true;
-    // play() tiene que llamarse dentro del propio evento para que el navegador lo permita.
     const voz = new Audio(urlAudio(SALUDO.id));
     voz.play().then(() => {
       dejarDeEsperar();
