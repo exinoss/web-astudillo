@@ -356,7 +356,7 @@ test('obras en ejecución muestra el avance y los hitos de cada propuesta', asyn
   await page.waitForURL('**/propuestas/agua-potable/');
 });
 
-test('las ocho propuestas llenan la rejilla y «¿Y tú, qué propones?» ocupa todo el ancho', async ({ page }) => {
+test('las ocho propuestas llenan la rejilla; «¿Y tú, qué propones?» y «Avance de obras» van a la mitad, y apiladas en celular', async ({ page }) => {
   for (const [ancho, columnas] of [[1440, 4], [768, 2], [390, 2], [320, 1]]) {
     await page.setViewportSize({ width: ancho, height: 900 });
     await page.goto('/');
@@ -364,8 +364,17 @@ test('las ocho propuestas llenan la rejilla y «¿Y tú, qué propones?» ocupa 
     await expect(tarjetas).toHaveCount(8);
     await expect(tarjetas.last()).toHaveAttribute('href', '/propuestas/mercado-local/');
     const franja = page.locator('#propuestas a[href="/ciudadania/sugerencias/"]');
-    const [rejilla, caja, primera] = await Promise.all([franja.locator('..'), franja, tarjetas.first()].map(l => l.boundingBox()));
-    expect(caja!.width).toBeCloseTo(rejilla!.width, 0);
+    const obras = page.locator('#propuestas a[href="/ciudadania/obras-en-ejecucion/"]');
+    const [rejilla, caja, primera, avance] = await Promise.all([franja.locator('..'), franja, tarjetas.first(), obras].map(l => l.boundingBox()));
+    if (ancho > 760) {
+      expect(avance!.y).toBeCloseTo(caja!.y, 0);
+      expect(caja!.width + avance!.width).toBeLessThan(rejilla!.width);
+      expect(caja!.width).toBeGreaterThan(rejilla!.width * 0.45);
+    } else {
+      expect(caja!.width).toBeCloseTo(rejilla!.width, 0);
+      expect(avance!.width).toBeCloseTo(rejilla!.width, 0);
+      expect(avance!.y).toBeGreaterThan(caja!.y);
+    }
     expect(Math.round(rejilla!.width / primera!.width)).toBe(columnas);
     expect(caja!.y).toBeGreaterThan((await tarjetas.last().boundingBox())!.y);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)).toBe(0);

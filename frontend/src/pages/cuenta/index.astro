@@ -8,6 +8,7 @@ import AccountSignOut from '../../components/cuenta/AccountSignOut.astro';
 import Icon from '../../components/comun/Icon.astro';
 import LegalAcceptance from '../../components/comun/LegalAcceptance.astro';
 import EnlaceCuenta from '../../components/cuenta/EnlaceCuenta.astro';
+import GuiaAnimada from '../../components/comun/GuiaAnimada.astro';
 ---
 
 <AccountShell title="Mi cuenta" lead="Accede para gestionar tus datos y participar.">
@@ -97,5 +98,6 @@ import EnlaceCuenta from '../../components/cuenta/EnlaceCuenta.astro';
       <button id="blocked-logout-button" type="button" class="button w-full">Cerrar sesión</button>
     </AccountCard>
   </div>
+  <GuiaAnimada />
   <script src="../../scripts/cuenta/index.ts"></script>
 </AccountShell>

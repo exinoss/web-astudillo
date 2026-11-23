@@ -69,9 +69,10 @@ export const ICON_PATHS: Record<string, string> = {
   volume: "M4 9v6h4l5 4V5L8 9H4Zm12 0a4 4 0 0 1 0 6m2.5-8.5a7.5 7.5 0 0 1 0 11",
   volumeOff: "M4 9v6h4l5 4V5L8 9H4Zm12 1 5 5m0-5-5 5",
   play: "m8 5 11 7-11 7Z",
+  pause: "M6 5h4v14H6ZM14 5h4v14h-4Z",
 };
 
-export const FILLED = new Set(["facebook", "tiktok", "whatsapp", "play"]);
+export const FILLED = new Set(["facebook", "tiktok", "whatsapp", "play", "pause"]);
 
 /** Icono como texto SVG para HTML generado desde scripts. */
 export function iconSvg(name: string, size = 24, clase = "") {
