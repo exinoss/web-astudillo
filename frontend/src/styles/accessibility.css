@@ -63,7 +63,9 @@
 
 .negative-contrast img,
 .negative-contrast video,
-.negative-contrast dialog[data-confirmacion] {
+.negative-contrast dialog[data-confirmacion],
+.negative-contrast :is([data-guia-escenario], [data-guia-escena]) canvas,
+.negative-contrast .correo-guia {
   filter: invert(1) hue-rotate(180deg);
 }
 

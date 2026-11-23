@@ -5,6 +5,7 @@ import DetailBanner from "../../components/comun/DetailBanner.astro";
 import Alerta from "../../components/ciudadania/Alerta.astro";
 import Chat from "../../components/ciudadania/Chat.astro";
 import Sugerencia from "../../components/ciudadania/Sugerencia.astro";
+import GuiaAnimada from "../../components/comun/GuiaAnimada.astro";
 import { contentRepository } from "../../lib/data";
 import type { CitizenLink, Proposal } from "../../lib/data/types";
 
@@ -45,4 +46,5 @@ const { item, proposals, quickReplies } = Astro.props;
     claves={{title:`ciudadania.${item.slug}.nombre`,lead:`ciudadania.${item.slug}.descripcion`}}
   />
   {item.slug === "alerta-ciudadana" ? <Alerta /> : item.slug === "chat" ? <Chat quickReplies={quickReplies} /> : <Sugerencia proposals={proposals} />}
+  {item.slug !== "chat" && <GuiaAnimada />}
 </Layout>

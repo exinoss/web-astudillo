@@ -4,6 +4,7 @@ import Icon from "../components/comun/Icon.astro";
 import Editable from "../components/comun/Editable.astro";
 import Foto from "../components/comun/Foto.astro";
 import BannerPortada from "../components/inicio/BannerPortada.astro";
+import GuiaAnimada from "../components/comun/GuiaAnimada.astro";
 import TextosBanner from "../components/inicio/TextosBanner.astro";
 import { getImage, Image } from "astro:assets";
 import { imageView, medidasFoto } from "../lib/comun/fotos";
@@ -69,6 +70,10 @@ const contactos = [
   { red: "whatsapp", nombre: "WhatsApp", url: whatsapp, fondo: "bg-whatsapp", etiqueta: whatsappEtiqueta(whatsapp) },
 ];
 const preguntas = (await contentRepository.getAboutCarlosPage("conoce-mas")).interview.slice(0, PREGUNTAS_PORTADA);
+const ACCESOS = [
+  { href: "/ciudadania/sugerencias/", icono: "idea", titulo: "¿Y tú, qué propones?", enlace: "Comparte tu idea", fondo: "bg-campaign-red" },
+  { href: "/ciudadania/obras-en-ejecucion/", icono: "obras", titulo: "Avance de obras", enlace: "Ver cómo van", fondo: "bg-primary" },
+];
 ---
 
 <Layout>
@@ -394,18 +399,20 @@ const preguntas = (await contentRepository.getAboutCarlosPage("conoce-mas")).int
             </span>
           </a>
         ))}
-        <a
-          class="group col-span-full flex items-center gap-6 rounded-card bg-campaign-red px-8 py-6 text-primary-content [transition:transform_0.2s] hover:-translate-y-1 max-tablet:gap-4 max-tablet:px-4 max-tablet:py-5 max-mobile:flex-wrap"
-          href="/ciudadania/sugerencias/"
-        >
-          <span class="shrink-0"><Icon name="idea" size={34} /></span>
-          <h3 class="m-0 font-display text-[2rem] font-semibold max-tablet:text-[1.8rem] max-mobile:text-[1.6rem]">
-            ¿Y tú, qué propones?
-          </h3>
-          <span class="ml-auto flex min-h-8 items-center gap-2.5 text-[0.76rem] font-bold group-hover:underline max-mobile:ml-0 max-mobile:w-full max-mobile:justify-between">
-            Comparte tu idea <Icon name="arrow" size={18} />
-          </span>
-        </a>
+        {ACCESOS.map((acceso) => (
+          <a
+            class:list={["group col-span-2 flex items-center gap-6 rounded-card px-8 py-6 text-primary-content [transition:transform_0.2s] hover:-translate-y-1 max-nav:col-span-1 max-tablet:col-span-full max-tablet:gap-4 max-tablet:px-4 max-tablet:py-5 max-mobile:flex-wrap", acceso.fondo]}
+            href={acceso.href}
+          >
+            <span class="shrink-0"><Icon name={acceso.icono} size={34} /></span>
+            <h3 class="m-0 font-display text-[2rem] font-semibold max-tablet:text-[1.8rem] max-mobile:text-[1.6rem]">
+              {acceso.titulo}
+            </h3>
+            <span class="ml-auto flex min-h-8 items-center gap-2.5 text-[0.76rem] font-bold group-hover:underline max-mobile:ml-0 max-mobile:w-full max-mobile:justify-between">
+              {acceso.enlace} <Icon name="arrow" size={18} />
+            </span>
+          </a>
+        ))}
       </div>
     </div>
   </section>
@@ -453,5 +460,6 @@ const preguntas = (await contentRepository.getAboutCarlosPage("conoce-mas")).int
       </div>
     </div>
   </section>
+  <GuiaAnimada inicio />
   <script src="../scripts/inicio/index.ts"></script>
 </Layout>

@@ -6,6 +6,7 @@ import { LARGOS } from '../../../../backend/src/contracts/limites';
 import AccountStatus from '../../components/cuenta/AccountStatus.astro';
 import LegalAcceptance from '../../components/comun/LegalAcceptance.astro';
 import EnlaceCuenta from '../../components/cuenta/EnlaceCuenta.astro';
+import GuiaAnimada from '../../components/comun/GuiaAnimada.astro';
 ---
 
 <AccountShell title="Participa" lead="Registra tus datos y confirma tu correo para empezar.">
@@ -24,5 +25,6 @@ import EnlaceCuenta from '../../components/cuenta/EnlaceCuenta.astro';
       <p class="m-0 mt-5 text-center text-sm text-muted">¿Ya tienes cuenta? <EnlaceCuenta href="/cuenta/" class="font-bold text-primary">Inicia sesión</EnlaceCuenta></p>
     </AccountCard>
   </div>
+  <GuiaAnimada />
   <script src="../../scripts/cuenta/registro.ts"></script>
 </AccountShell>
