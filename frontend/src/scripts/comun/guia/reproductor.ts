@@ -1,5 +1,6 @@
 import { PASOS, gestoDe, ladoPara, momentos, type Paso, type Posicion, type Visita } from "../../../lib/comun/guia/pasos";
-import { altoCabecera, espera, esperarA, rectDe, rectEl, visibles, type Rect } from "../../../lib/comun/guia/elementos";
+import { CELULAR, altoCabecera, esFijo, espera, esperarA, rectDe, rectEl, visibles, type Rect } from "../../../lib/comun/guia/elementos";
+import { colocacion, globoArriba } from "../../../lib/comun/guia/colocacion";
 import { guardarClave, leerClave } from "../../../lib/comun/almacen";
 import { bloquearMientras } from "../../../lib/comun/cambios";
 import { sinMovimiento } from "../../../lib/comun/movimiento";
@@ -16,6 +17,7 @@ const texto = caja.querySelector<HTMLElement>("[data-guia-texto]")!;
 /** Botón de los controles de la guía por su nombre (`data-guia-<nombre>`). */
 const boton = (nombre: string) => caja.querySelector<HTMLButtonElement>(`[data-guia-${nombre}]`)!;
 const RUTA = location.pathname;
+const celular = matchMedia(CELULAR);
 /** Indica si hay una sesión iniciada (lo marca el layout en <html>). */
 const conSesion = () => document.documentElement.hasAttribute("data-sesion");
 
@@ -27,6 +29,7 @@ let conAudio = true;
 let reloj = { inicio: 0, acumulado: 0, total: 1 };
 let indice = -1;
 let posicion: Posicion = "centro";
+let arriba = false;
 let pausado = false;
 let silenciado = false;
 let abiertos: HTMLElement[] = [];
@@ -122,6 +125,7 @@ async function ejecutar(desde: number) {
   const paso = PASOS[i];
   if (!paso || (paso.pagina !== "*" && paso.pagina !== RUTA)) return terminar();
   indice = i;
+  arriba = false;
   pausado = false;
   actualizarPausa();
   if (paso.esperar) await esperarA(paso.esperar, 4000);
@@ -149,13 +153,13 @@ async function desplazar(paso: Paso) {
   await espera(sinMovimiento() ? 60 : 650);
 }
 
-/** Deja el elemento entre la cabecera y Carlos. */
+/** Deja el elemento entre la cabecera y los subtítulos. */
 async function asegurarVisible(el: Element) {
   const r = el.getBoundingClientRect();
-  const arriba = altoCabecera() + 12;
-  const abajo = innerHeight - escenario.getBoundingClientRect().height - 16;
-  if (getComputedStyle(el).position === "fixed" || el.closest(".site-header") || (r.top >= arriba && r.bottom <= abajo)) return;
-  ir(scrollY + r.top - arriba - Math.max(0, (abajo - arriba - r.height) / 3));
+  const tope = altoCabecera() + 12;
+  const abajo = caja.getBoundingClientRect().top - 12;
+  if (esFijo(el) || (r.top >= tope && r.bottom <= abajo)) return;
+  ir(scrollY + r.top - tope - Math.max(0, (abajo - tope - r.height) / 3));
   await espera(sinMovimiento() ? 60 : 500);
 }
 
@@ -166,16 +170,33 @@ function moverAvatar(paso: Paso, r: Rect | null, actual: Posicion = paso.posicio
   avatar?.setEstado(paso.gesto ?? gestoDe(posicion));
 }
 
-/** Coloca a Carlos en su lado, los subtítulos sobre él y, si está abierto, el correo. */
-function colocar() {
+/** Medidas de Carlos y del globo para `colocacion`. */
+function medidas(enArriba: boolean) {
   const { width: w, height: h } = escenario.getBoundingClientRect();
-  const m = 12;
-  const x = { izquierda: m, derecha: innerWidth - w - m, centro: (innerWidth - w) / 2 }[posicion];
-  escenario.style.transform = `translateX(${x}px)`;
-  const cw = caja.getBoundingClientRect().width;
-  caja.style.left = `${Math.min(Math.max(m, x + w / 2 - cw / 2), innerWidth - cw - m)}px`;
-  caja.style.bottom = `${h - 6}px`;
+  return { ventana: innerWidth, carlos: { w, h }, globo: caja.getBoundingClientRect().width, celular: celular.matches, arriba: enArriba };
+}
+
+/** Coloca a Carlos en su lado, los subtítulos sobre él (en celular, a su lado o arriba) y, si está abierto, el correo. */
+function colocar() {
+  caja.style.width = "";
+  const { carlos, globo } = colocacion(posicion, medidas(arriba));
+  const px = (n: number | null) => (n === null ? "" : `${n}px`);
+  escenario.style.transform = `translateX(${carlos}px)`;
+  Object.assign(caja.style, { left: px(globo.left), width: px(globo.width), top: px(globo.top), bottom: px(globo.bottom) });
   ajustarCorreo(caja, escenario);
+}
+
+/** En celular, sube el globo cuando el foco es algo fijo (menú, accesibilidad) y arriba tapa menos de él. */
+function vigilarGlobo(paso: Paso, r: Rect | null) {
+  let nuevo = false;
+  if (celular.matches && r && paso.foco && !paso.correo && visibles(paso.foco.join(",")).some(esFijo)) {
+    const bottom = colocacion(posicion, medidas(false)).globo.bottom ?? 0;
+    const alto = caja.getBoundingClientRect().height;
+    nuevo = globoArriba(r, innerHeight - bottom - alto, alto, arriba);
+  }
+  if (nuevo === arriba) return;
+  arriba = nuevo;
+  colocar();
 }
 
 /** Avance del paso (0-1): el del audio o, sin audio, el del tiempo estimado. */
@@ -235,7 +256,11 @@ function seguir(paso: Paso, i: number) {
       enCurso = true;
       visitar(visitas[hecho]!, paso, i, (f) => (focoActual = f)).finally(() => (enCurso = false));
     }
-    if (paso.foco) focoA((paso.focoSigue && focoActual?.()) || rectDe(paso.foco));
+    if (paso.foco) {
+      const r = (paso.focoSigue && focoActual?.()) || rectDe(paso.foco);
+      focoA(r);
+      vigilarGlobo(paso, r);
+    }
     if (!conAudio && !pausado && p >= 1) return finPaso(paso, i);
     rafId = requestAnimationFrame(tick);
   };
@@ -357,6 +382,7 @@ const alTeclear = (evento: KeyboardEvent) => {
 function terminar() {
   limpiarPaso();
   indice = -1;
+  arriba = false;
   guardarClave("sesion", "guia-paso", null);
   guardarClave("local", "guia-vista", "1");
   avatar?.destruir();

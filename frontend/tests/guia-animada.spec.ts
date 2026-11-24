@@ -105,6 +105,88 @@ test('en el acceso, el foco pasa por el correo, la contraseña y Google aunque s
   await encierra('#google-login-button > *, #google-login-button:empty, #google-login-unavailable');
 });
 
+test('en celular, los subtítulos no tapan el campo que señala la guía', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await seguirEn(page, '/ciudadania/alerta-ciudadana/', 7);
+  const continuar = caja(page).getByRole('button', { name: 'Continuar' });
+  await page.waitForFunction(() => !document.querySelector<HTMLElement>('[data-guia-continuar]')?.hidden || !!document.querySelector('[data-guia-texto]')?.textContent?.trim());
+  if (await continuar.isVisible()) await continuar.click();
+  for (const sel of ['#alerta-descripcion', '#alerta-foto-zona', '#alerta-form [data-envia]']) {
+    await page.waitForFunction((s) => {
+      const f = document.querySelector('.foco')?.getBoundingClientRect();
+      const e = document.querySelector(s)?.getBoundingClientRect();
+      return !!f && !!e && Math.abs(f.top + 8 - e.top) < 3 && Math.abs(f.width - 16 - e.width) < 3;
+    }, sel, { timeout: 20000 });
+    await page.waitForTimeout(700);
+    const { campo, subtitulos } = await page.evaluate((s) => ({
+      campo: document.querySelector(s)!.getBoundingClientRect().bottom,
+      subtitulos: document.querySelector('[data-guia-caja]')!.getBoundingClientRect().top,
+    }), sel);
+    expect(campo, sel).toBeLessThanOrEqual(subtitulos);
+  }
+});
+
+/** Indica si el globo de la guía tapa alguno de los elementos visibles del selector. */
+const tapa = (page: Page, sel: string) => page.evaluate((s) => {
+  const c = document.querySelector('[data-guia-caja]')!.getBoundingClientRect();
+  return [...document.querySelectorAll(s)].filter((e) => e.getClientRects().length).some((e) => {
+    const r = e.getBoundingClientRect();
+    return r.bottom > c.top && r.top < c.bottom && r.right > c.left && r.left < c.right;
+  });
+}, sel);
+
+/** Pulsa «Continuar» si el navegador bloqueó el audio al retomar la guía. */
+async function continuarSiHaceFalta(page: Page) {
+  await page.waitForFunction(() => !document.querySelector<HTMLElement>('[data-guia-continuar]')?.hidden || !!document.querySelector('[data-guia-texto]')?.textContent?.trim());
+  const continuar = caja(page).getByRole('button', { name: 'Continuar' });
+  if (await continuar.isVisible()) await continuar.click();
+}
+
+test('en celular, el globo sube para no tapar el panel de accesibilidad', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 688 });
+  await seguirEn(page, '/', 4);
+  await continuarSiHaceFalta(page);
+  await expect(page.locator('#access-panel')).toBeVisible({ timeout: 8000 });
+  await page.waitForTimeout(1000);
+  expect(await tapa(page, '#access-panel > strong, #access-panel button')).toBe(false);
+});
+
+test('en celular, el globo sube para no tapar el submenú de Propuestas', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 688 });
+  await seguirEn(page, '/', 1);
+  await continuarSiHaceFalta(page);
+  await expect(page.locator('#proposals-menu')).toBeVisible({ timeout: 15000 });
+  await page.waitForTimeout(1000);
+  expect(await tapa(page, '#proposals-menu a')).toBe(false);
+});
+
+test('en celular, el globo va al lado de Carlos sin taparlo', async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 688 });
+  await seguirEn(page, '/ciudadania/alerta-ciudadana/', 7);
+  await continuarSiHaceFalta(page);
+  await expect(texto(page)).toContainText('Elige el tipo de problema', { timeout: 8000 });
+  await expect.poll(() => page.evaluate(() => {
+    const c = document.querySelector('[data-guia-caja]')!.getBoundingClientRect();
+    const e = document.querySelector('[data-guia-escenario]')!.getBoundingClientRect();
+    const alLado = c.right <= e.left + e.width * 0.24 + 1 || c.left >= e.left + e.width * 0.76 - 1;
+    return alLado && c.bottom > e.top && c.left >= 0 && c.right <= innerWidth;
+  })).toBe(true);
+});
+
+test('en escritorio, el globo sigue encima de Carlos', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('guia-vista', '1'));
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Ver la guía de la página' }).click();
+  await expect(texto(page)).toContainText('¡Hola!');
+  const { c, e } = await page.evaluate(() => ({
+    c: document.querySelector('[data-guia-caja]')!.getBoundingClientRect().toJSON(),
+    e: document.querySelector('[data-guia-escenario]')!.getBoundingClientRect().toJSON(),
+  }));
+  expect(Math.round(c.bottom)).toBe(Math.round(e.top + 6));
+  expect(Math.abs(c.left + c.width / 2 - (e.left + e.width / 2))).toBeLessThan(1);
+  expect(c.width).toBe(380);
+});
+
 test('con la sesión iniciada se saltan los pasos de crear la cuenta', async ({ page }) => {
   await page.route('**/api/me', (route) => route.fulfill({ contentType: 'application/json', body: JSON.stringify({
     id: 1, correo: 'maria@example.com', rol: 'votante', nombresCompletos: 'María', direccion: '', tieneContrasenia: true, tieneGoogle: false, permisos: [],
