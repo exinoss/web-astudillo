@@ -184,6 +184,8 @@ test('el retrato de la semilla se recorta y uno subido se ve completo y no más 
   await page.getByRole('button', { name: 'Cambiar las imágenes del carrusel principal' }).click();
   const dialogo = page.getByRole('dialog', { name: 'Carrusel principal' });
   await dialogo.locator('#retrato-nuevo').setInputFiles(await archivo('retrato.png', 1600, 1200));
+  // Al terminar la subida el editor se vuelve a pintar: escribir antes dejaba el texto en el campo reemplazado.
+  await expect(page.getByRole('status').filter({ hasText: 'Imagen subida' })).toBeVisible();
   await dialogo.locator('#retrato-alt').fill('Afiche de la entrevista');
   await dialogo.getByRole('button', { name: 'Guardar borrador' }).click();
   await expect(dialogo).toBeHidden({ timeout: 15000 });
