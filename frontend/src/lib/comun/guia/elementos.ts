@@ -5,9 +5,19 @@ export interface Rect {
   h: number;
 }
 
+/** Consulta de medios de los celulares; debe coincidir con la variante `celular:` de styles/global.css. */
+export const CELULAR = "(width <= 480px), (orientation: landscape) and (height <= 500px) and (pointer: coarse)";
+
 /** Indica si el elemento ocupa sitio en la página y no está oculto. */
 export const visible = (el: Element | null): el is HTMLElement =>
   !!el && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== "hidden";
+
+/** Indica si el elemento no se mueve al desplazar la página (él o un antecesor es fijo, o está en la cabecera). */
+export function esFijo(el: Element) {
+  if (el.closest(".site-header")) return true;
+  for (let e: Element | null = el; e; e = e.parentElement) if (getComputedStyle(e).position === "fixed") return true;
+  return false;
+}
 
 /** Elementos visibles que coinciden con el selector. */
 export const visibles = (sel: string) => [...document.querySelectorAll(sel)].filter(visible);

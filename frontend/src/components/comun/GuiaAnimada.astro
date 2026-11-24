@@ -12,10 +12,10 @@ const conTexto = `${boton} inline-flex items-center gap-1.5 px-3.5 text-[0.85rem
 ---
 
 <div data-guia hidden>
-  <div data-guia-escenario aria-hidden="true" class="pointer-events-none fixed bottom-0 left-0 z-[90] aspect-[4/3] w-[clamp(180px,22vw,300px)] [transition:transform_0.7s_cubic-bezier(0.45,0,0.2,1)]"></div>
-  <div data-guia-caja role="region" aria-label="Guía de la página" class="fixed z-[91] w-[min(380px,calc(100vw-24px))] rounded-[12px] bg-base-100 px-3.5 pt-3.5 pb-2.5 text-primary [box-shadow:0_10px_40px_var(--color-primary-line)] [transition:left_0.7s_cubic-bezier(0.45,0,0.2,1)]">
-    <p data-guia-texto aria-live="polite" class="m-0 text-base leading-normal font-medium"></p>
-    <div data-guia-controles class="mt-2 flex items-center gap-1.5">
+  <div data-guia-escenario aria-hidden="true" class="pointer-events-none fixed bottom-0 left-0 z-[90] aspect-[4/3] w-[clamp(180px,22vw,300px)] [transition:transform_0.7s_cubic-bezier(0.45,0,0.2,1)] celular:w-[min(180px,50vw)]"></div>
+  <div data-guia-caja role="region" aria-label="Guía de la página" class="fixed z-[91] w-[min(380px,calc(100vw-24px))] rounded-[12px] bg-base-100 px-3.5 pt-3.5 pb-2.5 text-primary [box-shadow:0_10px_40px_var(--color-primary-line)] [transition:left_0.7s_cubic-bezier(0.45,0,0.2,1)] celular:px-2.5 celular:pt-2 celular:pb-1">
+    <p data-guia-texto aria-live="polite" class="m-0 text-base leading-normal font-medium celular:text-sm celular:leading-[1.3]"></p>
+    <div data-guia-controles class="mt-2 flex items-center gap-1.5 celular:mt-1">
       <button type="button" data-guia-pausa class={control} aria-label="Pausar la guía">
         <span data-pausar><Icon name="pause" size={20} /></span><span data-reanudar hidden><Icon name="play" size={20} /></span>
       </button>
@@ -24,7 +24,7 @@ const conTexto = `${boton} inline-flex items-center gap-1.5 px-3.5 text-[0.85rem
       </button>
       <button type="button" data-guia-continuar class={conTexto} hidden><Icon name="play" size={18} /> Continuar</button>
       <button type="button" data-guia-reintentar class={conTexto} hidden>Reintentar</button>
-      <button type="button" data-guia-saltar class={`${conTexto} ml-auto`}>Saltar guía <Icon name="close" size={16} /></button>
+      <button type="button" data-guia-saltar class={`${conTexto} ml-auto celular:px-3 celular:whitespace-nowrap`}>Saltar guía <Icon name="close" size={16} /></button>
     </div>
   </div>
 </div>

@@ -34,7 +34,7 @@ export function ajustarCorreo(caja: HTMLElement, escenario: HTMLElement) {
   const derecha = (parseFloat(caja.style.left) || c.left) + c.width;
   const lado = innerWidth - derecha - 24 >= 320;
   const anchoLibre = lado ? innerWidth - derecha - 36 : innerWidth - 24;
-  const altoLibre = lado ? innerHeight - arriba - 16 : innerHeight - arriba - c.height - escenario.getBoundingClientRect().height - 10;
+  const altoLibre = lado ? innerHeight - arriba - 16 : Math.min(c.top - 6, escenario.getBoundingClientRect().top) - arriba - 10;
   const s = Math.max(0.3, Math.min(1, anchoLibre / ANCHO, Math.max(0.85, altoLibre / alto)));
   const visto = Math.min(alto, altoLibre / s);
   const corte = alto - visto;

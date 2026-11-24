@@ -107,7 +107,7 @@ export const PASOS: Paso[] = [
     recorrido: [{ en: "«Confirmar", sel: ".correo-guia-boton", clic: true }],
     texto: "Luego abre tu correo: te llegará este mensaje. Si no lo ves, revisa tu carpeta de spam. Toca «Confirmar mi correo» y ¡listo, ya puedes entrar!" },
   { id: "14-despedida", pagina: "*", posicion: "centro", gesto: "aprobacion",
-    texto: "¡Gracias por acompañarme! Por ti, San Lorenzo. ¡Lista 6!" },
+    texto: "¡Gracias por acompañarme! Por ti, San Lorenzo. ¡Lista 6! ¡La nueva historia!" },
 ];
 
 /** Fracción del audio (0-1) en que empieza cada visita: cuando se dice su palabra, `adelanto` segundos antes; sin ella, se reparten por igual. */

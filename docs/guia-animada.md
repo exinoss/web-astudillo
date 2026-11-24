@@ -21,6 +21,8 @@ Decisión: D-040. Diseño aprobado: `design/propuestas/tutorial-guia/`. Código:
 ## Carga
 
 - El runtime se carga por URL (`?url` + `cargarScript`) para poder reintentar: un `import()` que falla queda memorizado por el navegador.
+- En celular (`CELULAR`, igual que la variante `celular:`), Carlos se pega al borde y el globo va a su lado con letra más pequeña: así deja libre más pantalla. Si el foco es algo fijo (menú, panel de accesibilidad), el globo sube arriba cuando ahí tapa menos (`colocacion` y `globoArriba` de `lib/comun/guia/colocacion.ts`). En tablet y escritorio, el globo va encima de Carlos como siempre. Diseño aprobado en `design/propuestas/guia-celular.md`.
+- El runtime lleva un único cambio sobre el original: la opción `fpsMaximo`, que `avatar.ts` pone en 30 solo en celular (`CELULAR` de `lib/comun/guia/elementos.ts`); en PC y tablet vale 0 y el runtime se comporta como el original. Con límite, la boca y los gestos se siguen calculando en cada fotograma y solo se salta el dibujo: saltarse el cálculo dejaba la boca abierta entre sílabas. En un celular de gama baja, cada fotograma de Carlos obliga a recomponer la pantalla entera bajo el velo; a 30 fps la GPU trabaja un 20 % menos (`design/estudios/guia-celular/REPORTE.md`).
 - El atlas se sirve tal cual con `?url`, no con `astro:assets`: es una hoja de sprites para el lienzo y recomprimirla movería los bordes de cada pieza.
 
 ## Pruebas

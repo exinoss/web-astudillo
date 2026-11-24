@@ -97,6 +97,7 @@ estado: 'idle',
 autoParpadeo: true,
 fondo: null,
 escalaMaximaDpr: 2,
+fpsMaximo: 0,
 }, opts);
 this.canvas = document.createElement('canvas');
 this.canvas.style.width = '100%';
@@ -561,6 +562,11 @@ const speechNodTarget = this.hablando ? Math.sin(t * 6.4) * 2.8 * this.vozEnergi
 const nForce = -130 * (this.headNod - speechNodTarget) - 15 * this.headNodVel;
 this.headNodVel += nForce * dt;
 this.headNod += this.headNodVel * dt;
+if (this.opts.fpsMaximo && now - (this._ultimoDibujo ?? -Infinity) < 1000 / this.opts.fpsMaximo - 2) {
+this._raf = requestAnimationFrame(this._loop);
+return;
+}
+this._ultimoDibujo = now;
 const ctx = this.ctx;
 const cw = this.canvas.width;
 const ch = this.canvas.height;
